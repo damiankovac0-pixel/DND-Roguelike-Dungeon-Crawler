@@ -29,3 +29,15 @@
 - `mcp__godot__add_node(scene_path, parent_path, node_type, name)` - Add node to scene
 - `mcp__godot__save_scene(path)` - Save scene
 - `mcp__godot__load_sprite(path)` - Load texture resource
+
+## Web Deployment
+- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", output `build/web/index.html`
+- Export command: `godot --export-release "Web"`
+- Repo: `damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler`
+- Live URL: https://damiankovac0-pixel.github.io/DND-Roguelike-Dungeon-Crawler/
+- GitHub Pages serves from `gh-pages` branch (root `/`)
+
+### Update web build (after re-exporting):
+```sh
+git checkout gh-pages && git rm -rf . && cp -r build/web/* . && git add -A && git commit -m "Update web build" && git push origin gh-pages && git checkout main
+```
