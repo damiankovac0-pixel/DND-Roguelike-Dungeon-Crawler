@@ -35,7 +35,7 @@ func refresh(player: Node) -> void:
 
 	var lines: Array[String] = [
 		"[font_size=22][color=#f2f2f2]%s[/color][/font_size]" % player.display_name,
-		"[color=#8db7ff]CHARACTER SHEET[/color]",
+		"[color=#9bbcff]CHARACTER SHEET[/color]  [color=#7d788f]Esc close[/color]",
 		"",
 		"[color=#f1c75b]COMBAT[/color]",
 		"AC       %d" % stats.get_armor_class(),
@@ -70,12 +70,12 @@ func _format_ability_lines(stats: Node) -> Array[String]:
 	for ability: Dictionary in ability_data:
 		var mod_str: String = "%+d" % ability["modifier"]
 		var mod_color: String = "#7bd88f" if ability["modifier"] >= 0 else "#f07d67"
-		var line: String = (
-			"[color=#c8c8d0]%s[/color]  %2d  [color=%s](%s)[/color]  [color=#9999aa]%s[/color]"
-			% [ability["name"], ability["value"], mod_color, mod_str, ability["effects"]]
+		lines.append(
+			"[color=#d8d6e0]%s[/color]  %2d  [color=%s](%s)[/color]"
+			% [ability["name"], ability["value"], mod_color, mod_str]
 		)
-		lines.append(line)
-		lines.append("  [color=#666677]%s[/color]" % ability["flavor"])
+		lines.append("  [color=#aaa6b8]%s[/color]" % ability["effects"])
+		lines.append("  [color=#7d788f]%s[/color]" % ability["flavor"])
 	return lines
 
 

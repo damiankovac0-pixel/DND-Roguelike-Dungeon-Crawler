@@ -33,8 +33,8 @@ func refresh(player: Node) -> void:
 		_selected_index = clampi(_selected_index, 0, inventory.items.size() - 1)
 
 	var lines: Array[String] = [
-		"[font_size=22][color=#8fb3ff]INVENTORY[/color][/font_size]",
-		"[color=#555566]Up/Down select   Enter equip/unequip   H use selected[/color]",
+		"[font_size=22][color=#9bbcff]INVENTORY[/color][/font_size]",
+		"[color=#8a86a0]Up/Down select   Enter equip/unequip   H use selected   Esc close[/color]",
 		"",
 	]
 	for index: int in range(inventory.items.size()):
@@ -45,9 +45,10 @@ func refresh(player: Node) -> void:
 		)
 		lines.append("%s %s%s" % [marker, _colored_item_name(item), equipped_tag])
 	if inventory.items.is_empty():
-		lines.append("  [color=#555566]Empty[/color]")
+		lines.append("[color=#c8c4d8]Your pack is empty.[/color]")
+		lines.append("[color=#7d788f]Find potions, scrolls, weapons, and armor in the dungeon.[/color]")
 	lines.append("")
-	lines.append("[color=#555566]──────────────────────────────────[/color]")
+	lines.append("[color=#3f3a4c]──────────────────────────────────[/color]")
 	lines.append_array(_get_selected_item_details())
 	output.text = "\n".join(lines)
 
@@ -91,7 +92,7 @@ func has_selection() -> bool:
 # === Private Methods ===
 func _get_selected_item_details() -> Array[String]:
 	if _player == null or _player.inventory_component.items.is_empty():
-		return ["Press H with a potion selected, or F with a ranged weapon equipped."]
+		return ["[color=#8a86a0]Loot appears here after you pick it up. Potions use H; ranged weapons use F.[/color]"]
 
 	var inventory: Node = _player.inventory_component
 	var stats: Node = _player.stats_component

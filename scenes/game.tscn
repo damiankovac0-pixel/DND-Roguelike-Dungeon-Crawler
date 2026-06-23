@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/game.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/map_view.gd" id="2"]
@@ -10,6 +10,30 @@
 [ext_resource type="FontFile" path="res://fonts/JetBrainsMono-Regular.ttf" id="8"]
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="9"]
 [ext_resource type="Script" path="res://scripts/ui/shop_panel.gd" id="10"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_panel"]
+bg_color = Color(0.055, 0.05, 0.075, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.18, 0.31, 1)
+content_margin_left = 22.0
+content_margin_top = 18.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_overlay"]
+bg_color = Color(0.035, 0.035, 0.045, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.25, 0.36, 1)
+content_margin_left = 24.0
+content_margin_top = 22.0
+content_margin_right = 24.0
+content_margin_bottom = 22.0
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1")
@@ -58,21 +82,23 @@ theme_override_constants/separation = 4
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Hero"
+theme_override_colors/font_color = Color(0.86, 0.84, 0.92, 1)
 
 [node name="SepVitals" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/margin_top = 8
-theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+theme_override_colors/font_color = Color(0.45, 0.42, 0.55, 1)
 text = "-- VITALS --"
 
 [node name="HpLabel" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 text = "HP"
+theme_override_colors/font_color = Color(0.78, 0.76, 0.84, 1)
 
 [node name="SepProgress" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/margin_top = 8
-theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+theme_override_colors/font_color = Color(0.45, 0.42, 0.55, 1)
 text = "-- PROGRESS --"
 
 [node name="FloorLabel" type="Label" parent="UI/HUD/Margin/VBox"]
@@ -83,6 +109,7 @@ text = "Floor 1"
 [node name="StatsLabel" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 text = "Stats"
+theme_override_colors/font_color = Color(0.78, 0.76, 0.84, 1)
 
 [node name="GoldLabel" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
@@ -92,7 +119,7 @@ text = "Gold 0"
 [node name="SepControls" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/margin_top = 8
-theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+theme_override_colors/font_color = Color(0.45, 0.42, 0.55, 1)
 text = "-- CONTROLS --"
 
 [node name="HelpLabel" type="Label" parent="UI/HUD/Margin/VBox"]
@@ -100,8 +127,10 @@ layout_mode = 2
 autowrap_mode = 2
 theme_override_constants/margin_top = 4
 text = "Help"
+theme_override_colors/font_color = Color(0.72, 0.70, 0.80, 1)
 [node name="SidebarPanel" type="PanelContainer" parent="UI"]
 layout_mode = 1
+z_index = -1
 anchors_preset = 12
 anchor_left = 0.6
 anchor_top = 0.0
@@ -113,6 +142,7 @@ offset_right = -20.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_panel")
 [node name="MessageLog" type="PanelContainer" parent="UI"]
 offset_left = 20.0
 offset_top = 620.0
@@ -137,15 +167,16 @@ anchor_left = 0.6
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 30.0
-offset_top = 130.0
+offset_left = 20.0
+offset_top = 12.0
 offset_right = -20.0
 offset_bottom = -12.0
 theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
 script = ExtResource("5")
 
 [node name="Output" type="RichTextLabel" parent="UI/InventoryPanel"]
-custom_minimum_size = Vector2(400, 540)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 bbcode_enabled = true
 fit_content = false
@@ -158,15 +189,16 @@ anchor_left = 0.6
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 30.0
-offset_top = 130.0
+offset_left = 20.0
+offset_top = 12.0
 offset_right = -20.0
 offset_bottom = -12.0
 theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
 script = ExtResource("6")
 
 [node name="Output" type="RichTextLabel" parent="UI/CharacterSheet"]
-custom_minimum_size = Vector2(400, 540)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 bbcode_enabled = true
 scroll_active = true
@@ -186,6 +218,7 @@ offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
 script = ExtResource("10")
 [node name="Margin" type="MarginContainer" parent="UI/ShopPanel"]
 layout_mode = 2
@@ -235,6 +268,7 @@ offset_top = 180.0
 offset_right = 580.0
 offset_bottom = 480.0
 theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
 [node name="Margin" type="MarginContainer" parent="UI/ExtractionPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 32
