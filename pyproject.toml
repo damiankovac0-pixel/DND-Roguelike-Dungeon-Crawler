@@ -1,0 +1,2 @@
+[tool.gdlint]
+max-file-lines = 1100

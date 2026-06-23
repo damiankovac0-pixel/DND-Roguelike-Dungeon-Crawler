@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Warhammer"
+description = "A rare hammer built to crush armor and bones alike."
+glyph = "/"
+color = Color(0.93, 0.75, 0.45, 1)
+kind = 1
+rarity = 2
+base_price = 75
+spawn_weight = 5
+min_floor = 2
+damage_sides = 8
+attack_bonus = 1
+damage_bonus = 2

@@ -1,0 +1,5 @@
+Run the game directly from this project folder with:
+
+  /usr/local/bin/godot scenes/game.tscn
+
+This opens the game scene immediately, skipping the menu and character creation screens.

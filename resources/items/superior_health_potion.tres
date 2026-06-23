@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Superior Health Potion"
+description = "A bright red tonic that restores a serious wound before it becomes fatal."
+glyph = "!"
+color = Color(1, 0.28, 0.28, 1)
+kind = 0
+rarity = 2
+base_price = 75
+spawn_weight = 5
+min_floor = 4
+healing_amount = 32
+use_effect = 1

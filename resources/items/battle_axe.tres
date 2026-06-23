@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Battle Axe"
+description = "A sturdy one-handed axe. Solid middle-of-the-road damage."
+glyph = "/"
+color = Color(0.75, 0.65, 0.55, 1)
+kind = 1
+rarity = 0
+base_price = 40
+spawn_weight = 10
+min_floor = 1
+damage_sides = 8
+attack_bonus = 0
+damage_bonus = 1

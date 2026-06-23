@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/trap_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Poison Dart Trap"
+description = "A tiny hole in the wall fires a poisoned needle."
+glyph = "v"
+color = Color(0.2, 0.7, 0.25, 1)
+effect = 1
+min_damage = 2
+max_damage = 6
+detect_dc = 14
+reveal_on_detect = true

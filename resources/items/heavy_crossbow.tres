@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Heavy Crossbow"
+description = "A massive crossbow that punches through armor at long range."
+glyph = "/"
+color = Color(0.55, 0.4, 0.25, 1)
+kind = 1
+rarity = 2
+base_price = 120
+spawn_weight = 3
+min_floor = 4
+range = 8
+is_ranged_weapon = true
+use_effect = 2
+damage_dice = 2
+damage_sides = 8
+attack_bonus = 1
+damage_bonus = 0

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Dragonbone Blade"
+description = "A legendary white blade that bites deep and guides itself toward weak points."
+glyph = "/"
+color = Color(1, 0.82, 0.42, 1)
+kind = 1
+rarity = 4
+base_price = 260
+spawn_weight = 2
+min_floor = 6
+damage_sides = 12
+attack_bonus = 2
+damage_bonus = 4

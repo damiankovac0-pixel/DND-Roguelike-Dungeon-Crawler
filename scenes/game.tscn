@@ -1,0 +1,250 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/game.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/map_view.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/message_log.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/inventory_panel.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/ui/character_sheet.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/systems/turn_manager.gd" id="7"]
+[ext_resource type="FontFile" path="res://fonts/JetBrainsMono-Regular.ttf" id="8"]
+[ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="9"]
+[ext_resource type="Script" path="res://scripts/ui/shop_panel.gd" id="10"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1")
+
+[node name="MapView" type="Node2D" parent="."]
+script = ExtResource("2")
+font = ExtResource("8")
+font_size = 16
+cell_width = 14
+cell_height = 18
+margin = Vector2(20, 20)
+playfield_size = Vector2(680, 590)
+
+[node name="TurnManager" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="HUD" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("9")
+script = ExtResource("3")
+
+[node name="Margin" type="MarginContainer" parent="UI/HUD"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 740
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="UI/HUD/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="NameLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Hero"
+
+[node name="SepVitals" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/margin_top = 8
+theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+text = "-- VITALS --"
+
+[node name="HpLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+text = "HP"
+
+[node name="SepProgress" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/margin_top = 8
+theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+text = "-- PROGRESS --"
+
+[node name="FloorLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.7, 1.0, 1)
+text = "Floor 1"
+
+[node name="StatsLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+text = "Stats"
+
+[node name="GoldLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.85, 0.4, 1)
+text = "Gold 0"
+
+[node name="SepControls" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/margin_top = 8
+theme_override_colors/font_color = Color(0.35, 0.35, 0.4, 1)
+text = "-- CONTROLS --"
+
+[node name="HelpLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+theme_override_constants/margin_top = 4
+text = "Help"
+[node name="SidebarPanel" type="PanelContainer" parent="UI"]
+offset_left = 720.0
+offset_top = 12.0
+offset_right = 1160.0
+offset_bottom = 748.0
+
+[node name="MessageLog" type="PanelContainer" parent="UI"]
+offset_left = 20.0
+offset_top = 620.0
+offset_right = 690.0
+offset_bottom = 744.0
+theme = ExtResource("9")
+script = ExtResource("4")
+
+[node name="Output" type="RichTextLabel" parent="UI/MessageLog"]
+custom_minimum_size = Vector2(640, 110)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+scroll_following = true
+
+[node name="InventoryPanel" type="PanelContainer" parent="UI"]
+visible = false
+offset_left = 740.0
+offset_top = 140.0
+offset_right = 1160.0
+offset_bottom = 700.0
+theme = ExtResource("9")
+script = ExtResource("5")
+
+[node name="Output" type="RichTextLabel" parent="UI/InventoryPanel"]
+custom_minimum_size = Vector2(400, 540)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+[node name="CharacterSheet" type="PanelContainer" parent="UI"]
+visible = false
+offset_left = 740.0
+offset_top = 140.0
+offset_right = 1160.0
+offset_bottom = 700.0
+theme = ExtResource("9")
+script = ExtResource("6")
+
+[node name="Output" type="RichTextLabel" parent="UI/CharacterSheet"]
+custom_minimum_size = Vector2(400, 540)
+layout_mode = 2
+bbcode_enabled = true
+scroll_active = true
+
+[node name="ShopPanel" type="PanelContainer" parent="UI"]
+visible = false
+offset_left = 300.0
+offset_top = 20.0
+offset_right = 900.0
+offset_bottom = 720.0
+theme = ExtResource("9")
+script = ExtResource("10")
+
+[node name="Margin" type="MarginContainer" parent="UI/ShopPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="UI/ShopPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="UI/ShopPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="UI/ShopPanel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "SHOP"
+
+[node name="CloseButton" type="Button" parent="UI/ShopPanel/Margin/VBox/Header"]
+custom_minimum_size = Vector2(44, 36)
+layout_mode = 2
+text = "X"
+
+[node name="ItemScroll" type="ScrollContainer" parent="UI/ShopPanel/Margin/VBox"]
+custom_minimum_size = Vector2(540, 240)
+layout_mode = 2
+
+[node name="Output" type="RichTextLabel" parent="UI/ShopPanel/Margin/VBox"]
+custom_minimum_size = Vector2(540, 300)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+
+offset_top = 230.0
+offset_right = 920.0
+offset_bottom = 500.0
+theme = ExtResource("9")
+
+[node name="ExtractionPanel" type="PanelContainer" parent="UI"]
+visible = false
+offset_left = 140.0
+offset_top = 180.0
+offset_right = 580.0
+offset_bottom = 480.0
+theme = ExtResource("9")
+[node name="Margin" type="MarginContainer" parent="UI/ExtractionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="UI/ExtractionPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="TitleLabel" type="Label" parent="UI/ExtractionPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1.0, 0.82, 0.32, 1)
+text = "A WAY OUT"
+horizontal_alignment = 1
+
+[node name="PromptLabel" type="Label" parent="UI/ExtractionPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.72, 1)
+text = "The stairs out of the dungeon. Leave safely with your spoils, or descend deeper into the dark."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="UI/ExtractionPanel/Margin/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="LeaveButton" type="Button" parent="UI/ExtractionPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+text = "Leave Dungeon"
+
+[node name="DescendButton" type="Button" parent="UI/ExtractionPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+text = "Descend Deeper"

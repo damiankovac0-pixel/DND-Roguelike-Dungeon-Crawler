@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Skeleton"
+glyph = "s"
+color = Color(0.9, 0.9, 0.7, 1)
+max_hp = 12
+armor_class = 13
+attack_bonus = 4
+damage_sides = 6
+damage_bonus = 2
+xp_reward = 50
+min_floor = 2
+max_floor = 0
+spawn_weight = 9

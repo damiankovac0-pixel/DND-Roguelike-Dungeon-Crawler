@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Spear"
+description = "A simple pointed polearm. Reach gives a small accuracy edge."
+glyph = "/"
+color = Color(0.65, 0.55, 0.4, 1)
+kind = 1
+rarity = 0
+base_price = 35
+spawn_weight = 12
+min_floor = 1
+damage_sides = 6
+attack_bonus = 1
+damage_bonus = 1

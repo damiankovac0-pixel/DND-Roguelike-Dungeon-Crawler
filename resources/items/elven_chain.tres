@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Elven Chain"
+description = "A fine mithral chain shirt worn over a padded tunic. Remarkably comfortable."
+glyph = "["
+color = Color(0.3, 0.7, 0.6, 1)
+kind = 2
+rarity = 2
+base_price = 140
+spawn_weight = 3
+min_floor = 4
+armor_bonus = 5

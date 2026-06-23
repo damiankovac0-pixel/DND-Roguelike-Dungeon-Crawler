@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Shortbow"
+description = "A light bow that fires arrows accurately at short range."
+glyph = "/"
+color = Color(0.76, 0.58, 0.35, 1)
+kind = 1
+rarity = 0
+base_price = 38
+spawn_weight = 10
+min_floor = 1
+is_ranged_weapon = true
+range = 6
+use_effect = 2
+damage_dice = 1
+damage_sides = 6
+attack_bonus = 1

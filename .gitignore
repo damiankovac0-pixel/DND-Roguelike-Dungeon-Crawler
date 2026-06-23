@@ -1,0 +1,14 @@
+# Godot exports
+build/
+
+# Godot generated
+.godot/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+*~

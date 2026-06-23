@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/trap_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Teleport Trap"
+description = "A shimmering glyph on the floor warps you elsewhere in the dungeon."
+glyph = "◎"
+color = Color(0.6, 0.2, 0.8, 1)
+effect = 2
+min_damage = 0
+max_damage = 0
+detect_dc = 13
+reveal_on_detect = true

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Bracers of Power"
+description = "Runed bracers that lend extra force to every blow."
+glyph = "*"
+color = Color(0.86, 0.5, 1, 1)
+kind = 3
+rarity = 2
+base_price = 110
+spawn_weight = 3
+min_floor = 3
+damage_bonus = 2

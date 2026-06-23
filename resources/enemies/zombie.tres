@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Zombie"
+glyph = "z"
+color = Color(0.48, 0.72, 0.55, 1)
+max_hp = 18
+armor_class = 9
+attack_bonus = 3
+damage_sides = 6
+damage_bonus = 2
+xp_reward = 45
+min_floor = 2
+max_floor = 0
+spawn_weight = 8

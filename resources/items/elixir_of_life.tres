@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Elixir of Life"
+description = "An epic gold-flecked elixir that restores a huge amount of health."
+glyph = "!"
+color = Color(1, 0.72, 0.32, 1)
+kind = 0
+rarity = 3
+base_price = 140
+spawn_weight = 3
+min_floor = 6
+healing_amount = 50
+use_effect = 1

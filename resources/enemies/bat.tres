@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Bat"
+glyph = "b"
+color = Color(0.45, 0.55, 0.95, 1)
+max_hp = 4
+armor_class = 14
+attack_bonus = 4
+damage_sides = 4
+damage_bonus = 0
+xp_reward = 25
+min_floor = 1
+max_floor = 5
+spawn_weight = 8

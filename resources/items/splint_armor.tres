@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Splint Armor"
+description = "Rigid metal strips over padding. Strong protection if you can find it."
+glyph = "]"
+color = Color(0.7, 0.86, 1, 1)
+kind = 2
+rarity = 2
+base_price = 95
+spawn_weight = 4
+min_floor = 3
+armor_bonus = 5

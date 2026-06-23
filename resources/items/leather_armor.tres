@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Leather Armor"
+description = "Flexible armor. Modest protection without weighing down an adventurer."
+glyph = "]"
+color = Color(0.75, 0.58, 0.38, 1)
+kind = 2
+rarity = 0
+base_price = 25
+spawn_weight = 12
+armor_bonus = 2

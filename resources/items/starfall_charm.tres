@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Starfall Charm"
+description = "A mythic charm that sharpens every strike while wrapping you in starlight."
+glyph = "*"
+color = Color(1, 0.42, 0.86, 1)
+kind = 3
+rarity = 5
+base_price = 450
+spawn_weight = 1
+min_floor = 9
+attack_bonus = 2
+damage_bonus = 2
+armor_bonus = 2

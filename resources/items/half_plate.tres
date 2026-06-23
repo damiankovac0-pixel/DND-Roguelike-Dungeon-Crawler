@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Half Plate"
+description = "A cuirass and pauldrons. Nears the protection of full plate at lower weight."
+glyph = "["
+color = Color(0.5, 0.5, 0.55, 1)
+kind = 2
+rarity = 2
+base_price = 130
+spawn_weight = 4
+min_floor = 3
+armor_bonus = 6

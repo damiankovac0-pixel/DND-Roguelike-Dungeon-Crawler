@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Wraith"
+glyph = "w"
+color = Color(0.68, 0.72, 1, 1)
+max_hp = 22
+armor_class = 15
+attack_bonus = 6
+damage_sides = 10
+damage_bonus = 3
+xp_reward = 120
+min_floor = 6
+max_floor = 0
+spawn_weight = 5

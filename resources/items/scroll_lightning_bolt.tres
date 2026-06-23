@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Scroll of Lightning Bolt"
+description = "Targeted scroll. Fires a bolt of lightning dealing 3d6 damage at range."
+glyph = "?"
+color = Color(0.3, 0.6, 1, 1)
+kind = 0
+rarity = 2
+base_price = 110
+spawn_weight = 4
+min_floor = 3
+range = 6
+use_effect = 2
+damage_dice = 3
+damage_sides = 6
+damage_bonus = 0

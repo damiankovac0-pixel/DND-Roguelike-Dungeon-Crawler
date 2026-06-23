@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Hand Crossbow"
+description = "Compact ranged weapon. Short reach, strong shot, easy to aim."
+glyph = "/"
+color = Color(0.5, 0.42, 0.32, 1)
+kind = 1
+rarity = 2
+base_price = 95
+spawn_weight = 4
+min_floor = 4
+is_ranged_weapon = true
+range = 5
+use_effect = 2
+damage_dice = 1
+damage_sides = 6
+attack_bonus = 3
+damage_bonus = 2

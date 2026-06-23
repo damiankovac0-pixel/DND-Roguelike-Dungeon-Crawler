@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Scroll of Shield"
+description = "Defensive scroll. Raises AC for a few turns."
+glyph = "?"
+color = Color(0.45, 0.7, 1, 1)
+kind = 0
+rarity = 1
+base_price = 60
+spawn_weight = 6
+min_floor = 2
+use_effect = 4
+effect_duration = 3
+armor_bonus = 3

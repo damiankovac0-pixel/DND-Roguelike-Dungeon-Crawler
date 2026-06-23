@@ -1,0 +1,43 @@
+class_name MainMenu
+extends Control
+
+# === Onready ===
+@onready var start_button: Button = $Center/VBox/StartButton
+@onready var library_button: Button = $Center/VBox/LibraryButton
+@onready var quit_button: Button = $Center/VBox/QuitButton
+@onready var history_output: RichTextLabel = $HistoryPanel/HistoryOutput
+
+
+# === Lifecycle Methods ===
+func _ready() -> void:
+	start_button.pressed.connect(_on_start_pressed)
+	library_button.pressed.connect(_on_library_pressed)
+	quit_button.pressed.connect(_on_quit_pressed)
+	_refresh_history()
+	start_button.grab_focus()
+
+
+# === Private Methods ===
+func _on_start_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/character_creation.tscn")
+
+
+func _on_library_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/library.tscn")
+
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()
+
+
+func _refresh_history() -> void:
+	var lines: Array[String] = GameManager.get_history_lines()
+	if lines.is_empty():
+		history_output.text = (
+			"[color=#555566]-- CHARACTER HISTORY --[/color]"
+			+ "\n\n[color=#777777]No previous characters.[/color]"
+		)
+		return
+	history_output.text = (
+		"[color=#555566]-- CHARACTER HISTORY --[/color]\n\n%s" % "\n".join(lines)
+	)
