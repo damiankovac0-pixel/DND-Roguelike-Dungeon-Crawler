@@ -33,12 +33,11 @@ func _on_quit_pressed() -> void:
 
 func _refresh_history() -> void:
 	var lines: Array[String] = GameManager.get_history_lines()
-	if lines.is_empty():
-		history_output.text = (
-			"[color=#555566]-- CHARACTER HISTORY --[/color]"
-			+ "\n\n[color=#777777]No previous characters.[/color]"
-		)
-		return
-	history_output.text = (
-		"[color=#555566]-- CHARACTER HISTORY --[/color]\n\n%s" % "\n".join(lines)
+	var history_text: String = (
+		"[color=#555566]-- CHARACTER HISTORY --[/color]"
+		+ "\n\n[color=#777777]No previous characters.[/color]"
 	)
+	if not lines.is_empty():
+		history_text = "[color=#555566]-- CHARACTER HISTORY --[/color]\n\n%s" % "\n".join(lines)
+	history_output.clear()
+	history_output.parse_bbcode(history_text)
