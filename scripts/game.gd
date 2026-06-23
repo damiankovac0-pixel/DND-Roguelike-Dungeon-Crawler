@@ -75,6 +75,10 @@ func _ready() -> void:
 	leave_button.pressed.connect(_on_leave_dungeon)
 	descend_button.pressed.connect(_on_descend_deeper)
 	shop_panel.connect("close_requested", _on_shop_panel_close_requested)
+	inventory_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	character_sheet.visibility_changed.connect(_refresh_overlay_visibility)
+	shop_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	extraction_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	shop_panel.connect("purchase_requested", _on_shop_panel_purchase_requested)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
@@ -165,7 +169,19 @@ func _close_open_overlay() -> bool:
 	if character_sheet.visible:
 		character_sheet.visible = false
 		return true
+	if extraction_panel.visible:
+		extraction_panel.visible = false
+		return true
 	return false
+
+
+func _refresh_overlay_visibility() -> void:
+	hud.visible = (
+		not inventory_panel.visible
+		and not character_sheet.visible
+		and not shop_panel.visible
+		and not extraction_panel.visible
+	)
 
 
 ## Resource path lists (explicit — DirAccess does not work in web exports)
