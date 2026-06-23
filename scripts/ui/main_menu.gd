@@ -13,6 +13,7 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	library_button.pressed.connect(_on_library_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	history_output.bbcode_enabled = true
 	_refresh_history()
 	start_button.grab_focus()
 
