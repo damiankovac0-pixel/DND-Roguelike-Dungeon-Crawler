@@ -40,6 +40,28 @@ func _ready() -> void:
 	name_input.call_deferred("grab_focus")
 
 
+func _input(event: InputEvent) -> void:
+	if OS.get_name() != "Web":
+		return
+	if not name_input.has_focus():
+		return
+	if not event is InputEventKey:
+		return
+	var key_event: InputEventKey = event
+	if not key_event.pressed or key_event.echo or key_event.keycode != KEY_BACKSPACE:
+		return
+	if name_input.has_selection():
+		var selection_start: int = name_input.get_selection_from_column()
+		name_input.delete_text(selection_start, name_input.get_selection_to_column())
+		name_input.caret_column = selection_start
+	elif name_input.caret_column > 0:
+		var delete_from: int = name_input.caret_column - 1
+		name_input.delete_text(delete_from, name_input.caret_column)
+		name_input.caret_column = delete_from
+	_update_validation()
+	get_viewport().set_input_as_handled()
+
+
 # === Private Methods ===
 func _build_assignment_rows() -> void:
 	for index: int in range(STAT_KEYS.size()):
