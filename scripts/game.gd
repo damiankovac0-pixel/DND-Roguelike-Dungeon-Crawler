@@ -168,26 +168,83 @@ func _close_open_overlay() -> bool:
 	return false
 
 
+## Resource path lists (explicit — DirAccess does not work in web exports)
+const ENEMY_RESOURCE_PATHS: Array[String] = [
+	"res://resources/enemies/bat.tres",
+	"res://resources/enemies/cultist.tres",
+	"res://resources/enemies/goblin.tres",
+	"res://resources/enemies/kobold.tres",
+	"res://resources/enemies/orc.tres",
+	"res://resources/enemies/rat.tres",
+	"res://resources/enemies/skeleton.tres",
+	"res://resources/enemies/troll.tres",
+	"res://resources/enemies/wraith.tres",
+	"res://resources/enemies/zombie.tres",
+]
+const ITEM_RESOURCE_PATHS: Array[String] = [
+	"res://resources/items/amulet_of_guarding.tres",
+	"res://resources/items/battle_axe.tres",
+	"res://resources/items/bracers_of_power.tres",
+	"res://resources/items/chainmail.tres",
+	"res://resources/items/dagger.tres",
+	"res://resources/items/dragonbone_blade.tres",
+	"res://resources/items/elixir_of_life.tres",
+	"res://resources/items/elixir_of_swiftness.tres",
+	"res://resources/items/elven_chain.tres",
+	"res://resources/items/flail.tres",
+	"res://resources/items/greater_health_potion.tres",
+	"res://resources/items/greatsword.tres",
+	"res://resources/items/half_plate.tres",
+	"res://resources/items/hand_crossbow.tres",
+	"res://resources/items/health_potion.tres",
+	"res://resources/items/heavy_crossbow.tres",
+	"res://resources/items/iron_axe.tres",
+	"res://resources/items/leather_armor.tres",
+	"res://resources/items/longbow.tres",
+	"res://resources/items/longsword.tres",
+	"res://resources/items/mace.tres",
+	"res://resources/items/mythril_plate.tres",
+	"res://resources/items/plate_armor.tres",
+	"res://resources/items/potion_of_giant_strength.tres",
+	"res://resources/items/potion_of_haste.tres",
+	"res://resources/items/ring_of_accuracy.tres",
+	"res://resources/items/ring_of_power.tres",
+	"res://resources/items/ring_of_protection.tres",
+	"res://resources/items/scale_mail.tres",
+	"res://resources/items/scimitar.tres",
+	"res://resources/items/scroll_fire_bolt.tres",
+	"res://resources/items/scroll_lightning_bolt.tres",
+	"res://resources/items/scroll_magic_missile.tres",
+	"res://resources/items/scroll_shield.tres",
+	"res://resources/items/scroll_sleep.tres",
+	"res://resources/items/shortbow.tres",
+	"res://resources/items/spear.tres",
+	"res://resources/items/splint_armor.tres",
+	"res://resources/items/starfall_charm.tres",
+	"res://resources/items/studded_leather.tres",
+	"res://resources/items/superior_health_potion.tres",
+	"res://resources/items/tonic_of_regeneration.tres",
+	"res://resources/items/warhammer.tres",
+]
+const TRAP_RESOURCE_PATHS: Array[String] = [
+	"res://resources/traps/alarm_trap.tres",
+	"res://resources/traps/poison_dart_trap.tres",
+	"res://resources/traps/spike_trap.tres",
+	"res://resources/traps/teleport_trap.tres",
+]
+
 func _load_content() -> void:
-	_enemy_resources = _load_resources_from_dir("res://resources/enemies")
-	_item_resources = _load_resources_from_dir("res://resources/items")
-	_trap_resources = _load_resources_from_dir("res://resources/traps")
+	_enemy_resources = _load_explicit_resources(ENEMY_RESOURCE_PATHS)
+	_item_resources = _load_explicit_resources(ITEM_RESOURCE_PATHS)
+	_trap_resources = _load_explicit_resources(TRAP_RESOURCE_PATHS)
 
 
-func _load_resources_from_dir(dir_path: String) -> Array:
+func _load_explicit_resources(paths: Array[String]) -> Array:
 	var resources: Array = []
-	var directory: DirAccess = DirAccess.open(dir_path)
-	if directory == null:
-		return resources
-	directory.list_dir_begin()
-	var file_name: String = directory.get_next()
-	while not file_name.is_empty():
-		if not directory.current_is_dir() and file_name.ends_with(".tres"):
-			var loaded_resource: Resource = load("%s/%s" % [dir_path, file_name])
-			if loaded_resource != null:
-				resources.append(loaded_resource)
-		file_name = directory.get_next()
-	directory.list_dir_end()
+	for path: String in paths:
+		var loaded: Resource = load(path)
+		if loaded != null:
+			resources.append(loaded)
 	return resources
 
 

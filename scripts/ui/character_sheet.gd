@@ -70,24 +70,11 @@ func _format_ability_lines(stats: Node) -> Array[String]:
 	for ability: Dictionary in ability_data:
 		var mod_str: String = "%+d" % ability["modifier"]
 		var mod_color: String = "#7bd88f" if ability["modifier"] >= 0 else "#f07d67"
-		(
-			lines
-			. append(
-				(
-					"[color=#c8c8d0]%s[/color]  %2d  [color=%s](%s)[/color]"
-					+ (
-						"  [color=#9999aa]%s[/color]"
-						% [
-							ability["name"],
-							ability["value"],
-							mod_color,
-							mod_str,
-							ability["effects"],
-						]
-					)
-				)
-			)
+		var line: String = (
+			"[color=#c8c8d0]%s[/color]  %2d  [color=%s](%s)[/color]  [color=#9999aa]%s[/color]"
+			% [ability["name"], ability["value"], mod_color, mod_str, ability["effects"]]
 		)
+		lines.append(line)
 		lines.append("  [color=#666677]%s[/color]" % ability["flavor"])
 	return lines
 
