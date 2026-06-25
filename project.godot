@@ -15,6 +15,12 @@ config/description="An ASCII roguelike dungeon crawler with D&D 5e-inspired mech
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.4")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.035, 0.035, 0.045, 1)
+boot_splash/image="res://resources/startup_splash.png"
+boot_splash/fullsize=true
+boot_splash/use_filter=false
+boot_splash/show_image=true
+boot_splash/minimum_display_time=500
 
 [autoload]
 

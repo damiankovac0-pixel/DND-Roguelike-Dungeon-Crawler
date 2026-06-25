@@ -3,6 +3,8 @@ extends Node2D
 # === Constants ===
 const PLAYER_SCENE_NAME: String = "Player"
 const EXTRACTION_INTERVAL: int = 3
+const CARDINAL_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+const STARTER_WEAPON_PATH: String = "res://resources/items/dagger.tres"
 const SHOP_SPAWN_CHANCE: float = 0.75
 const SHOP_STOCK_SIZE: int = 5
 const SHOPKEEPER_NAME: String = "Shopkeeper"
@@ -58,6 +60,9 @@ var _trap_resources: Array = []
 @onready var extraction_label: Label = $UI/ExtractionPanel/Margin/VBox/PromptLabel
 @onready var leave_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/LeaveButton
 @onready var descend_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/DescendButton
+@onready var pause_panel: PanelContainer = $UI/PausePanel
+@onready var pause_resume_button: Button = $UI/PausePanel/Margin/VBox/ResumeButton
+@onready var pause_main_menu_button: Button = $UI/PausePanel/Margin/VBox/MainMenuButton
 @onready var turn_manager: Node = $TurnManager
 
 
@@ -79,18 +84,26 @@ func _ready() -> void:
 	character_sheet.visibility_changed.connect(_refresh_overlay_visibility)
 	shop_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	extraction_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	pause_resume_button.pressed.connect(_on_pause_resume_pressed)
+	pause_main_menu_button.pressed.connect(_on_pause_main_menu_pressed)
+	pause_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	shop_panel.connect("purchase_requested", _on_shop_panel_purchase_requested)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
 
 
 func _input(event: InputEvent) -> void:
-	if _is_escape_key(event) and _close_open_overlay():
-		get_viewport().set_input_as_handled()
+	if not _is_escape_key(event):
+		return
+	if pause_panel.visible:
+		_close_pause_menu()
+	elif not _close_open_overlay():
+		_open_pause_menu()
+	get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not GameManager.is_player_turn or extraction_panel.visible or shop_panel.visible:
+	if not GameManager.is_player_turn or extraction_panel.visible or shop_panel.visible or pause_panel.visible:
 		return
 	if _targeting_active:
 		_handle_targeting_input(event)
@@ -159,6 +172,25 @@ func _is_escape_key(event: InputEvent) -> bool:
 	)
 
 
+func _open_pause_menu() -> void:
+	_clear_targeting()
+	pause_panel.visible = true
+	pause_resume_button.grab_focus()
+
+
+func _close_pause_menu() -> void:
+	pause_panel.visible = false
+
+
+func _on_pause_resume_pressed() -> void:
+	_close_pause_menu()
+
+
+func _on_pause_main_menu_pressed() -> void:
+	GameManager.abandon_run()
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
 func _close_open_overlay() -> bool:
 	if shop_panel.visible:
 		shop_panel.visible = false
@@ -181,6 +213,7 @@ func _refresh_overlay_visibility() -> void:
 		and not character_sheet.visible
 		and not shop_panel.visible
 		and not extraction_panel.visible
+		and not pause_panel.visible
 	)
 
 
@@ -284,8 +317,19 @@ func _start_or_resume_player() -> void:
 	_player.initialize_from_rolls(ability_scores)
 	if not GameManager.pending_character_name.is_empty():
 		_player.display_name = GameManager.pending_character_name
+	_grant_starter_weapon()
 	GameManager.register_player(_player)
 	hud.bind_player(_player)
+
+func _grant_starter_weapon() -> void:
+	var starter_template: Resource = load(STARTER_WEAPON_PATH)
+	if starter_template == null:
+		push_warning("Starter weapon missing: %s" % STARTER_WEAPON_PATH)
+		return
+	var starter_weapon: Resource = starter_template.duplicate(true)
+	_player.inventory_component.add_item(starter_weapon)
+	_player.inventory_component.equipped_weapon = starter_weapon
+	GameManager.add_log_message("You grip a reliable dagger.", &"equipment")
 
 
 func _generate_floor(floor_number: int) -> void:
@@ -325,6 +369,7 @@ func _generate_floor(floor_number: int) -> void:
 	inventory_panel.visible = false
 	character_sheet.visible = false
 	shop_panel.visible = false
+	pause_panel.visible = false
 	GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
 	if _shopkeeper != null:
 		GameManager.add_log_message("A shopkeeper waits near the entrance.", &"loot")
@@ -626,7 +671,35 @@ func _can_place_shopkeeper(candidate: Vector2i, room: Rect2i, player_start: Vect
 		return false
 	if candidate.distance_to(player_start) < 2.0:
 		return false
-	return room.has_point(candidate) and _is_walkable(candidate)
+	if not room.has_point(candidate) or not _is_walkable(candidate):
+		return false
+	return _keeps_floor_connected(candidate, player_start)
+
+
+func _keeps_floor_connected(blocked_cell: Vector2i, origin: Vector2i) -> bool:
+	if origin == blocked_cell or not _is_walkable(origin):
+		return false
+
+	var walkable_count: int = 0
+	for y: int in range(GameManager.map_data.size()):
+		for x: int in range(GameManager.map_data[y].size()):
+			var cell: Vector2i = Vector2i(x, y)
+			if cell != blocked_cell and DungeonDataScript.is_walkable(GameManager.map_data[y][x]):
+				walkable_count += 1
+
+	var frontier: Array[Vector2i] = [origin]
+	var visited: Dictionary = {origin: true}
+	var cursor: int = 0
+	while cursor < frontier.size():
+		var current: Vector2i = frontier[cursor]
+		cursor += 1
+		for direction: Vector2i in CARDINAL_DIRECTIONS:
+			var neighbor: Vector2i = current + direction
+			if neighbor == blocked_cell or visited.has(neighbor) or not _is_walkable(neighbor):
+				continue
+			visited[neighbor] = true
+			frontier.append(neighbor)
+	return visited.size() == walkable_count
 
 
 func _get_perception_bonus() -> int:

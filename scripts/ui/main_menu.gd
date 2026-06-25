@@ -28,6 +28,10 @@ func _on_library_pressed() -> void:
 
 
 func _on_quit_pressed() -> void:
+	if OS.has_feature("web") and Engine.has_singleton(&"JavaScriptBridge"):
+		var bridge: Object = Engine.get_singleton(&"JavaScriptBridge")
+		bridge.call("eval", "window.close();", true)
+		return
 	get_tree().quit()
 
 

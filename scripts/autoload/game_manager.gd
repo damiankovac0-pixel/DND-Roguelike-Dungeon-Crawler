@@ -48,6 +48,14 @@ func reset_run() -> void:
 	map_data.clear()
 	clear_enemies()
 
+func abandon_run() -> void:
+	has_active_run = false
+	player = null
+	map_data.clear()
+	clear_enemies()
+	pending_character_name = ""
+	pending_ability_scores.clear()
+
 
 func register_player(p: Node2D) -> void:
 	player = p

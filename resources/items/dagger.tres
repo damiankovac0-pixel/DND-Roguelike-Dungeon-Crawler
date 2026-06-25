@@ -14,4 +14,4 @@ base_price = 18
 spawn_weight = 14
 damage_sides = 4
 attack_bonus = 2
-damage_bonus = 0
+damage_bonus = 1

@@ -15,7 +15,7 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_update_hp)
 	GameManager.xp_changed.connect(_update_xp)
 	GameManager.floor_changed.connect(_update_floor)
-	help_label.text = "WASD move   Space wait\nF fire   H heal/use\nI inventory   C sheet"
+	help_label.text = "WASD move   Space wait\nF fire   H heal/use\nI inventory   C sheet\nEsc pause"
 
 
 # === Public Methods ===
