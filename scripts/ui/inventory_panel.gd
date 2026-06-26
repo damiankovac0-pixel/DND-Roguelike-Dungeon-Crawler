@@ -34,7 +34,7 @@ func refresh(player: Node) -> void:
 
 	var lines: Array[String] = [
 		"[font_size=22][color=#9bbcff]INVENTORY[/color][/font_size]",
-		"[color=#8a86a0]Up/Down select   Enter equip/unequip   H use selected   Esc close[/color]",
+		"[color=#8a86a0]Up/Down select   Enter equip/unequip   H opens consumables   Esc close[/color]",
 		"",
 	]
 	for index: int in range(inventory.items.size()):
@@ -73,7 +73,7 @@ func toggle_selected_equipment() -> String:
 	var inventory: Node = _player.inventory_component
 	var item: Resource = inventory.items[_selected_index]
 	if item.kind == ItemDataScript.ItemKind.CONSUMABLE:
-		return "Consumables are used with H."
+		return "Press H to open the consumable menu."
 	var equipped: bool = inventory.toggle_equipped(item)
 	refresh(_player)
 	return "%s %s." % ["Equipped" if equipped else "Unequipped", item.display_name]
@@ -92,7 +92,7 @@ func has_selection() -> bool:
 # === Private Methods ===
 func _get_selected_item_details() -> Array[String]:
 	if _player == null or _player.inventory_component.items.is_empty():
-		return ["[color=#8a86a0]Loot appears here after you pick it up. Potions use H; ranged weapons use F.[/color]"]
+		return ["[color=#8a86a0]Loot appears here after you pick it up. H opens potions and scrolls; ranged weapons use F.[/color]"]
 
 	var inventory: Node = _player.inventory_component
 	var stats: Node = _player.stats_component
@@ -222,7 +222,10 @@ func _get_selected_item_details() -> Array[String]:
 				)
 		ItemDataScript.ItemKind.CONSUMABLE:
 			_append_consumable_details(lines, item)
-			lines.append("Press H to use this consumable.")
+			lines.append("Press H to open the consumable menu.")
+	var special_line: String = _special_detail(item)
+	if not special_line.is_empty():
+		lines.append(special_line)
 	return lines
 
 
@@ -236,6 +239,10 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 			)
 		ItemDataScript.ItemUse.HASTE:
 			lines.append("Consumable: skips %d enemy phase" % item.effect_duration)
+		ItemDataScript.ItemUse.REGEN:
+			lines.append(
+				"Consumable: restores %d HP for %d turns" % [item.healing_amount, item.effect_duration]
+			)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			(
 				lines
@@ -273,8 +280,32 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 					% [item.range, item.target_radius, item.effect_duration]
 				)
 			)
+		ItemDataScript.ItemUse.AREA_DAMAGE:
+			lines.append(
+				(
+					"Targeted: range %d, radius %d, area damage %dd%d%+d"
+					% [
+						item.range,
+						item.target_radius,
+						item.damage_dice,
+						item.damage_sides,
+						item.damage_bonus,
+					]
+				)
+			)
 		_:
 			lines.append("Consumable: no effect")
+
+
+func _special_detail(item: Resource) -> String:
+	match item.special_effect:
+		ItemDataScript.ItemSpecial.KILL_REGEN_PERCENT:
+			return "Special: restores %d%% max HP when you kill an enemy." % item.special_amount
+		ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
+			return "Special: ranged hits add %d%% of the target's current HP." % item.special_amount
+		ItemDataScript.ItemSpecial.DASH_CHARGE:
+			return "Special: every %d actions, your next clear move dashes two tiles." % item.special_cooldown
+	return ""
 
 
 func _colored_item_name(item: Resource) -> String:

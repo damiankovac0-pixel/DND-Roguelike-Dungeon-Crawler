@@ -28,6 +28,9 @@ var _target_range_cells: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
+var _secret_walls: Dictionary = {}
+var _revealed_secret_walls: Dictionary = {}
+var _secret_wall_hint_color: Color = Color(0.26, 0.26, 0.27)
 
 
 # === Public Methods ===
@@ -69,6 +72,14 @@ func set_traps(
 	_trap_data = trap_data
 	_revealed_traps = revealed_traps
 	_triggered_traps = triggered_traps
+	queue_redraw()
+
+func set_secret_walls(
+	secret_walls: Dictionary, revealed_secret_walls: Dictionary, hint_color: Color
+) -> void:
+	_secret_walls = secret_walls
+	_revealed_secret_walls = revealed_secret_walls
+	_secret_wall_hint_color = hint_color
 	queue_redraw()
 
 
@@ -136,6 +147,8 @@ func _draw() -> void:
 				continue
 			var tile_type: int = _map_data[y][x]
 			var color: Color = DungeonDataScript.TILE_COLORS[tile_type]
+			if _revealed_secret_walls.has(cell) and _secret_walls.has(cell):
+				color = _secret_wall_hint_color
 			if not _visible_cells.has(cell):
 				color = color.darkened(0.55)
 			draw_string(

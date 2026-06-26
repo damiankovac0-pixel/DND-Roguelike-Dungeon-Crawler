@@ -19,12 +19,12 @@ const ENEMY_NOTES: Dictionary = {
 }
 const ITEM_TYPE_LORE: Dictionary = {
 	ItemDataScript.ItemKind.CONSUMABLE:
-	"Consumed with H. Some act instantly; targeted scrolls open targeting mode.",
+	"Consumed with H. Some act instantly; targeted scrolls open targeting mode and are only spent on confirmation.",
 	ItemDataScript.ItemKind.WEAPON:
-	"Equipped weapon sets melee damage. Ranged weapons fire with F.",
-	ItemDataScript.ItemKind.ARMOR: "Equipped armor adds its AC bonus.",
+	"Equipped weapons set melee or ranged attacks. Some named weapons have unique effects.",
+	ItemDataScript.ItemKind.ARMOR: "Equipped armor adds AC; rare armor may carry utility effects.",
 	ItemDataScript.ItemKind.ACCESSORY:
-	"One accessory slot. Adds listed attack, damage, and/or AC bonuses.",
+	"Two accessory slots. Some add stats; others add cooldown utility like dashes.",
 }
 
 # === Onready ===
@@ -181,6 +181,8 @@ func _item_stats_line(item: Resource) -> String:
 		stats.append("duration %d" % item.effect_duration)
 	if item.target_radius > 0:
 		stats.append("radius %d" % item.target_radius)
+	if item.special_effect != ItemDataScript.ItemSpecial.NONE:
+		stats.append(_item_special_name(item))
 	if stats.is_empty():
 		stats.append("no direct combat stat")
 	return ", ".join(stats)
@@ -201,7 +203,22 @@ func _item_use_name(item_use: int) -> String:
 			name = "sleep"
 		ItemDataScript.ItemUse.HASTE:
 			name = "haste"
+		ItemDataScript.ItemUse.AREA_DAMAGE:
+			name = "area damage"
+		ItemDataScript.ItemUse.REGEN:
+			name = "regen"
 	return name
+
+
+func _item_special_name(item: Resource) -> String:
+	match item.special_effect:
+		ItemDataScript.ItemSpecial.KILL_REGEN_PERCENT:
+			return "kill regen %d%% max HP" % item.special_amount
+		ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
+			return "current HP hit +%d%%" % item.special_amount
+		ItemDataScript.ItemSpecial.DASH_CHARGE:
+			return "dash every %d actions" % item.special_cooldown
+	return "special"
 
 
 func _rarity_entry(rarity_index: int) -> String:
@@ -282,12 +299,15 @@ const ITEM_PATHS: Array[String] = [
 	"res://resources/items/scimitar.tres",
 	"res://resources/items/scroll_fire_bolt.tres",
 	"res://resources/items/scroll_lightning_bolt.tres",
+	"res://resources/items/scroll_fireball.tres",
 	"res://resources/items/scroll_magic_missile.tres",
 	"res://resources/items/scroll_shield.tres",
 	"res://resources/items/scroll_sleep.tres",
+	"res://resources/items/scroll_regeneration.tres",
 	"res://resources/items/shortbow.tres",
 	"res://resources/items/spear.tres",
 	"res://resources/items/splint_armor.tres",
+	"res://resources/items/stepstone_anklet.tres",
 	"res://resources/items/starfall_charm.tres",
 	"res://resources/items/studded_leather.tres",
 	"res://resources/items/superior_health_potion.tres",

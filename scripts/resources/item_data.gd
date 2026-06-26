@@ -27,6 +27,15 @@ enum ItemUse {
 	SHIELD,
 	SLEEP,
 	HASTE,
+	AREA_DAMAGE,
+	REGEN,
+}
+
+enum ItemSpecial {
+	NONE,
+	KILL_REGEN_PERCENT,
+	CURRENT_HP_DAMAGE_PERCENT,
+	DASH_CHARGE,
 }
 
 # === Constants ===
@@ -71,6 +80,9 @@ const RARITY_COLORS: Array[String] = [
 @export var attack_bonus: int = 0
 @export var damage_bonus: int = 0
 @export var armor_bonus: int = 0
+@export var special_effect: ItemSpecial = ItemSpecial.NONE
+@export var special_amount: int = 0
+@export var special_cooldown: int = 0
 
 
 # === Public Methods ===

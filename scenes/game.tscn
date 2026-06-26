@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/game.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/map_view.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="FontFile" path="res://fonts/JetBrainsMono-Regular.ttf" id="8"]
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="9"]
 [ext_resource type="Script" path="res://scripts/ui/shop_panel.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/ui/consumable_panel.gd" id="11"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_panel"]
 bg_color = Color(0.055, 0.05, 0.075, 1)
@@ -287,6 +288,42 @@ offset_top = 230.0
 offset_right = 920.0
 offset_bottom = 500.0
 theme = ExtResource("9")
+
+[node name="ConsumablePanel" type="PanelContainer" parent="UI"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -240.0
+offset_right = 300.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
+script = ExtResource("11")
+
+[node name="Margin" type="MarginContainer" parent="UI/ConsumablePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 22
+
+[node name="VBox" type="VBoxContainer" parent="UI/ConsumablePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Output" type="RichTextLabel" parent="UI/ConsumablePanel/Margin/VBox"]
+custom_minimum_size = Vector2(540, 400)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
 
 [node name="ExtractionPanel" type="PanelContainer" parent="UI"]
 visible = false

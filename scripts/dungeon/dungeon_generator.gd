@@ -7,6 +7,13 @@ const MIN_LEAF_SIZE: int = 10
 const MIN_ROOM_SIZE: int = 5
 const MAX_DEPTH: int = 4
 const TRAP_CHANCE: float = 0.3
+const SECRET_ROOM_MIN_FLOOR: int = 2
+const SECRET_ROOM_CHANCE: float = 0.28
+const SECRET_ROOM_ATTEMPTS: int = 80
+const SECRET_ROOM_MIN_SIZE: int = 3
+const SECRET_ROOM_MAX_SIZE: int = 5
+const SECRET_WALL_HP: int = 2
+const SECRET_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 
 
 # === Public Methods ===
@@ -70,6 +77,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 	var trap_limit: int = min(trap_spawns.size(), 2 + floor_number)
 	var enemy_limit: int = min(enemy_spawns.size(), 6 + floor_number * 2)
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
+	var secret_data: Dictionary = _generate_secret_room(map_data, rooms, occupied_spawns, floor_number)
 	return {
 		"map": map_data,
 		"rooms": rooms,
@@ -78,7 +86,120 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 		"enemy_spawns": enemy_spawns.slice(0, enemy_limit),
 		"item_spawns": item_spawns.slice(0, item_limit),
 		"trap_spawns": trap_spawns.slice(0, trap_limit),
+		"secret_walls": secret_data.get("secret_walls", {}),
+		"secret_containers": secret_data.get("secret_containers", []),
+		"secret_floor_cells": secret_data.get("secret_floor_cells", []),
 	}
+
+
+func _generate_secret_room(
+	map_data: Array, rooms: Array[Rect2i], occupied_spawns: Dictionary, floor_number: int
+) -> Dictionary:
+	var result: Dictionary = {
+		"secret_walls": {},
+		"secret_containers": [],
+		"secret_floor_cells": [],
+	}
+	if floor_number < SECRET_ROOM_MIN_FLOOR or rooms.is_empty() or randf() > SECRET_ROOM_CHANCE:
+		return result
+	for _attempt: int in range(SECRET_ROOM_ATTEMPTS):
+		var source_room: Rect2i = rooms[randi_range(0, rooms.size() - 1)]
+		var direction: Vector2i = SECRET_DIRECTIONS[randi_range(0, SECRET_DIRECTIONS.size() - 1)]
+		var entrance_floor: Vector2i = _random_room_edge_cell(source_room, direction)
+		var wall_cell: Vector2i = entrance_floor + direction
+		var secret_room: Rect2i = _secret_room_rect_from_wall(wall_cell, direction)
+		if not _can_place_secret_room(map_data, secret_room, wall_cell, entrance_floor):
+			continue
+		_carve_room(map_data, secret_room)
+		_add_secret_floor_cells(result["secret_floor_cells"], secret_room)
+		result["secret_walls"][wall_cell] = {"hp": SECRET_WALL_HP}
+		_add_secret_containers(result["secret_containers"], secret_room, floor_number)
+		return result
+	return result
+
+
+func _random_room_edge_cell(room: Rect2i, direction: Vector2i) -> Vector2i:
+	if direction == Vector2i.RIGHT:
+		return Vector2i(room.end.x - 1, randi_range(room.position.y + 1, room.end.y - 2))
+	if direction == Vector2i.LEFT:
+		return Vector2i(room.position.x, randi_range(room.position.y + 1, room.end.y - 2))
+	if direction == Vector2i.DOWN:
+		return Vector2i(randi_range(room.position.x + 1, room.end.x - 2), room.end.y - 1)
+	return Vector2i(randi_range(room.position.x + 1, room.end.x - 2), room.position.y)
+
+
+func _secret_room_rect_from_wall(wall_cell: Vector2i, direction: Vector2i) -> Rect2i:
+	var room_size: Vector2i = Vector2i(
+		randi_range(SECRET_ROOM_MIN_SIZE, SECRET_ROOM_MAX_SIZE),
+		randi_range(SECRET_ROOM_MIN_SIZE, SECRET_ROOM_MAX_SIZE)
+	)
+	if direction == Vector2i.RIGHT:
+		return Rect2i(wall_cell.x + 1, wall_cell.y - int(room_size.y / 2), room_size.x, room_size.y)
+	if direction == Vector2i.LEFT:
+		return Rect2i(wall_cell.x - room_size.x, wall_cell.y - int(room_size.y / 2), room_size.x, room_size.y)
+	if direction == Vector2i.DOWN:
+		return Rect2i(wall_cell.x - int(room_size.x / 2), wall_cell.y + 1, room_size.x, room_size.y)
+	return Rect2i(wall_cell.x - int(room_size.x / 2), wall_cell.y - room_size.y, room_size.x, room_size.y)
+
+
+func _can_place_secret_room(
+	map_data: Array, room: Rect2i, wall_cell: Vector2i, entrance_floor: Vector2i
+) -> bool:
+	if not _is_inside_map(map_data, wall_cell) or not _is_inside_map(map_data, entrance_floor):
+		return false
+	if map_data[wall_cell.y][wall_cell.x] != DungeonDataScript.TileType.WALL:
+		return false
+	if not DungeonDataScript.is_walkable(map_data[entrance_floor.y][entrance_floor.x]):
+		return false
+	for y: int in range(room.position.y, room.end.y):
+		for x: int in range(room.position.x, room.end.x):
+			var cell: Vector2i = Vector2i(x, y)
+			if not _is_inside_map(map_data, cell):
+				return false
+			if map_data[y][x] != DungeonDataScript.TileType.WALL:
+				return false
+			for direction: Vector2i in SECRET_DIRECTIONS:
+				var neighbor: Vector2i = cell + direction
+				if neighbor == wall_cell:
+					continue
+				if _is_inside_map(map_data, neighbor) and DungeonDataScript.is_walkable(map_data[neighbor.y][neighbor.x]):
+					return false
+	return true
+
+
+func _add_secret_floor_cells(secret_floor_cells: Array, room: Rect2i) -> void:
+	for y: int in range(room.position.y, room.end.y):
+		for x: int in range(room.position.x, room.end.x):
+			secret_floor_cells.append(Vector2i(x, y))
+
+
+func _add_secret_containers(secret_containers: Array, room: Rect2i, floor_number: int) -> void:
+	var used_cells: Dictionary = {}
+	var chest_cell: Vector2i = room.get_center()
+	secret_containers.append({
+		"cell": chest_cell,
+		"type": &"chest",
+		"rarity": min(int(floor_number / 4), 3),
+	})
+	used_cells[chest_cell] = true
+	for _index: int in range(randi_range(1, 2)):
+		var clutter_cell: Vector2i = _random_cell_in_room(room)
+		if used_cells.has(clutter_cell):
+			continue
+		secret_containers.append({
+			"cell": clutter_cell,
+			"type": &"clutter",
+		})
+		used_cells[clutter_cell] = true
+
+
+func _is_inside_map(map_data: Array, cell: Vector2i) -> bool:
+	return (
+		cell.y > 0
+		and cell.y < map_data.size() - 1
+		and cell.x > 0
+		and cell.x < map_data[0].size() - 1
+	)
 
 
 # === Private Methods ===

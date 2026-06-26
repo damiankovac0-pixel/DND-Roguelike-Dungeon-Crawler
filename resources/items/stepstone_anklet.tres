@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Stepstone Anklet"
+description = "A rare anklet that stores momentum. Every four actions, your next clear move dashes two tiles."
+glyph = "*"
+color = Color(0.56, 0.7, 1, 1)
+kind = 3
+rarity = 2
+base_price = 180
+spawn_weight = 3
+min_floor = 4
+special_effect = 3
+special_cooldown = 4

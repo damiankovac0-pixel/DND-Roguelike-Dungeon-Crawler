@@ -287,6 +287,9 @@ func _get_selected_item_details() -> Array[String]:
 			_append_accessory_shop_details(lines, item)
 		ItemDataScript.ItemKind.CONSUMABLE:
 			_append_consumable_details(lines, item)
+	var special_line: String = _special_detail(item)
+	if not special_line.is_empty():
+		lines.append(special_line)
 	return lines
 
 
@@ -395,6 +398,10 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 			)
 		ItemDataScript.ItemUse.HASTE:
 			lines.append("Consumable: skips %d enemy phase" % item.effect_duration)
+		ItemDataScript.ItemUse.REGEN:
+			lines.append(
+				"Consumable: restores %d HP for %d turns" % [item.healing_amount, item.effect_duration]
+			)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			lines.append(
 				(
@@ -416,6 +423,13 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 					% [item.range, item.target_radius, item.effect_duration]
 				)
 			)
+		ItemDataScript.ItemUse.AREA_DAMAGE:
+			lines.append(
+				(
+					"Targeted: range %d, radius %d, area damage %dd%d%+d"
+					% [item.range, item.target_radius, item.damage_dice, item.damage_sides, item.damage_bonus]
+				)
+			)
 		_:
 			lines.append("Consumable: no effect")
 
@@ -430,9 +444,22 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 		tags.append("damage %dd%d%+d" % [item.damage_dice, item.damage_sides, item.damage_bonus])
 	if item.armor_bonus != 0:
 		tags.append("AC %+d" % item.armor_bonus)
+	if item.special_effect != ItemDataScript.ItemSpecial.NONE:
+		tags.append(_special_detail(item))
 	if tags.is_empty():
 		tags.append(item.get_kind_name())
 	return tags
+
+
+func _special_detail(item: Resource) -> String:
+	match item.special_effect:
+		ItemDataScript.ItemSpecial.KILL_REGEN_PERCENT:
+			return "kill regen %d%% max HP" % item.special_amount
+		ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
+			return "ranged hit +%d%% current HP" % item.special_amount
+		ItemDataScript.ItemSpecial.DASH_CHARGE:
+			return "dash every %d actions" % item.special_cooldown
+	return ""
 
 
 func _select_index(index: int) -> void:

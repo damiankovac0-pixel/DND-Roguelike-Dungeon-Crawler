@@ -49,6 +49,13 @@ const CHEST_COLORS: Array[Color] = [
 const CLUTTER_NAMES: Array[String] = ["Cracked Vase", "Old Box"]
 const CLUTTER_GLYPHS: Array[String] = ["v", "b"]
 const CLUTTER_COLORS: Array[Color] = [Color(0.55, 0.45, 0.35), Color(0.45, 0.34, 0.24)]
+const SECRET_WALL_HP: int = 2
+const SECRET_WALL_HINT_COLOR: Color = Color(0.26, 0.26, 0.27)
+const SECRET_WALL_LISTEN_RADIUS: int = 6
+const VASE_XP_ORB_CHANCE: float = 0.35
+const VASE_XP_MIN_PERCENT: int = 5
+const VASE_XP_MAX_PERCENT: int = 10
+const DASH_LOG_NAME: String = "Windstep"
 
 # === Private Variables ===
 var _generator: RefCounted = DungeonGeneratorScript.new()
@@ -56,6 +63,9 @@ var _player: Node2D
 var _enemies: Array = []
 var _item_positions: Dictionary = {}
 var _container_positions: Dictionary = {}
+var _secret_walls: Dictionary = {}
+var _revealed_secret_walls: Dictionary = {}
+var _secret_floor_cells: Dictionary = {}
 var _explored_cells: Dictionary = {}
 var _visible_cells: Dictionary = {}
 var _stairs_position: Vector2i = Vector2i.ZERO
@@ -72,6 +82,9 @@ var _targeting_range_cells: Dictionary = {}
 var _shield_turns: int = 0
 var _shield_armor_bonus: int = 0
 var _haste_enemy_phases: int = 0
+var _regen_turns: int = 0
+var _regen_heal_amount: int = 0
+var _dash_charge: int = 0
 var _sleeping_enemies: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
@@ -84,6 +97,7 @@ var _trap_resources: Array = []
 @onready var inventory_panel: PanelContainer = $UI/InventoryPanel
 @onready var character_sheet: PanelContainer = $UI/CharacterSheet
 @onready var shop_panel: PanelContainer = $UI/ShopPanel
+@onready var consumable_panel: PanelContainer = $UI/ConsumablePanel
 @onready var extraction_panel: PanelContainer = $UI/ExtractionPanel
 @onready var extraction_label: Label = $UI/ExtractionPanel/Margin/VBox/PromptLabel
 @onready var leave_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/LeaveButton
@@ -118,6 +132,9 @@ func _ready() -> void:
 	shop_panel.connect("purchase_requested", _on_shop_panel_purchase_requested)
 	shop_panel.connect("sell_requested", _on_shop_panel_sell_requested)
 	shop_panel.connect("reroll_requested", _on_shop_panel_reroll_requested)
+	consumable_panel.connect("close_requested", _on_consumable_panel_close_requested)
+	consumable_panel.connect("use_requested", _on_consumable_panel_use_requested)
+	consumable_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
 
@@ -137,7 +154,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not GameManager.is_player_turn or extraction_panel.visible or shop_panel.visible or pause_panel.visible:
+	if not GameManager.is_player_turn or extraction_panel.visible or shop_panel.visible or pause_panel.visible or consumable_panel.visible:
 		return
 	if _targeting_active:
 		_handle_targeting_input(event)
@@ -165,11 +182,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			hud.bind_player(_player)
 			character_sheet.refresh(_player)
 		elif event.is_action_pressed(&"use_potion"):
-			_use_selected_inventory_item()
+			_open_consumable_menu()
 	elif not character_sheet.visible:
 		var direction: Vector2i = _input_direction(event)
 		if event.is_action_pressed(&"use_potion"):
-			_use_potion()
+			_open_consumable_menu()
 		elif event.is_action_pressed(&"fire_ranged"):
 			_attempt_fire_ranged()
 		elif direction != Vector2i.ZERO:
@@ -187,6 +204,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			if found > 0:
 				GameManager.add_log_message(
 					"You detect %d trap%s nearby." % [found, "s" if found != 1 else ""], &"neutral"
+				)
+			var secret_found: int = _search_for_secret_walls(false)
+			if secret_found > 0:
+				GameManager.add_log_message(
+					"You hear hollow stone nearby: %d weak wall%s revealed."
+					% [secret_found, "s" if secret_found != 1 else ""],
+					&"neutral"
 				)
 			_end_player_turn()
 
@@ -229,6 +253,9 @@ func _close_open_overlay() -> bool:
 	if shop_panel.visible:
 		shop_panel.visible = false
 		return true
+	if consumable_panel.visible:
+		consumable_panel.visible = false
+		return true
 	if inventory_panel.visible:
 		inventory_panel.visible = false
 		return true
@@ -248,7 +275,38 @@ func _refresh_overlay_visibility() -> void:
 		and not shop_panel.visible
 		and not extraction_panel.visible
 		and not pause_panel.visible
+		and not consumable_panel.visible
 	)
+
+func _open_consumable_menu() -> void:
+	var consumables: Array = _player.inventory_component.get_consumables()
+	if consumables.is_empty():
+		GameManager.add_log_message("You have no potions or scrolls to use.", &"warning")
+		return
+	inventory_panel.visible = false
+	character_sheet.visible = false
+	consumable_panel.refresh(_player)
+	consumable_panel.visible = true
+
+
+func _on_consumable_panel_close_requested() -> void:
+	consumable_panel.visible = false
+
+
+func _on_consumable_panel_use_requested(inventory_index: int) -> void:
+	var inventory: Node = _player.inventory_component
+	if inventory_index < 0 or inventory_index >= inventory.items.size():
+		consumable_panel.refresh(_player)
+		return
+	var item: Resource = inventory.items[inventory_index]
+	if item.kind != ItemDataScript.ItemKind.CONSUMABLE:
+		consumable_panel.refresh(_player)
+		return
+	var used: bool = _use_consumable(item)
+	if used:
+		consumable_panel.visible = false
+	else:
+		consumable_panel.refresh(_player)
 
 
 ## Resource path lists (explicit — DirAccess does not work in web exports)
@@ -306,12 +364,15 @@ const ITEM_RESOURCE_PATHS: Array[String] = [
 	"res://resources/items/scimitar.tres",
 	"res://resources/items/scroll_fire_bolt.tres",
 	"res://resources/items/scroll_lightning_bolt.tres",
+	"res://resources/items/scroll_fireball.tres",
 	"res://resources/items/scroll_magic_missile.tres",
 	"res://resources/items/scroll_shield.tres",
 	"res://resources/items/scroll_sleep.tres",
+	"res://resources/items/scroll_regeneration.tres",
 	"res://resources/items/shortbow.tres",
 	"res://resources/items/spear.tres",
 	"res://resources/items/splint_armor.tres",
+	"res://resources/items/stepstone_anklet.tres",
 	"res://resources/items/starfall_charm.tres",
 	"res://resources/items/studded_leather.tres",
 	"res://resources/items/superior_health_potion.tres",
@@ -410,6 +471,9 @@ func _generate_floor(floor_number: int) -> void:
 	GameManager.clear_enemies()
 	_item_positions.clear()
 	_container_positions.clear()
+	_secret_walls.clear()
+	_revealed_secret_walls.clear()
+	_secret_floor_cells.clear()
 	_shop_stock.clear()
 	_shop_reroll_count = 0
 	_explored_cells.clear()
@@ -418,6 +482,8 @@ func _generate_floor(floor_number: int) -> void:
 	_shield_turns = 0
 	_shield_armor_bonus = 0
 	_haste_enemy_phases = 0
+	_regen_turns = 0
+	_regen_heal_amount = 0
 	_sleeping_enemies.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
@@ -426,6 +492,9 @@ func _generate_floor(floor_number: int) -> void:
 		DungeonDataScript.MAP_WIDTH, DungeonDataScript.MAP_HEIGHT, floor_number
 	)
 	GameManager.set_map_data(generation_result["map"])
+	_secret_walls = generation_result.get("secret_walls", {}).duplicate(true)
+	for secret_floor_cell: Vector2i in generation_result.get("secret_floor_cells", []):
+		_secret_floor_cells[secret_floor_cell] = true
 	GameManager.start_floor(floor_number)
 	_stairs_position = generation_result["stairs_position"]
 	_player.set_grid_position(generation_result["player_start"])
@@ -440,6 +509,7 @@ func _generate_floor(floor_number: int) -> void:
 	character_sheet.visible = false
 	shop_panel.visible = false
 	pause_panel.visible = false
+	consumable_panel.visible = false
 	GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
 	if _shopkeeper != null:
 		GameManager.add_log_message("A shopkeeper waits near the entrance.", &"loot")
@@ -517,6 +587,16 @@ func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void
 			if clutter_cell != Vector2i.ZERO:
 				_container_positions[clutter_cell] = _make_clutter_container()
 				clutter_count += 1
+	for secret_container: Dictionary in generation_result.get("secret_containers", []):
+		var cell: Vector2i = secret_container.get("cell", Vector2i.ZERO)
+		if cell == Vector2i.ZERO or _container_positions.has(cell):
+			continue
+		if secret_container.get("type", CONTAINER_TYPE_CHEST) == CONTAINER_TYPE_CLUTTER:
+			_container_positions[cell] = _make_clutter_container()
+		else:
+			_container_positions[cell] = _make_chest_container(
+				secret_container.get("rarity", _choose_chest_rarity(floor_number))
+			)
 
 
 func _find_free_container_cell(room: Rect2i) -> Vector2i:
@@ -573,6 +653,10 @@ func _make_clutter_container() -> Dictionary:
 func _attempt_player_move(direction: Vector2i) -> void:
 	var target: Vector2i = _player.grid_position + direction
 	if not _is_walkable(target):
+		if _revealed_secret_walls.has(target):
+			_damage_secret_wall(target, 1, &"melee")
+			_end_player_turn()
+			return
 		GameManager.add_log_message("You bump into stone.", &"warning")
 		return
 
@@ -603,6 +687,12 @@ func _attempt_player_move(direction: Vector2i) -> void:
 		_end_player_turn()
 		return
 
+	var dash_target: Vector2i = _get_dash_destination(direction, target)
+	if dash_target != target:
+		_dash_charge = 0
+		target = dash_target
+		GameManager.add_log_message("%s carries you two tiles." % DASH_LOG_NAME, &"magic")
+
 	_player.set_grid_position(target)
 	_collect_item_at(target)
 	_open_container_at(target)
@@ -620,6 +710,52 @@ func _attempt_player_move(direction: Vector2i) -> void:
 	_refresh_visibility()
 	_refresh_map()
 	_end_player_turn()
+
+
+func _get_dash_destination(direction: Vector2i, first_cell: Vector2i) -> Vector2i:
+	if not _is_dash_ready():
+		return first_cell
+	if (
+		_item_positions.has(first_cell)
+		or _container_positions.has(first_cell)
+		or first_cell == _stairs_position
+	):
+		return first_cell
+	var second_cell: Vector2i = first_cell + direction
+	if not _is_walkable(second_cell):
+		return first_cell
+	if _is_shopkeeper_at(second_cell) or _get_enemy_at(second_cell) != null or _trap_data.has(second_cell):
+		return first_cell
+	return second_cell
+
+
+func _is_dash_ready() -> bool:
+	var dash_item: Resource = _get_dash_item()
+	if dash_item == null:
+		return false
+	return _dash_charge >= max(1, dash_item.special_cooldown)
+
+
+func _get_dash_item() -> Resource:
+	var dash_items: Array[Resource] = _player.inventory_component.get_equipped_special_items(
+		ItemDataScript.ItemSpecial.DASH_CHARGE
+	)
+	if dash_items.is_empty():
+		return null
+	return dash_items[0]
+
+
+func _advance_dash_charge() -> void:
+	var dash_item: Resource = _get_dash_item()
+	if dash_item == null:
+		_dash_charge = 0
+		return
+	var cooldown: int = max(1, dash_item.special_cooldown)
+	if _dash_charge >= cooldown:
+		return
+	_dash_charge += 1
+	if _dash_charge >= cooldown:
+		GameManager.add_log_message("%s is ready: your next clear move dashes two tiles." % DASH_LOG_NAME, &"magic")
 
 
 func _resolve_attack(attacker: Node, defender: Node) -> void:
@@ -655,6 +791,21 @@ func _handle_defender_after_damage(defender: Node) -> void:
 			)
 			GameManager.emit_player_damaged()
 		GameManager.emit_xp_changed()
+		_apply_player_kill_specials()
+
+
+func _apply_player_kill_specials() -> void:
+	var regen_items: Array[Resource] = _player.inventory_component.get_equipped_special_items(
+		ItemDataScript.ItemSpecial.KILL_REGEN_PERCENT
+	)
+	for item: Resource in regen_items:
+		var heal_amount: int = max(1, int(ceil(_player.stats_component.max_hp * item.special_amount / 100.0)))
+		var before_hp: int = _player.stats_component.current_hp
+		_player.stats_component.heal(heal_amount)
+		var healed: int = _player.stats_component.current_hp - before_hp
+		if healed > 0:
+			GameManager.emit_player_damaged()
+			GameManager.add_log_message("%s drinks the kill and restores %d HP." % [item.display_name, healed], &"heal")
 
 
 func _collect_item_at(cell: Vector2i) -> void:
@@ -683,6 +834,9 @@ func _open_container_at(cell: Vector2i) -> void:
 
 func _open_clutter_container(container_data: Dictionary) -> void:
 	var display_name: String = container_data.get("display_name", "container")
+	if display_name.contains("Vase") and randf() < VASE_XP_ORB_CHANCE:
+		_grant_xp_orb(display_name)
+		return
 	if randf() < 0.30:
 		var potion: Resource = _find_item_by_display_name("Health Potion")
 		if potion != null:
@@ -692,6 +846,18 @@ func _open_clutter_container(container_data: Dictionary) -> void:
 	var gold: int = randi_range(2, 8) + max(0, GameManager.current_floor - 1)
 	_player.stats_component.gold += gold
 	GameManager.add_log_message("You search the %s and find %d gold." % [display_name, gold], &"gold")
+
+func _grant_xp_orb(display_name: String) -> void:
+	var percent: int = randi_range(VASE_XP_MIN_PERCENT, VASE_XP_MAX_PERCENT)
+	var xp_amount: int = max(1, int(ceil(_player.stats_component.xp_for_next_level() * percent / 100.0)))
+	if _player.stats_component.grant_xp(xp_amount):
+		GameManager.level_up.emit(_player.stats_component.level)
+		GameManager.add_log_message("You advance to level %d." % _player.stats_component.level, &"level")
+		GameManager.emit_player_damaged()
+	GameManager.emit_xp_changed()
+	GameManager.add_log_message(
+		"An XP orb glows inside the %s. +%d XP." % [display_name, xp_amount], &"level"
+	)
 
 
 func _open_chest_container(container_data: Dictionary) -> void:
@@ -752,9 +918,23 @@ func _reach_stairs() -> void:
 	_generate_floor(GameManager.current_floor + 1)
 
 
+func _apply_regen_tick() -> void:
+	if _regen_turns <= 0:
+		return
+	_regen_turns -= 1
+	var before_hp: int = _player.stats_component.current_hp
+	_player.stats_component.heal(_regen_heal_amount)
+	var healed: int = _player.stats_component.current_hp - before_hp
+	if healed > 0:
+		GameManager.emit_player_damaged()
+		GameManager.add_log_message("Regeneration restores %d HP." % healed, &"heal")
+
+
 func _end_player_turn() -> void:
 	if _shield_turns > 0:
 		_shield_turns -= 1
+	_apply_regen_tick()
+	_advance_dash_charge()
 	_refresh_temporary_stats()
 	_refresh_visibility()
 	_refresh_map()
@@ -803,6 +983,7 @@ func _refresh_visibility() -> void:
 	)
 	for cell: Vector2i in _visible_cells.keys():
 		_explored_cells[cell] = true
+	_search_for_secret_walls(true)
 
 
 func _refresh_map() -> void:
@@ -818,6 +999,7 @@ func _refresh_map() -> void:
 	map_view.set_containers(_container_positions)
 	map_view.set_targeting(_targeting_active, _target_cursor, _targeting_range_cells)
 	map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
+	map_view.set_secret_walls(_secret_walls, _revealed_secret_walls, SECRET_WALL_HINT_COLOR)
 	hud.bind_player(_player)
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
@@ -897,7 +1079,11 @@ func _keeps_floor_connected(blocked_cell: Vector2i, origin: Vector2i) -> bool:
 	for y: int in range(GameManager.map_data.size()):
 		for x: int in range(GameManager.map_data[y].size()):
 			var cell: Vector2i = Vector2i(x, y)
-			if cell != blocked_cell and DungeonDataScript.is_walkable(GameManager.map_data[y][x]):
+			if (
+				cell != blocked_cell
+				and not _secret_floor_cells.has(cell)
+				and DungeonDataScript.is_walkable(GameManager.map_data[y][x])
+			):
 				walkable_count += 1
 
 	var frontier: Array[Vector2i] = [origin]
@@ -908,7 +1094,12 @@ func _keeps_floor_connected(blocked_cell: Vector2i, origin: Vector2i) -> bool:
 		cursor += 1
 		for direction: Vector2i in CARDINAL_DIRECTIONS:
 			var neighbor: Vector2i = current + direction
-			if neighbor == blocked_cell or visited.has(neighbor) or not _is_walkable(neighbor):
+			if (
+				neighbor == blocked_cell
+				or visited.has(neighbor)
+				or _secret_floor_cells.has(neighbor)
+				or not _is_walkable(neighbor)
+			):
 				continue
 			visited[neighbor] = true
 			frontier.append(neighbor)
@@ -920,6 +1111,55 @@ func _get_perception_bonus() -> int:
 		return 0
 	return Dice.modifier(_player.stats_component.wisdom) + _player.stats_component.proficiency_bonus
 
+func _get_secret_sense_bonus() -> int:
+	if _player == null:
+		return 0
+	var stats: Node = _player.stats_component
+	return max(Dice.modifier(stats.wisdom), Dice.modifier(stats.intelligence)) + stats.proficiency_bonus
+
+
+func _search_for_secret_walls(passive: bool) -> int:
+	var revealed_count: int = 0
+	if _secret_walls.is_empty():
+		return revealed_count
+	var sense_bonus: int = _get_secret_sense_bonus()
+	var base_chance: float = 0.10 if passive else 0.30
+	var per_bonus: float = 0.045 if passive else 0.07
+	var chance: float = clampf(base_chance + max(0, sense_bonus) * per_bonus, base_chance, 0.85)
+	for cell: Vector2i in _secret_walls.keys():
+		if _revealed_secret_walls.has(cell):
+			continue
+		if passive and not _visible_cells.has(cell):
+			continue
+		if not passive and cell.distance_to(_player.grid_position) > SECRET_WALL_LISTEN_RADIUS:
+			continue
+		if not passive and not _visible_cells.has(cell) and not _explored_cells.has(cell):
+			continue
+		if randf() <= chance:
+			_revealed_secret_walls[cell] = true
+			revealed_count += 1
+	return revealed_count
+
+
+func _damage_secret_wall(cell: Vector2i, amount: int, source: StringName) -> bool:
+	if not _secret_walls.has(cell):
+		return false
+	var wall_data: Dictionary = _secret_walls[cell]
+	var hp: int = wall_data.get("hp", SECRET_WALL_HP) - amount
+	wall_data["hp"] = hp
+	_secret_walls[cell] = wall_data
+	if hp <= 0:
+		GameManager.map_data[cell.y][cell.x] = DungeonDataScript.TileType.FLOOR
+		_secret_walls.erase(cell)
+		_revealed_secret_walls.erase(cell)
+		GameManager.add_log_message("The weak wall collapses, revealing a hidden passage.", &"loot")
+		_refresh_visibility()
+	else:
+		var method: String = "shot" if source == &"weapon" or source == &"consumable" else "strike"
+		GameManager.add_log_message("The suspicious wall cracks under your %s." % method, &"warning")
+	_refresh_map()
+	return true
+
 
 func _refresh_trap_aftermath() -> void:
 	GameManager.emit_player_damaged()
@@ -928,17 +1168,7 @@ func _refresh_trap_aftermath() -> void:
 
 
 func _use_potion() -> void:
-	var potion: Resource = _player.inventory_component.consume_first_potion()
-	if potion == null:
-		GameManager.add_log_message("You have no potion to drink.", &"warning")
-		return
-	_player.stats_component.heal(potion.healing_amount)
-	GameManager.emit_player_damaged()
-	GameManager.add_log_message(
-		"You drink %s and recover %d HP." % [potion.display_name, potion.healing_amount], &"heal"
-	)
-	_refresh_map()
-	_end_player_turn()
+	_open_consumable_menu()
 
 
 func _use_selected_inventory_item() -> void:
@@ -956,15 +1186,21 @@ func _use_consumable(item: Resource) -> bool:
 	var used: bool = true
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			_player.inventory_component.remove_item(item)
-			_player.stats_component.heal(item.healing_amount)
-			GameManager.emit_player_damaged()
-			GameManager.add_log_message(
-				"You drink %s and recover %d HP." % [item.display_name, item.healing_amount],
-				&"heal"
-			)
-			_refresh_map()
-			_end_player_turn()
+			if _player.stats_component.current_hp >= _player.stats_component.max_hp:
+				GameManager.add_log_message("That would be a waste — you're already at full HP.", &"warning")
+				used = false
+			else:
+				_player.inventory_component.remove_item(item)
+				var before_hp: int = _player.stats_component.current_hp
+				_player.stats_component.heal(item.healing_amount)
+				var healed: int = _player.stats_component.current_hp - before_hp
+				GameManager.emit_player_damaged()
+				GameManager.add_log_message(
+					"You drink %s and recover %d HP." % [item.display_name, healed],
+					&"heal"
+				)
+				_refresh_map()
+				_end_player_turn()
 		ItemDataScript.ItemUse.SHIELD:
 			_player.inventory_component.remove_item(item)
 			_shield_turns = max(_shield_turns, item.effect_duration)
@@ -987,11 +1223,22 @@ func _use_consumable(item: Resource) -> bool:
 			)
 			_refresh_map()
 			_end_player_turn()
+		ItemDataScript.ItemUse.REGEN:
+			_player.inventory_component.remove_item(item)
+			_regen_turns = max(_regen_turns, item.effect_duration)
+			_regen_heal_amount = max(_regen_heal_amount, item.healing_amount)
+			GameManager.add_log_message(
+				"%s starts mending your wounds over time." % item.display_name, &"magic"
+			)
+			_refresh_map()
+			_end_player_turn()
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			_start_targeting(item, &"consumable")
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
 			_start_targeting(item, &"consumable")
 		ItemDataScript.ItemUse.SLEEP:
+			_start_targeting(item, &"consumable")
+		ItemDataScript.ItemUse.AREA_DAMAGE:
 			_start_targeting(item, &"consumable")
 		_:
 			GameManager.add_log_message("Nothing happens.", &"warning")
@@ -1030,6 +1277,7 @@ func _start_targeting(item: Resource, source: StringName) -> void:
 		_target_cursor = _player.grid_position
 	inventory_panel.visible = false
 	character_sheet.visible = false
+	consumable_panel.visible = false
 	GameManager.add_log_message(
 		"Choose a target for %s. WASD moves marker; Enter confirms; F or Esc cancels." % item.display_name,
 		&"neutral"
@@ -1089,12 +1337,21 @@ func _confirm_targeting() -> void:
 func _is_valid_target_cell(cell: Vector2i, item: Resource) -> bool:
 	if not _visible_cells.has(cell) or not _targeting_range_cells.has(cell):
 		return false
-	if item.use_effect == ItemDataScript.ItemUse.SLEEP:
+	if _revealed_secret_walls.has(cell) and (
+		item.use_effect == ItemDataScript.ItemUse.RANGED_ATTACK
+		or item.use_effect == ItemDataScript.ItemUse.MAGIC_MISSILE
+		or item.use_effect == ItemDataScript.ItemUse.AREA_DAMAGE
+	):
+		return true
+	if item.use_effect == ItemDataScript.ItemUse.SLEEP or item.use_effect == ItemDataScript.ItemUse.AREA_DAMAGE:
 		return true
 	return _get_enemy_at(cell) != null
 
 
 func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) -> bool:
+	if _revealed_secret_walls.has(cell):
+		_damage_secret_wall(cell, 1, source)
+		return true
 	match item.use_effect:
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			var ranged_target: Node2D = _get_enemy_at(cell)
@@ -1117,6 +1374,8 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 			)
 			_handle_defender_after_damage(missile_target)
 			return true
+		ItemDataScript.ItemUse.AREA_DAMAGE:
+			return _resolve_area_damage(item, cell)
 		ItemDataScript.ItemUse.SLEEP:
 			return _resolve_sleep(item, cell)
 	return false
@@ -1146,6 +1405,16 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 		)
 		if is_critical:
 			damage += _roll_item_base_dice(item)
+		if item.special_effect == ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
+			var percent_damage: int = max(
+				1,
+				int(ceil(defender.stats_component.current_hp * item.special_amount / 100.0))
+			)
+			damage += percent_damage
+			GameManager.add_log_message(
+				"%s shears %d current HP from %s." % [item.display_name, percent_damage, defender.display_name],
+				&"magic"
+			)
 		defender.stats_component.apply_damage(damage)
 		var verb: String = "shoots" if source == &"weapon" else "scorches"
 		GameManager.add_log_message(
@@ -1157,6 +1426,26 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 		GameManager.add_log_message(
 			"%s misses %s." % [_player.display_name, defender.display_name], &"combat_miss"
 		)
+
+
+func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
+	var affected_count: int = 0
+	for enemy in _enemies:
+		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
+			continue
+		if enemy.grid_position.distance_to(cell) <= item.target_radius:
+			var damage: int = _roll_item_damage(item, 0)
+			enemy.stats_component.apply_damage(damage)
+			GameManager.add_log_message(
+				"%s erupts for %d damage around %s." % [item.display_name, damage, enemy.display_name],
+				&"magic"
+			)
+			_handle_defender_after_damage(enemy)
+			affected_count += 1
+	if affected_count <= 0:
+		GameManager.add_log_message("No enemies are caught in the blast.", &"warning")
+		return false
+	return true
 
 
 func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:

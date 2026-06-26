@@ -110,6 +110,27 @@ func get_equipped_ranged_weapon() -> Resource:
 		return equipped_weapon
 	return _find_best_weapon(true)
 
+func get_equipped_items() -> Array[Resource]:
+	var equipped_items: Array[Resource] = []
+	for item: Resource in [
+		get_preferred_melee_weapon(),
+		get_equipped_ranged_weapon(),
+		equipped_armor,
+		equipped_accessory_1,
+		equipped_accessory_2,
+	]:
+		if item != null and not equipped_items.has(item):
+			equipped_items.append(item)
+	return equipped_items
+
+
+func get_equipped_special_items(special_effect: int) -> Array[Resource]:
+	var special_items: Array[Resource] = []
+	for item: Resource in get_equipped_items():
+		if item.special_effect == special_effect:
+			special_items.append(item)
+	return special_items
+
 
 func toggle_equipped(item: Resource) -> bool:
 	match item.kind:

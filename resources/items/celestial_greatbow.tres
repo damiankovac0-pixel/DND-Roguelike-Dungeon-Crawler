@@ -20,3 +20,5 @@ damage_dice = 2
 damage_sides = 8
 attack_bonus = 2
 damage_bonus = 2
+special_effect = 2
+special_amount = 20
