@@ -121,6 +121,10 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if not _is_escape_key(event):
 		return
+	if _targeting_active:
+		_cancel_targeting()
+		get_viewport().set_input_as_handled()
+		return
 	if pause_panel.visible:
 		_close_pause_menu()
 	elif not _close_open_overlay():
@@ -557,11 +561,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 
 	if _trap_data.has(target) and _triggered_traps.has(target):
 		GameManager.add_log_message("The spent trap mechanism crunches underfoot.", &"neutral")
-	if (
-		_trap_data.has(target)
-		and not _triggered_traps.has(target)
-		and not _revealed_traps.has(target)
-	):
+	if _trap_data.has(target) and not _triggered_traps.has(target):
 		TrapSystem.trigger_trap(
 			target,
 			_trap_data,
@@ -982,12 +982,16 @@ func _attempt_fire_ranged() -> void:
 
 func _handle_targeting_input(event: InputEvent) -> void:
 	var direction: Vector2i = _input_direction(event)
-	if _is_escape_key(event):
+	if _is_escape_key(event) or event.is_action_pressed(&"fire_ranged"):
 		_cancel_targeting()
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"ui_accept"):
 		_confirm_targeting()
+		get_viewport().set_input_as_handled()
 	elif direction != Vector2i.ZERO:
-		_move_target_cursor(direction)
+		_cancel_targeting()
+		_attempt_player_move(direction)
+		get_viewport().set_input_as_handled()
 
 
 func _start_targeting(item: Resource, source: StringName) -> void:
@@ -1001,7 +1005,8 @@ func _start_targeting(item: Resource, source: StringName) -> void:
 	inventory_panel.visible = false
 	character_sheet.visible = false
 	GameManager.add_log_message(
-		"Choose a target for %s. Enter confirms, Esc cancels." % item.display_name, &"neutral"
+		"Choose a target for %s. Enter confirms; F or movement cancels." % item.display_name,
+		&"neutral"
 	)
 	_refresh_map()
 

@@ -28,7 +28,9 @@ var _mode: StringName = MODE_BUY
 # === Lifecycle Methods ===
 func _ready() -> void:
 	output.bbcode_enabled = true
-	output.custom_minimum_size = Vector2(520, 170)
+	output.custom_minimum_size = Vector2(700, 320)
+	item_scroll.custom_minimum_size = Vector2(700, 224)
+	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_ensure_item_list()
 	close_button.pressed.connect(_request_close)
 
@@ -138,6 +140,7 @@ func _ensure_item_list() -> void:
 		return
 	_item_list = VBoxContainer.new()
 	_item_list.name = "ItemList"
+	_item_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_item_list.add_theme_constant_override("separation", 4)
 	item_scroll.add_child(_item_list)
 
@@ -152,7 +155,9 @@ func _rebuild_item_buttons(gold: int) -> void:
 	var active_items: Array = _get_active_items()
 	for index: int in range(active_items.size()):
 		var button: Button = Button.new()
-		button.custom_minimum_size = Vector2(520, 28)
+		button.custom_minimum_size = Vector2(0, 32)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
 		button.focus_mode = Control.FOCUS_ALL
 		button.mouse_entered.connect(_select_index.bind(index))
 		button.focus_entered.connect(_select_index.bind(index))
@@ -175,14 +180,13 @@ func _refresh_item_buttons(gold: int) -> void:
 				suffix = " [equipped]"
 		else:
 			var price: int = _get_item_price_for_player(item)
-			var afford_text: String = "" if gold >= price else " (need gold)"
-			var base_price: int = item.get_price()
-			price_text = "%dg" % price if price == base_price else "%dg (base %dg)" % [price, base_price]
+			var missing_gold: int = max(0, price - gold)
+			var afford_text: String = "" if missing_gold == 0 else " (need %dg)" % missing_gold
+			price_text = "%dg" % price
 			suffix = afford_text
-		_item_buttons[index].text = (
-			"%s %s %s - %s%s"
-			% [marker, item.get_rarity_name(), item.display_name, price_text, suffix]
-		)
+		_item_buttons[index].text = "%s %s - %s%s" % [
+			marker, item.display_name, price_text, suffix
+		]
 		_item_buttons[index].tooltip_text = (
 			"%s\n%s" % [item.description, ", ".join(_item_effect_tags(item))]
 		)

@@ -211,9 +211,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
+offset_left = -380.0
 offset_top = -350.0
-offset_right = 300.0
+offset_right = 380.0
 offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -246,11 +246,12 @@ layout_mode = 2
 text = "X"
 
 [node name="ItemScroll" type="ScrollContainer" parent="UI/ShopPanel/Margin/VBox"]
-custom_minimum_size = Vector2(540, 240)
+custom_minimum_size = Vector2(700, 224)
 layout_mode = 2
+horizontal_scroll_mode = 0
 
 [node name="Output" type="RichTextLabel" parent="UI/ShopPanel/Margin/VBox"]
-custom_minimum_size = Vector2(540, 300)
+custom_minimum_size = Vector2(700, 320)
 layout_mode = 2
 bbcode_enabled = true
 fit_content = false

@@ -31,7 +31,10 @@ static func detect_traps_around(
 		var trap: Resource = trap_data[neighbor]
 		if _d20_roll() + perception_bonus >= trap.detect_dc:
 			revealed_traps[neighbor] = true
-			log_callback.call("You notice something off about the floor nearby.", &"neutral")
+			log_callback.call(
+				"You spot a %s nearby (%s). Step around it." % [trap.display_name, trap.glyph],
+				&"warning"
+			)
 
 
 static func search_for_traps(
