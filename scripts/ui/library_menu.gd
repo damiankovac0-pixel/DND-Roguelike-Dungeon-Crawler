@@ -5,6 +5,7 @@ extends Control
 const ENEMY_DIR: String = "res://resources/enemies"
 const ITEM_DIR: String = "res://resources/items"
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const ENEMY_NOTES: Dictionary = {
 	"Rat": "Low HP, low AC, low damage. Early chip threat; dangerous only in numbers.",
 	"Bat": "High AC and +4 to hit, but only 4 HP. Harder to hit than it is to kill.",
@@ -32,6 +33,8 @@ const ITEM_TYPE_LORE: Dictionary = {
 @onready var tabs: TabContainer = $Margin/VBox/Tabs
 @onready var bestiary_text: RichTextLabel = $Margin/VBox/Tabs/Bestiary/BestiaryText
 @onready var scribes_text: RichTextLabel = $Margin/VBox/Tabs/Scribes/ScribesText
+@onready var dungeon_scrolls_text: RichTextLabel = $"Margin/VBox/Tabs/Dungeon Scrolls/DungeonScrollsText"
+@onready var info_text: RichTextLabel = $Margin/VBox/Tabs/Info/InfoText
 
 
 # === Lifecycle Methods ===
@@ -41,6 +44,10 @@ func _ready() -> void:
 	scribes_text.bbcode_enabled = true
 	bestiary_text.text = _build_bestiary_text()
 	scribes_text.text = _build_scribes_text()
+	dungeon_scrolls_text.bbcode_enabled = true
+	info_text.bbcode_enabled = true
+	dungeon_scrolls_text.text = _build_dungeon_scrolls_text()
+	info_text.text = _build_info_text()
 	back_button.grab_focus()
 
 
@@ -118,6 +125,81 @@ func _build_scribes_text() -> String:
 	return "\n".join(lines)
 
 
+func _build_dungeon_scrolls_text() -> String:
+	var traps: Array[Resource] = _load_resources_with_paths(TRAP_PATHS)
+	traps.sort_custom(_sort_trap)
+	var lines: Array[String] = [
+		"[font_size=24][color=#f1c75b]DUNGEON SCROLLS[/color][/font_size]",
+		"",
+		"Field guide to symbols, traps, secret rooms, and dungeon markings.",
+		"",
+		"[color=#8fb3ff]MAP SYMBOLS[/color]",
+		"- [color=#f2f2f2]@[/color] You.",
+		"- [color=#777777].[/color] Floor. Walkable.",
+		"- [color=#777777]#[/color] Stone wall. Blocks movement and sight.",
+		"- [color=#b87532]+[/color] Closed door. Opens when you step into it.",
+		"- [color=#9b7a45]/[/color] Open door.",
+		"- [color=#ffff66]>[/color] Stairs down. Every third floor offers extraction.",
+		"- [color=#ffd152]S[/color] Shopkeeper. Step into them to open the shop.",
+		"- [color=#f1c75b]c/C[/color] Chests. Better colors mean better rarity bands.",
+		"- [color=#8c7259]v/b[/color] Cracked vases and old boxes. Can hold gold, potions, or XP orbs.",
+		"- [color=#b894ff]?[/color] Revealed weak wall. Attack, shoot, or blast it twice to open a secret room.",
+		"- [color=#ff9f6e]^ v ! ◎[/color] Revealed traps. Step around them.",
+		"- [color=#d8d8d8]![/color] Item on the ground.",
+		"",
+		"[color=#8fb3ff]TRAPS[/color]",
+		"Traps are hidden until detected. Moving near one rolls passive detection;",
+		"Space searches visible traps within 3 tiles. WIS adds to detection.",
+	]
+	for trap: Resource in traps:
+		lines.append(_trap_entry(trap))
+	lines.append("")
+	lines.append("[color=#8fb3ff]SECRET ROOMS[/color]")
+	lines.append("- Secret rooms start sealed behind normal-looking wall tiles.")
+	lines.append("- Search/listen can reveal nearby weak walls as '?'.")
+	lines.append("- Breaking the weak wall turns it into floor and reveals the hidden passage.")
+	lines.append("- Secret rooms have a high chance to contain a chest and clutter.")
+	return "\n".join(lines)
+
+
+func _build_info_text() -> String:
+	var lines: Array[String] = [
+		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
+		"",
+		"Exact v9 mechanics.",
+		"",
+		"[color=#8fb3ff]LEVELS[/color]",
+		"- XP to next level = current level × 100.",
+		"- Levels 2-20 grant +1 ability score after the level up menu.",
+		"- Ability scores cannot exceed 20.",
+		"- After level 20, levels display as 20+1, 20+2, and so on with shifting colors.",
+		"- Level 21+ gives normal HP growth only; proficiency and ability score gains stop at level 20.",
+		"- HP gained each level = max(1, 5 + CON modifier).",
+		"",
+		"[color=#8fb3ff]ABILITY SCORES[/color]",
+		"- STR: melee attack and melee damage.",
+		"- DEX: armor class and ranged attack accuracy.",
+		"- CON: starting HP and HP gained per level. Raising CON can increase max HP.",
+		"- INT: direct healing consumables restore base HP + max(0, INT modifier).",
+		"- WIS: magic scroll damage adds max(0, WIS modifier) before magic resistance/vulnerability.",
+		"- CHA: shop buy price multiplier = clamp(1 - 0.05 × CHA modifier, 0.5, 1.5).",
+		"- CHA: shop sell value multiplier = clamp(0.35 + 0.02 × CHA modifier, 0.25, 0.50).",
+		"",
+		"[color=#8fb3ff]COMBAT AND CONSUMABLES[/color]",
+		"- Melee uses STR. Ranged attack rolls use DEX.",
+		"- Scroll fire/bolt style attacks can miss, but their magic damage uses WIS.",
+		"- Magic Missile does not roll to hit.",
+		"- Area scrolls target a cell and damage every visible enemy in the radius.",
+		"- Targeted consumables are only spent after a valid confirmed target.",
+		"- Potions are not consumed at full HP.",
+		"",
+		"[color=#8fb3ff]SEARCHING[/color]",
+		"- Space spends a turn searching for traps and listening for weak walls.",
+		"- WIS improves trap detection and secret wall discovery.",
+	]
+	return "\n".join(lines)
+
+
 func _enemy_entry(enemy: Resource) -> Array[String]:
 	var color: String = enemy.color.to_html(false)
 	var lines: Array[String] = [
@@ -168,9 +250,11 @@ func _item_stats_line(item: Resource) -> String:
 	if item.range > 1:
 		stats.append("range %d" % item.range)
 	if item.healing_amount > 0:
-		stats.append("heals %d HP" % item.healing_amount)
+		var heal_tag: String = " +INT" if item.use_effect == ItemDataScript.ItemUse.HEAL else ""
+		stats.append("heals %d HP%s" % [item.healing_amount, heal_tag])
 	if item.damage_sides > 0:
-		stats.append("damage %dd%d%+d" % [item.damage_dice, item.damage_sides, item.damage_bonus])
+		var damage_tag: String = " +WIS" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
+		stats.append("damage %dd%d%+d%s" % [item.damage_dice, item.damage_sides, item.damage_bonus, damage_tag])
 	if item.attack_bonus != 0:
 		stats.append("attack %+d" % item.attack_bonus)
 	elif item.damage_bonus != 0:
@@ -219,6 +303,33 @@ func _item_special_name(item: Resource) -> String:
 		ItemDataScript.ItemSpecial.DASH_CHARGE:
 			return "dash every %d actions" % item.special_cooldown
 	return "special"
+
+func _trap_entry(trap: Resource) -> String:
+	return (
+		"- [color=#%s]%s[/color] [color=#777788]'%s'[/color]: DC %d. %s %s"
+		% [
+			trap.color.to_html(false),
+			trap.display_name,
+			trap.glyph,
+			trap.detect_dc,
+			trap.description,
+			_trap_effect_line(trap),
+		]
+	)
+
+
+func _trap_effect_line(trap: Resource) -> String:
+	match trap.effect:
+		TrapDataScript.TrapEffect.DAMAGE:
+			return "Deals %d-%d damage." % [trap.min_damage, trap.max_damage]
+		TrapDataScript.TrapEffect.POTSON:
+			return "Deals %d-%d poison dart damage." % [trap.min_damage, trap.max_damage]
+		TrapDataScript.TrapEffect.TELEPORT:
+			return "Teleports you to another walkable cell."
+		TrapDataScript.TrapEffect.ALARM:
+			return "Alerts nearby monsters."
+	return "Unknown trap effect."
+
 
 
 func _rarity_entry(rarity_index: int) -> String:
@@ -315,6 +426,13 @@ const ITEM_PATHS: Array[String] = [
 	"res://resources/items/warhammer.tres",
 	"res://resources/items/voidglass_rapier.tres",
 ]
+const TRAP_PATHS: Array[String] = [
+	"res://resources/traps/alarm_trap.tres",
+	"res://resources/traps/poison_dart_trap.tres",
+	"res://resources/traps/spike_trap.tres",
+	"res://resources/traps/teleport_trap.tres",
+]
+
 
 func _load_resources_from_dir(_dir_path: String) -> Array[Resource]:
 	# DirAccess does not work in web exports, so this always returns empty.
@@ -345,6 +463,11 @@ func _sort_item(left: Resource, right: Resource) -> bool:
 	if left.min_floor != right.min_floor:
 		return left.min_floor < right.min_floor
 	return left.display_name < right.display_name
+
+func _sort_trap(left: Resource, right: Resource) -> bool:
+	if left.detect_dc == right.detect_dc:
+		return left.display_name < right.display_name
+	return left.detect_dc < right.detect_dc
 
 
 func _enemy_stat_note(enemy: Resource) -> String:

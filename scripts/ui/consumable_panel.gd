@@ -123,7 +123,7 @@ func _request_use_selected() -> void:
 func _effect_summary(item: Resource) -> String:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			return "+%d HP" % item.healing_amount
+			return "+%d HP +INT" % item.healing_amount
 		ItemDataScript.ItemUse.REGEN:
 			return "regen %d x %d" % [item.healing_amount, item.effect_duration]
 		ItemDataScript.ItemUse.SHIELD:
@@ -131,20 +131,20 @@ func _effect_summary(item: Resource) -> String:
 		ItemDataScript.ItemUse.HASTE:
 			return "haste %d" % item.effect_duration
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			return "target %dd%d" % [item.damage_dice, item.damage_sides]
+			return "target %dd%d +WIS" % [item.damage_dice, item.damage_sides]
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			return "force %dd%d" % [item.damage_dice, item.damage_sides]
+			return "force %dd%d +WIS" % [item.damage_dice, item.damage_sides]
 		ItemDataScript.ItemUse.SLEEP:
 			return "sleep r%d" % item.target_radius
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			return "area r%d %dd%d" % [item.target_radius, item.damage_dice, item.damage_sides]
+			return "area r%d %dd%d +WIS" % [item.target_radius, item.damage_dice, item.damage_sides]
 	return "unknown"
 
 
 func _effect_detail(item: Resource) -> String:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			return "Use immediately: restores %d HP. Not consumed at full HP." % item.healing_amount
+			return "Use immediately: restores %d HP plus INT modifier (min +0). Not consumed at full HP." % item.healing_amount
 		ItemDataScript.ItemUse.REGEN:
 			return "Use immediately: restores %d HP for %d turns." % [item.healing_amount, item.effect_duration]
 		ItemDataScript.ItemUse.SHIELD:
@@ -152,13 +152,13 @@ func _effect_detail(item: Resource) -> String:
 		ItemDataScript.ItemUse.HASTE:
 			return "Use immediately: skips %d enemy phase." % item.effect_duration
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			return "Targets one creature in range %d. Canceling does not consume it." % item.range
+			return "Targets one creature in range %d. Damage adds WIS modifier (min +0). Canceling does not consume it." % item.range
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			return "Targets one creature in range %d. Canceling does not consume it." % item.range
+			return "Targets one creature in range %d and cannot miss. Damage adds WIS modifier (min +0)." % item.range
 		ItemDataScript.ItemUse.SLEEP:
 			return "Targets a cell in range %d; sleeps enemies in radius %d." % [item.range, item.target_radius]
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			return "Targets a cell in range %d; damages enemies in radius %d." % [item.range, item.target_radius]
+			return "Targets a cell in range %d; damages enemies in radius %d and adds WIS modifier (min +0)." % [item.range, item.target_radius]
 	return "No effect."
 
 

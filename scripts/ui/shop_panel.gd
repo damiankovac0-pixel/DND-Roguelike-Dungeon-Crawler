@@ -391,7 +391,7 @@ func _append_accessory_shop_details(lines: Array[String], item: Resource) -> voi
 func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			lines.append("Consumable: restores %d HP" % item.healing_amount)
+			lines.append("Consumable: restores %d HP plus INT modifier (min +0)" % item.healing_amount)
 		ItemDataScript.ItemUse.SHIELD:
 			lines.append(
 				"Consumable: %+d AC for %d turns" % [item.armor_bonus, item.effect_duration]
@@ -405,14 +405,14 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			lines.append(
 				(
-					"Targeted: range %d, damage %dd%d%+d"
+					"Targeted: range %d, magic damage %dd%d%+d plus WIS modifier"
 					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
 			lines.append(
 				(
-					"Targeted: range %d, force damage %dd%d%+d"
+					"Targeted: range %d, force damage %dd%d%+d plus WIS modifier"
 					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
@@ -426,7 +426,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 		ItemDataScript.ItemUse.AREA_DAMAGE:
 			lines.append(
 				(
-					"Targeted: range %d, radius %d, area damage %dd%d%+d"
+					"Targeted: range %d, radius %d, area damage %dd%d%+d plus WIS modifier"
 					% [item.range, item.target_radius, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
@@ -439,9 +439,17 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 	if item.range > 1:
 		tags.append("range %d" % item.range)
 	if item.healing_amount > 0:
-		tags.append("heals %d HP" % item.healing_amount)
+		tags.append("heals %d HP +INT" % item.healing_amount)
 	if item.damage_sides > 0:
-		tags.append("damage %dd%d%+d" % [item.damage_dice, item.damage_sides, item.damage_bonus])
+		var stat_bonus_tag: String = " +WIS" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
+		tags.append(
+			"damage %dd%d%+d%s" % [
+				item.damage_dice,
+				item.damage_sides,
+				item.damage_bonus,
+				stat_bonus_tag,
+			]
+		)
 	if item.armor_bonus != 0:
 		tags.append("AC %+d" % item.armor_bonus)
 	if item.special_effect != ItemDataScript.ItemSpecial.NONE:

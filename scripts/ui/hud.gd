@@ -5,7 +5,7 @@ extends Control
 @onready var name_label: Label = $Margin/VBox/NameLabel
 @onready var hp_label: Label = $Margin/VBox/HpLabel
 @onready var floor_label: Label = $Margin/VBox/FloorLabel
-@onready var stats_label: Label = $Margin/VBox/StatsLabel
+@onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
 
@@ -15,6 +15,9 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_update_hp)
 	GameManager.xp_changed.connect(_update_xp)
 	GameManager.floor_changed.connect(_update_floor)
+	stats_label.bbcode_enabled = true
+	stats_label.fit_content = true
+	stats_label.scroll_active = false
 	help_label.text = "WASD move   Space search/listen\nF fire   H consumables\nI inventory   C sheet\nEsc pause"
 
 
@@ -37,7 +40,7 @@ func _update_hp(current_hp: int, max_hp: int) -> void:
 
 
 func _update_xp(current_xp: int, xp_to_next: int) -> void:
-	var level: int = 1
+	var level_text: String = "1"
 	if GameManager.player != null:
-		level = GameManager.player.stats_component.level
-	stats_label.text = "Level %d   XP %d / %d" % [level, current_xp, xp_to_next]
+		level_text = GameManager.player.stats_component.get_level_bbcode()
+	stats_label.text = "Level %s   XP %d / %d" % [level_text, current_xp, xp_to_next]

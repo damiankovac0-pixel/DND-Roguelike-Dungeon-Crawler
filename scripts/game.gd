@@ -93,6 +93,7 @@ var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
 var _trap_resources: Array = []
+var _resume_turn_after_level_choice: bool = false
 
 # === Onready ===
 @onready var map_view: Node2D = $MapView
@@ -101,6 +102,7 @@ var _trap_resources: Array = []
 @onready var character_sheet: PanelContainer = $UI/CharacterSheet
 @onready var shop_panel: PanelContainer = $UI/ShopPanel
 @onready var consumable_panel: PanelContainer = $UI/ConsumablePanel
+@onready var level_up_panel: LevelUpPanel = $UI/LevelUpPanel
 @onready var extraction_panel: PanelContainer = $UI/ExtractionPanel
 @onready var extraction_label: Label = $UI/ExtractionPanel/Margin/VBox/PromptLabel
 @onready var leave_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/LeaveButton
@@ -140,6 +142,8 @@ func _ready() -> void:
 	consumable_panel.connect("close_requested", _on_consumable_panel_close_requested)
 	debug_descend_button.pressed.connect(_debug_descend_deeper)
 	consumable_panel.connect("use_requested", _on_consumable_panel_use_requested)
+	level_up_panel.stat_selected.connect(_on_level_up_panel_stat_selected)
+	level_up_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	consumable_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
@@ -156,6 +160,9 @@ func _input(event: InputEvent) -> void:
 		_cancel_targeting()
 		get_viewport().set_input_as_handled()
 		return
+	if level_up_panel.visible:
+		get_viewport().set_input_as_handled()
+		return
 	if pause_panel.visible:
 		_close_pause_menu()
 	elif not _close_open_overlay():
@@ -164,7 +171,14 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not GameManager.is_player_turn or extraction_panel.visible or shop_panel.visible or pause_panel.visible or consumable_panel.visible:
+	if (
+		not GameManager.is_player_turn
+		or extraction_panel.visible
+		or shop_panel.visible
+		or pause_panel.visible
+		or consumable_panel.visible
+		or level_up_panel.visible
+	):
 		return
 	if _targeting_active:
 		_handle_targeting_input(event)
@@ -222,7 +236,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					% [secret_found, "s" if secret_found != 1 else ""],
 					&"neutral"
 				)
-			_end_player_turn()
+			_finish_player_action()
 
 
 # === Private Methods ===
@@ -310,6 +324,7 @@ func _refresh_overlay_visibility() -> void:
 		and not extraction_panel.visible
 		and not pause_panel.visible
 		and not consumable_panel.visible
+		and not level_up_panel.visible
 	)
 
 func _open_consumable_menu() -> void:
@@ -342,6 +357,111 @@ func _on_consumable_panel_use_requested(inventory_index: int) -> void:
 	else:
 		consumable_panel.refresh(_player)
 
+
+func _open_level_up_panel() -> void:
+	if _player == null:
+		return
+	var stats: StatsComponent = _player.stats_component
+	if stats.pending_stat_increases <= 0:
+		return
+	if not stats.has_available_stat_increase():
+		stats.pending_stat_increases = 0
+		GameManager.add_log_message("All ability scores are already 20.", &"level")
+		return
+	_close_open_overlay()
+	level_up_panel.refresh(_player)
+	level_up_panel.visible = true
+
+
+func _on_level_up_panel_stat_selected(stat_key: String) -> void:
+	if _player == null:
+		return
+	var stats: StatsComponent = _player.stats_component
+	if not stats.increase_ability(stat_key):
+		level_up_panel.refresh(_player)
+		return
+	GameManager.add_log_message(
+		"%s rises to %d." % [_get_ability_label(stat_key), _get_ability_value(stat_key)],
+		&"level"
+	)
+	GameManager.emit_player_damaged()
+	GameManager.emit_xp_changed()
+	hud.bind_player(_player)
+	character_sheet.refresh(_player)
+	if stats.pending_stat_increases > 0 and stats.has_available_stat_increase():
+		level_up_panel.refresh(_player)
+		return
+	if not stats.has_available_stat_increase():
+		stats.pending_stat_increases = 0
+	level_up_panel.visible = false
+	_refresh_overlay_visibility()
+	if _resume_turn_after_level_choice:
+		_resume_turn_after_level_choice = false
+		_end_player_turn()
+
+
+func _grant_player_xp(amount: int) -> bool:
+	if not _player.stats_component.grant_xp(amount):
+		return false
+	_handle_player_level_up()
+	return true
+
+
+func _handle_player_level_up() -> void:
+	var stats: StatsComponent = _player.stats_component
+	var first_level: int = stats.level - stats.last_levels_gained + 1
+	for gained_level: int in range(first_level, stats.level + 1):
+		GameManager.level_up.emit(gained_level)
+		GameManager.add_log_message(
+			"You advance to level %s." % stats.format_level_bbcode(gained_level),
+			&"level"
+		)
+	if first_level <= StatsComponent.STAT_LEVEL_CAP and stats.level > StatsComponent.STAT_LEVEL_CAP:
+		GameManager.add_log_message("Level 20 reached: future levels only raise HP.", &"level")
+	GameManager.emit_player_damaged()
+	_open_level_up_panel()
+
+
+func _finish_player_action() -> void:
+	if level_up_panel.visible:
+		_resume_turn_after_level_choice = true
+		return
+	_end_player_turn()
+
+
+func _get_ability_label(stat_key: String) -> String:
+	match stat_key:
+		"str":
+			return "Strength"
+		"dex":
+			return "Dexterity"
+		"con":
+			return "Constitution"
+		"int":
+			return "Intelligence"
+		"wis":
+			return "Wisdom"
+		"cha":
+			return "Charisma"
+	return "Ability"
+
+
+func _get_ability_value(stat_key: String) -> int:
+	var stats: StatsComponent = _player.stats_component
+	match stat_key:
+		"str":
+			return stats.strength
+		"dex":
+			return stats.dexterity
+		"con":
+			return stats.constitution
+		"int":
+			return stats.intelligence
+		"wis":
+			return stats.wisdom
+		"cha":
+			return stats.charisma
+	return 0
 
 ## Resource path lists (explicit — DirAccess does not work in web exports)
 const ENEMY_RESOURCE_PATHS: Array[String] = [
@@ -702,7 +822,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 	if not _is_walkable(target):
 		if _revealed_secret_walls.has(target):
 			_damage_secret_wall(target, 1, &"melee")
-			_end_player_turn()
+			_finish_player_action()
 			return
 		GameManager.add_log_message("You bump into stone.", &"warning")
 		return
@@ -714,7 +834,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 	var enemy: Node2D = _get_enemy_at(target)
 	if enemy != null:
 		_resolve_attack(_player, enemy)
-		_end_player_turn()
+		_finish_player_action()
 		return
 
 	if _trap_data.has(target) and _triggered_traps.has(target):
@@ -731,7 +851,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 			_refresh_trap_aftermath,
 			_game_over
 		)
-		_end_player_turn()
+		_finish_player_action()
 		return
 
 	var dash_target: Vector2i = _get_dash_destination(direction, target)
@@ -756,7 +876,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 	)
 	_refresh_visibility()
 	_refresh_map()
-	_end_player_turn()
+	_finish_player_action()
 
 
 func _get_dash_destination(direction: Vector2i, first_cell: Vector2i) -> Vector2i:
@@ -887,12 +1007,7 @@ func _handle_defender_after_damage(defender: Node) -> void:
 			_game_over(false)
 	elif not defender.is_alive():
 		var xp_reward: int = defender.stats_component.xp_reward
-		if _player.stats_component.grant_xp(xp_reward):
-			GameManager.level_up.emit(_player.stats_component.level)
-			GameManager.add_log_message(
-				"You advance to level %d." % _player.stats_component.level, &"level"
-			)
-			GameManager.emit_player_damaged()
+		_grant_player_xp(xp_reward)
 		GameManager.emit_xp_changed()
 		_apply_player_kill_specials()
 
@@ -953,10 +1068,7 @@ func _open_clutter_container(container_data: Dictionary) -> void:
 func _grant_xp_orb(display_name: String) -> void:
 	var percent: int = randi_range(VASE_XP_MIN_PERCENT, VASE_XP_MAX_PERCENT)
 	var xp_amount: int = max(1, int(ceil(_player.stats_component.xp_for_next_level() * percent / 100.0)))
-	if _player.stats_component.grant_xp(xp_amount):
-		GameManager.level_up.emit(_player.stats_component.level)
-		GameManager.add_log_message("You advance to level %d." % _player.stats_component.level, &"level")
-		GameManager.emit_player_damaged()
+	_grant_player_xp(xp_amount)
 	GameManager.emit_xp_changed()
 	GameManager.add_log_message(
 		"An XP orb glows inside the %s. +%d XP." % [display_name, xp_amount], &"level"
@@ -1490,7 +1602,7 @@ func _use_consumable(item: Resource) -> bool:
 			else:
 				_player.inventory_component.remove_item(item)
 				var before_hp: int = _player.stats_component.current_hp
-				_player.stats_component.heal(item.healing_amount)
+				_player.stats_component.heal(_get_potion_heal_amount(item))
 				var healed: int = _player.stats_component.current_hp - before_hp
 				GameManager.emit_player_damaged()
 				GameManager.add_log_message(
@@ -1498,7 +1610,7 @@ func _use_consumable(item: Resource) -> bool:
 					&"heal"
 				)
 				_refresh_map()
-				_end_player_turn()
+				_finish_player_action()
 		ItemDataScript.ItemUse.SHIELD:
 			_player.inventory_component.remove_item(item)
 			_shield_turns = max(_shield_turns, item.effect_duration)
@@ -1512,7 +1624,7 @@ func _use_consumable(item: Resource) -> bool:
 				&"magic"
 			)
 			_refresh_map()
-			_end_player_turn()
+			_finish_player_action()
 		ItemDataScript.ItemUse.HASTE:
 			_player.inventory_component.remove_item(item)
 			_haste_enemy_phases = max(_haste_enemy_phases, item.effect_duration)
@@ -1520,7 +1632,7 @@ func _use_consumable(item: Resource) -> bool:
 				"%s makes your next move too fast to answer." % item.display_name, &"magic"
 			)
 			_refresh_map()
-			_end_player_turn()
+			_finish_player_action()
 		ItemDataScript.ItemUse.REGEN:
 			_player.inventory_component.remove_item(item)
 			_regen_turns = max(_regen_turns, item.effect_duration)
@@ -1529,7 +1641,7 @@ func _use_consumable(item: Resource) -> bool:
 				"%s starts mending your wounds over time." % item.display_name, &"magic"
 			)
 			_refresh_map()
-			_end_player_turn()
+			_finish_player_action()
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			_start_targeting(item, &"consumable")
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
@@ -1629,7 +1741,7 @@ func _confirm_targeting() -> void:
 		_player.inventory_component.remove_item(_targeting_item)
 	_clear_targeting()
 	_refresh_map()
-	_end_player_turn()
+	_finish_player_action()
 
 
 func _is_valid_target_cell(cell: Vector2i, item: Resource) -> bool:
@@ -1661,7 +1773,7 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 			var missile_target: Node2D = _get_enemy_at(cell)
 			if missile_target == null:
 				return false
-			var missile_raw_damage: int = _roll_item_damage(item, 0)
+			var missile_raw_damage: int = _roll_item_damage(item, _get_magic_damage_bonus())
 			var missile_damage: int = _apply_typed_damage(missile_target, missile_raw_damage, &"magic")
 			GameManager.add_log_message(
 				(
@@ -1698,9 +1810,10 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 	var is_critical: bool = roll_result == 20
 	var hit: bool = is_critical or attack_total >= defender.stats_component.get_armor_class()
 	if hit:
-		var raw_damage: int = _roll_item_damage(
-			item, Dice.modifier(stats.dexterity) + inventory.get_accessory_damage_bonus()
-		)
+		var damage_bonus: int = _get_magic_damage_bonus()
+		if source == &"weapon":
+			damage_bonus = Dice.modifier(stats.dexterity) + inventory.get_accessory_damage_bonus()
+		var raw_damage: int = _roll_item_damage(item, damage_bonus)
 		if is_critical:
 			raw_damage += _roll_item_base_dice(item)
 		if item.special_effect == ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
@@ -1733,7 +1846,7 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
-			var raw_damage: int = _roll_item_damage(item, 0)
+			var raw_damage: int = _roll_item_damage(item, _get_magic_damage_bonus())
 			var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
 			GameManager.add_log_message(
 				"%s erupts for %d damage around %s." % [item.display_name, damage, enemy.display_name],
@@ -1764,6 +1877,13 @@ func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
 
 func _roll_item_damage(item: Resource, bonus: int) -> int:
 	return max(1, _roll_item_base_dice(item) + item.damage_bonus + bonus)
+
+func _get_potion_heal_amount(item: Resource) -> int:
+	return item.healing_amount + max(0, Dice.modifier(_player.stats_component.intelligence))
+
+
+func _get_magic_damage_bonus() -> int:
+	return max(0, Dice.modifier(_player.stats_component.wisdom))
 
 
 func _roll_item_base_dice(item: Resource) -> int:

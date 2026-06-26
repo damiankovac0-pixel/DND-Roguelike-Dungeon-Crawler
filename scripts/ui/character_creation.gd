@@ -7,12 +7,12 @@ const STAT_LABELS: Array[String] = [
 	"Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"
 ]
 const STAT_DESCRIPTIONS: Array[String] = [
-	"Melee attack & damage  |  A strong arm cuts deep.",
-	"AC bonus, ranged aim  |  Quick feet, steady hand.",
-	"Health every level  |  Grit to endure the dark.",
-	"Arcane knowledge  |  The mind is a lantern.",
-	"Divine insight  |  Seeing what others miss.",
-	"Shop prices  |  Gold follows a silver tongue.",
+	"STR: melee attack and melee damage.",
+	"DEX: armor class and ranged attack accuracy.",
+	"CON: max HP now and HP gained every level.",
+	"INT: health potions restore bonus HP.",
+	"WIS: magic scrolls deal bonus damage.",
+	"CHA: shops sell cheaper and buy for more.",
 ]
 # === Private Variables ===
 var _rolls: Array[int] = []
@@ -73,7 +73,8 @@ func _build_assignment_rows() -> void:
 		selector.custom_minimum_size = Vector2(120, 0)
 		selector.item_selected.connect(_on_roll_selected.bind(index))
 		var description: Label = Label.new()
-		description.custom_minimum_size = Vector2(300, 0)
+		description.custom_minimum_size = Vector2(460, 0)
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		description.text = STAT_DESCRIPTIONS[index]
 		row.add_child(label)
 		row.add_child(selector)

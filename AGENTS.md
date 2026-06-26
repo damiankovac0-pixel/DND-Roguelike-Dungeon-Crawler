@@ -31,9 +31,9 @@
 - `mcp__godot__load_sprite(path)` - Load texture resource
 
 ## Web Deployment
-- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v8_6.html`
+- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v9.html`
 - Export command: `/usr/local/bin/godot --headless --export-release "Web"`
-- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v8_6`) inside the copied HTML.
+- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v9`) inside the copied HTML.
 - Repo: `damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler`
 - Live URL: https://damiankovac0-pixel.github.io/DND-Roguelike-Dungeon-Crawler/
 - GitHub Pages serves from `gh-pages` branch (root `/`)
@@ -43,17 +43,17 @@
 rm -rf build .godot
 mkdir -p build/web
 /usr/local/bin/godot --headless --export-release "Web"
-cp build/web/dungeon_delver_web_v8_6.html build/web/index.html
-rm -rf /tmp/dnd-v8-6-web
-cp -R build/web /tmp/dnd-v8-6-web
-git add scripts/dungeon/dungeon_generator.gd scripts/ui/message_log.gd scripts/game.gd resources/enemies/*.tres resources/items/*.tres export_presets.cfg AGENTS.md
-git commit -m "Prepare v8.6 balance pass"
+cp build/web/dungeon_delver_web_v9.html build/web/index.html
+rm -rf /tmp/dnd-v9-web
+cp -R build/web /tmp/dnd-v9-web
+git add -A
+git commit -m "Prepare v9 level and lore update"
 git push origin main
 git checkout gh-pages
 git rm -r --ignore-unmatch .
-cp -R /tmp/dnd-v8-6-web/* .
+cp -R /tmp/dnd-v9-web/* .
 git add -A
-git commit -m "Deploy v8.6 web build"
+git commit -m "Deploy v9 web build"
 git push origin gh-pages
 git checkout main
 ```

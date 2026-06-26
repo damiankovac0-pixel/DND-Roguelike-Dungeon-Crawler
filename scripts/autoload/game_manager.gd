@@ -142,11 +142,11 @@ func get_history_lines() -> Array[String]:
 			lines
 			. append(
 				(
-					"%s - Floor %d, Level %d - %s"
+					"%s - Floor %d, Level %s - %s"
 					% [
 						entry.get("name", "Unknown"),
 						entry.get("floor", 1),
-						entry.get("level", 1),
+						_format_level_bbcode(entry.get("level", 1)),
 						result,
 					]
 				)
@@ -156,6 +156,26 @@ func get_history_lines() -> Array[String]:
 
 
 # === Private Methods ===
+func _format_level_bbcode(level_value: int) -> String:
+	if level_value <= 20:
+		return "%d" % level_value
+	var colors: Array[String] = [
+		"#d899ff",
+		"#c77dff",
+		"#9d7dff",
+		"#7db8ff",
+		"#66fff0",
+		"#7bd88f",
+		"#ffb84d",
+		"#ff5fd7",
+	]
+	var prestige_level: int = level_value - 20
+	return "20[color=%s]+%d[/color]" % [
+		colors[(prestige_level - 1) % colors.size()],
+		prestige_level,
+	]
+
+
 func _record_character(victory: bool) -> void:
 	var level: int = 1
 	var character_name: String = (

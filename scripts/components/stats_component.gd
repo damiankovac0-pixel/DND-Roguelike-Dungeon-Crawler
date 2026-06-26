@@ -3,6 +3,20 @@ extends Node
 
 signal died
 
+# === Constants ===
+const MAX_ABILITY_SCORE: int = 20
+const STAT_LEVEL_CAP: int = 20
+const PRESTIGE_LEVEL_COLORS: Array[String] = [
+	"#d899ff",
+	"#c77dff",
+	"#9d7dff",
+	"#7db8ff",
+	"#66fff0",
+	"#7bd88f",
+	"#ffb84d",
+	"#ff5fd7",
+]
+
 # === Public Variables ===
 var strength: int = 10
 var dexterity: int = 10
@@ -14,6 +28,8 @@ var max_hp: int = 10
 var current_hp: int = 10
 var xp: int = 0
 var level: int = 1
+var pending_stat_increases: int = 0
+var last_levels_gained: int = 0
 var proficiency_bonus: int = 2
 var base_armor_class: int = 10
 var base_attack_bonus: int = 0
@@ -88,19 +104,82 @@ func get_damage_sides() -> int:
 
 func grant_xp(amount: int) -> bool:
 	xp += amount
-	var leveled_up: bool = false
+	last_levels_gained = 0
 	while xp >= xp_for_next_level():
 		xp -= xp_for_next_level()
 		level += 1
-		proficiency_bonus = 2 + int((level - 1) / 4)
+		last_levels_gained += 1
+		proficiency_bonus = 2 + int((min(level, STAT_LEVEL_CAP) - 1) / 4)
 		max_hp += max(1, 5 + Dice.modifier(constitution))
 		current_hp = max_hp
-		leveled_up = true
-	return leveled_up
+		if level <= STAT_LEVEL_CAP and has_available_stat_increase():
+			pending_stat_increases += 1
+	return last_levels_gained > 0
 
 
 func xp_for_next_level() -> int:
 	return level * 100
+
+func get_level_label() -> String:
+	return format_level_label(level)
+
+
+func get_level_bbcode() -> String:
+	return format_level_bbcode(level)
+
+
+func format_level_label(level_value: int) -> String:
+	if level_value <= STAT_LEVEL_CAP:
+		return "%d" % level_value
+	return "%d+%d" % [STAT_LEVEL_CAP, level_value - STAT_LEVEL_CAP]
+
+
+func format_level_bbcode(level_value: int) -> String:
+	if level_value <= STAT_LEVEL_CAP:
+		return "%d" % level_value
+	var prestige_level: int = level_value - STAT_LEVEL_CAP
+	return "%d[color=%s]+%d[/color]" % [
+		STAT_LEVEL_CAP,
+		get_prestige_level_color(prestige_level),
+		prestige_level,
+	]
+
+
+func get_prestige_level_color(prestige_level: int) -> String:
+	if prestige_level <= 0:
+		return PRESTIGE_LEVEL_COLORS[0]
+	return PRESTIGE_LEVEL_COLORS[(prestige_level - 1) % PRESTIGE_LEVEL_COLORS.size()]
+
+
+func has_available_stat_increase() -> bool:
+	return (
+		strength < MAX_ABILITY_SCORE
+		or dexterity < MAX_ABILITY_SCORE
+		or constitution < MAX_ABILITY_SCORE
+		or intelligence < MAX_ABILITY_SCORE
+		or wisdom < MAX_ABILITY_SCORE
+		or charisma < MAX_ABILITY_SCORE
+	)
+
+
+func can_increase_ability(stat_key: String) -> bool:
+	if pending_stat_increases <= 0:
+		return false
+	return _get_ability_value(stat_key) < MAX_ABILITY_SCORE
+
+
+func increase_ability(stat_key: String) -> bool:
+	if not can_increase_ability(stat_key):
+		return false
+	var old_con_modifier: int = Dice.modifier(constitution)
+	_set_ability_value(stat_key, _get_ability_value(stat_key) + 1)
+	pending_stat_increases -= 1
+	if stat_key == "con":
+		var con_hp_gain: int = max(0, Dice.modifier(constitution) - old_con_modifier) * level
+		max_hp += con_hp_gain
+		current_hp += con_hp_gain
+	return true
+
 
 
 func get_summary_lines() -> Array[String]:
@@ -161,23 +240,62 @@ func get_ability_effects() -> Array[Dictionary]:
 			"name": "INT",
 			"value": intelligence,
 			"modifier": int_mod,
-			"effects": "Unlocks arcane knowledge",
-			"flavor": "Mind over darkness.",
+			"effects": "Potions restore %+d HP (min +0)" % max(0, int_mod),
+			"flavor": "A sharper mind wastes less medicine.",
 		},
 		{
 			"key": "wis",
 			"name": "WIS",
 			"value": wisdom,
 			"modifier": wis_mod,
-			"effects": "Sharpens divine insight",
-			"flavor": "Seeing what others miss.",
+			"effects": "Magic scroll damage %+d (min +0)" % max(0, wis_mod),
+			"flavor": "Insight turns glyphs into force.",
 		},
 		{
 			"key": "cha",
 			"name": "CHA",
 			"value": charisma,
 			"modifier": cha_mod,
-			"effects": "Shop pays %d%% base price" % max(50, 100 - 5 * cha_mod),
+			"effects": (
+				"Buy %d%%, sell %d%% value"
+				% [
+					max(50, 100 - 5 * cha_mod),
+					int(clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50) * 100.0),
+				]
+			),
 			"flavor": "A silver tongue opens purses.",
 		},
 	]
+
+func _get_ability_value(stat_key: String) -> int:
+	match stat_key:
+		"str":
+			return strength
+		"dex":
+			return dexterity
+		"con":
+			return constitution
+		"int":
+			return intelligence
+		"wis":
+			return wisdom
+		"cha":
+			return charisma
+	return MAX_ABILITY_SCORE
+
+
+func _set_ability_value(stat_key: String, value: int) -> void:
+	var capped_value: int = clampi(value, 1, MAX_ABILITY_SCORE)
+	match stat_key:
+		"str":
+			strength = capped_value
+		"dex":
+			dexterity = capped_value
+		"con":
+			constitution = capped_value
+		"int":
+			intelligence = capped_value
+		"wis":
+			wisdom = capped_value
+		"cha":
+			charisma = capped_value

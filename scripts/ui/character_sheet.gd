@@ -42,7 +42,7 @@ func refresh(player: Node) -> void:
 		"Attack   %+d" % stats.get_attack_bonus(),
 		"Damage   d%d%+d" % [stats.get_damage_sides(), stats.get_damage_bonus()],
 		"HP       %d / %d" % [stats.current_hp, stats.max_hp],
-		"Level    %d" % stats.level,
+		"Level    %s" % stats.get_level_bbcode(),
 		"XP       %d / %d" % [stats.xp, stats.xp_for_next_level()],
 		"Gold     %d" % stats.gold,
 		"",

@@ -232,7 +232,7 @@ func _get_selected_item_details() -> Array[String]:
 func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			lines.append("Consumable: restores %d HP" % item.healing_amount)
+			lines.append("Consumable: restores %d HP plus INT modifier (min +0)" % item.healing_amount)
 		ItemDataScript.ItemUse.SHIELD:
 			lines.append(
 				"Consumable: %+d AC for %d turns" % [item.armor_bonus, item.effect_duration]
@@ -248,7 +248,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, damage %dd%d%+d"
+						"Targeted: range %d, magic damage %dd%d%+d plus WIS modifier"
 						% [
 							item.range,
 							item.damage_dice,
@@ -263,7 +263,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, force damage %dd%d%+d"
+						"Targeted: range %d, force damage %dd%d%+d plus WIS modifier"
 						% [
 							item.range,
 							item.damage_dice,
@@ -283,7 +283,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 		ItemDataScript.ItemUse.AREA_DAMAGE:
 			lines.append(
 				(
-					"Targeted: range %d, radius %d, area damage %dd%d%+d"
+					"Targeted: range %d, radius %d, area damage %dd%d%+d plus WIS modifier"
 					% [
 						item.range,
 						item.target_radius,

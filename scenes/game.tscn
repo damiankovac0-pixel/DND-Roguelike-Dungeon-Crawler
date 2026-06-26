@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/game.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/map_view.gd" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="9"]
 [ext_resource type="Script" path="res://scripts/ui/shop_panel.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/ui/consumable_panel.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/ui/level_up_panel.gd" id="12"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_terminal_panel"]
 bg_color = Color(0.055, 0.05, 0.075, 1)
@@ -107,10 +108,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.7, 1.0, 1)
 text = "Floor 1"
 
-[node name="StatsLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+[node name="StatsLabel" type="RichTextLabel" parent="UI/HUD/Margin/VBox"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 text = "Stats"
-theme_override_colors/font_color = Color(0.78, 0.76, 0.84, 1)
+theme_override_colors/default_color = Color(0.78, 0.76, 0.84, 1)
 
 [node name="GoldLabel" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
@@ -326,6 +331,46 @@ bbcode_enabled = true
 fit_content = false
 scroll_active = true
 
+
+[node name="LevelUpPanel" type="PanelContainer" parent="UI"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -310.0
+offset_right = 330.0
+offset_bottom = 310.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("9")
+theme_override_styles/panel = SubResource("StyleBoxFlat_terminal_overlay")
+script = ExtResource("12")
+
+[node name="Margin" type="MarginContainer" parent="UI/LevelUpPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="UI/LevelUpPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Output" type="RichTextLabel" parent="UI/LevelUpPanel/Margin/VBox"]
+custom_minimum_size = Vector2(560, 330)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
+
+[node name="Buttons" type="VBoxContainer" parent="UI/LevelUpPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
 [node name="ExtractionPanel" type="PanelContainer" parent="UI"]
 visible = false
 offset_left = 140.0
