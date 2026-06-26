@@ -1016,8 +1016,7 @@ func _handle_targeting_input(event: InputEvent) -> void:
 		_confirm_targeting()
 		get_viewport().set_input_as_handled()
 	elif direction != Vector2i.ZERO:
-		_cancel_targeting()
-		_attempt_player_move(direction)
+		_move_target_cursor(direction)
 		get_viewport().set_input_as_handled()
 
 
@@ -1032,7 +1031,7 @@ func _start_targeting(item: Resource, source: StringName) -> void:
 	inventory_panel.visible = false
 	character_sheet.visible = false
 	GameManager.add_log_message(
-		"Choose a target for %s. Enter confirms; F or movement cancels." % item.display_name,
+		"Choose a target for %s. WASD moves marker; Enter confirms; F or Esc cancels." % item.display_name,
 		&"neutral"
 	)
 	_refresh_map()
