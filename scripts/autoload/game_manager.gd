@@ -24,6 +24,7 @@ var is_player_turn: bool = true
 var has_active_run: bool = false
 var pending_character_name: String = ""
 var pending_ability_scores: Dictionary = {}
+var pending_debug_loadout: bool = false
 var character_history: Array = []
 
 
@@ -36,7 +37,18 @@ func _ready() -> void:
 # === Public Methods ===
 func prepare_character(character_name: String, ability_scores: Dictionary) -> void:
 	pending_character_name = character_name.strip_edges()
-	pending_ability_scores = ability_scores.duplicate(true)
+	pending_debug_loadout = pending_character_name.to_lower() == "debug"
+	if pending_debug_loadout:
+		pending_ability_scores = {
+			"str": 20,
+			"dex": 20,
+			"con": 20,
+			"int": 20,
+			"wis": 20,
+			"cha": 20,
+		}
+	else:
+		pending_ability_scores = ability_scores.duplicate(true)
 
 
 func reset_run() -> void:
@@ -55,6 +67,7 @@ func abandon_run() -> void:
 	clear_enemies()
 	pending_character_name = ""
 	pending_ability_scores.clear()
+	pending_debug_loadout = false
 
 
 func register_player(p: Node2D) -> void:

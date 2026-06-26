@@ -245,6 +245,32 @@ custom_minimum_size = Vector2(44, 36)
 layout_mode = 2
 text = "X"
 
+[node name="ModeTabs" type="HBoxContainer" parent="UI/ShopPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BuyTabButton" type="Button" parent="UI/ShopPanel/Margin/VBox/ModeTabs"]
+custom_minimum_size = Vector2(130, 34)
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "BUY"
+
+[node name="SellTabButton" type="Button" parent="UI/ShopPanel/Margin/VBox/ModeTabs"]
+custom_minimum_size = Vector2(130, 34)
+layout_mode = 2
+toggle_mode = true
+text = "SELL"
+
+[node name="Spacer" type="Control" parent="UI/ShopPanel/Margin/VBox/ModeTabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RerollButton" type="Button" parent="UI/ShopPanel/Margin/VBox/ModeTabs"]
+custom_minimum_size = Vector2(160, 34)
+layout_mode = 2
+text = "Reroll"
+
 [node name="ItemScroll" type="ScrollContainer" parent="UI/ShopPanel/Margin/VBox"]
 custom_minimum_size = Vector2(700, 224)
 layout_mode = 2

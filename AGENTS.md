@@ -31,9 +31,9 @@
 - `mcp__godot__load_sprite(path)` - Load texture resource
 
 ## Web Deployment
-- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v7_1.html`
+- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v7_5.html`
 - Export command: `/usr/local/bin/godot --headless --export-release "Web"`
-- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v7_1`) inside the copied HTML.
+- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v7_5`) inside the copied HTML.
 - Repo: `damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler`
 - Live URL: https://damiankovac0-pixel.github.io/DND-Roguelike-Dungeon-Crawler/
 - GitHub Pages serves from `gh-pages` branch (root `/`)
@@ -43,17 +43,17 @@
 rm -rf build .godot
 mkdir -p build/web
 /usr/local/bin/godot --headless --export-release "Web"
-cp build/web/dungeon_delver_web_v7_1.html build/web/index.html
-rm -rf /tmp/dnd-v7-1-web
-cp -R build/web /tmp/dnd-v7-1-web
-git add scripts/game.gd scripts/systems/trap_system.gd scripts/ui/shop_panel.gd scenes/game.tscn export_presets.cfg AGENTS.md
-git commit -m "Fix v7.1 targeting traps and shop layout"
+cp build/web/dungeon_delver_web_v7_5.html build/web/index.html
+rm -rf /tmp/dnd-v7-5-web
+cp -R build/web /tmp/dnd-v7-5-web
+git add scripts/autoload/game_manager.gd scripts/ui/character_creation.gd scripts/game.gd scripts/ui/shop_panel.gd scripts/ui/library_menu.gd scenes/character_creation.tscn scenes/game.tscn export_presets.cfg AGENTS.md
+git commit -m "Add v7.5 debug name and shop polish"
 git push origin main
 git checkout gh-pages
 git rm -r --ignore-unmatch .
-cp -R /tmp/dnd-v7-1-web/* .
+cp -R /tmp/dnd-v7-5-web/* .
 git add -A
-git commit -m "Deploy v7.1 web build"
+git commit -m "Deploy v7.5 web build"
 git push origin gh-pages
 git checkout main
 ```

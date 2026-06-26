@@ -7,6 +7,8 @@ const CARDINAL_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vecto
 const STARTER_WEAPON_PATH: String = "res://resources/items/dagger.tres"
 const SHOP_SPAWN_CHANCE: float = 0.75
 const SHOP_STOCK_SIZE: int = 6
+const SHOP_REROLL_BASE_COST: int = 35
+const SHOP_REROLL_FLOOR_COST: int = 10
 const SHOPKEEPER_NAME: String = "Shopkeeper"
 const SHOPKEEPER_GLYPH: String = "S"
 const SHOPKEEPER_COLOR: Color = Color(1.0, 0.82, 0.32)
@@ -61,6 +63,7 @@ var _shopkeeper: Node2D
 var _enemy_resources: Array = []
 var _item_resources: Array = []
 var _shop_stock: Array = []
+var _shop_reroll_count: int = 0
 var _targeting_active: bool = false
 var _target_cursor: Vector2i = Vector2i.ZERO
 var _targeting_item: Resource
@@ -114,6 +117,7 @@ func _ready() -> void:
 	pause_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	shop_panel.connect("purchase_requested", _on_shop_panel_purchase_requested)
 	shop_panel.connect("sell_requested", _on_shop_panel_sell_requested)
+	shop_panel.connect("reroll_requested", _on_shop_panel_reroll_requested)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
 
@@ -358,6 +362,8 @@ func _start_or_resume_player() -> void:
 	if not GameManager.pending_character_name.is_empty():
 		_player.display_name = GameManager.pending_character_name
 	_grant_starter_weapon()
+	if GameManager.pending_debug_loadout:
+		_grant_debug_loadout()
 	GameManager.register_player(_player)
 	hud.bind_player(_player)
 
@@ -372,6 +378,26 @@ func _grant_starter_weapon() -> void:
 	_player.inventory_component.equipped_melee_weapon = starter_weapon
 	GameManager.add_log_message("You grip a reliable dagger.", &"equipment")
 
+func _grant_debug_loadout() -> void:
+	for item_template: Resource in _item_resources:
+		var item: Resource = item_template.duplicate(true)
+		_player.inventory_component.add_item(item)
+		if item.kind == ItemDataScript.ItemKind.WEAPON:
+			if item.is_ranged_weapon and _player.inventory_component.equipped_ranged_weapon == null:
+				_player.inventory_component.equipped_ranged_weapon = item
+			elif not item.is_ranged_weapon and _player.inventory_component.equipped_melee_weapon == null:
+				_player.inventory_component.equipped_melee_weapon = item
+		elif item.kind == ItemDataScript.ItemKind.ARMOR and _player.inventory_component.equipped_armor == null:
+			_player.inventory_component.equipped_armor = item
+		elif item.kind == ItemDataScript.ItemKind.ACCESSORY:
+			if _player.inventory_component.equipped_accessory_1 == null:
+				_player.inventory_component.equipped_accessory_1 = item
+			elif _player.inventory_component.equipped_accessory_2 == null:
+				_player.inventory_component.equipped_accessory_2 = item
+	_player.inventory_component.equipped_weapon = _player.inventory_component.equipped_melee_weapon
+	_player.stats_component.gold = 9999
+	GameManager.add_log_message("Debug kit granted: 20 stats, full item set, and 9999 gold.", &"loot")
+
 
 func _generate_floor(floor_number: int) -> void:
 	for enemy in _enemies:
@@ -385,6 +411,7 @@ func _generate_floor(floor_number: int) -> void:
 	_item_positions.clear()
 	_container_positions.clear()
 	_shop_stock.clear()
+	_shop_reroll_count = 0
 	_explored_cells.clear()
 	_visible_cells.clear()
 	_clear_targeting()
@@ -820,7 +847,7 @@ func _is_shopkeeper_at(cell: Vector2i) -> bool:
 func _open_shop() -> void:
 	inventory_panel.visible = false
 	character_sheet.visible = false
-	shop_panel.refresh(_player, _shop_stock)
+	shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
 	shop_panel.visible = true
 	GameManager.add_log_message("You approach the shopkeeper.", &"neutral")
 
@@ -1259,7 +1286,7 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 		GameManager.add_log_message(
 			"You need %d gold for %s." % [price, item.display_name], &"warning"
 		)
-		shop_panel.refresh(_player, _shop_stock)
+		shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
 		return
 	_player.stats_component.gold -= price
 	_player.inventory_component.add_item(item.duplicate(true))
@@ -1274,7 +1301,7 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 	hud.bind_player(_player)
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
-	shop_panel.refresh(_player, _shop_stock)
+	shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
 
 func _on_shop_panel_sell_requested(inventory_index: int) -> void:
 	var inventory: Node = _player.inventory_component
@@ -1295,7 +1322,30 @@ func _on_shop_panel_sell_requested(inventory_index: int) -> void:
 	hud.bind_player(_player)
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
-	shop_panel.refresh(_player, _shop_stock)
+	shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
+
+func _on_shop_panel_reroll_requested() -> void:
+	var cost: int = _get_shop_reroll_cost()
+	if _player.stats_component.gold < cost:
+		GameManager.add_log_message("You need %d gold to reroll the shop." % cost, &"warning")
+		shop_panel.refresh(_player, _shop_stock, cost)
+		return
+	_player.stats_component.gold -= cost
+	_shop_reroll_count += 1
+	_shop_stock = _generate_shop_stock(GameManager.current_floor)
+	GameManager.add_log_message(
+		"Shop stock rerolled for %d gold. Next reroll costs %d."
+		% [cost, _get_shop_reroll_cost()],
+		&"gold"
+	)
+	hud.bind_player(_player)
+	shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
+
+
+func _get_shop_reroll_cost() -> int:
+	return (SHOP_REROLL_BASE_COST + GameManager.current_floor * SHOP_REROLL_FLOOR_COST) * (
+		_shop_reroll_count + 1
+	)
 
 
 func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:

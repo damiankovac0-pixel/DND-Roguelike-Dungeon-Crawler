@@ -4,6 +4,7 @@ extends PanelContainer
 signal close_requested
 signal purchase_requested(stock_index: int)
 signal sell_requested(inventory_index: int)
+signal reroll_requested
 
 # === Constants ===
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
@@ -17,12 +18,16 @@ var _selected_index: int = 0
 var _item_buttons: Array[Button] = []
 var _item_list: VBoxContainer
 var _mode: StringName = MODE_BUY
+var _reroll_cost: int = 0
 
 # === Onready ===
 @onready var content_box: VBoxContainer = $Margin/VBox
 @onready var close_button: Button = $Margin/VBox/Header/CloseButton
 @onready var output: RichTextLabel = $Margin/VBox/Output
 @onready var item_scroll: ScrollContainer = $Margin/VBox/ItemScroll
+@onready var buy_tab_button: Button = $Margin/VBox/ModeTabs/BuyTabButton
+@onready var sell_tab_button: Button = $Margin/VBox/ModeTabs/SellTabButton
+@onready var reroll_button: Button = $Margin/VBox/ModeTabs/RerollButton
 
 
 # === Lifecycle Methods ===
@@ -33,6 +38,9 @@ func _ready() -> void:
 	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_ensure_item_list()
 	close_button.pressed.connect(_request_close)
+	buy_tab_button.pressed.connect(_set_mode.bind(MODE_BUY))
+	sell_tab_button.pressed.connect(_set_mode.bind(MODE_SELL))
+	reroll_button.pressed.connect(_request_reroll)
 
 
 func _input(event: InputEvent) -> void:
@@ -60,12 +68,14 @@ func _input(event: InputEvent) -> void:
 
 
 # === Public Methods ===
-func refresh(player: Node, stock: Array) -> void:
+func refresh(player: Node, stock: Array, reroll_cost: int = 0) -> void:
 	_player = player
 	_stock = stock
+	_reroll_cost = reroll_cost
 	_clamp_selection()
 	var gold: int = _get_player_gold()
 	_ensure_item_list()
+	_refresh_controls(gold)
 	_rebuild_item_buttons(gold)
 	_refresh_details(gold)
 
@@ -113,10 +123,32 @@ func sell_selected() -> void:
 
 # === Private Methods ===
 func _toggle_mode() -> void:
-	_mode = MODE_SELL if _mode == MODE_BUY else MODE_BUY
+	_set_mode(MODE_SELL if _mode == MODE_BUY else MODE_BUY)
+
+
+func _set_mode(mode: StringName) -> void:
+	if _mode == mode:
+		_refresh_controls(_get_player_gold())
+		return
+	_mode = mode
 	_selected_index = 0
-	refresh(_player, _stock)
+	refresh(_player, _stock, _reroll_cost)
 	_grab_selected_button_focus()
+
+
+func _request_reroll() -> void:
+	reroll_requested.emit()
+
+func _refresh_controls(gold: int) -> void:
+	var is_buying: bool = _mode == MODE_BUY
+	buy_tab_button.button_pressed = is_buying
+	sell_tab_button.button_pressed = not is_buying
+	buy_tab_button.text = "BUY"
+	sell_tab_button.text = "SELL"
+	buy_tab_button.add_theme_color_override("font_color", Color.html("#f1c75b") if is_buying else Color.html("#777788"))
+	sell_tab_button.add_theme_color_override("font_color", Color.html("#f1c75b") if not is_buying else Color.html("#777788"))
+	reroll_button.text = "Reroll %dg" % _reroll_cost
+	reroll_button.disabled = gold < _reroll_cost
 
 
 func _clamp_selection() -> void:

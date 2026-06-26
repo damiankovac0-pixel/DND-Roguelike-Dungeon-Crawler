@@ -142,19 +142,21 @@ func _enemy_entry(enemy: Resource) -> Array[String]:
 func _item_entry(item: Resource) -> Array[String]:
 	var lines: Array[String] = [
 		(
-			"[color=%s]%s[/color]  %s %s  %s  Price %dg  Spawn Weight %d"
+			"[font_size=18][color=%s]%s[/color][/font_size]  [color=#777788]%s %s[/color]"
 			% [
 				item.get_rarity_color(),
 				item.display_name,
 				item.get_rarity_name(),
 				item.get_kind_name(),
-				_floor_range(item.min_floor, item.max_floor),
-				item.get_price(),
-				item.spawn_weight
 			]
 		),
-		"  Text: %s" % item.description,
-		"  Stats: %s" % _item_stats_line(item),
+		(
+			"  [color=#8fb3ff]Floor[/color] %s   [color=#8fb3ff]Price[/color] %dg   [color=#8fb3ff]Weight[/color] %d"
+			% [_floor_range(item.min_floor, item.max_floor), item.get_price(), item.spawn_weight]
+		),
+		"  [color=#9999aa]Lore[/color]  %s" % item.description,
+		"  [color=#9999aa]Stats[/color] %s" % _item_stats_line(item),
+		"",
 	]
 	return lines
 
