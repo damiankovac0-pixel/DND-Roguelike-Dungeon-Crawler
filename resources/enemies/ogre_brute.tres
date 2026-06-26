@@ -13,6 +13,6 @@ attack_bonus = 7
 damage_sides = 12
 damage_bonus = 5
 xp_reward = 190
-min_floor = 7
+min_floor = 8
 max_floor = 0
 spawn_weight = 5

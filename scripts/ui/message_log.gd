@@ -2,7 +2,7 @@ class_name MessageLog
 extends PanelContainer
 
 # === Constants ===
-const MAX_MESSAGES: int = 6
+const MAX_MESSAGES: int = 10
 const TYPE_COLORS: Dictionary = {
 	&"neutral": "#d7d8dc",
 	&"combat_hit": "#f07d67",

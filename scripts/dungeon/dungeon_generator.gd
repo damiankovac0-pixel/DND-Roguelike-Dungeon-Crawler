@@ -8,10 +8,10 @@ const MIN_ROOM_SIZE: int = 5
 const MAX_DEPTH: int = 4
 const TRAP_CHANCE: float = 0.3
 const SECRET_ROOM_MIN_FLOOR: int = 2
-const SECRET_ROOM_CHANCE: float = 0.28
-const SECRET_ROOM_ATTEMPTS: int = 80
+const SECRET_ROOM_CHANCE: float = 0.50
+const SECRET_ROOM_GUARANTEE_INTERVAL: int = 4
 const SECRET_ROOM_MIN_SIZE: int = 3
-const SECRET_ROOM_MAX_SIZE: int = 5
+const SECRET_ROOM_MAX_SIZE: int = 4
 const SECRET_WALL_HP: int = 2
 const SECRET_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 
@@ -50,7 +50,9 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 			)
 
 	if rooms.size() > 1:
-		var extra_enemy_attempts: int = floor_number + 2 + int(floor_number / 3)
+		var extra_enemy_attempts: int = 2 + int(floor_number * 0.45)
+		if floor_number >= 10:
+			extra_enemy_attempts = 6 + int((floor_number - 10) * 0.35)
 		for attempt: int in range(extra_enemy_attempts):
 			var room: Rect2i = rooms[randi_range(1, rooms.size() - 1)]
 			_add_spawn_if_free(enemy_spawns, occupied_spawns, _random_cell_in_room(room))
@@ -75,7 +77,9 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 				trap_spawns.append(trap_cell)
 	trap_spawns.shuffle()
 	var trap_limit: int = min(trap_spawns.size(), 2 + floor_number)
-	var enemy_limit: int = min(enemy_spawns.size(), 6 + floor_number * 2)
+	var enemy_limit: int = min(enemy_spawns.size(), 5 + int(floor_number * 0.7))
+	if floor_number >= 10:
+		enemy_limit = min(enemy_spawns.size(), 12 + int((floor_number - 10) * 0.5))
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
 	var secret_data: Dictionary = _generate_secret_room(map_data, rooms, occupied_spawns, floor_number)
 	return {
@@ -100,13 +104,19 @@ func _generate_secret_room(
 		"secret_containers": [],
 		"secret_floor_cells": [],
 	}
-	if floor_number < SECRET_ROOM_MIN_FLOOR or rooms.is_empty() or randf() > SECRET_ROOM_CHANCE:
+	if floor_number < SECRET_ROOM_MIN_FLOOR or rooms.is_empty():
 		return result
-	for _attempt: int in range(SECRET_ROOM_ATTEMPTS):
-		var source_room: Rect2i = rooms[randi_range(0, rooms.size() - 1)]
-		var direction: Vector2i = SECRET_DIRECTIONS[randi_range(0, SECRET_DIRECTIONS.size() - 1)]
-		var entrance_floor: Vector2i = _random_room_edge_cell(source_room, direction)
-		var wall_cell: Vector2i = entrance_floor + direction
+	var should_generate: bool = (
+		randf() <= SECRET_ROOM_CHANCE or floor_number % SECRET_ROOM_GUARANTEE_INTERVAL == 0
+	)
+	if not should_generate:
+		return result
+	var candidates: Array[Dictionary] = _get_secret_room_candidates(rooms)
+	candidates.shuffle()
+	for candidate: Dictionary in candidates:
+		var direction: Vector2i = candidate["direction"]
+		var entrance_floor: Vector2i = candidate["entrance_floor"]
+		var wall_cell: Vector2i = candidate["wall_cell"]
 		var secret_room: Rect2i = _secret_room_rect_from_wall(wall_cell, direction)
 		if not _can_place_secret_room(map_data, secret_room, wall_cell, entrance_floor):
 			continue
@@ -118,14 +128,30 @@ func _generate_secret_room(
 	return result
 
 
-func _random_room_edge_cell(room: Rect2i, direction: Vector2i) -> Vector2i:
-	if direction == Vector2i.RIGHT:
-		return Vector2i(room.end.x - 1, randi_range(room.position.y + 1, room.end.y - 2))
-	if direction == Vector2i.LEFT:
-		return Vector2i(room.position.x, randi_range(room.position.y + 1, room.end.y - 2))
-	if direction == Vector2i.DOWN:
-		return Vector2i(randi_range(room.position.x + 1, room.end.x - 2), room.end.y - 1)
-	return Vector2i(randi_range(room.position.x + 1, room.end.x - 2), room.position.y)
+func _get_secret_room_candidates(rooms: Array[Rect2i]) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
+	for room: Rect2i in rooms:
+		for direction: Vector2i in SECRET_DIRECTIONS:
+			for entrance_floor: Vector2i in _room_edge_cells(room, direction):
+				candidates.append({
+					"direction": direction,
+					"entrance_floor": entrance_floor,
+					"wall_cell": entrance_floor + direction,
+				})
+	return candidates
+
+
+func _room_edge_cells(room: Rect2i, direction: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if direction == Vector2i.RIGHT or direction == Vector2i.LEFT:
+		var x: int = room.end.x - 1 if direction == Vector2i.RIGHT else room.position.x
+		for y: int in range(room.position.y + 1, room.end.y - 1):
+			cells.append(Vector2i(x, y))
+		return cells
+	var y: int = room.end.y - 1 if direction == Vector2i.DOWN else room.position.y
+	for x: int in range(room.position.x + 1, room.end.x - 1):
+		cells.append(Vector2i(x, y))
+	return cells
 
 
 func _secret_room_rect_from_wall(wall_cell: Vector2i, direction: Vector2i) -> Rect2i:

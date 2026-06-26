@@ -3,6 +3,7 @@ extends Node2D
 
 # === Constants ===
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
+const SECRET_WALL_GLYPH: String = "?"
 
 # === Exports ===
 @export var font: Font
@@ -30,7 +31,7 @@ var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
 var _secret_walls: Dictionary = {}
 var _revealed_secret_walls: Dictionary = {}
-var _secret_wall_hint_color: Color = Color(0.26, 0.26, 0.27)
+var _secret_wall_hint_color: Color = Color(0.72, 0.58, 1.0)
 
 
 # === Public Methods ===
@@ -147,14 +148,17 @@ func _draw() -> void:
 				continue
 			var tile_type: int = _map_data[y][x]
 			var color: Color = DungeonDataScript.TILE_COLORS[tile_type]
-			if _revealed_secret_walls.has(cell) and _secret_walls.has(cell):
+			var tile_char: String = DungeonDataScript.TILE_CHARS[tile_type]
+			var is_revealed_secret_wall: bool = _revealed_secret_walls.has(cell) and _secret_walls.has(cell)
+			if is_revealed_secret_wall:
 				color = _secret_wall_hint_color
+				tile_char = SECRET_WALL_GLYPH
 			if not _visible_cells.has(cell):
-				color = color.darkened(0.55)
+				color = color.darkened(0.20 if is_revealed_secret_wall else 0.55)
 			draw_string(
 				draw_font,
 				point,
-				DungeonDataScript.TILE_CHARS[tile_type],
+				tile_char,
 				HORIZONTAL_ALIGNMENT_LEFT,
 				-1,
 				font_size,

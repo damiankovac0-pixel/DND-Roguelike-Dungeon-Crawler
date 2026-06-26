@@ -5,10 +5,10 @@ const PLAYER_SCENE_NAME: String = "Player"
 const EXTRACTION_INTERVAL: int = 3
 const CARDINAL_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 const STARTER_WEAPON_PATH: String = "res://resources/items/dagger.tres"
-const SHOP_SPAWN_CHANCE: float = 0.75
+const SHOP_SPAWN_CHANCE: float = 0.90
 const SHOP_STOCK_SIZE: int = 6
-const SHOP_REROLL_BASE_COST: int = 35
-const SHOP_REROLL_FLOOR_COST: int = 10
+const SHOP_REROLL_BASE_COST: int = 20
+const SHOP_REROLL_FLOOR_COST: int = 5
 const SHOPKEEPER_NAME: String = "Shopkeeper"
 const SHOPKEEPER_GLYPH: String = "S"
 const SHOPKEEPER_COLOR: Color = Color(1.0, 0.82, 0.32)
@@ -50,8 +50,8 @@ const CLUTTER_NAMES: Array[String] = ["Cracked Vase", "Old Box"]
 const CLUTTER_GLYPHS: Array[String] = ["v", "b"]
 const CLUTTER_COLORS: Array[Color] = [Color(0.55, 0.45, 0.35), Color(0.45, 0.34, 0.24)]
 const SECRET_WALL_HP: int = 2
-const SECRET_WALL_HINT_COLOR: Color = Color(0.26, 0.26, 0.27)
-const SECRET_WALL_LISTEN_RADIUS: int = 6
+const SECRET_WALL_HINT_COLOR: Color = Color(0.72, 0.58, 1.0)
+const SECRET_WALL_LISTEN_RADIUS: int = 8
 const VASE_XP_ORB_CHANCE: float = 0.35
 const VASE_XP_MIN_PERCENT: int = 5
 const VASE_XP_MAX_PERCENT: int = 10
@@ -85,6 +85,9 @@ var _haste_enemy_phases: int = 0
 var _regen_turns: int = 0
 var _regen_heal_amount: int = 0
 var _dash_charge: int = 0
+var _poison_turns: int = 0
+var _poison_damage_sides: int = 4
+var _enemy_action_counts: Dictionary = {}
 var _sleeping_enemies: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
@@ -103,8 +106,10 @@ var _trap_resources: Array = []
 @onready var leave_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/LeaveButton
 @onready var descend_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/DescendButton
 @onready var pause_panel: PanelContainer = $UI/PausePanel
+@onready var pause_hint_label: Label = $UI/PausePanel/Margin/VBox/HintLabel
 @onready var pause_resume_button: Button = $UI/PausePanel/Margin/VBox/ResumeButton
 @onready var pause_main_menu_button: Button = $UI/PausePanel/Margin/VBox/MainMenuButton
+@onready var debug_descend_button: Button = $UI/PausePanel/Margin/VBox/DebugDescendButton
 @onready var turn_manager: Node = $TurnManager
 
 
@@ -133,6 +138,7 @@ func _ready() -> void:
 	shop_panel.connect("sell_requested", _on_shop_panel_sell_requested)
 	shop_panel.connect("reroll_requested", _on_shop_panel_reroll_requested)
 	consumable_panel.connect("close_requested", _on_consumable_panel_close_requested)
+	debug_descend_button.pressed.connect(_debug_descend_deeper)
 	consumable_panel.connect("use_requested", _on_consumable_panel_use_requested)
 	consumable_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	_start_or_resume_player()
@@ -140,6 +146,10 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _is_debug_descend_key(event):
+		_debug_descend_deeper()
+		get_viewport().set_input_as_handled()
+		return
 	if not _is_escape_key(event):
 		return
 	if _targeting_active:
@@ -229,10 +239,26 @@ func _is_escape_key(event: InputEvent) -> bool:
 		and (key_event.keycode == KEY_ESCAPE or key_event.physical_keycode == KEY_ESCAPE)
 	)
 
+func _is_debug_descend_key(event: InputEvent) -> bool:
+	if not GameManager.pending_debug_loadout:
+		return false
+	var key_event: InputEventKey = event as InputEventKey
+	return (
+		key_event != null
+		and key_event.pressed
+		and not key_event.echo
+		and (key_event.keycode == KEY_PAGEDOWN or (key_event.keycode == KEY_PERIOD and key_event.shift_pressed))
+	)
+
 
 func _open_pause_menu() -> void:
 	_clear_targeting()
 	pause_panel.visible = true
+	debug_descend_button.visible = GameManager.pending_debug_loadout
+	if GameManager.pending_debug_loadout:
+		pause_hint_label.text = "The dungeon waits. Debug: Shift+> or PageDown descends."
+	else:
+		pause_hint_label.text = "The dungeon waits."
 	pause_resume_button.grab_focus()
 
 
@@ -242,6 +268,14 @@ func _close_pause_menu() -> void:
 
 func _on_pause_resume_pressed() -> void:
 	_close_pause_menu()
+
+func _debug_descend_deeper() -> void:
+	if not GameManager.pending_debug_loadout or _player == null:
+		return
+	_clear_targeting()
+	_close_pause_menu()
+	_close_open_overlay()
+	_generate_floor(GameManager.current_floor + 1)
 
 
 func _on_pause_main_menu_pressed() -> void:
@@ -484,6 +518,9 @@ func _generate_floor(floor_number: int) -> void:
 	_haste_enemy_phases = 0
 	_regen_turns = 0
 	_regen_heal_amount = 0
+	_poison_turns = 0
+	_poison_damage_sides = 4
+	_enemy_action_counts.clear()
 	_sleeping_enemies.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
@@ -517,17 +554,25 @@ func _generate_floor(floor_number: int) -> void:
 
 func _spawn_enemies(spawn_positions: Array, floor_number: int) -> void:
 	for spawn_position: Vector2i in spawn_positions:
-		var enemy: Node2D = EnemyScript.new()
-		var stats_component: Node = StatsComponentScript.new()
-		stats_component.name = "StatsComponent"
-		enemy.add_child(stats_component)
-		add_child(enemy)
 		var enemy_data: Resource = _choose_enemy_data_for_floor(floor_number)
-		enemy.initialize_from_data(enemy_data, spawn_position)
+		_spawn_enemy_instance(enemy_data, spawn_position, floor_number, true)
+
+
+func _spawn_enemy_instance(
+	enemy_data: Resource, spawn_position: Vector2i, floor_number: int, apply_floor_scaling: bool
+) -> Node2D:
+	var enemy: Node2D = EnemyScript.new()
+	var stats_component: Node = StatsComponentScript.new()
+	stats_component.name = "StatsComponent"
+	enemy.add_child(stats_component)
+	add_child(enemy)
+	enemy.initialize_from_data(enemy_data, spawn_position)
+	if apply_floor_scaling:
 		_scale_enemy_for_floor(enemy, floor_number)
-		enemy.died.connect(_on_enemy_died)
-		_enemies.append(enemy)
-		GameManager.register_enemy(enemy)
+	enemy.died.connect(_on_enemy_died)
+	_enemies.append(enemy)
+	GameManager.register_enemy(enemy)
+	return enemy
 
 
 func _spawn_items(spawn_positions: Array) -> void:
@@ -537,7 +582,9 @@ func _spawn_items(spawn_positions: Array) -> void:
 
 
 func _spawn_shopkeeper(generation_result: Dictionary, floor_number: int) -> void:
-	if floor_number < 2 or randf() >= SHOP_SPAWN_CHANCE:
+	if floor_number < 2:
+		return
+	if floor_number > 2 and randf() >= SHOP_SPAWN_CHANCE:
 		return
 	var rooms: Array = generation_result.get("rooms", [])
 	if rooms.is_empty():
@@ -759,12 +806,14 @@ func _advance_dash_charge() -> void:
 
 
 func _resolve_attack(attacker: Node, defender: Node) -> void:
-	var outcome: Dictionary = CombatSystemScript.attack(attacker, defender)
+	var damage_percent: int = _get_damage_percent(defender, &"melee")
+	var outcome: Dictionary = CombatSystemScript.attack(attacker, defender, damage_percent)
 	if outcome["hit"]:
-		var critical_text: String = " Critical hit!" if outcome["critical"] else ""
+		_log_damage_affinity(defender, &"melee", outcome["raw_damage"], outcome["damage"])
+		var critical_text: String = " (critical)" if outcome["critical"] else ""
 		GameManager.add_log_message(
 			(
-				"%s hits %s for %d damage.%s"
+				"%s hits %s for %d melee damage%s."
 				% [attacker.display_name, defender.display_name, outcome["damage"], critical_text]
 			),
 			&"combat_hit"
@@ -774,7 +823,61 @@ func _resolve_attack(attacker: Node, defender: Node) -> void:
 			"%s misses %s." % [attacker.display_name, defender.display_name], &"combat_miss"
 		)
 
+	_try_apply_attack_poison(attacker, defender, outcome)
 	_handle_defender_after_damage(defender)
+
+func _get_damage_percent(defender: Node, damage_type: StringName) -> int:
+	var enemy_actor: Enemy = defender as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return 100
+	match damage_type:
+		&"melee":
+			return enemy_actor.enemy_data.melee_damage_percent
+		&"ranged":
+			return enemy_actor.enemy_data.ranged_damage_percent
+		&"magic":
+			return enemy_actor.enemy_data.magic_damage_percent
+	return 100
+
+
+func _apply_typed_damage(defender: Node, raw_damage: int, damage_type: StringName) -> int:
+	var damage_percent: int = _get_damage_percent(defender, damage_type)
+	var damage: int = _scale_damage(raw_damage, damage_percent)
+	_log_damage_affinity(defender, damage_type, raw_damage, damage)
+	if damage > 0:
+		defender.stats_component.apply_damage(damage)
+	return damage
+
+
+func _scale_damage(raw_damage: int, damage_percent: int) -> int:
+	if damage_percent <= 0:
+		return 0
+	if damage_percent == 100:
+		return raw_damage
+	return max(1, int(round(raw_damage * damage_percent / 100.0)))
+
+
+func _log_damage_affinity(defender: Node, damage_type: StringName, raw_damage: int, damage: int) -> void:
+	if raw_damage <= 0 or defender == null:
+		return
+	if damage <= 0:
+		GameManager.add_log_message("%s is immune to %s damage (%d -> 0)." % [defender.display_name, damage_type, raw_damage], &"warning")
+	elif damage < raw_damage:
+		GameManager.add_log_message("%s resists %s damage (%d -> %d)." % [defender.display_name, damage_type, raw_damage, damage], &"warning")
+	elif damage > raw_damage:
+		GameManager.add_log_message("%s is vulnerable to %s damage (%d -> %d)." % [defender.display_name, damage_type, raw_damage, damage], &"magic")
+
+
+func _try_apply_attack_poison(attacker: Node, defender: Node, outcome: Dictionary) -> void:
+	var enemy_actor: Enemy = attacker as Enemy
+	if not outcome.get("hit", false) or defender != _player or enemy_actor == null:
+		return
+	var poison_chance: int = enemy_actor.enemy_data.poison_chance_percent
+	if poison_chance <= 0 or randi_range(1, 100) > poison_chance:
+		return
+	_poison_turns = max(_poison_turns, enemy_actor.enemy_data.poison_turns)
+	_poison_damage_sides = max(2, enemy_actor.enemy_data.poison_damage_sides)
+	GameManager.add_log_message("%s poisons you for %d turns." % [attacker.display_name, _poison_turns], &"warning")
 
 
 func _handle_defender_after_damage(defender: Node) -> void:
@@ -837,7 +940,7 @@ func _open_clutter_container(container_data: Dictionary) -> void:
 	if display_name.contains("Vase") and randf() < VASE_XP_ORB_CHANCE:
 		_grant_xp_orb(display_name)
 		return
-	if randf() < 0.30:
+	if randf() < 0.40:
 		var potion: Resource = _find_item_by_display_name("Health Potion")
 		if potion != null:
 			_player.inventory_component.add_item(potion.duplicate(true))
@@ -880,7 +983,7 @@ func _open_chest_container(container_data: Dictionary) -> void:
 			continue
 		var reward_item: Resource = reward.duplicate(true)
 		_player.inventory_component.add_item(reward_item)
-		GameManager.add_log_message("Inside: %s." % reward_item.display_name, &"loot")
+		GameManager.add_log_message("Inside the %s: %s." % [display_name, reward_item.display_name], &"loot")
 
 
 func _choose_chest_reward_item(chest_rarity: int, floor_number: int) -> Resource:
@@ -929,10 +1032,25 @@ func _apply_regen_tick() -> void:
 		GameManager.emit_player_damaged()
 		GameManager.add_log_message("Regeneration restores %d HP." % healed, &"heal")
 
+func _apply_poison_tick() -> bool:
+	if _poison_turns <= 0:
+		return true
+	_poison_turns -= 1
+	var damage: int = Dice.roll(_poison_damage_sides)
+	_player.stats_component.apply_damage(damage)
+	GameManager.emit_player_damaged()
+	GameManager.add_log_message("Poison deals %d damage (%d turn%s left)." % [damage, _poison_turns, "" if _poison_turns == 1 else "s"], &"warning")
+	if not _player.is_alive():
+		_game_over(false)
+		return false
+	return true
+
 
 func _end_player_turn() -> void:
 	if _shield_turns > 0:
 		_shield_turns -= 1
+	if not _apply_poison_tick():
+		return
 	_apply_regen_tick()
 	_advance_dash_charge()
 	_refresh_temporary_stats()
@@ -957,14 +1075,18 @@ func _process_enemy_turns() -> void:
 		blocked_cells[_shopkeeper.grid_position] = true
 	blocked_cells[_player.grid_position] = true
 
-	for enemy in _enemies:
+	for enemy in _enemies.duplicate():
 		if enemy == null or not enemy.is_alive():
 			continue
 		if _is_enemy_sleeping(enemy):
 			continue
 		blocked_cells.erase(enemy.grid_position)
 		var distance_to_player: float = enemy.grid_position.distance_to(_player.grid_position)
-		if distance_to_player <= 1.1:
+		var action_count: int = _advance_enemy_action(enemy)
+		if _process_enemy_special_turn(enemy, distance_to_player, action_count, blocked_cells):
+			if not _player.is_alive():
+				return
+		elif distance_to_player <= 1.1:
 			_resolve_attack(enemy, _player)
 			if not _player.is_alive():
 				return
@@ -975,6 +1097,182 @@ func _process_enemy_turns() -> void:
 			if next_step != enemy.grid_position and next_step != _player.grid_position:
 				enemy.set_grid_position(next_step)
 		blocked_cells[enemy.grid_position] = true
+
+func _advance_enemy_action(enemy: Node) -> int:
+	var action_count: int = int(_enemy_action_counts.get(enemy, 0)) + 1
+	_enemy_action_counts[enemy] = action_count
+	return action_count
+
+
+func _process_enemy_special_turn(
+	enemy: Node, distance_to_player: float, action_count: int, blocked_cells: Dictionary
+) -> bool:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return false
+	var enemy_data: Resource = enemy_actor.enemy_data
+	if (
+		enemy_data.summon_interval > 0
+		and action_count % enemy_data.summon_interval == 0
+		and _try_enemy_summon(enemy, blocked_cells)
+	):
+		return true
+	if (
+		enemy_data.fireball_range > 0
+		and distance_to_player > 1.1
+		and distance_to_player <= enemy_data.fireball_range
+		and (action_count - 1) % max(1, enemy_data.fireball_interval) == 0
+	):
+		_resolve_enemy_fireball(enemy)
+		return true
+	if enemy_data.ranged_attack_range > 0:
+		if (
+			distance_to_player <= 1.1
+			and enemy_data.ai_preferred_range > 1
+			and _try_enemy_keep_range(enemy, blocked_cells)
+		):
+			return true
+		if distance_to_player <= enemy_data.ranged_attack_range:
+			if (action_count - 1) % max(1, enemy_data.ranged_attack_interval) == 0:
+				_resolve_enemy_ranged_attack(enemy)
+				return true
+			if (
+				enemy_data.ai_preferred_range > 0
+				and distance_to_player < enemy_data.ai_preferred_range
+				and _try_enemy_keep_range(enemy, blocked_cells)
+			):
+				return true
+			return distance_to_player > 1.1
+	return false
+
+func _try_enemy_keep_range(enemy: Node, blocked_cells: Dictionary) -> bool:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return false
+	var preferred_range: int = max(1, enemy_actor.enemy_data.ai_preferred_range)
+	var attack_range: int = max(1, enemy_actor.enemy_data.ranged_attack_range)
+	var current_distance: float = enemy.grid_position.distance_to(_player.grid_position)
+	var best_cell: Vector2i = enemy.grid_position
+	var best_distance: float = current_distance
+	var best_score: float = absf(current_distance - float(preferred_range))
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		var cell: Vector2i = enemy.grid_position + direction
+		if not _is_free_enemy_spawn_cell(cell, blocked_cells):
+			continue
+		var distance: float = cell.distance_to(_player.grid_position)
+		if distance > attack_range:
+			continue
+		var score: float = absf(distance - float(preferred_range))
+		if score < best_score or (score == best_score and distance > best_distance):
+			best_cell = cell
+			best_distance = distance
+			best_score = score
+	if best_cell == enemy.grid_position:
+		return false
+	enemy.set_grid_position(best_cell)
+	return true
+
+
+func _resolve_enemy_ranged_attack(enemy: Node) -> void:
+	var enemy_actor: Enemy = enemy as Enemy
+	var enemy_data: Resource = enemy_actor.enemy_data
+	var damage_sides: int = max(2, enemy_data.ranged_damage_sides)
+	var damage: int = max(1, Dice.roll(damage_sides) + enemy_data.ranged_damage_bonus)
+	var damage_type: StringName = enemy_data.ranged_damage_type
+	if damage_type == &"":
+		damage_type = &"piercing"
+	_player.stats_component.apply_damage(damage)
+	var action_text: String = "casts a spell at" if damage_type == &"magic" else "shoots"
+	var message_type: StringName = &"magic" if damage_type == &"magic" else &"combat_hit"
+	GameManager.add_log_message(
+		"%s %s you for %d %s damage." % [enemy.display_name, action_text, damage, damage_type],
+		message_type
+	)
+	_handle_defender_after_damage(_player)
+
+
+func _resolve_enemy_fireball(enemy: Node) -> void:
+	var enemy_actor: Enemy = enemy as Enemy
+	var enemy_data: Resource = enemy_actor.enemy_data
+	var raw_damage: int = enemy_data.fireball_damage_bonus
+	for _die_index: int in range(max(1, enemy_data.fireball_damage_dice)):
+		raw_damage += Dice.roll(max(2, enemy_data.fireball_damage_sides))
+	var damage: int = max(1, raw_damage)
+	_player.stats_component.apply_damage(damage)
+	GameManager.add_log_message(
+		"%s hurls a fireball at you for %d fire damage." % [enemy.display_name, damage],
+		&"magic"
+	)
+	_handle_defender_after_damage(_player)
+
+
+func _try_enemy_summon(enemy: Node, blocked_cells: Dictionary) -> bool:
+	var enemy_actor: Enemy = enemy as Enemy
+	var enemy_data: Resource = enemy_actor.enemy_data
+	var active_minions: int = _count_summoned_minions(enemy)
+	if active_minions >= enemy_data.summon_max_active:
+		return false
+	var summon_data: Resource = load(enemy_data.summon_enemy_path)
+	if summon_data == null:
+		return false
+	var summon_count: int = min(enemy_data.summon_count, enemy_data.summon_max_active - active_minions)
+	var spawned: int = 0
+	for _index: int in range(summon_count):
+		var summon_cell: Vector2i = _find_summon_cell(enemy.grid_position, blocked_cells)
+		if summon_cell == Vector2i.ZERO:
+			break
+		var minion: Node2D = _spawn_enemy_instance(summon_data, summon_cell, GameManager.current_floor, false)
+		minion.set_meta("summoned_minion", true)
+		minion.set_meta("summoner_id", enemy.get_instance_id())
+		minion.stats_component.max_hp = max(4, int(ceil(minion.stats_component.max_hp * 0.6)))
+		minion.stats_component.current_hp = minion.stats_component.max_hp
+		minion.stats_component.base_attack_bonus = max(1, minion.stats_component.base_attack_bonus - 1)
+		minion.stats_component.base_damage_bonus = max(0, minion.stats_component.base_damage_bonus - 1)
+		minion.stats_component.xp_reward = 0
+		blocked_cells[summon_cell] = true
+		spawned += 1
+	if spawned > 0:
+		GameManager.add_log_message("%s raises %d brittle skeleton%s." % [enemy.display_name, spawned, "" if spawned == 1 else "s"], &"magic")
+		return true
+	return false
+
+
+func _count_summoned_minions(enemy: Node) -> int:
+	var count: int = 0
+	var summoner_id: int = enemy.get_instance_id()
+	for candidate in _enemies:
+		if (
+			candidate != null
+			and candidate.is_alive()
+			and candidate.get_meta("summoner_id", 0) == summoner_id
+		):
+			count += 1
+	return count
+
+
+func _find_summon_cell(origin: Vector2i, blocked_cells: Dictionary) -> Vector2i:
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		var cell: Vector2i = origin + direction
+		if _is_free_enemy_spawn_cell(cell, blocked_cells):
+			return cell
+	for y_offset: int in range(-1, 2):
+		for x_offset: int in range(-1, 2):
+			var cell: Vector2i = origin + Vector2i(x_offset, y_offset)
+			if _is_free_enemy_spawn_cell(cell, blocked_cells):
+				return cell
+	return Vector2i.ZERO
+
+
+func _is_free_enemy_spawn_cell(cell: Vector2i, blocked_cells: Dictionary) -> bool:
+	return (
+		cell != Vector2i.ZERO
+		and _is_walkable(cell)
+		and not blocked_cells.has(cell)
+		and not _trap_data.has(cell)
+		and not _container_positions.has(cell)
+		and not _is_shopkeeper_at(cell)
+		and _get_enemy_at(cell) == null
+	)
 
 
 func _refresh_visibility() -> void:
@@ -1123,9 +1421,9 @@ func _search_for_secret_walls(passive: bool) -> int:
 	if _secret_walls.is_empty():
 		return revealed_count
 	var sense_bonus: int = _get_secret_sense_bonus()
-	var base_chance: float = 0.10 if passive else 0.30
-	var per_bonus: float = 0.045 if passive else 0.07
-	var chance: float = clampf(base_chance + max(0, sense_bonus) * per_bonus, base_chance, 0.85)
+	var base_chance: float = 0.18 if passive else 0.55
+	var per_bonus: float = 0.055 if passive else 0.08
+	var chance: float = clampf(base_chance + max(0, sense_bonus) * per_bonus, base_chance, 0.95)
 	for cell: Vector2i in _secret_walls.keys():
 		if _revealed_secret_walls.has(cell):
 			continue
@@ -1363,8 +1661,8 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 			var missile_target: Node2D = _get_enemy_at(cell)
 			if missile_target == null:
 				return false
-			var missile_damage: int = _roll_item_damage(item, 0)
-			missile_target.stats_component.apply_damage(missile_damage)
+			var missile_raw_damage: int = _roll_item_damage(item, 0)
+			var missile_damage: int = _apply_typed_damage(missile_target, missile_raw_damage, &"magic")
 			GameManager.add_log_message(
 				(
 					"%s hits %s for %d force damage."
@@ -1400,22 +1698,23 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 	var is_critical: bool = roll_result == 20
 	var hit: bool = is_critical or attack_total >= defender.stats_component.get_armor_class()
 	if hit:
-		var damage: int = _roll_item_damage(
+		var raw_damage: int = _roll_item_damage(
 			item, Dice.modifier(stats.dexterity) + inventory.get_accessory_damage_bonus()
 		)
 		if is_critical:
-			damage += _roll_item_base_dice(item)
+			raw_damage += _roll_item_base_dice(item)
 		if item.special_effect == ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
 			var percent_damage: int = max(
 				1,
 				int(ceil(defender.stats_component.current_hp * item.special_amount / 100.0))
 			)
-			damage += percent_damage
+			raw_damage += percent_damage
 			GameManager.add_log_message(
 				"%s shears %d current HP from %s." % [item.display_name, percent_damage, defender.display_name],
 				&"magic"
 			)
-		defender.stats_component.apply_damage(damage)
+		var damage_type: StringName = &"ranged" if source == &"weapon" else &"magic"
+		var damage: int = _apply_typed_damage(defender, raw_damage, damage_type)
 		var verb: String = "shoots" if source == &"weapon" else "scorches"
 		GameManager.add_log_message(
 			"%s %s %s for %d damage." % [_player.display_name, verb, defender.display_name, damage],
@@ -1434,8 +1733,8 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
-			var damage: int = _roll_item_damage(item, 0)
-			enemy.stats_component.apply_damage(damage)
+			var raw_damage: int = _roll_item_damage(item, 0)
+			var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
 			GameManager.add_log_message(
 				"%s erupts for %d damage around %s." % [item.display_name, damage, enemy.display_name],
 				&"magic"
@@ -1536,13 +1835,37 @@ func _input_direction(event: InputEvent) -> Vector2i:
 
 
 func _on_enemy_died(enemy: Node) -> void:
-	var gold_reward: int = _roll_enemy_gold_reward()
-	_player.stats_component.gold += gold_reward
-	GameManager.add_log_message("%s dies." % enemy.display_name, &"death")
-	GameManager.add_log_message("+%d gold" % gold_reward, &"gold")
+	if _try_enemy_revive(enemy):
+		hud.bind_player(_player)
+		_refresh_map()
+		return
+	if enemy.get_meta("summoned_minion", false):
+		GameManager.add_log_message("%s crumbles into dust (summoned; no reward)." % enemy.display_name, &"death")
+	else:
+		var gold_reward: int = _roll_enemy_gold_reward(enemy)
+		_player.stats_component.gold += gold_reward
+		GameManager.add_log_message("%s dies. +%d gold." % [enemy.display_name, gold_reward], &"death")
+	_enemy_action_counts.erase(enemy)
 	GameManager.remove_enemy(enemy)
 	hud.bind_player(_player)
 	_refresh_map()
+
+func _try_enemy_revive(enemy: Node) -> bool:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return false
+	if enemy.get_meta("revived_once", false):
+		return false
+	var revive_chance: int = enemy_actor.enemy_data.revive_chance_percent
+	if revive_chance <= 0 or randi_range(1, 100) > revive_chance:
+		return false
+	enemy.set_meta("revived_once", true)
+	var revive_hp: int = max(1, int(ceil(enemy.stats_component.max_hp * enemy_actor.enemy_data.revive_hp_percent / 100.0)))
+	enemy.stats_component.current_hp = revive_hp
+	GameManager.add_log_message(
+		"%s revives once, lurching back up with %d HP." % [enemy.display_name, revive_hp], &"warning"
+	)
+	return true
 
 
 func _on_enemy_phase_finished() -> void:
@@ -1572,7 +1895,7 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 	var price: int = _get_item_shop_price(item)
 	if _player.stats_component.gold < price:
 		GameManager.add_log_message(
-			"You need %d gold for %s." % [price, item.display_name], &"warning"
+			"%s costs %d gold; you need %d more." % [item.display_name, price, price - _player.stats_component.gold], &"warning"
 		)
 		shop_panel.refresh(_player, _shop_stock, _get_shop_reroll_cost())
 		return
@@ -1581,7 +1904,7 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 	_shop_stock.remove_at(stock_index)
 	GameManager.add_log_message(
 		(
-			"You buy %s for %d gold.  Remaining: %d."
+			"You buy %s for %d gold. Gold left: %d."
 			% [item.display_name, price, _player.stats_component.gold]
 		),
 		&"gold"
@@ -1602,7 +1925,7 @@ func _on_shop_panel_sell_requested(inventory_index: int) -> void:
 	_shop_stock.append(item)
 	GameManager.add_log_message(
 		(
-			"You sell %s for %d gold.  Total: %d."
+			"You sell %s for %d gold. Gold now: %d."
 			% [item.display_name, sell_price, _player.stats_component.gold]
 		),
 		&"gold"
@@ -1615,14 +1938,14 @@ func _on_shop_panel_sell_requested(inventory_index: int) -> void:
 func _on_shop_panel_reroll_requested() -> void:
 	var cost: int = _get_shop_reroll_cost()
 	if _player.stats_component.gold < cost:
-		GameManager.add_log_message("You need %d gold to reroll the shop." % cost, &"warning")
+		GameManager.add_log_message("Reroll costs %d gold; you need %d more." % [cost, cost - _player.stats_component.gold], &"warning")
 		shop_panel.refresh(_player, _shop_stock, cost)
 		return
 	_player.stats_component.gold -= cost
 	_shop_reroll_count += 1
 	_shop_stock = _generate_shop_stock(GameManager.current_floor)
 	GameManager.add_log_message(
-		"Shop stock rerolled for %d gold. Next reroll costs %d."
+		"You reroll shop stock for %d gold. Next reroll: %d gold."
 		% [cost, _get_shop_reroll_cost()],
 		&"gold"
 	)
@@ -1638,13 +1961,17 @@ func _get_shop_reroll_cost() -> int:
 
 func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
 	var depth_bonus: int = max(0, floor_number - 1)
-	var tier_bonus: int = int(depth_bonus / EXTRACTION_INTERVAL)
-	enemy.stats_component.max_hp += depth_bonus * 2
+	var early_depth: int = min(depth_bonus, 9)
+	var late_depth: int = max(0, depth_bonus - 9)
+	var armor_bonus: int = int(depth_bonus / 6)
+	var attack_bonus: int = int(depth_bonus / 5)
+	var damage_bonus: int = int(max(0, depth_bonus - 2) / 6)
+	enemy.stats_component.max_hp += early_depth + late_depth * 2
 	enemy.stats_component.current_hp = enemy.stats_component.max_hp
-	enemy.stats_component.base_armor_class += tier_bonus
-	enemy.stats_component.base_attack_bonus += tier_bonus
-	enemy.stats_component.base_damage_bonus += tier_bonus
-	enemy.stats_component.xp_reward += depth_bonus * 10
+	enemy.stats_component.base_armor_class += armor_bonus
+	enemy.stats_component.base_attack_bonus += attack_bonus
+	enemy.stats_component.base_damage_bonus += damage_bonus
+	enemy.stats_component.xp_reward += depth_bonus * 7
 
 
 func _choose_enemy_data_for_floor(floor_number: int) -> Resource:
@@ -1804,6 +2131,12 @@ func _choose_guaranteed_shop_potion(floor_number: int) -> Resource:
 			potion_candidates.append(item_data)
 	if potion_candidates.is_empty():
 		return null
+	if floor_number <= 4:
+		var best_potion: Resource = potion_candidates[0]
+		for potion: Resource in potion_candidates:
+			if potion.healing_amount > best_potion.healing_amount:
+				best_potion = potion
+		return best_potion
 	return _choose_weighted_item(potion_candidates, floor_number)
 
 func _choose_luxury_shop_item(floor_number: int) -> Resource:
@@ -1821,12 +2154,22 @@ func _choose_luxury_shop_item(floor_number: int) -> Resource:
 	return _choose_weighted_item(luxury_candidates, effective_floor)
 
 
-func _roll_enemy_gold_reward() -> int:
+func _roll_enemy_gold_reward(enemy: Node = null) -> int:
 	var floor_number: int = max(1, GameManager.current_floor)
-	var base_reward: int = randi_range(5, 10)
-	var depth_bonus: int = randi_range(0, floor_number * 2)
+	var base_reward: int = randi_range(6, 12)
+	var depth_bonus: int = randi_range(1, max(1, floor_number * 2))
 	var tier_bonus: int = int(floor_number / EXTRACTION_INTERVAL) * 2
-	return base_reward + depth_bonus + tier_bonus
+	var reward: int = base_reward + depth_bonus + tier_bonus
+	var enemy_actor: Enemy = enemy as Enemy
+	if (
+		enemy_actor != null
+		and enemy_actor.enemy_data.gold_bonus_chance_percent > 0
+		and randi_range(1, 100) <= enemy_actor.enemy_data.gold_bonus_chance_percent
+	):
+		var bonus: int = max(1, int(round(reward * enemy_actor.enemy_data.gold_bonus_percent / 100.0)))
+		reward += bonus
+		GameManager.add_log_message("%s carried extra plunder: +%d bonus gold." % [enemy.display_name, bonus], &"gold")
+	return reward
 
 
 func _game_over(victory: bool) -> void:
