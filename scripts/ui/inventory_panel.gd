@@ -100,12 +100,17 @@ func _get_selected_item_details() -> Array[String]:
 	var lines: Array[String] = [
 		_colored_item_name(item),
 		"%s %s" % [item.get_rarity_name(), item.get_kind_name()],
+		"Value: %d gold  |  Shops buy for less." % item.get_price(),
 		item.description,
 		"",
 	]
 	match item.kind:
 		ItemDataScript.ItemKind.WEAPON:
-			var current_weapon: Resource = inventory.equipped_weapon
+			var current_weapon: Resource = (
+				inventory.get_equipped_ranged_weapon()
+				if item.is_ranged_weapon
+				else inventory.get_preferred_melee_weapon()
+			)
 			var current_attack: int = 0 if current_weapon == null else current_weapon.attack_bonus
 			var current_damage_sides: int = (
 				4 if current_weapon == null else current_weapon.damage_sides
@@ -113,6 +118,7 @@ func _get_selected_item_details() -> Array[String]:
 			var current_damage_bonus: int = (
 				0 if current_weapon == null else current_weapon.damage_bonus
 			)
+			var weapon_role: String = "ranged" if item.is_ranged_weapon else "melee"
 			lines.append(
 				(
 					"Weapon: d%d%+d damage, %+d attack"
@@ -123,8 +129,8 @@ func _get_selected_item_details() -> Array[String]:
 				lines.append("Range: %d" % item.range)
 			lines.append(
 				(
-					"Current: d%d%+d damage, %+d attack"
-					% [current_damage_sides, current_damage_bonus, current_attack]
+					"Current %s: d%d%+d damage, %+d attack"
+					% [weapon_role, current_damage_sides, current_damage_bonus, current_attack]
 				)
 			)
 			(

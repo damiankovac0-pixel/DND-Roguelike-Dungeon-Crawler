@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ascended Aegis"
+description = "Armor of impossible light. Every plate hums like a warding prayer."
+glyph = "]"
+color = Color(0.4, 1, 0.94, 1)
+kind = 2
+rarity = 6
+base_price = 760
+spawn_weight = 1
+min_floor = 12
+armor_bonus = 10

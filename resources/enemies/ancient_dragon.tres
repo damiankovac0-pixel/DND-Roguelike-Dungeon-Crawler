@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ancient Dragon"
+glyph = "D"
+color = Color(1, 0.35, 0.16, 1)
+max_hp = 86
+armor_class = 19
+attack_bonus = 12
+damage_sides = 16
+damage_bonus = 10
+xp_reward = 600
+min_floor = 15
+max_floor = 0
+spawn_weight = 2

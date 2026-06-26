@@ -6,7 +6,7 @@ const EXTRACTION_INTERVAL: int = 3
 const CARDINAL_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 const STARTER_WEAPON_PATH: String = "res://resources/items/dagger.tres"
 const SHOP_SPAWN_CHANCE: float = 0.75
-const SHOP_STOCK_SIZE: int = 5
+const SHOP_STOCK_SIZE: int = 6
 const SHOPKEEPER_NAME: String = "Shopkeeper"
 const SHOPKEEPER_GLYPH: String = "S"
 const SHOPKEEPER_COLOR: Color = Color(1.0, 0.82, 0.32)
@@ -23,12 +23,37 @@ const PathfindingScript = preload("res://scripts/systems/pathfinding.gd")
 const FOVSystemScript = preload("res://scripts/systems/fov_system.gd")
 const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const TrapSystem = preload("res://scripts/systems/trap_system.gd")
+const CONTAINER_TYPE_CHEST: StringName = &"chest"
+const CONTAINER_TYPE_CLUTTER: StringName = &"clutter"
+const CHEST_GLYPHS: Array[String] = ["c", "c", "C", "C", "C", "C", "C"]
+const CHEST_NAMES: Array[String] = [
+	"Plain Chest",
+	"Green Chest",
+	"Blue Chest",
+	"Violet Chest",
+	"Golden Chest",
+	"Mythic Chest",
+	"Ascended Chest",
+]
+const CHEST_COLORS: Array[Color] = [
+	Color(0.78, 0.78, 0.78),
+	Color(0.48, 0.85, 0.56),
+	Color(0.56, 0.70, 1.0),
+	Color(0.82, 0.56, 1.0),
+	Color(1.0, 0.72, 0.30),
+	Color(1.0, 0.36, 0.84),
+	Color(0.40, 1.0, 0.94),
+]
+const CLUTTER_NAMES: Array[String] = ["Cracked Vase", "Old Box"]
+const CLUTTER_GLYPHS: Array[String] = ["v", "b"]
+const CLUTTER_COLORS: Array[Color] = [Color(0.55, 0.45, 0.35), Color(0.45, 0.34, 0.24)]
 
 # === Private Variables ===
 var _generator: RefCounted = DungeonGeneratorScript.new()
 var _player: Node2D
 var _enemies: Array = []
 var _item_positions: Dictionary = {}
+var _container_positions: Dictionary = {}
 var _explored_cells: Dictionary = {}
 var _visible_cells: Dictionary = {}
 var _stairs_position: Vector2i = Vector2i.ZERO
@@ -88,6 +113,7 @@ func _ready() -> void:
 	pause_main_menu_button.pressed.connect(_on_pause_main_menu_pressed)
 	pause_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	shop_panel.connect("purchase_requested", _on_shop_panel_purchase_requested)
+	shop_panel.connect("sell_requested", _on_shop_panel_sell_requested)
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
 
@@ -220,9 +246,13 @@ func _refresh_overlay_visibility() -> void:
 ## Resource path lists (explicit — DirAccess does not work in web exports)
 const ENEMY_RESOURCE_PATHS: Array[String] = [
 	"res://resources/enemies/bat.tres",
+	"res://resources/enemies/abyss_knight.tres",
+	"res://resources/enemies/ancient_dragon.tres",
 	"res://resources/enemies/cultist.tres",
 	"res://resources/enemies/goblin.tres",
 	"res://resources/enemies/kobold.tres",
+	"res://resources/enemies/lich.tres",
+	"res://resources/enemies/ogre_brute.tres",
 	"res://resources/enemies/orc.tres",
 	"res://resources/enemies/rat.tres",
 	"res://resources/enemies/skeleton.tres",
@@ -231,11 +261,15 @@ const ENEMY_RESOURCE_PATHS: Array[String] = [
 	"res://resources/enemies/zombie.tres",
 ]
 const ITEM_RESOURCE_PATHS: Array[String] = [
+	"res://resources/items/ascendant_elixir.tres",
+	"res://resources/items/ascended_aegis.tres",
 	"res://resources/items/amulet_of_guarding.tres",
 	"res://resources/items/battle_axe.tres",
 	"res://resources/items/bracers_of_power.tres",
 	"res://resources/items/chainmail.tres",
 	"res://resources/items/dagger.tres",
+	"res://resources/items/celestial_greatbow.tres",
+	"res://resources/items/crown_of_the_deep.tres",
 	"res://resources/items/dragonbone_blade.tres",
 	"res://resources/items/elixir_of_life.tres",
 	"res://resources/items/elixir_of_swiftness.tres",
@@ -254,6 +288,7 @@ const ITEM_RESOURCE_PATHS: Array[String] = [
 	"res://resources/items/mace.tres",
 	"res://resources/items/mythril_plate.tres",
 	"res://resources/items/plate_armor.tres",
+	"res://resources/items/phoenix_elixir.tres",
 	"res://resources/items/potion_of_giant_strength.tres",
 	"res://resources/items/potion_of_haste.tres",
 	"res://resources/items/ring_of_accuracy.tres",
@@ -274,6 +309,7 @@ const ITEM_RESOURCE_PATHS: Array[String] = [
 	"res://resources/items/superior_health_potion.tres",
 	"res://resources/items/tonic_of_regeneration.tres",
 	"res://resources/items/warhammer.tres",
+	"res://resources/items/voidglass_rapier.tres",
 ]
 const TRAP_RESOURCE_PATHS: Array[String] = [
 	"res://resources/traps/alarm_trap.tres",
@@ -329,6 +365,7 @@ func _grant_starter_weapon() -> void:
 	var starter_weapon: Resource = starter_template.duplicate(true)
 	_player.inventory_component.add_item(starter_weapon)
 	_player.inventory_component.equipped_weapon = starter_weapon
+	_player.inventory_component.equipped_melee_weapon = starter_weapon
 	GameManager.add_log_message("You grip a reliable dagger.", &"equipment")
 
 
@@ -342,6 +379,7 @@ func _generate_floor(floor_number: int) -> void:
 	_shopkeeper = null
 	GameManager.clear_enemies()
 	_item_positions.clear()
+	_container_positions.clear()
 	_shop_stock.clear()
 	_explored_cells.clear()
 	_visible_cells.clear()
@@ -364,6 +402,7 @@ func _generate_floor(floor_number: int) -> void:
 	_spawn_enemies(generation_result["enemy_spawns"], floor_number)
 	_spawn_items(generation_result["item_spawns"])
 	_spawn_traps(generation_result.get("trap_spawns", []), floor_number)
+	_spawn_containers(generation_result, floor_number)
 	_refresh_visibility()
 	_refresh_map()
 	inventory_panel.visible = false
@@ -426,6 +465,79 @@ func _spawn_traps(trap_spawns: Array, _floor_number: int) -> void:
 		var trap: Resource = _trap_resources[randi_range(0, _trap_resources.size() - 1)]
 		_trap_data[spawn_position] = trap
 
+func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void:
+	var rooms: Array = generation_result.get("rooms", [])
+	if rooms.size() <= 1:
+		return
+	var chest_limit: int = min(max(1, 1 + int(floor_number / 5)), max(1, int(rooms.size() / 3)))
+	var clutter_limit: int = min(2 + int(floor_number / 8), 4)
+	var chest_count: int = 0
+	var clutter_count: int = 0
+	for room_index: int in range(1, rooms.size()):
+		var room: Rect2i = rooms[room_index]
+		if chest_count < chest_limit and randf() < clampf(0.16 + floor_number * 0.015, 0.16, 0.45):
+			var chest_cell: Vector2i = _find_free_container_cell(room)
+			if chest_cell != Vector2i.ZERO:
+				var rarity: int = _choose_chest_rarity(floor_number)
+				_container_positions[chest_cell] = _make_chest_container(rarity)
+				chest_count += 1
+		if clutter_count < clutter_limit and randf() < 0.12:
+			var clutter_cell: Vector2i = _find_free_container_cell(room)
+			if clutter_cell != Vector2i.ZERO:
+				_container_positions[clutter_cell] = _make_clutter_container()
+				clutter_count += 1
+
+
+func _find_free_container_cell(room: Rect2i) -> Vector2i:
+	for attempt: int in range(8):
+		var cell: Vector2i = _random_cell_in_room(room)
+		if not _is_container_spawn_blocked(cell):
+			return cell
+	return Vector2i.ZERO
+
+
+func _random_cell_in_room(room: Rect2i) -> Vector2i:
+	var min_x: int = room.position.x + 1
+	var max_x: int = room.end.x - 2
+	var min_y: int = room.position.y + 1
+	var max_y: int = room.end.y - 2
+	if min_x > max_x or min_y > max_y:
+		return room.get_center()
+	return Vector2i(randi_range(min_x, max_x), randi_range(min_y, max_y))
+
+
+func _is_container_spawn_blocked(cell: Vector2i) -> bool:
+	if cell == _player.grid_position or cell == _stairs_position:
+		return true
+	if not _is_walkable(cell):
+		return true
+	if _item_positions.has(cell) or _trap_data.has(cell) or _container_positions.has(cell):
+		return true
+	if _is_shopkeeper_at(cell) or _get_enemy_at(cell) != null:
+		return true
+	return false
+
+
+func _make_chest_container(rarity: int) -> Dictionary:
+	return {
+		"type": CONTAINER_TYPE_CHEST,
+		"rarity": rarity,
+		"display_name": CHEST_NAMES[clampi(rarity, 0, CHEST_NAMES.size() - 1)],
+		"glyph": CHEST_GLYPHS[clampi(rarity, 0, CHEST_GLYPHS.size() - 1)],
+		"color": CHEST_COLORS[clampi(rarity, 0, CHEST_COLORS.size() - 1)],
+	}
+
+
+func _make_clutter_container() -> Dictionary:
+	var index: int = randi_range(0, CLUTTER_NAMES.size() - 1)
+	return {
+		"type": CONTAINER_TYPE_CLUTTER,
+		"rarity": ItemDataScript.ItemRarity.COMMON,
+		"display_name": CLUTTER_NAMES[index],
+		"glyph": CLUTTER_GLYPHS[index],
+		"color": CLUTTER_COLORS[index],
+	}
+
 
 func _attempt_player_move(direction: Vector2i) -> void:
 	var target: Vector2i = _player.grid_position + direction
@@ -466,6 +578,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 
 	_player.set_grid_position(target)
 	_collect_item_at(target)
+	_open_container_at(target)
 	if target == _stairs_position:
 		_reach_stairs()
 		return
@@ -526,6 +639,78 @@ func _collect_item_at(cell: Vector2i) -> void:
 	GameManager.add_log_message("You pick up %s." % item.display_name, &"loot")
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
+
+func _open_container_at(cell: Vector2i) -> void:
+	if not _container_positions.has(cell):
+		return
+	var container_data: Dictionary = _container_positions[cell]
+	_container_positions.erase(cell)
+	if container_data.get("type", CONTAINER_TYPE_CHEST) == CONTAINER_TYPE_CLUTTER:
+		_open_clutter_container(container_data)
+	else:
+		_open_chest_container(container_data)
+	inventory_panel.refresh(_player)
+	character_sheet.refresh(_player)
+	hud.bind_player(_player)
+
+
+func _open_clutter_container(container_data: Dictionary) -> void:
+	var display_name: String = container_data.get("display_name", "container")
+	if randf() < 0.30:
+		var potion: Resource = _find_item_by_display_name("Health Potion")
+		if potion != null:
+			_player.inventory_component.add_item(potion.duplicate(true))
+			GameManager.add_log_message("You search the %s and find a Health Potion." % display_name, &"loot")
+			return
+	var gold: int = randi_range(2, 8) + max(0, GameManager.current_floor - 1)
+	_player.stats_component.gold += gold
+	GameManager.add_log_message("You search the %s and find %d gold." % [display_name, gold], &"gold")
+
+
+func _open_chest_container(container_data: Dictionary) -> void:
+	var rarity: int = container_data.get("rarity", ItemDataScript.ItemRarity.COMMON)
+	var display_name: String = container_data.get("display_name", "Chest")
+	var gold: int = randi_range(
+		10 + GameManager.current_floor * 2 + rarity * 12,
+		24 + GameManager.current_floor * 5 + rarity * 28
+	)
+	_player.stats_component.gold += gold
+	GameManager.add_log_message("You open the %s and find %d gold." % [display_name, gold], &"gold")
+	var item_count: int = 1
+	if rarity >= ItemDataScript.ItemRarity.RARE and randf() < 0.50:
+		item_count += 1
+	if rarity >= ItemDataScript.ItemRarity.MYTHIC and randf() < 0.35:
+		item_count += 1
+	for index: int in range(item_count):
+		var reward: Resource = _choose_chest_reward_item(rarity, GameManager.current_floor)
+		if reward == null:
+			continue
+		var reward_item: Resource = reward.duplicate(true)
+		_player.inventory_component.add_item(reward_item)
+		GameManager.add_log_message("Inside: %s." % reward_item.display_name, &"loot")
+
+
+func _choose_chest_reward_item(chest_rarity: int, floor_number: int) -> Resource:
+	var reward_floor: int = floor_number + chest_rarity * 2
+	var candidates: Array[Resource] = _get_item_candidates_for_floor(reward_floor)
+	var filtered: Array[Resource] = []
+	var minimum_rarity: int = max(0, chest_rarity - 2)
+	var maximum_rarity: int = min(ItemDataScript.ItemRarity.ASCENDED, chest_rarity + 1)
+	for item_data: Resource in candidates:
+		if item_data.rarity >= minimum_rarity and item_data.rarity <= maximum_rarity:
+			filtered.append(item_data)
+	if filtered.is_empty():
+		filtered = candidates
+	if filtered.is_empty():
+		return null
+	return _choose_weighted_item(filtered, reward_floor)
+
+
+func _find_item_by_display_name(display_name: String) -> Resource:
+	for item_data: Resource in _item_resources:
+		if item_data.display_name == display_name:
+			return item_data
+	return null
 
 
 func _reach_stairs() -> void:
@@ -603,6 +788,7 @@ func _refresh_map() -> void:
 	map_view.set_visibility(_visible_cells, _explored_cells)
 	map_view.set_actors(actors)
 	map_view.set_items(_item_positions)
+	map_view.set_containers(_container_positions)
 	map_view.set_targeting(_targeting_active, _target_cursor, _targeting_range_cells)
 	map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
 	hud.bind_player(_player)
@@ -904,9 +1090,14 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 			return _resolve_sleep(item, cell)
 	return false
 
-
 func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName) -> void:
 	var roll_result: int = Dice.d20()
+	var close_weapon_shot: bool = (
+		source == &"weapon" and defender.grid_position.distance_to(_player.grid_position) <= 2.0
+	)
+	if close_weapon_shot:
+		roll_result = min(roll_result, Dice.d20())
+		GameManager.add_log_message("Too close for a clean shot — disadvantage.", &"warning")
 	var stats: Node = _player.stats_component
 	var inventory: Node = _player.inventory_component
 	var attack_total: int = (
@@ -1080,6 +1271,27 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 	character_sheet.refresh(_player)
 	shop_panel.refresh(_player, _shop_stock)
 
+func _on_shop_panel_sell_requested(inventory_index: int) -> void:
+	var inventory: Node = _player.inventory_component
+	if inventory_index < 0 or inventory_index >= inventory.items.size():
+		return
+	var item: Resource = inventory.items[inventory_index]
+	var sell_price: int = _get_item_sell_price(item)
+	inventory.remove_item(item)
+	_player.stats_component.gold += sell_price
+	_shop_stock.append(item)
+	GameManager.add_log_message(
+		(
+			"You sell %s for %d gold.  Total: %d."
+			% [item.display_name, sell_price, _player.stats_component.gold]
+		),
+		&"gold"
+	)
+	hud.bind_player(_player)
+	inventory_panel.refresh(_player)
+	character_sheet.refresh(_player)
+	shop_panel.refresh(_player, _shop_stock)
+
 
 func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
 	var depth_bonus: int = max(0, floor_number - 1)
@@ -1178,7 +1390,47 @@ func _rarity_weight_for_floor(rarity: int, floor_number: int) -> int:
 			weight = max(0, depth * 3 - 18)
 		ItemDataScript.ItemRarity.MYTHIC:
 			weight = max(0, depth * 2 - 14)
+		ItemDataScript.ItemRarity.ASCENDED:
+			weight = max(0, depth * 2 - 22)
 	return weight
+
+
+func _choose_chest_rarity(floor_number: int) -> int:
+	var total_weight: int = 0
+	var weights: Array[int] = []
+	for rarity: int in range(ItemDataScript.RARITY_NAMES.size()):
+		var weight: int = _chest_rarity_weight_for_floor(rarity, floor_number)
+		weights.append(weight)
+		total_weight += weight
+	if total_weight <= 0:
+		return ItemDataScript.ItemRarity.COMMON
+	var roll: int = randi_range(1, total_weight)
+	var running_weight: int = 0
+	for rarity: int in range(weights.size()):
+		running_weight += weights[rarity]
+		if roll <= running_weight:
+			return rarity
+	return ItemDataScript.ItemRarity.COMMON
+
+
+func _chest_rarity_weight_for_floor(rarity: int, floor_number: int) -> int:
+	var depth: int = max(0, floor_number - 1)
+	match rarity:
+		ItemDataScript.ItemRarity.COMMON:
+			return max(8, 70 - depth * 6)
+		ItemDataScript.ItemRarity.UNCOMMON:
+			return 24 + depth * 2
+		ItemDataScript.ItemRarity.RARE:
+			return max(0, depth * 5 - 5)
+		ItemDataScript.ItemRarity.EPIC:
+			return max(0, depth * 4 - 14)
+		ItemDataScript.ItemRarity.LEGENDARY:
+			return max(0, depth * 3 - 20)
+		ItemDataScript.ItemRarity.MYTHIC:
+			return max(0, depth * 3 - 28)
+		ItemDataScript.ItemRarity.ASCENDED:
+			return max(0, depth * 2 - 24)
+	return 0
 
 
 func _generate_shop_stock(floor_number: int) -> Array:
@@ -1188,6 +1440,10 @@ func _generate_shop_stock(floor_number: int) -> Array:
 	if potion != null:
 		stock.append(potion)
 		candidates.erase(potion)
+	var luxury_item: Resource = _choose_luxury_shop_item(floor_number)
+	if luxury_item != null and not stock.has(luxury_item):
+		stock.append(luxury_item)
+		candidates.erase(luxury_item)
 
 	while stock.size() < SHOP_STOCK_SIZE and not candidates.is_empty():
 		var item_data: Resource = _choose_weighted_item(candidates, floor_number)
@@ -1206,6 +1462,20 @@ func _choose_guaranteed_shop_potion(floor_number: int) -> Resource:
 	if potion_candidates.is_empty():
 		return null
 	return _choose_weighted_item(potion_candidates, floor_number)
+
+func _choose_luxury_shop_item(floor_number: int) -> Resource:
+	if floor_number < 6:
+		return null
+	var luxury_candidates: Array[Resource] = []
+	var effective_floor: int = floor_number + 2
+	for item_data: Resource in _item_resources:
+		if not _can_spawn_item(item_data, effective_floor):
+			continue
+		if item_data.rarity >= ItemDataScript.ItemRarity.RARE:
+			luxury_candidates.append(item_data)
+	if luxury_candidates.is_empty():
+		return null
+	return _choose_weighted_item(luxury_candidates, effective_floor)
 
 
 func _roll_enemy_gold_reward() -> int:
@@ -1232,3 +1502,9 @@ func _get_item_shop_price(item: Resource) -> int:
 	# 5% per CHA modifier point, min 50% of base price, cap penalty at +50%
 	var multiplier: float = clampf(1.0 - 0.05 * cha_mod, 0.5, 1.5)
 	return max(1, ceili(base_price * multiplier))
+
+
+func _get_item_sell_price(item: Resource) -> int:
+	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
+	var multiplier: float = clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50)
+	return max(1, floori(item.get_price() * multiplier))

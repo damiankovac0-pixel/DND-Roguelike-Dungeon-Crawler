@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Voidglass Rapier"
+description = "A mythic needle-thin blade that slips through armor and leaves a black afterimage."
+glyph = "/"
+color = Color(0.92, 0.28, 1, 1)
+kind = 1
+rarity = 5
+base_price = 520
+spawn_weight = 1
+min_floor = 10
+damage_sides = 10
+attack_bonus = 4
+damage_bonus = 3

@@ -16,6 +16,7 @@ enum ItemRarity {
 	EPIC,
 	LEGENDARY,
 	MYTHIC,
+	ASCENDED,
 }
 
 enum ItemUse {
@@ -36,6 +37,7 @@ const RARITY_NAMES: Array[String] = [
 	"Epic",
 	"Legendary",
 	"Mythic",
+	"Ascended",
 ]
 const RARITY_COLORS: Array[String] = [
 	"#d8d8d8",
@@ -44,6 +46,7 @@ const RARITY_COLORS: Array[String] = [
 	"#d78fff",
 	"#ffb84d",
 	"#ff5fd7",
+	"#66fff0",
 ]
 
 # === Exports ===
@@ -111,4 +114,6 @@ func get_price() -> int:
 			rarity_multiplier = 6.0
 		ItemRarity.MYTHIC:
 			rarity_multiplier = 10.0
+		ItemRarity.ASCENDED:
+			rarity_multiplier = 18.0
 	return max(1, int(ceil(base_price * rarity_multiplier)))

@@ -3,9 +3,12 @@ extends PanelContainer
 
 signal close_requested
 signal purchase_requested(stock_index: int)
+signal sell_requested(inventory_index: int)
 
 # === Constants ===
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const MODE_BUY: StringName = &"buy"
+const MODE_SELL: StringName = &"sell"
 
 # === Private Variables ===
 var _player: Node
@@ -13,6 +16,7 @@ var _stock: Array = []
 var _selected_index: int = 0
 var _item_buttons: Array[Button] = []
 var _item_list: VBoxContainer
+var _mode: StringName = MODE_BUY
 
 # === Onready ===
 @onready var content_box: VBoxContainer = $Margin/VBox
@@ -36,6 +40,10 @@ func _input(event: InputEvent) -> void:
 		_request_close()
 		get_viewport().set_input_as_handled()
 		return
+	if _is_tab_key(event):
+		_toggle_mode()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"move_up"):
 		select_previous()
 		get_viewport().set_input_as_handled()
@@ -45,7 +53,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(&"ui_accept"):
-		buy_selected()
+		activate_selected()
 		get_viewport().set_input_as_handled()
 
 
@@ -53,11 +61,7 @@ func _input(event: InputEvent) -> void:
 func refresh(player: Node, stock: Array) -> void:
 	_player = player
 	_stock = stock
-	if _stock.is_empty():
-		_selected_index = 0
-	else:
-		_selected_index = clampi(_selected_index, 0, _stock.size() - 1)
-
+	_clamp_selection()
 	var gold: int = _get_player_gold()
 	_ensure_item_list()
 	_rebuild_item_buttons(gold)
@@ -65,21 +69,30 @@ func refresh(player: Node, stock: Array) -> void:
 
 
 func select_previous() -> void:
-	if _stock.is_empty():
+	var active_items: Array = _get_active_items()
+	if active_items.is_empty():
 		return
-	_selected_index = wrapi(_selected_index - 1, 0, _stock.size())
+	_selected_index = wrapi(_selected_index - 1, 0, active_items.size())
 	_refresh_item_buttons(_get_player_gold())
 	_refresh_details(_get_player_gold())
 	_grab_selected_button_focus()
 
 
 func select_next() -> void:
-	if _stock.is_empty():
+	var active_items: Array = _get_active_items()
+	if active_items.is_empty():
 		return
-	_selected_index = wrapi(_selected_index + 1, 0, _stock.size())
+	_selected_index = wrapi(_selected_index + 1, 0, active_items.size())
 	_refresh_item_buttons(_get_player_gold())
 	_refresh_details(_get_player_gold())
 	_grab_selected_button_focus()
+
+
+func activate_selected() -> void:
+	if _mode == MODE_SELL:
+		sell_selected()
+	else:
+		buy_selected()
 
 
 func buy_selected() -> void:
@@ -88,7 +101,38 @@ func buy_selected() -> void:
 	purchase_requested.emit(_selected_index)
 
 
+func sell_selected() -> void:
+	if _player == null or _player.inventory_component == null:
+		return
+	if _player.inventory_component.items.is_empty():
+		return
+	sell_requested.emit(_selected_index)
+
+
 # === Private Methods ===
+func _toggle_mode() -> void:
+	_mode = MODE_SELL if _mode == MODE_BUY else MODE_BUY
+	_selected_index = 0
+	refresh(_player, _stock)
+	_grab_selected_button_focus()
+
+
+func _clamp_selection() -> void:
+	var active_items: Array = _get_active_items()
+	if active_items.is_empty():
+		_selected_index = 0
+	else:
+		_selected_index = clampi(_selected_index, 0, active_items.size() - 1)
+
+
+func _get_active_items() -> Array:
+	if _mode == MODE_SELL:
+		if _player == null or _player.inventory_component == null:
+			return []
+		return _player.inventory_component.items
+	return _stock
+
+
 func _ensure_item_list() -> void:
 	if _item_list != null:
 		return
@@ -105,7 +149,8 @@ func _rebuild_item_buttons(gold: int) -> void:
 			button.queue_free()
 	_item_buttons.clear()
 
-	for index: int in range(_stock.size()):
+	var active_items: Array = _get_active_items()
+	for index: int in range(active_items.size()):
 		var button: Button = Button.new()
 		button.custom_minimum_size = Vector2(520, 28)
 		button.focus_mode = Control.FOCUS_ALL
@@ -118,18 +163,25 @@ func _rebuild_item_buttons(gold: int) -> void:
 
 
 func _refresh_item_buttons(gold: int) -> void:
+	var active_items: Array = _get_active_items()
 	for index: int in range(_item_buttons.size()):
-		var item: Resource = _stock[index]
-		var price: int = _get_item_price_for_player(item)
+		var item: Resource = active_items[index]
 		var marker: String = ">" if index == _selected_index else " "
-		var afford_text: String = "" if gold >= price else " (need gold)"
-		var base_price: int = item.get_price()
-		var price_text: String = (
-			"%dg" % price if price == base_price else "%d g (base %dg)" % [price, base_price]
-		)
+		var price_text: String = ""
+		var suffix: String = ""
+		if _mode == MODE_SELL:
+			price_text = "%dg" % _get_item_sell_price(item)
+			if _player != null and _player.inventory_component.is_equipped(item):
+				suffix = " [equipped]"
+		else:
+			var price: int = _get_item_price_for_player(item)
+			var afford_text: String = "" if gold >= price else " (need gold)"
+			var base_price: int = item.get_price()
+			price_text = "%dg" % price if price == base_price else "%dg (base %dg)" % [price, base_price]
+			suffix = afford_text
 		_item_buttons[index].text = (
 			"%s %s %s - %s%s"
-			% [marker, item.get_rarity_name(), item.display_name, price_text, afford_text]
+			% [marker, item.get_rarity_name(), item.display_name, price_text, suffix]
 		)
 		_item_buttons[index].tooltip_text = (
 			"%s\n%s" % [item.description, ", ".join(_item_effect_tags(item))]
@@ -140,21 +192,25 @@ func _refresh_item_buttons(gold: int) -> void:
 
 
 func _refresh_details(gold: int) -> void:
+	var mode_label: String = "SELL" if _mode == MODE_SELL else "BUY"
+	var help: String = "Tab buy/sell   Up/Down select   Enter/click %s   Esc closes" % (
+		"sells" if _mode == MODE_SELL else "buys"
+	)
 	var lines: Array[String] = [
-		"[font_size=22][color=#f1c75b]SHOP[/color][/font_size]",
-		"[color=#555566]Up/Down select   Enter/click buys   Esc closes[/color]",
+		"[font_size=22][color=#f1c75b]SHOP - %s[/color][/font_size]" % mode_label,
+		"[color=#555566]%s[/color]" % help,
 		"",
 		"[color=#ffd866]Gold: %d[/color]" % gold,
 	]
-	# CHA discount info
 	if _player != null and _player.stats_component != null:
 		var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
 		if cha_mod != 0:
 			var price_pct: int = max(50, 100 - 5 * cha_mod)
-			var line: String = (
-				"[color=#9999aa]Your CHA: items cost %d%% base price.[/color]" % price_pct
+			var sell_pct: int = int(clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50) * 100.0)
+			lines.append(
+				"[color=#9999aa]CHA: buys cost %d%% base, sells pay %d%% value.[/color]"
+				% [price_pct, sell_pct]
 			)
-			lines.append(line)
 	lines.append("")
 	lines.append("[color=#555566]──────────────────────────────────[/color]")
 	lines.append_array(_get_selected_item_details())
@@ -162,20 +218,27 @@ func _refresh_details(gold: int) -> void:
 
 
 func _get_selected_item_details() -> Array[String]:
-	if _stock.is_empty():
+	var active_items: Array = _get_active_items()
+	if active_items.is_empty():
+		if _mode == MODE_SELL:
+			return ["You have nothing to sell."]
 		return ["Sold out. Come back after the next restock."]
-	var item: Resource = _stock[_selected_index]
+	var item: Resource = active_items[_selected_index]
+	var value_line: String = ""
+	if _mode == MODE_SELL:
+		value_line = "%s %s  sell %dg (value %dg)" % [
+			item.get_rarity_name(), item.get_kind_name(), _get_item_sell_price(item), item.get_price()
+		]
+	else:
+		value_line = "%s %s  %dg (base %dg)" % [
+			item.get_rarity_name(),
+			item.get_kind_name(),
+			_get_item_price_for_player(item),
+			item.get_price()
+		]
 	var lines: Array[String] = [
 		_colored_item_name(item),
-		(
-			"%s %s  %dg (base %dg)"
-			% [
-				item.get_rarity_name(),
-				item.get_kind_name(),
-				_get_item_price_for_player(item),
-				item.get_price()
-			]
-		),
+		value_line,
 		item.description,
 		"",
 	]
@@ -200,27 +263,26 @@ func _append_weapon_shop_details(lines: Array[String], item: Resource) -> void:
 	)
 	if item.is_ranged_weapon:
 		lines.append("Range: %d" % item.range)
-	# Comparison with current equipment
 	if _player != null and _player.inventory_component != null:
 		var inv: Node = _player.inventory_component
-		var current_weapon: Resource = inv.equipped_weapon
+		var current_weapon: Resource = (
+			inv.get_equipped_ranged_weapon() if item.is_ranged_weapon else inv.get_preferred_melee_weapon()
+		)
 		var cur_attack: int = 0 if current_weapon == null else current_weapon.attack_bonus
 		var cur_dmg_sides: int = 4 if current_weapon == null else current_weapon.damage_sides
 		var cur_dmg_bonus: int = 0 if current_weapon == null else current_weapon.damage_bonus
+		var role: String = "ranged" if item.is_ranged_weapon else "melee"
 		lines.append(
-			"Current: d%d%+d damage, %+d attack" % [cur_dmg_sides, cur_dmg_bonus, cur_attack]
+			"Current %s: d%d%+d damage, %+d attack" % [role, cur_dmg_sides, cur_dmg_bonus, cur_attack]
 		)
-		(
-			lines
-			. append(
-				(
-					"Change: damage die %+d, damage %+d, attack %+d"
-					% [
-						item.damage_sides - cur_dmg_sides,
-						item.damage_bonus - cur_dmg_bonus,
-						item.attack_bonus - cur_attack,
-					]
-				)
+		lines.append(
+			(
+				"Change: damage die %+d, damage %+d, attack %+d"
+				% [
+					item.damage_sides - cur_dmg_sides,
+					item.damage_bonus - cur_dmg_bonus,
+					item.attack_bonus - cur_attack,
+				]
 			)
 		)
 
@@ -298,33 +360,17 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 		ItemDataScript.ItemUse.HASTE:
 			lines.append("Consumable: skips %d enemy phase" % item.effect_duration)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			(
-				lines
-				. append(
-					(
-						"Targeted: range %d, damage %dd%d%+d"
-						% [
-							item.range,
-							item.damage_dice,
-							item.damage_sides,
-							item.damage_bonus,
-						]
-					)
+			lines.append(
+				(
+					"Targeted: range %d, damage %dd%d%+d"
+					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			(
-				lines
-				. append(
-					(
-						"Targeted: range %d, force damage %dd%d%+d"
-						% [
-							item.range,
-							item.damage_dice,
-							item.damage_sides,
-							item.damage_bonus,
-						]
-					)
+			lines.append(
+				(
+					"Targeted: range %d, force damage %dd%d%+d"
+					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
 		ItemDataScript.ItemUse.SLEEP:
@@ -354,7 +400,8 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 
 
 func _select_index(index: int) -> void:
-	if index < 0 or index >= _stock.size() or index == _selected_index:
+	var active_items: Array = _get_active_items()
+	if index < 0 or index >= active_items.size() or index == _selected_index:
 		return
 	_selected_index = index
 	var gold: int = _get_player_gold()
@@ -364,7 +411,7 @@ func _select_index(index: int) -> void:
 
 func _on_item_button_pressed(index: int) -> void:
 	_select_index(index)
-	purchase_requested.emit(_selected_index)
+	activate_selected()
 
 
 func _grab_selected_button_focus() -> void:
@@ -399,11 +446,23 @@ func _is_escape_key(event: InputEvent) -> bool:
 	)
 
 
+func _is_tab_key(event: InputEvent) -> bool:
+	var key_event: InputEventKey = event as InputEventKey
+	return key_event != null and key_event.pressed and not key_event.echo and key_event.keycode == KEY_TAB
+
+
 func _get_item_price_for_player(item: Resource) -> int:
-	"""Returns price adjusted by player CHA modifier, matching game.gd logic."""
 	var base_price: int = item.get_price()
 	if _player == null or _player.stats_component == null:
 		return base_price
 	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
 	var multiplier: float = clampf(1.0 - 0.05 * cha_mod, 0.5, 1.5)
 	return max(1, ceili(base_price * multiplier))
+
+
+func _get_item_sell_price(item: Resource) -> int:
+	if _player == null or _player.stats_component == null:
+		return max(1, floori(item.get_price() * 0.35))
+	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
+	var multiplier: float = clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50)
+	return max(1, floori(item.get_price() * multiplier))

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Abyss Knight"
+glyph = "K"
+color = Color(0.72, 0.38, 0.95, 1)
+max_hp = 54
+armor_class = 17
+attack_bonus = 9
+damage_sides = 12
+damage_bonus = 7
+xp_reward = 280
+min_floor = 10
+max_floor = 0
+spawn_weight = 4

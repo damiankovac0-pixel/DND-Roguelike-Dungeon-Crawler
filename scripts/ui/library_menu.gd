@@ -219,15 +219,21 @@ func _rarity_entry(rarity_index: int) -> String:
 			note = "weight max(0, 3 × depth - 18)"
 		ItemDataScript.ItemRarity.MYTHIC:
 			note = "weight max(0, 2 × depth - 14)"
+		ItemDataScript.ItemRarity.ASCENDED:
+			note = "weight max(0, 2 × depth - 22)"
 	return "- [color=%s]%s[/color]: %s" % [color, name, note]
 
 
 
 ## Resource path lists (explicit — DirAccess does not work in web exports)
 const ENEMY_PATHS: Array[String] = [
+	"res://resources/enemies/abyss_knight.tres",
+	"res://resources/enemies/ancient_dragon.tres",
 	"res://resources/enemies/bat.tres",
 	"res://resources/enemies/cultist.tres",
 	"res://resources/enemies/goblin.tres",
+	"res://resources/enemies/lich.tres",
+	"res://resources/enemies/ogre_brute.tres",
 	"res://resources/enemies/kobold.tres",
 	"res://resources/enemies/orc.tres",
 	"res://resources/enemies/rat.tres",
@@ -237,11 +243,15 @@ const ENEMY_PATHS: Array[String] = [
 	"res://resources/enemies/zombie.tres",
 ]
 const ITEM_PATHS: Array[String] = [
+	"res://resources/items/ascendant_elixir.tres",
+	"res://resources/items/ascended_aegis.tres",
 	"res://resources/items/amulet_of_guarding.tres",
 	"res://resources/items/battle_axe.tres",
 	"res://resources/items/bracers_of_power.tres",
 	"res://resources/items/chainmail.tres",
 	"res://resources/items/dagger.tres",
+	"res://resources/items/celestial_greatbow.tres",
+	"res://resources/items/crown_of_the_deep.tres",
 	"res://resources/items/dragonbone_blade.tres",
 	"res://resources/items/elixir_of_life.tres",
 	"res://resources/items/elixir_of_swiftness.tres",
@@ -260,6 +270,7 @@ const ITEM_PATHS: Array[String] = [
 	"res://resources/items/mace.tres",
 	"res://resources/items/mythril_plate.tres",
 	"res://resources/items/plate_armor.tres",
+	"res://resources/items/phoenix_elixir.tres",
 	"res://resources/items/potion_of_giant_strength.tres",
 	"res://resources/items/potion_of_haste.tres",
 	"res://resources/items/ring_of_accuracy.tres",
@@ -280,6 +291,7 @@ const ITEM_PATHS: Array[String] = [
 	"res://resources/items/superior_health_potion.tres",
 	"res://resources/items/tonic_of_regeneration.tres",
 	"res://resources/items/warhammer.tres",
+	"res://resources/items/voidglass_rapier.tres",
 ]
 
 func _load_resources_from_dir(_dir_path: String) -> Array[Resource]:

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Crown of the Deep"
+description = "An ascended crown that drinks dungeon darkness and returns it as lethal clarity."
+glyph = "*"
+color = Color(0.4, 1, 0.94, 1)
+kind = 3
+rarity = 6
+base_price = 900
+spawn_weight = 1
+min_floor = 14
+attack_bonus = 3
+damage_bonus = 3
+armor_bonus = 2

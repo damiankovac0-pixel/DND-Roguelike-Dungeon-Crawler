@@ -31,9 +31,9 @@
 - `mcp__godot__load_sprite(path)` - Load texture resource
 
 ## Web Deployment
-- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v6.html`
+- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v7.html`
 - Export command: `/usr/local/bin/godot --headless --export-release "Web"`
-- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v6`) inside the copied HTML.
+- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v7`) inside the copied HTML.
 - Repo: `damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler`
 - Live URL: https://damiankovac0-pixel.github.io/DND-Roguelike-Dungeon-Crawler/
 - GitHub Pages serves from `gh-pages` branch (root `/`)
@@ -43,17 +43,17 @@
 rm -rf build .godot
 mkdir -p build/web
 /usr/local/bin/godot --headless --export-release "Web"
-cp build/web/dungeon_delver_web_v6.html build/web/index.html
-rm -rf /tmp/dnd-v6-web
-cp -R build/web /tmp/dnd-v6-web
-git add scripts/game.gd scripts/autoload/game_manager.gd scripts/ui/main_menu.gd scripts/ui/hud.gd scenes/game.tscn project.godot export_presets.cfg AGENTS.md resources/startup_splash.png resources/startup_splash.png.import resources/items/dagger.tres resources/items/shortbow.tres resources/items/longbow.tres resources/items/hand_crossbow.tres resources/items/heavy_crossbow.tres
-git commit -m "Add v6 QoL menu and balance fixes"
+cp build/web/dungeon_delver_web_v7.html build/web/index.html
+rm -rf /tmp/dnd-v7-web
+cp -R build/web /tmp/dnd-v7-web
+git add scripts/game.gd scripts/components/inventory_component.gd scripts/dungeon/dungeon_generator.gd scripts/resources/item_data.gd scripts/ui/inventory_panel.gd scripts/ui/library_menu.gd scripts/ui/map_view.gd scripts/ui/shop_panel.gd export_presets.cfg AGENTS.md resources/enemies/abyss_knight.tres resources/enemies/ancient_dragon.tres resources/enemies/lich.tres resources/enemies/ogre_brute.tres resources/items/ascendant_elixir.tres resources/items/ascended_aegis.tres resources/items/celestial_greatbow.tres resources/items/crown_of_the_deep.tres resources/items/phoenix_elixir.tres resources/items/voidglass_rapier.tres
+git commit -m "Add v7 deep loot and shop selling"
 git push origin main
 git checkout gh-pages
 git rm -r --ignore-unmatch .
-cp -R /tmp/dnd-v6-web/* .
+cp -R /tmp/dnd-v7-web/* .
 git add -A
-git commit -m "Deploy v6 web build"
+git commit -m "Deploy v7 web build"
 git push origin gh-pages
 git checkout main
 ```

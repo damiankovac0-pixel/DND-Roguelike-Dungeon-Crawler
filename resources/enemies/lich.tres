@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Lich"
+glyph = "L"
+color = Color(0.45, 0.85, 1, 1)
+max_hp = 42
+armor_class = 18
+attack_bonus = 10
+damage_sides = 14
+damage_bonus = 8
+xp_reward = 360
+min_floor = 12
+max_floor = 0
+spawn_weight = 3

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Celestial Greatbow"
+description = "An ascended bow strung with cold starlight. It rewards steady aim from a safe distance."
+glyph = "/"
+color = Color(0.4, 1, 0.94, 1)
+kind = 1
+rarity = 6
+base_price = 720
+spawn_weight = 1
+min_floor = 12
+is_ranged_weapon = true
+range = 7
+use_effect = 2
+damage_dice = 2
+damage_sides = 8
+attack_bonus = 2
+damage_bonus = 2

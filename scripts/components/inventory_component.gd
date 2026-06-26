@@ -7,6 +7,8 @@ const ItemDataScript = preload("res://scripts/resources/item_data.gd")
 # === Public Variables ===
 var items: Array = []
 var equipped_weapon: Resource
+var equipped_melee_weapon: Resource
+var equipped_ranged_weapon: Resource
 var equipped_armor: Resource
 var equipped_accessory_1: Resource
 var equipped_accessory_2: Resource
@@ -21,6 +23,10 @@ func remove_item(item: Resource) -> void:
 	items.erase(item)
 	if equipped_weapon == item:
 		equipped_weapon = null
+	if equipped_melee_weapon == item:
+		equipped_melee_weapon = null
+	if equipped_ranged_weapon == item:
+		equipped_ranged_weapon = null
 	if equipped_armor == item:
 		equipped_armor = null
 	if equipped_accessory_1 == item:
@@ -31,8 +37,9 @@ func remove_item(item: Resource) -> void:
 
 func get_attack_bonus() -> int:
 	var bonus: int = 0
-	if equipped_weapon != null and not equipped_weapon.is_ranged_weapon:
-		bonus += equipped_weapon.attack_bonus
+	var melee_weapon: Resource = get_preferred_melee_weapon()
+	if melee_weapon != null:
+		bonus += melee_weapon.attack_bonus
 	if equipped_accessory_1 != null:
 		bonus += equipped_accessory_1.attack_bonus
 	if equipped_accessory_2 != null:
@@ -42,8 +49,9 @@ func get_attack_bonus() -> int:
 
 func get_damage_bonus() -> int:
 	var bonus: int = 0
-	if equipped_weapon != null and not equipped_weapon.is_ranged_weapon:
-		bonus += equipped_weapon.damage_bonus
+	var melee_weapon: Resource = get_preferred_melee_weapon()
+	if melee_weapon != null:
+		bonus += melee_weapon.damage_bonus
 	if equipped_accessory_1 != null:
 		bonus += equipped_accessory_1.damage_bonus
 	if equipped_accessory_2 != null:
@@ -81,25 +89,37 @@ func get_armor_bonus() -> int:
 
 
 func get_weapon_damage_sides() -> int:
-	if (
-		equipped_weapon == null
-		or equipped_weapon.is_ranged_weapon
-		or equipped_weapon.damage_sides <= 0
-	):
+	var melee_weapon: Resource = get_preferred_melee_weapon()
+	if melee_weapon == null or melee_weapon.damage_sides <= 0:
 		return 4
-	return equipped_weapon.damage_sides
+	return melee_weapon.damage_sides
+
+
+func get_preferred_melee_weapon() -> Resource:
+	if equipped_melee_weapon != null:
+		return equipped_melee_weapon
+	if equipped_weapon != null and not equipped_weapon.is_ranged_weapon:
+		return equipped_weapon
+	return _find_best_weapon(false)
 
 
 func get_equipped_ranged_weapon() -> Resource:
-	if equipped_weapon == null or not equipped_weapon.is_ranged_weapon:
-		return null
-	return equipped_weapon
+	if equipped_ranged_weapon != null:
+		return equipped_ranged_weapon
+	if equipped_weapon != null and equipped_weapon.is_ranged_weapon:
+		return equipped_weapon
+	return _find_best_weapon(true)
 
 
 func toggle_equipped(item: Resource) -> bool:
 	match item.kind:
 		ItemDataScript.ItemKind.WEAPON:
-			var is_now_equipped: bool = equipped_weapon != item
+			var equipped_slot: Resource = equipped_ranged_weapon if item.is_ranged_weapon else equipped_melee_weapon
+			var is_now_equipped: bool = equipped_slot != item
+			if item.is_ranged_weapon:
+				equipped_ranged_weapon = item if is_now_equipped else null
+			else:
+				equipped_melee_weapon = item if is_now_equipped else null
 			equipped_weapon = item if is_now_equipped else null
 			return is_now_equipped
 		ItemDataScript.ItemKind.ARMOR:
@@ -125,6 +145,8 @@ func toggle_equipped(item: Resource) -> bool:
 func is_equipped(item: Resource) -> bool:
 	return (
 		equipped_weapon == item
+		or equipped_melee_weapon == item
+		or equipped_ranged_weapon == item
 		or equipped_armor == item
 		or equipped_accessory_1 == item
 		or equipped_accessory_2 == item
@@ -145,3 +167,17 @@ func consume_first_potion() -> Resource:
 			remove_item(item)
 			return item
 	return null
+
+func _find_best_weapon(wants_ranged: bool) -> Resource:
+	var best_weapon: Resource = null
+	var best_score: int = -1
+	for item: Resource in items:
+		if item.kind != ItemDataScript.ItemKind.WEAPON or item.is_ranged_weapon != wants_ranged:
+			continue
+		var score: int = item.damage_dice * max(1, item.damage_sides) + item.damage_bonus + item.attack_bonus * 2
+		if wants_ranged:
+			score += item.range
+		if score > best_score:
+			best_score = score
+			best_weapon = item
+	return best_weapon

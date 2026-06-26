@@ -21,6 +21,7 @@ var _visible_cells: Dictionary = {}
 var _explored_cells: Dictionary = {}
 var _actors: Array = []
 var _items: Dictionary = {}
+var _containers: Dictionary = {}
 var _target_cursor: Vector2i = Vector2i.ZERO
 var _targeting_active: bool = false
 var _target_range_cells: Dictionary = {}
@@ -48,6 +49,10 @@ func set_actors(actors: Array) -> void:
 
 func set_items(items: Dictionary) -> void:
 	_items = items
+	queue_redraw()
+
+func set_containers(containers: Dictionary) -> void:
+	_containers = containers
 	queue_redraw()
 
 
@@ -156,6 +161,25 @@ func _draw() -> void:
 			draw_font, item_point, item.glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, item.color
 		)
 
+
+	for container_position: Vector2i in _containers.keys():
+		if not _visible_cells.has(container_position):
+			continue
+		if _actor_at(container_position) != null:
+			continue
+		var container_data: Dictionary = _containers[container_position]
+		var container_point: Vector2 = _cell_draw_position(container_position, ascent)
+		if not _is_inside_playfield(container_point, playfield_rect):
+			continue
+		draw_string(
+			draw_font,
+			container_point,
+			container_data.get("glyph", "?"),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			font_size,
+			container_data.get("color", Color.WHITE)
+		)
 	for trap_cell: Vector2i in _trap_data.keys():
 		var is_revealed: bool = _revealed_traps.has(trap_cell)
 		var is_triggered: bool = _triggered_traps.has(trap_cell)

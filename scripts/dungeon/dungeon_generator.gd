@@ -43,7 +43,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 			)
 
 	if rooms.size() > 1:
-		var extra_enemy_attempts: int = floor_number + 2
+		var extra_enemy_attempts: int = floor_number + 2 + int(floor_number / 3)
 		for attempt: int in range(extra_enemy_attempts):
 			var room: Rect2i = rooms[randi_range(1, rooms.size() - 1)]
 			_add_spawn_if_free(enemy_spawns, occupied_spawns, _random_cell_in_room(room))
@@ -68,7 +68,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 				trap_spawns.append(trap_cell)
 	trap_spawns.shuffle()
 	var trap_limit: int = min(trap_spawns.size(), 2 + floor_number)
-	var enemy_limit: int = min(enemy_spawns.size(), 6 + floor_number + int(floor_number / 2))
+	var enemy_limit: int = min(enemy_spawns.size(), 6 + floor_number * 2)
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
 	return {
 		"map": map_data,
