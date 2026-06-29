@@ -1235,6 +1235,7 @@ func _process_enemy_special_turn(
 	if (
 		enemy_data.summon_interval > 0
 		and action_count % enemy_data.summon_interval == 0
+		and _visible_cells.has(enemy.grid_position)
 		and _try_enemy_summon(enemy, blocked_cells)
 	):
 		return true

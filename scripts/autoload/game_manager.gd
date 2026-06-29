@@ -12,8 +12,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "9.96"
-const LAST_UPDATED: String = "2026-06-29 23:21 CEST"
+const GAME_VERSION: String = "9.9.7"
+const LAST_UPDATED: String = "2026-06-30 00:14 CEST"
 const LEGACY_TEST_HISTORY_NAMES: Array[String] = [
 	"debug",
 	"Fresh Delver",

@@ -44,12 +44,13 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V9.7[/color] — Archive pass: Library gained a dedicated Archive tab for all recorded runs and stored version metadata.",
 	"[color=#f1c75b]V9.8[/color] — Menu presentation pass: animated ASCII depth backdrop, no central button box, and no debug-style corner labels.",
 	"[color=#f1c75b]V9.9[/color] — Level-up input pass: WASD now moves through stat choices alongside arrows, numbers, and mouse.",
-	"[color=#f1c75b]V9.91[/color] — Chest clarity pass: chest names and colors now mirror item rarities, with the color ladder documented in Dungeon Notes.",
-	"[color=#f1c75b]V9.92[/color] — Library cleanup: Dungeon Notes moved into their own tab, Info stays focused on mechanics/version history, and debug/test runs are filtered from Archive.",
-	"[color=#f1c75b]V9.93[/color] — Shop cleanup: sell mode hides reroll, item selection no longer looks Legendary by focus alone, and consumable details spell out effects.",
-	"[color=#f1c75b]V9.94[/color] — Targeting pass: area scrolls preview their blast radius and door symbols now appear on generated dungeon entrances.",
-	"[color=#f1c75b]V9.95[/color] — Ability pass: INT expands sight at 15/20 and scales potion healing harder; WIS improves scroll accuracy and damage.",
-	"[color=#f1c75b]V9.96[/color] — Shop depth pass: stocks now preview stronger floor-scaled gear, expand by depth, and respect debug floor skips.",
+	"[color=#f1c75b]V9.9.1[/color] — Chest clarity pass: chest names and colors now mirror item rarities, with the color ladder documented in Dungeon Notes.",
+	"[color=#f1c75b]V9.9.2[/color] — Library cleanup: Dungeon Notes moved into their own tab, Info stays focused on mechanics/version history, and debug/test runs are filtered from Archive.",
+	"[color=#f1c75b]V9.9.3[/color] — Shop cleanup: sell mode hides reroll, item selection no longer looks Legendary by focus alone, and consumable details spell out effects.",
+	"[color=#f1c75b]V9.9.4[/color] — Targeting pass: area scrolls preview their blast radius and door symbols now appear on generated dungeon entrances.",
+	"[color=#f1c75b]V9.9.5[/color] — Ability pass: INT expands sight at 15/20 and scales potion healing harder; WIS improves scroll accuracy and damage.",
+	"[color=#f1c75b]V9.9.6[/color] — Shop depth pass: stocks now preview stronger floor-scaled gear, expand by depth, and respect debug floor skips.",
+	"[color=#f1c75b]V9.9.7[/color] — Lich sight gate: the Lich now only raises skeletons while inside your line of sight, so hidden casters stay silent.",
 ]
 
 # === Onready ===
@@ -193,7 +194,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		GameManager.get_version_label() + ". Exact v9.96 mechanics.",
+		GameManager.get_version_label() + ". Exact v9.9.7 mechanics.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",

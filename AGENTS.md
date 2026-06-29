@@ -83,9 +83,9 @@ Item/enemy/trap `.tres` paths are hardcoded in `scripts/resource_paths.gd` (`cla
 - `mcp__godot__load_sprite(path)` - Load texture resource
 
 ## Web Deployment
-- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v9_96.html`
+- Export preset: `export_presets.cfg` — preset name "Web", platform "Web", versioned output currently `build/web/dungeon_delver_web_v9_9_7.html`
 - Export command: `/usr/local/bin/godot --headless --export-release "Web"`
-- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v9_96`) inside the copied HTML.
+- After exporting, copy the versioned HTML to `build/web/index.html`; keep the versioned asset base (`dungeon_delver_web_v9_9_7`) inside the copied HTML.
 - Repo: `damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler`
 - Live URL: https://damiankovac0-pixel.github.io/DND-Roguelike-Dungeon-Crawler/
 - GitHub Pages serves from `gh-pages` branch (root `/`)
@@ -95,17 +95,17 @@ Item/enemy/trap `.tres` paths are hardcoded in `scripts/resource_paths.gd` (`cla
 rm -rf build .godot
 mkdir -p build/web
 /usr/local/bin/godot --headless --export-release "Web"
-cp build/web/dungeon_delver_web_v9_96.html build/web/index.html
-rm -rf /tmp/dnd-v9-96-web
-cp -R build/web /tmp/dnd-v9-96-web
+cp build/web/dungeon_delver_web_v9_9_7.html build/web/index.html
+rm -rf /tmp/dnd-v9-9-7-web
+cp -R build/web /tmp/dnd-v9-9-7-web
 git add -A
-git commit -m "Prepare v9.96 quality-of-life update"
+git commit -m "Prepare v9.9.7 lich sight gate"
 git push origin main
 git checkout gh-pages
 git rm -r --ignore-unmatch .
-cp -R /tmp/dnd-v9-96-web/* .
+cp -R /tmp/dnd-v9-9-7-web/* .
 git add -A
-git commit -m "Deploy v9.96 web build"
+git commit -m "Deploy v9.9.7 web build"
 git push origin gh-pages
 git checkout main
 ```
