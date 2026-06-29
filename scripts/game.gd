@@ -97,7 +97,6 @@ var _trap_resources: Array = []
 var _resume_turn_after_level_choice: bool = false
 
 # === Onready ===
-@onready var version_label: Label = $UI/VersionLabel
 @onready var map_view: Node2D = $MapView
 @onready var hud: Control = $UI/HUD
 @onready var inventory_panel: PanelContainer = $UI/InventoryPanel
@@ -119,7 +118,6 @@ var _resume_turn_after_level_choice: bool = false
 
 # === Lifecycle Methods ===
 func _ready() -> void:
-	version_label.text = GameManager.get_version_label()
 	if (
 		GameManager.pending_character_name.is_empty()
 		or GameManager.pending_ability_scores.is_empty()

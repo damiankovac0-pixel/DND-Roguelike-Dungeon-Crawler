@@ -11,8 +11,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "9.5"
-const LAST_UPDATED: String = "2026-06-29 15:57 CEST"
+const GAME_VERSION: String = "9.9"
+const LAST_UPDATED: String = "2026-06-29 16:58 CEST"
 
 # === Public Variables ===
 var player: Node2D
@@ -139,48 +139,7 @@ func end_run(victory: bool) -> void:
 	game_over_won.emit(victory)
 
 
-func get_history_lines() -> Array[String]:
-	var lines: Array[String] = []
-	for entry: Dictionary in character_history:
-		var result: String = "Victory" if entry.get("victory", false) else "Fell"
-		(
-			lines
-			. append(
-				(
-					"%s - Floor %d, Level %s - %s"
-					% [
-						entry.get("name", "Unknown"),
-						entry.get("floor", 1),
-						_format_level_bbcode(entry.get("level", 1)),
-						result,
-					]
-				)
-			)
-		)
-	return lines
-
-
 # === Private Methods ===
-func _format_level_bbcode(level_value: int) -> String:
-	if level_value <= 20:
-		return "%d" % level_value
-	var colors: Array[String] = [
-		"#d899ff",
-		"#c77dff",
-		"#9d7dff",
-		"#7db8ff",
-		"#66fff0",
-		"#7bd88f",
-		"#ffb84d",
-		"#ff5fd7",
-	]
-	var prestige_level: int = level_value - 20
-	return "20[color=%s]+%d[/color]" % [
-		colors[(prestige_level - 1) % colors.size()],
-		prestige_level,
-	]
-
-
 func _record_character(victory: bool) -> void:
 	var level: int = 1
 	var character_name: String = (
@@ -193,19 +152,15 @@ func _record_character(victory: bool) -> void:
 		var actor_name: Variant = player.get("display_name")
 		if actor_name is String and not actor_name.is_empty():
 			character_name = actor_name
-	(
-		character_history
-		. push_front(
-			{
-				"name": character_name,
-				"floor": current_floor,
-				"level": level,
-				"victory": victory,
-			}
-		)
+	character_history.push_front(
+		{
+			"name": character_name,
+			"floor": current_floor,
+			"level": level,
+			"victory": victory,
+			"version": GAME_VERSION,
+		}
 	)
-	if character_history.size() > 12:
-		character_history.resize(12)
 	_save_character_history()
 
 

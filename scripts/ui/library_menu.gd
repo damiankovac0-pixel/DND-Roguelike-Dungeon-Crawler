@@ -41,34 +41,33 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V9[/color] — Level and lore update: ability-score level-up menu, stat caps at 20, prestige level colors, INT/WIS/CHA scaling, library tabs, and Info mechanics.",
 	"[color=#f1c75b]V9.1[/color] — Menu/library polish: centered menu staging, accessible saved-run list, clearer library spacing, chest rarity explanation, version timestamp, and name Backspace fix.",
 	"[color=#f1c75b]V9.5[/color] — Ranged mechanics revisit: ranged enemies recover after shooting before they can kite again, giving players a clean chance to close distance.",
+	"[color=#f1c75b]V9.6[/color] — Main menu cleanup: version text moved into Info, landing history removed, and the Library button simplified.",
+	"[color=#f1c75b]V9.7[/color] — Archive pass: Library gained a dedicated Archive tab for all recorded runs and stored version metadata.",
+	"[color=#f1c75b]V9.8[/color] — Menu presentation pass: animated ASCII depth backdrop, no central button box, and no debug-style corner labels.",
+	"[color=#f1c75b]V9.9[/color] — Level-up input pass: WASD now moves through stat choices alongside arrows, numbers, and mouse.",
 ]
 
 # === Onready ===
-@onready var version_label: Label = $VersionLabel
 @onready var back_button: Button = $Margin/VBox/Header/BackButton
 @onready var tabs: TabContainer = $Margin/VBox/Tabs
 @onready var bestiary_text: RichTextLabel = $Margin/VBox/Tabs/Bestiary/BestiaryText
 @onready var scribes_text: RichTextLabel = $Margin/VBox/Tabs/Scribes/ScribesText
-@onready var dungeon_scrolls_text: RichTextLabel = $"Margin/VBox/Tabs/Dungeon Scrolls/DungeonScrollsText"
 @onready var info_text: RichTextLabel = $Margin/VBox/Tabs/Info/InfoText
+@onready var archive_text: RichTextLabel = $Margin/VBox/Tabs/Archive/ArchiveText
 
 
 # === Lifecycle Methods ===
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
-	version_label.text = GameManager.get_version_label()
 	for rich_text: RichTextLabel in [
-		bestiary_text, scribes_text, dungeon_scrolls_text, info_text
+		bestiary_text, scribes_text, info_text, archive_text
 	]:
 		rich_text.add_theme_constant_override("line_separation", 4)
-	bestiary_text.bbcode_enabled = true
-	scribes_text.bbcode_enabled = true
+		rich_text.bbcode_enabled = true
 	bestiary_text.text = _build_bestiary_text()
 	scribes_text.text = _build_scribes_text()
-	dungeon_scrolls_text.bbcode_enabled = true
-	info_text.bbcode_enabled = true
-	dungeon_scrolls_text.text = _build_dungeon_scrolls_text()
 	info_text.text = _build_info_text()
+	archive_text.text = _build_archive_text()
 	back_button.grab_focus()
 
 
@@ -150,7 +149,7 @@ func _build_dungeon_scrolls_text() -> String:
 	var traps: Array[Resource] = _load_resources_with_paths(TRAP_PATHS)
 	traps.sort_custom(_sort_trap)
 	var lines: Array[String] = [
-		"[font_size=24][color=#f1c75b]DUNGEON SCROLLS[/color][/font_size]",
+		"[font_size=24][color=#f1c75b]DUNGEON NOTES[/color][/font_size]",
 		"",
 		"Field guide to symbols, traps, secret rooms, and dungeon markings.",
 		"",
@@ -189,7 +188,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		GameManager.get_version_label() + ". Exact v9.5 mechanics.",
+		GameManager.get_version_label() + ". Exact v9.9 mechanics.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",
@@ -221,9 +220,83 @@ func _build_info_text() -> String:
 		"- WIS improves trap detection and secret wall discovery.",
 	]
 	lines.append("")
+	lines.append(_build_dungeon_scrolls_text())
+	lines.append("")
 	lines.append("[color=#8fb3ff]VERSION HISTORY[/color]")
 	lines.append_array(VERSION_HISTORY)
 	return "\n".join(lines)
+
+
+func _build_archive_text() -> String:
+	var entries: Array = GameManager.character_history
+	var lines: Array[String] = [
+		"[font_size=24][color=#f1c75b]ARCHIVE[/color][/font_size]",
+		"",
+		"All recorded runs. New runs store the game version at the moment they end.",
+		"",
+	]
+	if entries.is_empty():
+		lines.append("[color=#92906f]No archived runs yet.[/color]")
+		return "\n".join(lines)
+	for index: int in range(entries.size()):
+		lines.append(_archive_entry(entries[index], index + 1))
+	return "\n".join(lines)
+
+
+func _archive_entry(entry: Dictionary, archive_index: int) -> String:
+	var delver_name: String = _clean_archive_name(str(entry.get("name", "Unknown")))
+	var floor_number: int = int(entry.get("floor", 1))
+	var level_value: int = int(entry.get("level", 1))
+	var result: String = "Victory" if bool(entry.get("victory", false)) else "Fell"
+	var result_color: String = "#7bd88f" if result == "Victory" else "#8b8fa3"
+	var version_text: String = _archive_version(str(entry.get("version", "")))
+	return (
+		"[color=#47426b]%02d[/color]  [color=#fffbf0]%s[/color]  [color=#7db8ff]F%d[/color]  [color=#d8d8d8]L%s[/color]  [color=%s]%s[/color]  [color=#f1c75b]%s[/color]"
+		% [
+			archive_index,
+			delver_name,
+			floor_number,
+			_format_level_bbcode(level_value),
+			result_color,
+			result,
+			version_text,
+		]
+	)
+
+
+func _archive_version(version_value: String) -> String:
+	if version_value.strip_edges().is_empty():
+		return "version not recorded"
+	return "v%s" % version_value.strip_edges()
+
+
+func _format_level_bbcode(level_value: int) -> String:
+	if level_value <= 20:
+		return "%d" % level_value
+	var colors: Array[String] = [
+		"#d899ff",
+		"#c77dff",
+		"#9d7dff",
+		"#7db8ff",
+		"#66fff0",
+		"#7bd88f",
+		"#ffb84d",
+		"#ff5fd7",
+	]
+	var prestige_level: int = level_value - 20
+	return "20[color=%s]+%d[/color]" % [
+		colors[(prestige_level - 1) % colors.size()],
+		prestige_level,
+	]
+
+
+func _clean_archive_name(raw_name: String) -> String:
+	var clean_name: String = raw_name.strip_edges().replace("[", "(").replace("]", ")")
+	if clean_name.is_empty():
+		clean_name = "Nameless"
+	if clean_name.length() > 18:
+		clean_name = clean_name.substr(0, 15) + "..."
+	return clean_name
 
 
 func _enemy_entry(enemy: Resource) -> Array[String]:

@@ -27,7 +27,6 @@ var _is_swapping: bool = false
 @onready var reroll_button: Button = $Center/Panel/Margin/VBox/Buttons/RerollButton
 @onready var begin_button: Button = $Center/Panel/Margin/VBox/Buttons/BeginButton
 @onready var back_button: Button = $Center/Panel/Margin/VBox/Buttons/BackButton
-@onready var version_label: Label = $VersionLabel
 
 
 # === Lifecycle Methods ===
@@ -36,7 +35,6 @@ func _ready() -> void:
 	begin_button.pressed.connect(_begin_run)
 	back_button.pressed.connect(_go_back)
 	name_input.text_changed.connect(_on_selection_changed)
-	version_label.text = GameManager.get_version_label()
 	_build_assignment_rows()
 	_roll_abilities()
 	name_input.call_deferred("grab_focus")

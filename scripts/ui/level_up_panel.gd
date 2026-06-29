@@ -28,10 +28,19 @@ func _input(event: InputEvent) -> void:
 	if key_event == null or not key_event.pressed or key_event.echo:
 		return
 	var key_index: int = key_event.keycode - KEY_1
-	if key_index < 0 or key_index >= STAT_KEYS.size():
+	if key_index >= 0 and key_index < STAT_KEYS.size():
+		_request_stat(STAT_KEYS[key_index])
+		get_viewport().set_input_as_handled()
 		return
-	_request_stat(STAT_KEYS[key_index])
-	get_viewport().set_input_as_handled()
+	if _is_previous_key(key_event):
+		_focus_relative(-1)
+		get_viewport().set_input_as_handled()
+	elif _is_next_key(key_event):
+		_focus_relative(1)
+		get_viewport().set_input_as_handled()
+	elif _is_accept_key(key_event):
+		_request_focused_stat()
+		get_viewport().set_input_as_handled()
 
 
 # === Public Methods ===
@@ -60,7 +69,7 @@ func _render() -> void:
 	var lines: Array[String] = [
 		"[font_size=24][color=#d899ff]LEVEL UP[/color][/font_size]",
 		"[color=#8a86a0]Choose one ability score to increase by +1. Scores cannot exceed 20.[/color]",
-		"[color=#8a86a0]Press 1-6 or click a stat. Choices left: %d[/color]" % stats.pending_stat_increases,
+		"[color=#8a86a0]Press 1-6, W/S or A/D + Enter, or click a stat. Choices left: %d[/color]" % stats.pending_stat_increases,
 		"",
 	]
 	var ability_data: Array[Dictionary] = stats.get_ability_effects()
@@ -91,6 +100,56 @@ func _request_stat(stat_key: String) -> void:
 	if not stats.can_increase_ability(stat_key):
 		return
 	stat_selected.emit(stat_key)
+
+func _request_focused_stat() -> void:
+	var focus_owner: Control = get_viewport().gui_get_focus_owner()
+	for index: int in range(_stat_buttons.size()):
+		if _stat_buttons[index] == focus_owner:
+			_request_stat(STAT_KEYS[index])
+			return
+	_grab_first_enabled_button()
+
+
+
+func _focus_relative(step: int) -> void:
+	if _stat_buttons.is_empty():
+		return
+	var current_index: int = 0
+	var focus_owner: Control = get_viewport().gui_get_focus_owner()
+	for index: int in range(_stat_buttons.size()):
+		if _stat_buttons[index] == focus_owner:
+			current_index = index
+			break
+	for offset: int in range(1, _stat_buttons.size() + 1):
+		var candidate_index: int = wrapi(
+			current_index + step * offset, 0, _stat_buttons.size()
+		)
+		var button: Button = _stat_buttons[candidate_index]
+		if not button.disabled:
+			button.grab_focus()
+			return
+
+
+func _is_previous_key(key_event: InputEventKey) -> bool:
+	return _matches_key(key_event, KEY_W) or _matches_key(key_event, KEY_A)
+
+
+func _is_next_key(key_event: InputEventKey) -> bool:
+	return _matches_key(key_event, KEY_S) or _matches_key(key_event, KEY_D)
+
+func _is_accept_key(key_event: InputEventKey) -> bool:
+	return (
+		_matches_key(key_event, KEY_ENTER)
+		or _matches_key(key_event, KEY_KP_ENTER)
+		or _matches_key(key_event, KEY_SPACE)
+	)
+
+
+
+
+func _matches_key(key_event: InputEventKey, keycode: Key) -> bool:
+	return key_event.keycode == keycode or key_event.physical_keycode == keycode
+
 
 
 func _grab_first_enabled_button() -> void:
