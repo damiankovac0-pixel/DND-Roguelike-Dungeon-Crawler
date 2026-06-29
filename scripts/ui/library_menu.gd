@@ -27,8 +27,24 @@ const ITEM_TYPE_LORE: Dictionary = {
 	ItemDataScript.ItemKind.ACCESSORY:
 	"Two accessory slots. Some add stats; others add cooldown utility like dashes.",
 }
+const VERSION_HISTORY: Array[String] = [
+	"[color=#f1c75b]V1[/color] — Core ASCII roguelike loop: character creation, random dungeon floors, turn-based movement, melee combat, XP, gold, and win/fail run records.",
+	"[color=#f1c75b]V2[/color] — Web build hardening: canvas sizing, Godot export paths, panel anchors, and browser-safe explicit resource loading.",
+	"[color=#f1c75b]V3[/color] — Core UI cleanup: readable HUD, message log, inventory, character sheet, and consistent BBCode rendering for run history.",
+	"[color=#f1c75b]V4[/color] — Dungeon readability pass: clearer map colors, wall/floor/door symbols, and improved overlay panel behavior.",
+	"[color=#f1c75b]V5[/color] — Loot foundation: weapons, armor, consumables, item rarity colors, chest rewards, and gold economy tuning.",
+	"[color=#f1c75b]V6[/color] — Quality-of-life pass: starter dagger, pause/abandon flow, web quit behavior, shopkeeper placement, and ranged weapon balance.",
+	"[color=#f1c75b]V7[/color] — Deep loot and shop pass: expanded item pool, shop selling, better targeting, trap targeting fixes, and debug-name support.",
+	"[color=#f1c75b]V8[/color] — Consumables and secrets: magic scrolls, potions, regeneration, haste, sleep, shield, secret rooms, traps, and clutter rewards.",
+	"[color=#f1c75b]V8.5[/color] — Enemy and secret balance: ranged enemy data, skeleton piercing shots, magic casters, guaranteed secret-room chances, and clearer secret-wall rendering.",
+	"[color=#f1c75b]V8.6[/color] — Balance pass: floors 1-10 enemy/resource curve, shop costs, reward pacing, combat messages, and export path cleanup.",
+	"[color=#f1c75b]V9[/color] — Level and lore update: ability-score level-up menu, stat caps at 20, prestige level colors, INT/WIS/CHA scaling, library tabs, and Info mechanics.",
+	"[color=#f1c75b]V9.1[/color] — Menu/library polish: centered menu staging, accessible saved-run list, clearer library spacing, chest rarity explanation, version timestamp, and name Backspace fix.",
+	"[color=#f1c75b]V9.5[/color] — Ranged mechanics revisit: ranged enemies recover after shooting before they can kite again, giving players a clean chance to close distance.",
+]
 
 # === Onready ===
+@onready var version_label: Label = $VersionLabel
 @onready var back_button: Button = $Margin/VBox/Header/BackButton
 @onready var tabs: TabContainer = $Margin/VBox/Tabs
 @onready var bestiary_text: RichTextLabel = $Margin/VBox/Tabs/Bestiary/BestiaryText
@@ -40,6 +56,11 @@ const ITEM_TYPE_LORE: Dictionary = {
 # === Lifecycle Methods ===
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
+	version_label.text = GameManager.get_version_label()
+	for rich_text: RichTextLabel in [
+		bestiary_text, scribes_text, dungeon_scrolls_text, info_text
+	]:
+		rich_text.add_theme_constant_override("line_separation", 4)
 	bestiary_text.bbcode_enabled = true
 	scribes_text.bbcode_enabled = true
 	bestiary_text.text = _build_bestiary_text()
@@ -141,7 +162,9 @@ func _build_dungeon_scrolls_text() -> String:
 		"- [color=#9b7a45]/[/color] Open door.",
 		"- [color=#ffff66]>[/color] Stairs down. Every third floor offers extraction.",
 		"- [color=#ffd152]S[/color] Shopkeeper. Step into them to open the shop.",
-		"- [color=#f1c75b]c/C[/color] Chests. Better colors mean better rarity bands.",
+		"- [color=#d8d8d8]Plain[/color] < [color=#7bd88f]Green[/color] < [color=#8fb3ff]Blue[/color] < [color=#d78fff]Violet[/color] < [color=#ffb84d]Golden[/color] < [color=#ff5fd7]Mythic[/color] < [color=#66fff0]Ascended[/color] chests.",
+		"- Better chest colors mean higher reward floors, better rarity bands, and extra item rolls at high tiers.",
+		"- Chest glyphs: [color=#d8d8d8]c[/color] is plain/green; [color=#8fb3ff]C[/color] marks rare and above.",
 		"- [color=#8c7259]v/b[/color] Cracked vases and old boxes. Can hold gold, potions, or XP orbs.",
 		"- [color=#b894ff]?[/color] Revealed weak wall. Attack, shoot, or blast it twice to open a secret room.",
 		"- [color=#ff9f6e]^ v ! ◎[/color] Revealed traps. Step around them.",
@@ -166,7 +189,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		"Exact v9 mechanics.",
+		GameManager.get_version_label() + ". Exact v9.5 mechanics.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",
@@ -197,6 +220,9 @@ func _build_info_text() -> String:
 		"- Space spends a turn searching for traps and listening for weak walls.",
 		"- WIS improves trap detection and secret wall discovery.",
 	]
+	lines.append("")
+	lines.append("[color=#8fb3ff]VERSION HISTORY[/color]")
+	lines.append_array(VERSION_HISTORY)
 	return "\n".join(lines)
 
 

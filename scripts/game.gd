@@ -89,6 +89,7 @@ var _poison_turns: int = 0
 var _poison_damage_sides: int = 4
 var _enemy_action_counts: Dictionary = {}
 var _sleeping_enemies: Dictionary = {}
+var _ranged_recovery_enemies: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
@@ -96,6 +97,7 @@ var _trap_resources: Array = []
 var _resume_turn_after_level_choice: bool = false
 
 # === Onready ===
+@onready var version_label: Label = $UI/VersionLabel
 @onready var map_view: Node2D = $MapView
 @onready var hud: Control = $UI/HUD
 @onready var inventory_panel: PanelContainer = $UI/InventoryPanel
@@ -117,6 +119,7 @@ var _resume_turn_after_level_choice: bool = false
 
 # === Lifecycle Methods ===
 func _ready() -> void:
+	version_label.text = GameManager.get_version_label()
 	if (
 		GameManager.pending_character_name.is_empty()
 		or GameManager.pending_ability_scores.is_empty()
@@ -642,6 +645,7 @@ func _generate_floor(floor_number: int) -> void:
 	_poison_damage_sides = 4
 	_enemy_action_counts.clear()
 	_sleeping_enemies.clear()
+	_ranged_recovery_enemies.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
 	_triggered_traps.clear()
@@ -1223,6 +1227,9 @@ func _process_enemy_special_turn(
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return false
 	var enemy_data: Resource = enemy_actor.enemy_data
+	var recovering_from_shot: bool = _ranged_recovery_enemies.has(enemy)
+	if recovering_from_shot:
+		_ranged_recovery_enemies.erase(enemy)
 	if (
 		enemy_data.summon_interval > 0
 		and action_count % enemy_data.summon_interval == 0
@@ -1239,7 +1246,8 @@ func _process_enemy_special_turn(
 		return true
 	if enemy_data.ranged_attack_range > 0:
 		if (
-			distance_to_player <= 1.1
+			not recovering_from_shot
+			and distance_to_player <= 1.1
 			and enemy_data.ai_preferred_range > 1
 			and _try_enemy_keep_range(enemy, blocked_cells)
 		):
@@ -1247,9 +1255,11 @@ func _process_enemy_special_turn(
 		if distance_to_player <= enemy_data.ranged_attack_range:
 			if (action_count - 1) % max(1, enemy_data.ranged_attack_interval) == 0:
 				_resolve_enemy_ranged_attack(enemy)
+				_ranged_recovery_enemies[enemy] = true
 				return true
 			if (
-				enemy_data.ai_preferred_range > 0
+				not recovering_from_shot
+				and enemy_data.ai_preferred_range > 0
 				and distance_to_player < enemy_data.ai_preferred_range
 				and _try_enemy_keep_range(enemy, blocked_cells)
 			):
@@ -1966,6 +1976,7 @@ func _on_enemy_died(enemy: Node) -> void:
 		_player.stats_component.gold += gold_reward
 		GameManager.add_log_message("%s dies. +%d gold." % [enemy.display_name, gold_reward], &"death")
 	_enemy_action_counts.erase(enemy)
+	_ranged_recovery_enemies.erase(enemy)
 	GameManager.remove_enemy(enemy)
 	hud.bind_player(_player)
 	_refresh_map()

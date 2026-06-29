@@ -11,6 +11,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
+const GAME_VERSION: String = "9.5"
+const LAST_UPDATED: String = "2026-06-29 15:57 CEST"
 
 # === Public Variables ===
 var player: Node2D
@@ -110,6 +112,9 @@ func emit_xp_changed() -> void:
 
 func add_log_message(message: String, message_type: StringName = &"neutral") -> void:
 	log_message_added.emit(message, message_type)
+
+func get_version_label() -> String:
+	return "Version %s • Updated %s" % [GAME_VERSION, LAST_UPDATED]
 
 
 func start_floor(floor_number: int) -> void:

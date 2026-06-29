@@ -26,10 +26,21 @@ color = Color(0.0, 0.02, 0.035, 1)
 script = ExtResource("3")
 font = ExtResource("4")
 
-[node name="Center" type="CenterContainer" parent="."]
+
+[node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 0
-anchor_right = 0.62
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 360.0
+offset_bottom = 34.0
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.6, 0.843, 0.898, 0.78)
+text = "Version 9.5 • Updated 2026-06-29 15:57 CEST"
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -72,15 +83,15 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -380.0
-offset_top = 54.0
-offset_right = -40.0
-offset_bottom = 248.0
+offset_left = -346.0
+offset_top = 64.0
+offset_right = -28.0
+offset_bottom = 284.0
 grow_horizontal = 0
 
 [node name="HistoryOutput" type="RichTextLabel" parent="HistoryPanel"]
-custom_minimum_size = Vector2(320, 168)
+custom_minimum_size = Vector2(298, 196)
 layout_mode = 2
 bbcode_enabled = true
-text = "CHARACTER HISTORY\n\nNo previous characters."
-scroll_active = false
+text = "SAVED DELVERS\n\nNo delvers recorded yet."
+scroll_active = true

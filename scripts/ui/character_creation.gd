@@ -27,6 +27,7 @@ var _is_swapping: bool = false
 @onready var reroll_button: Button = $Center/Panel/Margin/VBox/Buttons/RerollButton
 @onready var begin_button: Button = $Center/Panel/Margin/VBox/Buttons/BeginButton
 @onready var back_button: Button = $Center/Panel/Margin/VBox/Buttons/BackButton
+@onready var version_label: Label = $VersionLabel
 
 
 # === Lifecycle Methods ===
@@ -35,20 +36,21 @@ func _ready() -> void:
 	begin_button.pressed.connect(_begin_run)
 	back_button.pressed.connect(_go_back)
 	name_input.text_changed.connect(_on_selection_changed)
+	version_label.text = GameManager.get_version_label()
 	_build_assignment_rows()
 	_roll_abilities()
 	name_input.call_deferred("grab_focus")
 
 
 func _input(event: InputEvent) -> void:
-	if OS.get_name() != "Web":
+	if OS.get_name() != "Web" and not OS.has_feature("web"):
 		return
 	if not name_input.has_focus():
 		return
-	if not event is InputEventKey:
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo:
 		return
-	var key_event: InputEventKey = event
-	if not key_event.pressed or key_event.echo or key_event.keycode != KEY_BACKSPACE:
+	if not _is_backspace_key(key_event):
 		return
 	if name_input.has_selection():
 		var selection_start: int = name_input.get_selection_from_column()
@@ -60,6 +62,15 @@ func _input(event: InputEvent) -> void:
 		name_input.caret_column = delete_from
 	_update_validation()
 	get_viewport().set_input_as_handled()
+
+
+func _is_backspace_key(key_event: InputEventKey) -> bool:
+	return (
+		key_event.keycode == KEY_BACKSPACE
+		or key_event.physical_keycode == KEY_BACKSPACE
+		or key_event.key_label == KEY_BACKSPACE
+		or key_event.unicode == 8
+	)
 
 
 # === Private Methods ===

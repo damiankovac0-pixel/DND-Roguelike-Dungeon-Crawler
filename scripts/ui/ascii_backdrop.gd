@@ -3,11 +3,8 @@ extends ColorRect
 
 # === Constants ===
 const AMBIENT_GLYPHS: Array[String] = [".", "·", "'", "`"]
-const ROOM_PATTERNS: Array[Dictionary] = [
-	{"origin": Vector2(64, 74), "width": 18, "height": 8, "label": "VAULT"},
-	{"origin": Vector2(66, 502), "width": 22, "height": 9, "label": "CRYPT"},
-	{"origin": Vector2(612, 596), "width": 15, "height": 6, "label": "STAIRS"},
-]
+const CENTER_FRAME_ALPHA: float = 0.075
+const INNER_FRAME_ALPHA: float = 0.055
 
 # === Exports ===
 @export var font: Font
@@ -30,7 +27,7 @@ func _draw() -> void:
 	if draw_font == null:
 		return
 	_draw_ambient_glyphs(draw_font)
-	_draw_room_overlays(draw_font)
+	_draw_centered_depth_marker(draw_font)
 	_draw_corner_runes(draw_font)
 
 
@@ -51,42 +48,32 @@ func _draw_ambient_glyphs(draw_font: Font) -> void:
 			draw_string(draw_font, point, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color)
 
 
-func _draw_room_overlays(draw_font: Font) -> void:
-	for pattern: Dictionary in ROOM_PATTERNS:
-		_draw_ascii_room(
-			draw_font,
-			pattern["origin"],
-			pattern["width"],
-			pattern["height"],
-			pattern["label"]
-		)
-
-
-func _draw_ascii_room(
-	draw_font: Font, origin: Vector2, width_chars: int, height_chars: int, label: String
-) -> void:
-	var top_bottom: String = "+" + _repeat_char("-", max(0, width_chars - 2)) + "+"
-	var middle: String = "|" + _repeat_char(".", max(0, width_chars - 2)) + "|"
-	for row: int in range(height_chars):
-		var row_text: String = top_bottom if row == 0 or row == height_chars - 1 else middle
-		var row_color: Color = accent_color if row == 0 or row == height_chars - 1 else ambient_color
-		draw_string(
-			draw_font,
-			origin + Vector2(0, float(row + 1) * grid_step.y),
-			row_text,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			font_size,
-			row_color
-		)
+func _draw_centered_depth_marker(draw_font: Font) -> void:
+	var frame_size: Vector2 = Vector2(min(size.x * 0.44, 520.0), min(size.y * 0.32, 240.0))
+	var frame_position: Vector2 = (size - frame_size) * 0.5
+	var outer_color: Color = Color(accent_color.r, accent_color.g, accent_color.b, CENTER_FRAME_ALPHA)
+	var inner_color: Color = Color(treasure_color.r, treasure_color.g, treasure_color.b, INNER_FRAME_ALPHA)
+	draw_rect(Rect2(frame_position, frame_size), outer_color, false, 1.0)
+	draw_rect(Rect2(frame_position + Vector2(10.0, 10.0), frame_size - Vector2(20.0, 20.0)), inner_color, false, 1.0)
+	var marker: String = "· · ·"
+	var marker_size: Vector2 = draw_font.get_string_size(marker, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	draw_string(
 		draw_font,
-		origin + Vector2(grid_step.x * 2.0, grid_step.y * 3.0),
-		label,
+		Vector2((size.x - marker_size.x) * 0.5, frame_position.y + grid_step.y * 1.5),
+		marker,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		font_size,
-		treasure_color
+		outer_color
+	)
+	draw_string(
+		draw_font,
+		Vector2((size.x - marker_size.x) * 0.5, frame_position.y + frame_size.y - grid_step.y),
+		marker,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		font_size,
+		outer_color
 	)
 
 

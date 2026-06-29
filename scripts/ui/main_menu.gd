@@ -2,7 +2,7 @@ class_name MainMenu
 extends Control
 
 # === Constants ===
-const HISTORY_LIMIT: int = 5
+const HISTORY_LIMIT: int = 12
 const HISTORY_NAME_MAX: int = 18
 
 
@@ -11,6 +11,7 @@ const HISTORY_NAME_MAX: int = 18
 @onready var library_button: Button = $Center/VBox/LibraryButton
 @onready var quit_button: Button = $Center/VBox/QuitButton
 @onready var history_output: RichTextLabel = $HistoryPanel/HistoryOutput
+@onready var version_label: Label = $VersionLabel
 
 
 # === Lifecycle Methods ===
@@ -18,6 +19,7 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	library_button.pressed.connect(_on_library_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	version_label.text = GameManager.get_version_label()
 	history_output.bbcode_enabled = true
 	_refresh_history()
 	start_button.grab_focus()
@@ -42,9 +44,9 @@ func _on_quit_pressed() -> void:
 
 func _refresh_history() -> void:
 	var entries: Array = GameManager.character_history
-	var history_text: String = "[color=#47426b]-- RECENT DELVERS --[/color]"
+	var history_text: String = "[color=#47426b]-- SAVED DELVERS --[/color]"
 	if entries.is_empty():
-		history_text += "\n\n[color=#92906f]No delvers recorded.[/color]"
+		history_text += "\n\n[color=#92906f]No delvers recorded yet.[/color]"
 	else:
 		var lines: Array[String] = []
 		var entry_count: int = min(HISTORY_LIMIT, entries.size())
@@ -52,8 +54,7 @@ func _refresh_history() -> void:
 			lines.append(_format_history_entry(entries[index]))
 		if entries.size() > HISTORY_LIMIT:
 			lines.append(
-				"[color=#47426b]+%d older runs in the archive[/color]"
-				% (entries.size() - HISTORY_LIMIT)
+				"[color=#47426b]+%d more saved runs[/color]" % (entries.size() - HISTORY_LIMIT)
 			)
 		history_text += "\n\n%s" % "\n".join(lines)
 	history_output.clear()
