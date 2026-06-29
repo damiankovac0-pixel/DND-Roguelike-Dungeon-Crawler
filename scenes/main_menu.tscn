@@ -72,15 +72,15 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -420.0
-offset_top = 36.0
-offset_right = -28.0
-offset_bottom = 318.0
+offset_left = -380.0
+offset_top = 54.0
+offset_right = -40.0
+offset_bottom = 248.0
 grow_horizontal = 0
 
 [node name="HistoryOutput" type="RichTextLabel" parent="HistoryPanel"]
-custom_minimum_size = Vector2(368, 258)
+custom_minimum_size = Vector2(320, 168)
 layout_mode = 2
 bbcode_enabled = true
 text = "CHARACTER HISTORY\n\nNo previous characters."
-scroll_active = true
+scroll_active = false

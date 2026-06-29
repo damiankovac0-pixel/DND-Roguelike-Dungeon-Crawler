@@ -2,7 +2,7 @@ class_name AsciiBackdrop
 extends ColorRect
 
 # === Constants ===
-const AMBIENT_GLYPHS: Array[String] = [".", "·", "'", "`", ":", "*", "+"]
+const AMBIENT_GLYPHS: Array[String] = [".", "·", "'", "`"]
 const ROOM_PATTERNS: Array[Dictionary] = [
 	{"origin": Vector2(64, 74), "width": 18, "height": 8, "label": "VAULT"},
 	{"origin": Vector2(66, 502), "width": 22, "height": 9, "label": "CRYPT"},
@@ -13,10 +13,10 @@ const ROOM_PATTERNS: Array[Dictionary] = [
 @export var font: Font
 @export var font_size: int = 15
 @export var grid_step: Vector2 = Vector2(14, 18)
-@export_range(0.0, 1.0) var glyph_density: float = 0.075
-@export var ambient_color: Color = Color(0.28, 0.26, 0.39, 0.20)
-@export var accent_color: Color = Color(0.6, 0.84, 0.9, 0.34)
-@export var treasure_color: Color = Color(1.0, 0.72, 0.08, 0.42)
+@export_range(0.0, 1.0) var glyph_density: float = 0.045
+@export var ambient_color: Color = Color(0.28, 0.26, 0.39, 0.14)
+@export var accent_color: Color = Color(0.6, 0.84, 0.9, 0.24)
+@export var treasure_color: Color = Color(1.0, 0.72, 0.08, 0.34)
 
 
 # === Lifecycle Methods ===
@@ -92,7 +92,6 @@ func _draw_ascii_room(
 
 func _draw_corner_runes(draw_font: Font) -> void:
 	var runes: Array[Dictionary] = [
-		{"point": Vector2(24, 32), "text": "HP  AC  XP"},
 		{"point": Vector2(size.x - 176.0, size.y - 34.0), "text": "FOV  LOOT  EXIT"},
 	]
 	for rune: Dictionary in runes:
@@ -103,7 +102,7 @@ func _draw_corner_runes(draw_font: Font) -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			font_size,
-			Color(accent_color.r, accent_color.g, accent_color.b, 0.26)
+			Color(accent_color.r, accent_color.g, accent_color.b, 0.18)
 		)
 
 
