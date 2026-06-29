@@ -1,3 +1,4 @@
+## Animated ASCII glyph backdrop used behind menu screens.
 class_name AsciiBackdrop
 extends ColorRect
 
@@ -60,7 +61,9 @@ func _draw_ambient_glyphs(draw_font: Font) -> void:
 			var alpha: float = ambient_color.a * clamp(pulse, 0.2, 0.9)
 			var glyph_color: Color = Color(ambient_color.r, ambient_color.g, ambient_color.b, alpha)
 			var point: Vector2 = Vector2(x * grid_step.x, (y + 1) * grid_step.y)
-			draw_string(draw_font, point, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color)
+			draw_string(
+				draw_font, point, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color
+			)
 
 
 func _draw_depth_streams(draw_font: Font) -> void:
@@ -68,7 +71,9 @@ func _draw_depth_streams(draw_font: Font) -> void:
 	for lane_index: int in range(lanes.size()):
 		var lane_x: float = size.x * lanes[lane_index]
 		var speed: float = 18.0 + float(lane_index % 3) * 8.0
-		var base_y: float = fposmod(_elapsed * speed + float(lane_index * 97), size.y + 160.0) - 80.0
+		var base_y: float = (
+			fposmod(_elapsed * speed + float(lane_index * 97), size.y + 160.0) - 80.0
+		)
 		for step: int in range(9):
 			var point_y: float = fposmod(base_y + float(step * 82), size.y + 120.0) - 40.0
 			var hash_value: int = _cell_hash(Vector2i(lane_index, step + int(_elapsed)))

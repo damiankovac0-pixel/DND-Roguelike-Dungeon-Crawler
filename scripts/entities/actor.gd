@@ -1,3 +1,4 @@
+## Base grid-positioned entity with glyph, color, stats, inventory, and movement signals.
 class_name Actor
 extends Node2D
 

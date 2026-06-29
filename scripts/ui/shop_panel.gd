@@ -1,3 +1,4 @@
+## Buy, sell, and reroll UI for the shopkeeper's stock.
 class_name ShopPanel
 extends PanelContainer
 
@@ -137,7 +138,10 @@ func _set_mode(mode: StringName) -> void:
 
 
 func _request_reroll() -> void:
+	if _mode != MODE_BUY:
+		return
 	reroll_requested.emit()
+
 
 func _refresh_controls(gold: int) -> void:
 	var is_buying: bool = _mode == MODE_BUY
@@ -145,10 +149,15 @@ func _refresh_controls(gold: int) -> void:
 	sell_tab_button.button_pressed = not is_buying
 	buy_tab_button.text = "BUY"
 	sell_tab_button.text = "SELL"
-	buy_tab_button.add_theme_color_override("font_color", Color.html("#f1c75b") if is_buying else Color.html("#777788"))
-	sell_tab_button.add_theme_color_override("font_color", Color.html("#f1c75b") if not is_buying else Color.html("#777788"))
+	buy_tab_button.add_theme_color_override(
+		"font_color", Color.html("#f1c75b") if is_buying else Color.html("#777788")
+	)
+	sell_tab_button.add_theme_color_override(
+		"font_color", Color.html("#f1c75b") if not is_buying else Color.html("#777788")
+	)
+	reroll_button.visible = is_buying
 	reroll_button.text = "Reroll %dg" % _reroll_cost
-	reroll_button.disabled = gold < _reroll_cost
+	reroll_button.disabled = (not is_buying) or gold < _reroll_cost
 
 
 func _clamp_selection() -> void:
@@ -190,9 +199,8 @@ func _rebuild_item_buttons(gold: int) -> void:
 		button.custom_minimum_size = Vector2(0, 32)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
-		button.focus_mode = Control.FOCUS_ALL
+		button.focus_mode = Control.FOCUS_NONE
 		button.mouse_entered.connect(_select_index.bind(index))
-		button.focus_entered.connect(_select_index.bind(index))
 		button.pressed.connect(_on_item_button_pressed.bind(index))
 		_item_list.add_child(button)
 		_item_buttons.append(button)
@@ -216,21 +224,19 @@ func _refresh_item_buttons(gold: int) -> void:
 			var afford_text: String = "" if missing_gold == 0 else " (need %dg)" % missing_gold
 			price_text = "%dg" % price
 			suffix = afford_text
-		_item_buttons[index].text = "%s %s - %s%s" % [
-			marker, item.display_name, price_text, suffix
-		]
+		_item_buttons[index].text = "%s %s - %s%s" % [marker, item.display_name, price_text, suffix]
 		_item_buttons[index].tooltip_text = (
 			"%s\n%s" % [item.description, ", ".join(_item_effect_tags(item))]
 		)
-		_item_buttons[index].add_theme_color_override(
-			"font_color", Color.html(item.get_rarity_color())
-		)
+		var button_color: String = "#f2f2f2" if index == _selected_index else "#c7c3d6"
+		_item_buttons[index].add_theme_color_override("font_color", Color.html(button_color))
 
 
 func _refresh_details(gold: int) -> void:
 	var mode_label: String = "SELL" if _mode == MODE_SELL else "BUY"
-	var help: String = "Tab buy/sell   Up/Down select   Enter/click %s   Esc closes" % (
-		"sells" if _mode == MODE_SELL else "buys"
+	var help: String = (
+		"Tab buy/sell   Up/Down select   Enter/click %s   Esc closes"
+		% ("sells" if _mode == MODE_SELL else "buys")
 	)
 	var lines: Array[String] = [
 		"[font_size=22][color=#f1c75b]SHOP - %s[/color][/font_size]" % mode_label,
@@ -244,8 +250,10 @@ func _refresh_details(gold: int) -> void:
 			var price_pct: int = max(50, 100 - 5 * cha_mod)
 			var sell_pct: int = int(clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50) * 100.0)
 			lines.append(
-				"[color=#9999aa]CHA: buys cost %d%% base, sells pay %d%% value.[/color]"
-				% [price_pct, sell_pct]
+				(
+					"[color=#9999aa]CHA: buys cost %d%% base, sells pay %d%% value.[/color]"
+					% [price_pct, sell_pct]
+				)
 			)
 	lines.append("")
 	lines.append("[color=#555566]──────────────────────────────────[/color]")
@@ -262,16 +270,25 @@ func _get_selected_item_details() -> Array[String]:
 	var item: Resource = active_items[_selected_index]
 	var value_line: String = ""
 	if _mode == MODE_SELL:
-		value_line = "%s %s  sell %dg (value %dg)" % [
-			item.get_rarity_name(), item.get_kind_name(), _get_item_sell_price(item), item.get_price()
-		]
+		value_line = (
+			"%s %s  sell %dg (value %dg)"
+			% [
+				item.get_rarity_name(),
+				item.get_kind_name(),
+				_get_item_sell_price(item),
+				item.get_price()
+			]
+		)
 	else:
-		value_line = "%s %s  %dg (base %dg)" % [
-			item.get_rarity_name(),
-			item.get_kind_name(),
-			_get_item_price_for_player(item),
-			item.get_price()
-		]
+		value_line = (
+			"%s %s  %dg (base %dg)"
+			% [
+				item.get_rarity_name(),
+				item.get_kind_name(),
+				_get_item_price_for_player(item),
+				item.get_price()
+			]
+		)
 	var lines: Array[String] = [
 		_colored_item_name(item),
 		value_line,
@@ -296,7 +313,7 @@ func _get_selected_item_details() -> Array[String]:
 func _append_weapon_shop_details(lines: Array[String], item: Resource) -> void:
 	lines.append(
 		(
-			"Weapon: d%d%+d damage, %+d attack"
+			"Weapon: d%d%+d damage, %+d accuracy"
 			% [item.damage_sides, item.damage_bonus, item.attack_bonus]
 		)
 	)
@@ -305,23 +322,31 @@ func _append_weapon_shop_details(lines: Array[String], item: Resource) -> void:
 	if _player != null and _player.inventory_component != null:
 		var inv: Node = _player.inventory_component
 		var current_weapon: Resource = (
-			inv.get_equipped_ranged_weapon() if item.is_ranged_weapon else inv.get_preferred_melee_weapon()
+			inv.get_equipped_ranged_weapon()
+			if item.is_ranged_weapon
+			else inv.get_preferred_melee_weapon()
 		)
-		var cur_attack: int = 0 if current_weapon == null else current_weapon.attack_bonus
+		var cur_accuracy: int = 0 if current_weapon == null else current_weapon.attack_bonus
 		var cur_dmg_sides: int = 4 if current_weapon == null else current_weapon.damage_sides
 		var cur_dmg_bonus: int = 0 if current_weapon == null else current_weapon.damage_bonus
 		var role: String = "ranged" if item.is_ranged_weapon else "melee"
 		lines.append(
-			"Current %s: d%d%+d damage, %+d attack" % [role, cur_dmg_sides, cur_dmg_bonus, cur_attack]
-		)
-		lines.append(
 			(
-				"Change: damage die %+d, damage %+d, attack %+d"
-				% [
-					item.damage_sides - cur_dmg_sides,
-					item.damage_bonus - cur_dmg_bonus,
-					item.attack_bonus - cur_attack,
-				]
+				"Current %s: d%d%+d damage, %+d accuracy"
+				% [role, cur_dmg_sides, cur_dmg_bonus, cur_accuracy]
+			)
+		)
+		(
+			lines
+			. append(
+				(
+					"Change: damage die %+d, damage %+d, accuracy %+d"
+					% [
+						item.damage_sides - cur_dmg_sides,
+						item.damage_bonus - cur_dmg_bonus,
+						item.attack_bonus - cur_accuracy,
+					]
+				)
 			)
 		)
 
@@ -343,7 +368,7 @@ func _append_armor_shop_details(lines: Array[String], item: Resource) -> void:
 func _append_accessory_shop_details(lines: Array[String], item: Resource) -> void:
 	lines.append(
 		(
-			"Accessory: %+d attack, %+d damage, %+d AC"
+			"Accessory: %+d accuracy, %+d damage, %+d AC"
 			% [item.attack_bonus, item.damage_bonus, item.armor_bonus]
 		)
 	)
@@ -363,11 +388,11 @@ func _append_accessory_shop_details(lines: Array[String], item: Resource) -> voi
 			for acc: Resource in equipped:
 				lines.append(
 					(
-						"  %s: %+d atk, %+d dmg, %+d AC"
+						"  %s: %+d acc, %+d dmg, %+d AC"
 						% [acc.display_name, acc.attack_bonus, acc.damage_bonus, acc.armor_bonus]
 					)
 				)
-		var total_atk: int = (
+		var total_accuracy: int = (
 			(acc1.attack_bonus if acc1 != null else 0) + (acc2.attack_bonus if acc2 != null else 0)
 		)
 		var total_dmg: int = (
@@ -378,9 +403,9 @@ func _append_accessory_shop_details(lines: Array[String], item: Resource) -> voi
 		)
 		lines.append(
 			(
-				"Change: attack %+d, damage %+d, AC %+d"
+				"Change: accuracy %+d, damage %+d, AC %+d"
 				% [
-					item.attack_bonus - total_atk,
+					item.attack_bonus - total_accuracy,
 					item.damage_bonus - total_dmg,
 					item.armor_bonus - total_ac
 				]
@@ -391,7 +416,15 @@ func _append_accessory_shop_details(lines: Array[String], item: Resource) -> voi
 func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			lines.append("Consumable: restores %d HP plus INT modifier (min +0)" % item.healing_amount)
+			(
+				lines
+				. append(
+					(
+						"Consumable: restores %d HP + INT modifier + 10%% base per positive INT modifier"
+						% item.healing_amount
+					)
+				)
+			)
 		ItemDataScript.ItemUse.SHIELD:
 			lines.append(
 				"Consumable: %+d AC for %d turns" % [item.armor_bonus, item.effect_duration]
@@ -400,36 +433,53 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 			lines.append("Consumable: skips %d enemy phase" % item.effect_duration)
 		ItemDataScript.ItemUse.REGEN:
 			lines.append(
-				"Consumable: restores %d HP for %d turns" % [item.healing_amount, item.effect_duration]
+				(
+					"Consumable: restores %d HP for %d turns"
+					% [item.healing_amount, item.effect_duration]
+				)
 			)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			lines.append(
-				(
-					"Targeted: range %d, magic damage %dd%d%+d plus WIS modifier"
-					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
+			(
+				lines
+				. append(
+					(
+						"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus double positive WIS modifier"
+						% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
+					)
 				)
 			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			lines.append(
-				(
-					"Targeted: range %d, force damage %dd%d%+d plus WIS modifier"
-					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
+			(
+				lines
+				. append(
+					(
+						"Targeted: range %d, cannot miss, force damage %dd%d%+d plus double positive WIS modifier"
+						% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
+					)
 				)
 			)
 		ItemDataScript.ItemUse.SLEEP:
 			lines.append(
 				(
-					"Targeted: range %d, radius %d, sleep %d turns"
+					"Targeted: range %d, highlighted radius %d, sleeps enemies %d turns"
 					% [item.range, item.target_radius, item.effect_duration]
 				)
 			)
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			lines.append(
+			var area_text: String = (
 				(
-					"Targeted: range %d, radius %d, area damage %dd%d%+d plus WIS modifier"
-					% [item.range, item.target_radius, item.damage_dice, item.damage_sides, item.damage_bonus]
+					"Targeted: range %d, highlighted radius %d, hits every visible enemy "
+					+ "for %dd%d%+d plus double positive WIS modifier"
 				)
+				% [
+					item.range,
+					item.target_radius,
+					item.damage_dice,
+					item.damage_sides,
+					item.damage_bonus,
+				]
 			)
+			lines.append(area_text)
 		_:
 			lines.append("Consumable: no effect")
 
@@ -438,17 +488,27 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 	var tags: Array[String] = []
 	if item.range > 1:
 		tags.append("range %d" % item.range)
+	if item.target_radius > 0:
+		tags.append("radius %d" % item.target_radius)
 	if item.healing_amount > 0:
-		tags.append("heals %d HP +INT" % item.healing_amount)
+		tags.append("heals %d HP +INT scaling" % item.healing_amount)
 	if item.damage_sides > 0:
-		var stat_bonus_tag: String = " +WIS" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
-		tags.append(
-			"damage %dd%d%+d%s" % [
-				item.damage_dice,
-				item.damage_sides,
-				item.damage_bonus,
-				stat_bonus_tag,
-			]
+		var stat_bonus_tag: String = (
+			" +WISx2" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
+		)
+		(
+			tags
+			. append(
+				(
+					"damage %dd%d%+d%s"
+					% [
+						item.damage_dice,
+						item.damage_sides,
+						item.damage_bonus,
+						stat_bonus_tag,
+					]
+				)
+			)
 		)
 	if item.armor_bonus != 0:
 		tags.append("AC %+d" % item.armor_bonus)
@@ -519,7 +579,12 @@ func _is_escape_key(event: InputEvent) -> bool:
 
 func _is_tab_key(event: InputEvent) -> bool:
 	var key_event: InputEventKey = event as InputEventKey
-	return key_event != null and key_event.pressed and not key_event.echo and key_event.keycode == KEY_TAB
+	return (
+		key_event != null
+		and key_event.pressed
+		and not key_event.echo
+		and key_event.keycode == KEY_TAB
+	)
 
 
 func _get_item_price_for_player(item: Resource) -> int:

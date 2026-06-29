@@ -1,3 +1,4 @@
+## Autoload singleton for dice rolling: d20, NdS, 4d6-drop-lowest, and ability modifiers.
 extends Node
 
 

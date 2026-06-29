@@ -1,3 +1,4 @@
+## Displays inventory items and handles equip/unequip interactions.
 class_name InventoryPanel
 extends PanelContainer
 
@@ -46,7 +47,9 @@ func refresh(player: Node) -> void:
 		lines.append("%s %s%s" % [marker, _colored_item_name(item), equipped_tag])
 	if inventory.items.is_empty():
 		lines.append("[color=#c8c4d8]Your pack is empty.[/color]")
-		lines.append("[color=#7d788f]Find potions, scrolls, weapons, and armor in the dungeon.[/color]")
+		lines.append(
+			"[color=#7d788f]Find potions, scrolls, weapons, and armor in the dungeon.[/color]"
+		)
 	lines.append("")
 	lines.append("[color=#3f3a4c]──────────────────────────────────[/color]")
 	lines.append_array(_get_selected_item_details())
@@ -92,7 +95,9 @@ func has_selection() -> bool:
 # === Private Methods ===
 func _get_selected_item_details() -> Array[String]:
 	if _player == null or _player.inventory_component.items.is_empty():
-		return ["[color=#8a86a0]Loot appears here after you pick it up. H opens potions and scrolls; ranged weapons use F.[/color]"]
+		return [
+			"[color=#8a86a0]Loot appears here after you pick it up. H opens potions and scrolls; ranged weapons use F.[/color]"
+		]
 
 	var inventory: Node = _player.inventory_component
 	var stats: Node = _player.stats_component
@@ -121,7 +126,7 @@ func _get_selected_item_details() -> Array[String]:
 			var weapon_role: String = "ranged" if item.is_ranged_weapon else "melee"
 			lines.append(
 				(
-					"Weapon: d%d%+d damage, %+d attack"
+					"Weapon: d%d%+d damage, %+d accuracy"
 					% [item.damage_sides, item.damage_bonus, item.attack_bonus]
 				)
 			)
@@ -129,7 +134,7 @@ func _get_selected_item_details() -> Array[String]:
 				lines.append("Range: %d" % item.range)
 			lines.append(
 				(
-					"Current %s: d%d%+d damage, %+d attack"
+					"Current %s: d%d%+d damage, %+d accuracy"
 					% [weapon_role, current_damage_sides, current_damage_bonus, current_attack]
 				)
 			)
@@ -137,7 +142,7 @@ func _get_selected_item_details() -> Array[String]:
 				lines
 				. append(
 					(
-						"Change: damage die %+d, damage %+d, attack %+d"
+						"Change: damage die %+d, damage %+d, accuracy %+d"
 						% [
 							item.damage_sides - current_damage_sides,
 							item.damage_bonus - current_damage_bonus,
@@ -169,7 +174,7 @@ func _get_selected_item_details() -> Array[String]:
 
 			lines.append(
 				(
-					"Accessory: %+d attack, %+d damage, %+d AC"
+					"Accessory: %+d accuracy, %+d damage, %+d AC"
 					% [item.attack_bonus, item.damage_bonus, item.armor_bonus]
 				)
 			)
@@ -177,7 +182,7 @@ func _get_selected_item_details() -> Array[String]:
 				lines.append("Current: no accessories equipped.")
 				lines.append(
 					(
-						"Change: attack %+d, damage %+d, AC %+d"
+						"Change: accuracy %+d, damage %+d, AC %+d"
 						% [item.attack_bonus, item.damage_bonus, item.armor_bonus]
 					)
 				)
@@ -186,7 +191,7 @@ func _get_selected_item_details() -> Array[String]:
 				for acc: Resource in accessory_list:
 					lines.append(
 						(
-							"  %s: %+d atk, %+d dmg, %+d AC"
+							"  %s: %+d acc, %+d dmg, %+d AC"
 							% [
 								acc.display_name,
 								acc.attack_bonus,
@@ -211,7 +216,7 @@ func _get_selected_item_details() -> Array[String]:
 					lines
 					. append(
 						(
-							"Change: attack %+d, damage %+d, AC %+d"
+							"Change: accuracy %+d, damage %+d, AC %+d"
 							% [
 								item.attack_bonus - total_attack,
 								item.damage_bonus - total_damage,
@@ -232,7 +237,15 @@ func _get_selected_item_details() -> Array[String]:
 func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			lines.append("Consumable: restores %d HP plus INT modifier (min +0)" % item.healing_amount)
+			(
+				lines
+				. append(
+					(
+						"Consumable: restores %d HP + INT modifier + 10%% base per positive INT modifier"
+						% item.healing_amount
+					)
+				)
+			)
 		ItemDataScript.ItemUse.SHIELD:
 			lines.append(
 				"Consumable: %+d AC for %d turns" % [item.armor_bonus, item.effect_duration]
@@ -241,14 +254,17 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 			lines.append("Consumable: skips %d enemy phase" % item.effect_duration)
 		ItemDataScript.ItemUse.REGEN:
 			lines.append(
-				"Consumable: restores %d HP for %d turns" % [item.healing_amount, item.effect_duration]
+				(
+					"Consumable: restores %d HP for %d turns"
+					% [item.healing_amount, item.effect_duration]
+				)
 			)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
 			(
 				lines
 				. append(
 					(
-						"Targeted: range %d, magic damage %dd%d%+d plus WIS modifier"
+						"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus double positive WIS modifier"
 						% [
 							item.range,
 							item.damage_dice,
@@ -263,7 +279,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, force damage %dd%d%+d plus WIS modifier"
+						"Targeted: range %d, cannot miss, force damage %dd%d%+d plus double positive WIS modifier"
 						% [
 							item.range,
 							item.damage_dice,
@@ -276,21 +292,24 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 		ItemDataScript.ItemUse.SLEEP:
 			lines.append(
 				(
-					"Targeted: range %d, radius %d, sleep %d turns"
+					"Targeted: range %d, highlighted radius %d, sleep %d turns"
 					% [item.range, item.target_radius, item.effect_duration]
 				)
 			)
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			lines.append(
-				(
-					"Targeted: range %d, radius %d, area damage %dd%d%+d plus WIS modifier"
-					% [
-						item.range,
-						item.target_radius,
-						item.damage_dice,
-						item.damage_sides,
-						item.damage_bonus,
-					]
+			(
+				lines
+				. append(
+					(
+						"Targeted: range %d, highlighted radius %d, hits every visible enemy for %dd%d%+d plus double positive WIS modifier"
+						% [
+							item.range,
+							item.target_radius,
+							item.damage_dice,
+							item.damage_sides,
+							item.damage_bonus,
+						]
+					)
 				)
 			)
 		_:
@@ -304,7 +323,10 @@ func _special_detail(item: Resource) -> String:
 		ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
 			return "Special: ranged hits add %d%% of the target's current HP." % item.special_amount
 		ItemDataScript.ItemSpecial.DASH_CHARGE:
-			return "Special: every %d actions, your next clear move dashes two tiles." % item.special_cooldown
+			return (
+				"Special: every %d actions, your next clear move dashes two tiles."
+				% item.special_cooldown
+			)
 	return ""
 
 

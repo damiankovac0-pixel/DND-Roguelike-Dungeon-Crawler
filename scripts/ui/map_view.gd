@@ -1,3 +1,4 @@
+## Renders the dungeon grid as colored ASCII glyphs with FOV and depth label.
 class_name MapView
 extends Node2D
 
@@ -43,6 +44,7 @@ var _containers: Dictionary = {}
 var _target_cursor: Vector2i = Vector2i.ZERO
 var _targeting_active: bool = false
 var _target_range_cells: Dictionary = {}
+var _target_area_cells: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
@@ -72,15 +74,19 @@ func set_items(items: Dictionary) -> void:
 	_items = items
 	queue_redraw()
 
+
 func set_containers(containers: Dictionary) -> void:
 	_containers = containers
 	queue_redraw()
 
 
-func set_targeting(active: bool, cursor: Vector2i, range_cells: Dictionary) -> void:
+func set_targeting(
+	active: bool, cursor: Vector2i, range_cells: Dictionary, area_cells: Dictionary = {}
+) -> void:
 	_targeting_active = active
 	_target_cursor = cursor
 	_target_range_cells = range_cells
+	_target_area_cells = area_cells
 	queue_redraw()
 
 
@@ -91,6 +97,7 @@ func set_traps(
 	_revealed_traps = revealed_traps
 	_triggered_traps = triggered_traps
 	queue_redraw()
+
 
 func set_secret_walls(
 	secret_walls: Dictionary, revealed_secret_walls: Dictionary, hint_color: Color
@@ -164,6 +171,14 @@ func _draw() -> void:
 		)
 		_draw_glyph(draw_font, target_point, "·", Color(0.86, 0.90, 0.36, 0.95), false)
 
+	for area_cell: Vector2i in _target_area_cells.keys():
+		if not _visible_cells.has(area_cell) or not _explored_cells.has(area_cell):
+			continue
+		var area_point: Vector2 = _cell_draw_position(area_cell, ascent)
+		if not _is_inside_playfield(area_point, playfield_rect):
+			continue
+		_draw_cell_highlight(area_cell, Color(1.0, 0.30, 0.08, 0.24), Color(1.0, 0.55, 0.18, 0.78))
+		_draw_glyph(draw_font, area_point, "*", Color(1.0, 0.72, 0.28, 0.95), false)
 	for item_position: Vector2i in _items.keys():
 		if not _visible_cells.has(item_position):
 			continue
@@ -280,7 +295,9 @@ func _draw_glyph(
 
 
 func _tile_foreground(tile_type: int, is_visible: bool, is_revealed_secret_wall: bool) -> Color:
-	var color: Color = TILE_FOREGROUND_COLORS.get(tile_type, DungeonDataScript.TILE_COLORS[tile_type])
+	var color: Color = TILE_FOREGROUND_COLORS.get(
+		tile_type, DungeonDataScript.TILE_COLORS[tile_type]
+	)
 	if is_revealed_secret_wall:
 		color = _secret_wall_hint_color
 	if not is_visible:

@@ -1,3 +1,4 @@
+## Rolls ability scores and prepares a character before entering the dungeon.
 class_name CharacterCreation
 extends Control
 
@@ -7,11 +8,11 @@ const STAT_LABELS: Array[String] = [
 	"Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"
 ]
 const STAT_DESCRIPTIONS: Array[String] = [
-	"STR: melee attack and melee damage.",
-	"DEX: armor class and ranged attack accuracy.",
+	"STR: melee accuracy and melee damage.",
+	"DEX: armor class and ranged weapon accuracy.",
 	"CON: max HP now and HP gained every level.",
-	"INT: health potions restore bonus HP.",
-	"WIS: magic scrolls deal bonus damage.",
+	"INT: stronger potions; sight radius +1 at 15 and +2 at 20.",
+	"WIS: scroll accuracy and stronger scroll damage.",
 	"CHA: shops sell cheaper and buy for more.",
 ]
 # === Private Variables ===
@@ -116,7 +117,6 @@ func _begin_run() -> void:
 		ability_scores[STAT_KEYS[index]] = _rolls[roll_index]
 	GameManager.prepare_character(name_input.text, ability_scores)
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
-
 
 
 func _go_back() -> void:

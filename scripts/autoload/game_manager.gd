@@ -1,3 +1,4 @@
+## Autoload singleton: floor state, turn order, player/enemy registry, XP, and run history.
 extends Node
 
 signal player_damaged(new_hp: int, max_hp: int)
@@ -11,8 +12,15 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "9.91"
-const LAST_UPDATED: String = "2026-06-29 22:06 CEST"
+const GAME_VERSION: String = "9.96"
+const LAST_UPDATED: String = "2026-06-29 23:21 CEST"
+const LEGACY_TEST_HISTORY_NAMES: Array[String] = [
+	"debug",
+	"Fresh Delver",
+	"Old Delver",
+	"Patch Hero",
+	"Long Debug Name",
+]
 
 # === Public Variables ===
 var player: Node2D
@@ -61,6 +69,7 @@ func reset_run() -> void:
 	player = null
 	map_data.clear()
 	clear_enemies()
+
 
 func abandon_run() -> void:
 	has_active_run = false
@@ -113,6 +122,7 @@ func emit_xp_changed() -> void:
 func add_log_message(message: String, message_type: StringName = &"neutral") -> void:
 	log_message_added.emit(message, message_type)
 
+
 func get_version_label() -> String:
 	return "Version %s • Updated %s" % [GAME_VERSION, LAST_UPDATED]
 
@@ -133,7 +143,7 @@ func begin_player_turn() -> void:
 
 
 func end_run(victory: bool) -> void:
-	if has_active_run:
+	if has_active_run and not pending_debug_loadout:
 		_record_character(victory)
 	has_active_run = false
 	game_over_won.emit(victory)
@@ -152,14 +162,17 @@ func _record_character(victory: bool) -> void:
 		var actor_name: Variant = player.get("display_name")
 		if actor_name is String and not actor_name.is_empty():
 			character_name = actor_name
-	character_history.push_front(
-		{
-			"name": character_name,
-			"floor": current_floor,
-			"level": level,
-			"victory": victory,
-			"version": GAME_VERSION,
-		}
+	(
+		character_history
+		. push_front(
+			{
+				"name": character_name,
+				"floor": current_floor,
+				"level": level,
+				"victory": victory,
+				"version": GAME_VERSION,
+			}
+		)
 	)
 	_save_character_history()
 
@@ -172,10 +185,28 @@ func _load_character_history() -> void:
 		return
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if parsed is Array:
-		character_history = parsed
+		var raw_history: Array = parsed
+		character_history = _filter_character_history(raw_history)
+		if character_history.size() != raw_history.size():
+			_save_character_history()
 
 
 func _save_character_history() -> void:
 	var file: FileAccess = FileAccess.open(HISTORY_PATH, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(character_history))
+
+
+func _filter_character_history(raw_history: Array) -> Array:
+	var filtered: Array = []
+	for entry: Variant in raw_history:
+		if entry is Dictionary and not _is_legacy_test_history_entry(entry):
+			filtered.append(entry)
+	return filtered
+
+
+func _is_legacy_test_history_entry(entry: Dictionary) -> bool:
+	var character_name: String = str(entry.get("name", "")).strip_edges()
+	if character_name.to_lower() == "debug":
+		return true
+	return LEGACY_TEST_HISTORY_NAMES.has(character_name)

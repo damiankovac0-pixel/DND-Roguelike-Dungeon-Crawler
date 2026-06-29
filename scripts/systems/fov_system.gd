@@ -1,3 +1,4 @@
+## Line-of-sight FOV calculator returning visible cells from a position and radius.
 class_name FOVSystem
 extends RefCounted
 

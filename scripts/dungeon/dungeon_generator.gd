@@ -1,3 +1,4 @@
+## BSP dungeon generator producing rooms, corridors, spawns, traps, and secret rooms.
 class_name DungeonGenerator
 extends RefCounted
 
@@ -13,7 +14,9 @@ const SECRET_ROOM_GUARANTEE_INTERVAL: int = 4
 const SECRET_ROOM_MIN_SIZE: int = 3
 const SECRET_ROOM_MAX_SIZE: int = 4
 const SECRET_WALL_HP: int = 2
-const SECRET_DIRECTIONS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+const SECRET_DIRECTIONS: Array[Vector2i] = [
+	Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT
+]
 
 
 # === Public Methods ===
@@ -29,6 +32,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 			_carve_room(map_data, room)
 	for i: int in range(1, rooms.size()):
 		_connect_rooms(map_data, rooms[i - 1], rooms[i])
+	_place_room_doors(map_data, rooms)
 
 	var player_start: Vector2i = rooms[0].get_center()
 	var stairs_position: Vector2i = rooms[rooms.size() - 1].get_center()
@@ -81,7 +85,9 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 	if floor_number >= 10:
 		enemy_limit = min(enemy_spawns.size(), 12 + int((floor_number - 10) * 0.5))
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
-	var secret_data: Dictionary = _generate_secret_room(map_data, rooms, occupied_spawns, floor_number)
+	var secret_data: Dictionary = _generate_secret_room(
+		map_data, rooms, occupied_spawns, floor_number
+	)
 	return {
 		"map": map_data,
 		"rooms": rooms,
@@ -133,11 +139,16 @@ func _get_secret_room_candidates(rooms: Array[Rect2i]) -> Array[Dictionary]:
 	for room: Rect2i in rooms:
 		for direction: Vector2i in SECRET_DIRECTIONS:
 			for entrance_floor: Vector2i in _room_edge_cells(room, direction):
-				candidates.append({
-					"direction": direction,
-					"entrance_floor": entrance_floor,
-					"wall_cell": entrance_floor + direction,
-				})
+				(
+					candidates
+					. append(
+						{
+							"direction": direction,
+							"entrance_floor": entrance_floor,
+							"wall_cell": entrance_floor + direction,
+						}
+					)
+				)
 	return candidates
 
 
@@ -162,10 +173,14 @@ func _secret_room_rect_from_wall(wall_cell: Vector2i, direction: Vector2i) -> Re
 	if direction == Vector2i.RIGHT:
 		return Rect2i(wall_cell.x + 1, wall_cell.y - int(room_size.y / 2), room_size.x, room_size.y)
 	if direction == Vector2i.LEFT:
-		return Rect2i(wall_cell.x - room_size.x, wall_cell.y - int(room_size.y / 2), room_size.x, room_size.y)
+		return Rect2i(
+			wall_cell.x - room_size.x, wall_cell.y - int(room_size.y / 2), room_size.x, room_size.y
+		)
 	if direction == Vector2i.DOWN:
 		return Rect2i(wall_cell.x - int(room_size.x / 2), wall_cell.y + 1, room_size.x, room_size.y)
-	return Rect2i(wall_cell.x - int(room_size.x / 2), wall_cell.y - room_size.y, room_size.x, room_size.y)
+	return Rect2i(
+		wall_cell.x - int(room_size.x / 2), wall_cell.y - room_size.y, room_size.x, room_size.y
+	)
 
 
 func _can_place_secret_room(
@@ -188,7 +203,10 @@ func _can_place_secret_room(
 				var neighbor: Vector2i = cell + direction
 				if neighbor == wall_cell:
 					continue
-				if _is_inside_map(map_data, neighbor) and DungeonDataScript.is_walkable(map_data[neighbor.y][neighbor.x]):
+				if (
+					_is_inside_map(map_data, neighbor)
+					and DungeonDataScript.is_walkable(map_data[neighbor.y][neighbor.x])
+				):
 					return false
 	return true
 
@@ -202,20 +220,30 @@ func _add_secret_floor_cells(secret_floor_cells: Array, room: Rect2i) -> void:
 func _add_secret_containers(secret_containers: Array, room: Rect2i, floor_number: int) -> void:
 	var used_cells: Dictionary = {}
 	var chest_cell: Vector2i = room.get_center()
-	secret_containers.append({
-		"cell": chest_cell,
-		"type": &"chest",
-		"rarity": min(int(floor_number / 4), 3),
-	})
+	(
+		secret_containers
+		. append(
+			{
+				"cell": chest_cell,
+				"type": &"chest",
+				"rarity": min(int(floor_number / 4), 3),
+			}
+		)
+	)
 	used_cells[chest_cell] = true
 	for _index: int in range(randi_range(1, 2)):
 		var clutter_cell: Vector2i = _random_cell_in_room(room)
 		if used_cells.has(clutter_cell):
 			continue
-		secret_containers.append({
-			"cell": clutter_cell,
-			"type": &"clutter",
-		})
+		(
+			secret_containers
+			. append(
+				{
+					"cell": clutter_cell,
+					"type": &"clutter",
+				}
+			)
+		)
 		used_cells[clutter_cell] = true
 
 
@@ -316,6 +344,43 @@ func _connect_rooms(map_data: Array, room_a: Rect2i, room_b: Rect2i) -> void:
 	else:
 		_carve_hallway_vertical(map_data, point_a.y, point_b.y, point_a.x)
 		_carve_hallway_horizontal(map_data, point_a.x, point_b.x, point_b.y)
+
+
+func _place_room_doors(map_data: Array, rooms: Array[Rect2i]) -> void:
+	for room: Rect2i in rooms:
+		for x: int in range(room.position.x + 1, room.end.x - 1):
+			_try_place_room_door(map_data, Vector2i(x, room.position.y), Vector2i.UP)
+			_try_place_room_door(map_data, Vector2i(x, room.end.y - 1), Vector2i.DOWN)
+		for y: int in range(room.position.y + 1, room.end.y - 1):
+			_try_place_room_door(map_data, Vector2i(room.position.x, y), Vector2i.LEFT)
+			_try_place_room_door(map_data, Vector2i(room.end.x - 1, y), Vector2i.RIGHT)
+
+
+func _try_place_room_door(map_data: Array, cell: Vector2i, outward: Vector2i) -> void:
+	var outside_cell: Vector2i = cell + outward
+	var inside_cell: Vector2i = cell - outward
+	if not _is_inside_map(map_data, outside_cell) or not _is_inside_map(map_data, inside_cell):
+		return
+	if map_data[cell.y][cell.x] != DungeonDataScript.TileType.FLOOR:
+		return
+	if map_data[outside_cell.y][outside_cell.x] != DungeonDataScript.TileType.FLOOR:
+		return
+	if map_data[inside_cell.y][inside_cell.x] != DungeonDataScript.TileType.FLOOR:
+		return
+	if _has_adjacent_door(map_data, cell):
+		return
+	map_data[cell.y][cell.x] = DungeonDataScript.TileType.DOOR
+
+
+func _has_adjacent_door(map_data: Array, cell: Vector2i) -> bool:
+	for direction: Vector2i in SECRET_DIRECTIONS:
+		var neighbor: Vector2i = cell + direction
+		if (
+			_is_inside_map(map_data, neighbor)
+			and map_data[neighbor.y][neighbor.x] == DungeonDataScript.TileType.DOOR
+		):
+			return true
+	return false
 
 
 func _carve_hallway_horizontal(map_data: Array, from_x: int, to_x: int, y: int) -> void:

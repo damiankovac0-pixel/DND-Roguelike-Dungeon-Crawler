@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Health Potion"
-description = "A small red vial that restores 12 HP."
+description = "A small red vial that restores 12 HP, plus INT modifier and extra INT scaling."
 glyph = "!"
 color = Color(0.95, 0.2, 0.2, 1)
 kind = 0

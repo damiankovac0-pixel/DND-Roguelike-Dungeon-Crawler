@@ -1,3 +1,4 @@
+## Stat selection overlay shown when the player levels up.
 class_name LevelUpPanel
 extends PanelContainer
 
@@ -69,7 +70,10 @@ func _render() -> void:
 	var lines: Array[String] = [
 		"[font_size=24][color=#d899ff]LEVEL UP[/color][/font_size]",
 		"[color=#8a86a0]Choose one ability score to increase by +1. Scores cannot exceed 20.[/color]",
-		"[color=#8a86a0]Press 1-6, W/S or A/D + Enter, or click a stat. Choices left: %d[/color]" % stats.pending_stat_increases,
+		(
+			"[color=#8a86a0]Press 1-6, W/S or A/D + Enter, or click a stat. Choices left: %d[/color]"
+			% stats.pending_stat_increases
+		),
 		"",
 	]
 	var ability_data: Array[Dictionary] = stats.get_ability_effects()
@@ -83,12 +87,17 @@ func _render() -> void:
 		var status: String = "MAX" if value >= StatsComponent.MAX_ABILITY_SCORE else "+1"
 		var color: String = "#777788" if not can_raise else "#f2f2f2"
 		lines.append(
-			"%d. [color=%s]%s %2d (%+d)[/color]  [color=#f1c75b]%s[/color]"
-			% [index + 1, color, stat_name, value, modifier, status]
+			(
+				"%d. [color=%s]%s %2d (%+d)[/color]  [color=#f1c75b]%s[/color]"
+				% [index + 1, color, stat_name, value, modifier, status]
+			)
 		)
 		lines.append("   [color=#aaa6b8]%s[/color]" % ability["effects"])
 		var button: Button = _stat_buttons[index]
-		button.text = "%d  %s %d -> %d" % [index + 1, stat_name, value, min(value + 1, StatsComponent.MAX_ABILITY_SCORE)]
+		button.text = (
+			"%d  %s %d -> %d"
+			% [index + 1, stat_name, value, min(value + 1, StatsComponent.MAX_ABILITY_SCORE)]
+		)
 		button.disabled = not can_raise
 	output.text = "\n".join(lines)
 
@@ -101,6 +110,7 @@ func _request_stat(stat_key: String) -> void:
 		return
 	stat_selected.emit(stat_key)
 
+
 func _request_focused_stat() -> void:
 	var focus_owner: Control = get_viewport().gui_get_focus_owner()
 	for index: int in range(_stat_buttons.size()):
@@ -108,7 +118,6 @@ func _request_focused_stat() -> void:
 			_request_stat(STAT_KEYS[index])
 			return
 	_grab_first_enabled_button()
-
 
 
 func _focus_relative(step: int) -> void:
@@ -121,9 +130,7 @@ func _focus_relative(step: int) -> void:
 			current_index = index
 			break
 	for offset: int in range(1, _stat_buttons.size() + 1):
-		var candidate_index: int = wrapi(
-			current_index + step * offset, 0, _stat_buttons.size()
-		)
+		var candidate_index: int = wrapi(current_index + step * offset, 0, _stat_buttons.size())
 		var button: Button = _stat_buttons[candidate_index]
 		if not button.disabled:
 			button.grab_focus()
@@ -137,6 +144,7 @@ func _is_previous_key(key_event: InputEventKey) -> bool:
 func _is_next_key(key_event: InputEventKey) -> bool:
 	return _matches_key(key_event, KEY_S) or _matches_key(key_event, KEY_D)
 
+
 func _is_accept_key(key_event: InputEventKey) -> bool:
 	return (
 		_matches_key(key_event, KEY_ENTER)
@@ -145,11 +153,8 @@ func _is_accept_key(key_event: InputEventKey) -> bool:
 	)
 
 
-
-
 func _matches_key(key_event: InputEventKey, keycode: Key) -> bool:
 	return key_event.keycode == keycode or key_event.physical_keycode == keycode
-
 
 
 func _grab_first_enabled_button() -> void:

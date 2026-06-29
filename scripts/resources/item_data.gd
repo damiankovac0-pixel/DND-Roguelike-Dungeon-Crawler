@@ -1,3 +1,4 @@
+## Resource defining an item: kind, rarity, price, stats, use effects, and special abilities.
 class_name ItemData
 extends Resource
 

@@ -1,3 +1,4 @@
+## Drives the enemy phase by emitting signals around a callable action.
 class_name TurnManager
 extends Node
 

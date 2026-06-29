@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Fireball"
-description = "Targeted scroll. Bursts around a chosen point and burns nearby enemies; canceling targeting keeps the scroll."
+description = "Targeted AOE scroll: range 6, highlighted radius 1. Hits every visible enemy in the blast for 4d6+3 fire damage plus double positive WIS modifier; canceling targeting keeps the scroll."
 glyph = "?"
 color = Color(1, 0.22, 0.08, 1)
 kind = 0
@@ -16,6 +16,6 @@ min_floor = 4
 range = 6
 use_effect = 7
 target_radius = 1
-damage_dice = 3
+damage_dice = 4
 damage_sides = 6
-damage_bonus = 2
+damage_bonus = 3

@@ -1,9 +1,8 @@
+## In-game codex: enemy lore, item stats, trap data, mechanics, version history, and run archive.
 class_name LibraryMenu
 extends Control
 
 # === Constants ===
-const ENEMY_DIR: String = "res://resources/enemies"
-const ITEM_DIR: String = "res://resources/items"
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
 const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const ENEMY_NOTES: Dictionary = {
@@ -45,7 +44,12 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V9.7[/color] — Archive pass: Library gained a dedicated Archive tab for all recorded runs and stored version metadata.",
 	"[color=#f1c75b]V9.8[/color] — Menu presentation pass: animated ASCII depth backdrop, no central button box, and no debug-style corner labels.",
 	"[color=#f1c75b]V9.9[/color] — Level-up input pass: WASD now moves through stat choices alongside arrows, numbers, and mouse.",
-	"[color=#f1c75b]V9.91[/color] — Chest clarity pass: chest names and colors now mirror item rarities, with the color ladder documented in Info.",
+	"[color=#f1c75b]V9.91[/color] — Chest clarity pass: chest names and colors now mirror item rarities, with the color ladder documented in Dungeon Notes.",
+	"[color=#f1c75b]V9.92[/color] — Library cleanup: Dungeon Notes moved into their own tab, Info stays focused on mechanics/version history, and debug/test runs are filtered from Archive.",
+	"[color=#f1c75b]V9.93[/color] — Shop cleanup: sell mode hides reroll, item selection no longer looks Legendary by focus alone, and consumable details spell out effects.",
+	"[color=#f1c75b]V9.94[/color] — Targeting pass: area scrolls preview their blast radius and door symbols now appear on generated dungeon entrances.",
+	"[color=#f1c75b]V9.95[/color] — Ability pass: INT expands sight at 15/20 and scales potion healing harder; WIS improves scroll accuracy and damage.",
+	"[color=#f1c75b]V9.96[/color] — Shop depth pass: stocks now preview stronger floor-scaled gear, expand by depth, and respect debug floor skips.",
 ]
 
 # === Onready ===
@@ -54,6 +58,7 @@ const VERSION_HISTORY: Array[String] = [
 @onready var bestiary_text: RichTextLabel = $Margin/VBox/Tabs/Bestiary/BestiaryText
 @onready var scribes_text: RichTextLabel = $Margin/VBox/Tabs/Scribes/ScribesText
 @onready var info_text: RichTextLabel = $Margin/VBox/Tabs/Info/InfoText
+@onready var dungeon_notes_text: RichTextLabel = $"Margin/VBox/Tabs/Dungeon Notes/DungeonNotesText"
 @onready var archive_text: RichTextLabel = $Margin/VBox/Tabs/Archive/ArchiveText
 
 
@@ -61,12 +66,13 @@ const VERSION_HISTORY: Array[String] = [
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
 	for rich_text: RichTextLabel in [
-		bestiary_text, scribes_text, info_text, archive_text
+		bestiary_text, scribes_text, dungeon_notes_text, info_text, archive_text
 	]:
 		rich_text.add_theme_constant_override("line_separation", 4)
 		rich_text.bbcode_enabled = true
 	bestiary_text.text = _build_bestiary_text()
 	scribes_text.text = _build_scribes_text()
+	dungeon_notes_text.text = _build_dungeon_scrolls_text()
 	info_text.text = _build_info_text()
 	archive_text.text = _build_archive_text()
 	back_button.grab_focus()
@@ -86,7 +92,7 @@ func _input(event: InputEvent) -> void:
 
 # === Private Methods ===
 func _build_bestiary_text() -> String:
-	var enemies: Array[Resource] = _load_resources_with_paths(ENEMY_PATHS)
+	var enemies: Array[Resource] = _load_resources_with_paths(ResourcePaths.ENEMY_PATHS)
 	enemies.sort_custom(_sort_enemy)
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]BESTIARY[/color][/font_size]",
@@ -103,13 +109,13 @@ func _build_bestiary_text() -> String:
 
 
 func _build_scribes_text() -> String:
-	var items: Array[Resource] = _load_resources_with_paths(ITEM_PATHS)
+	var items: Array[Resource] = _load_resources_with_paths(ResourcePaths.ITEM_PATHS)
 	items.sort_custom(_sort_item)
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]SCRIBES[/color][/font_size]",
 		"",
-		"Item data from item resources. Shops and dungeon drops use floor gates,",
-		"spawn weight, and rarity weight. depth = floor - 1.",
+		"Item data from item resources. Dungeon drops use floor gates, spawn weight,",
+		"and rarity weight. Shops use a boosted effective floor, depth rarity gates, and larger deep-floor stock.",
 		"",
 		"[color=#f1c75b]ITEM TYPES[/color]",
 	]
@@ -147,7 +153,7 @@ func _build_scribes_text() -> String:
 
 
 func _build_dungeon_scrolls_text() -> String:
-	var traps: Array[Resource] = _load_resources_with_paths(TRAP_PATHS)
+	var traps: Array[Resource] = _load_resources_with_paths(ResourcePaths.TRAP_PATHS)
 	traps.sort_custom(_sort_trap)
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]DUNGEON NOTES[/color][/font_size]",
@@ -156,10 +162,10 @@ func _build_dungeon_scrolls_text() -> String:
 		"",
 		"[color=#8fb3ff]MAP SYMBOLS[/color]",
 		"- [color=#f2f2f2]@[/color] You.",
-		"- [color=#777777].[/color] Floor. Walkable.",
-		"- [color=#777777]#[/color] Stone wall. Blocks movement and sight.",
-		"- [color=#b87532]+[/color] Closed door. Opens when you step into it.",
-		"- [color=#9b7a45]/[/color] Open door.",
+		"- [color=#777777]. · ' `[/color] Floor variants. Walkable.",
+		"- [color=#777777]# ▓ ▒[/color] Stone wall variants. Block movement and sight.",
+		"- [color=#b87532]+[/color] Closed door. Generated at some room entrances; bump it to open it.",
+		"- [color=#9b7a45]/[/color] Open door. Walkable.",
 		"- [color=#ffff66]>[/color] Stairs down. Every third floor offers extraction.",
 		"- [color=#ffd152]S[/color] Shopkeeper. Step into them to open the shop.",
 		"- Chests use item-rarity colors: [color=#d8d8d8]gray Common[/color], [color=#7bd88f]green Uncommon[/color], [color=#8fb3ff]blue Rare[/color], [color=#d78fff]purple Epic[/color], [color=#ffb84d]gold Legendary[/color], [color=#ff5fd7]pink Mythic[/color], [color=#66fff0]cyan Ascended[/color].",
@@ -187,7 +193,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		GameManager.get_version_label() + ". Exact v9.91 mechanics.",
+		GameManager.get_version_label() + ". Exact v9.96 mechanics.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",
@@ -198,30 +204,31 @@ func _build_info_text() -> String:
 		"- HP gained each level = max(1, 5 + CON modifier).",
 		"",
 		"[color=#8fb3ff]ABILITY SCORES[/color]",
-		"- STR: melee attack and melee damage.",
-		"- DEX: armor class and ranged attack accuracy.",
+		"- STR: melee accuracy and melee damage.",
+		"- DEX: armor class and ranged weapon accuracy.",
 		"- CON: starting HP and HP gained per level. Raising CON can increase max HP.",
-		"- INT: direct healing consumables restore base HP + max(0, INT modifier).",
-		"- WIS: magic scroll damage adds max(0, WIS modifier) before magic resistance/vulnerability.",
+		"- INT: direct healing consumables restore base HP + INT modifier + 10% of base healing per positive INT modifier.",
+		"- INT: sight radius is 8, increases to 9 at INT 15, and 10 at INT 20.",
+		"- WIS: magic scroll damage adds double positive WIS modifier before magic resistance/vulnerability.",
+		"- WIS: scroll attack rolls use WIS instead of DEX, so higher WIS makes them more likely to hit.",
 		"- CHA: shop buy price multiplier = clamp(1 - 0.05 × CHA modifier, 0.5, 1.5).",
 		"- CHA: shop sell value multiplier = clamp(0.35 + 0.02 × CHA modifier, 0.25, 0.50).",
 		"",
 		"[color=#8fb3ff]COMBAT AND CONSUMABLES[/color]",
-		"- Melee uses STR. Ranged attack rolls use DEX.",
-		"- Scroll fire/bolt style attacks can miss, but their magic damage uses WIS.",
+		"- Melee accuracy and melee damage use STR.",
+		"- Ranged weapon accuracy and damage use DEX.",
+		"- Scroll fire/bolt style attacks can miss; they roll with WIS and deal WIS-scaled magic damage.",
 		"- Magic Missile does not roll to hit.",
-		"- Area scrolls target a cell and damage every visible enemy in the radius.",
+		"- Area scrolls target a cell, preview their radius, and damage every visible enemy in the radius.",
 		"- Targeted consumables are only spent after a valid confirmed target.",
 		"- Potions are not consumed at full HP.",
 		"",
 		"[color=#8fb3ff]SEARCHING[/color]",
 		"- Space spends a turn searching for traps and listening for weak walls.",
 		"- WIS improves trap detection and secret wall discovery.",
+		"",
+		"[color=#8fb3ff]VERSION HISTORY[/color]",
 	]
-	lines.append("")
-	lines.append(_build_dungeon_scrolls_text())
-	lines.append("")
-	lines.append("[color=#8fb3ff]VERSION HISTORY[/color]")
 	lines.append_array(VERSION_HISTORY)
 	return "\n".join(lines)
 
@@ -231,8 +238,8 @@ func _build_archive_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]ARCHIVE[/color][/font_size]",
 		"",
-		"All recorded runs. New runs store the game version at the moment they end.",
-		"",
+		"Real completed runs only. Debug/test loadouts are ignored.",
+		"New runs store the game version at the moment they end.",
 	]
 	if entries.is_empty():
 		lines.append("[color=#92906f]No archived runs yet.[/color]")
@@ -283,10 +290,13 @@ func _format_level_bbcode(level_value: int) -> String:
 		"#ff5fd7",
 	]
 	var prestige_level: int = level_value - 20
-	return "20[color=%s]+%d[/color]" % [
-		colors[(prestige_level - 1) % colors.size()],
-		prestige_level,
-	]
+	return (
+		"20[color=%s]+%d[/color]"
+		% [
+			colors[(prestige_level - 1) % colors.size()],
+			prestige_level,
+		]
+	)
 
 
 func _clean_archive_name(raw_name: String) -> String:
@@ -352,7 +362,12 @@ func _item_stats_line(item: Resource) -> String:
 		stats.append("heals %d HP%s" % [item.healing_amount, heal_tag])
 	if item.damage_sides > 0:
 		var damage_tag: String = " +WIS" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
-		stats.append("damage %dd%d%+d%s" % [item.damage_dice, item.damage_sides, item.damage_bonus, damage_tag])
+		stats.append(
+			(
+				"damage %dd%d%+d%s"
+				% [item.damage_dice, item.damage_sides, item.damage_bonus, damage_tag]
+			)
+		)
 	if item.attack_bonus != 0:
 		stats.append("attack %+d" % item.attack_bonus)
 	elif item.damage_bonus != 0:
@@ -402,6 +417,7 @@ func _item_special_name(item: Resource) -> String:
 			return "dash every %d actions" % item.special_cooldown
 	return "special"
 
+
 func _trap_entry(trap: Resource) -> String:
 	return (
 		"- [color=#%s]%s[/color] [color=#777788]'%s'[/color]: DC %d. %s %s"
@@ -429,7 +445,6 @@ func _trap_effect_line(trap: Resource) -> String:
 	return "Unknown trap effect."
 
 
-
 func _rarity_entry(rarity_index: int) -> String:
 	var name: String = ItemDataScript.RARITY_NAMES[rarity_index]
 	var color: String = ItemDataScript.RARITY_COLORS[rarity_index]
@@ -450,92 +465,6 @@ func _rarity_entry(rarity_index: int) -> String:
 		ItemDataScript.ItemRarity.ASCENDED:
 			note = "weight max(0, 2 × depth - 22)"
 	return "- [color=%s]%s[/color]: %s" % [color, name, note]
-
-
-
-## Resource path lists (explicit — DirAccess does not work in web exports)
-const ENEMY_PATHS: Array[String] = [
-	"res://resources/enemies/abyss_knight.tres",
-	"res://resources/enemies/ancient_dragon.tres",
-	"res://resources/enemies/bat.tres",
-	"res://resources/enemies/cultist.tres",
-	"res://resources/enemies/goblin.tres",
-	"res://resources/enemies/lich.tres",
-	"res://resources/enemies/ogre_brute.tres",
-	"res://resources/enemies/kobold.tres",
-	"res://resources/enemies/orc.tres",
-	"res://resources/enemies/rat.tres",
-	"res://resources/enemies/skeleton.tres",
-	"res://resources/enemies/troll.tres",
-	"res://resources/enemies/wraith.tres",
-	"res://resources/enemies/zombie.tres",
-]
-const ITEM_PATHS: Array[String] = [
-	"res://resources/items/ascendant_elixir.tres",
-	"res://resources/items/ascended_aegis.tres",
-	"res://resources/items/amulet_of_guarding.tres",
-	"res://resources/items/battle_axe.tres",
-	"res://resources/items/bracers_of_power.tres",
-	"res://resources/items/chainmail.tres",
-	"res://resources/items/dagger.tres",
-	"res://resources/items/celestial_greatbow.tres",
-	"res://resources/items/crown_of_the_deep.tres",
-	"res://resources/items/dragonbone_blade.tres",
-	"res://resources/items/elixir_of_life.tres",
-	"res://resources/items/elixir_of_swiftness.tres",
-	"res://resources/items/elven_chain.tres",
-	"res://resources/items/flail.tres",
-	"res://resources/items/greater_health_potion.tres",
-	"res://resources/items/greatsword.tres",
-	"res://resources/items/half_plate.tres",
-	"res://resources/items/hand_crossbow.tres",
-	"res://resources/items/health_potion.tres",
-	"res://resources/items/heavy_crossbow.tres",
-	"res://resources/items/iron_axe.tres",
-	"res://resources/items/leather_armor.tres",
-	"res://resources/items/longbow.tres",
-	"res://resources/items/longsword.tres",
-	"res://resources/items/mace.tres",
-	"res://resources/items/mythril_plate.tres",
-	"res://resources/items/plate_armor.tres",
-	"res://resources/items/phoenix_elixir.tres",
-	"res://resources/items/potion_of_giant_strength.tres",
-	"res://resources/items/potion_of_haste.tres",
-	"res://resources/items/ring_of_accuracy.tres",
-	"res://resources/items/ring_of_power.tres",
-	"res://resources/items/ring_of_protection.tres",
-	"res://resources/items/scale_mail.tres",
-	"res://resources/items/scimitar.tres",
-	"res://resources/items/scroll_fire_bolt.tres",
-	"res://resources/items/scroll_lightning_bolt.tres",
-	"res://resources/items/scroll_fireball.tres",
-	"res://resources/items/scroll_magic_missile.tres",
-	"res://resources/items/scroll_shield.tres",
-	"res://resources/items/scroll_sleep.tres",
-	"res://resources/items/scroll_regeneration.tres",
-	"res://resources/items/shortbow.tres",
-	"res://resources/items/spear.tres",
-	"res://resources/items/splint_armor.tres",
-	"res://resources/items/stepstone_anklet.tres",
-	"res://resources/items/starfall_charm.tres",
-	"res://resources/items/studded_leather.tres",
-	"res://resources/items/superior_health_potion.tres",
-	"res://resources/items/tonic_of_regeneration.tres",
-	"res://resources/items/warhammer.tres",
-	"res://resources/items/voidglass_rapier.tres",
-]
-const TRAP_PATHS: Array[String] = [
-	"res://resources/traps/alarm_trap.tres",
-	"res://resources/traps/poison_dart_trap.tres",
-	"res://resources/traps/spike_trap.tres",
-	"res://resources/traps/teleport_trap.tres",
-]
-
-
-func _load_resources_from_dir(_dir_path: String) -> Array[Resource]:
-	# DirAccess does not work in web exports, so this always returns empty.
-	# Use explicit path lists (ENEMY_PATHS, ITEM_PATHS) and load_with_paths() instead.
-	return []
 
 
 func _load_resources_with_paths(paths: Array[String]) -> Array[Resource]:
@@ -561,6 +490,7 @@ func _sort_item(left: Resource, right: Resource) -> bool:
 	if left.min_floor != right.min_floor:
 		return left.min_floor < right.min_floor
 	return left.display_name < right.display_name
+
 
 func _sort_trap(left: Resource, right: Resource) -> bool:
 	if left.detect_dc == right.detect_dc:

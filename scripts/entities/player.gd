@@ -1,3 +1,4 @@
+## Player actor initialized from rolled ability scores; extends Actor.
 class_name Player
 extends "res://scripts/entities/actor.gd"
 

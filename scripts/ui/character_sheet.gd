@@ -1,3 +1,4 @@
+## Displays player stats, equipment, and derived combat values.
 class_name CharacterSheet
 extends PanelContainer
 
@@ -38,9 +39,9 @@ func refresh(player: Node) -> void:
 		"[color=#9bbcff]CHARACTER SHEET[/color]  [color=#7d788f]Esc close[/color]",
 		"",
 		"[color=#f1c75b]COMBAT[/color]",
-		"AC       %d" % stats.get_armor_class(),
-		"Attack   %+d" % stats.get_attack_bonus(),
-		"Damage   d%d%+d" % [stats.get_damage_sides(), stats.get_damage_bonus()],
+		"AC              %d" % stats.get_armor_class(),
+		"Melee accuracy %+d" % stats.get_attack_bonus(),
+		"Melee damage   d%d%+d" % [stats.get_damage_sides(), stats.get_damage_bonus()],
 		"HP       %d / %d" % [stats.current_hp, stats.max_hp],
 		"Level    %s" % stats.get_level_bbcode(),
 		"XP       %d / %d" % [stats.xp, stats.xp_for_next_level()],
@@ -71,8 +72,10 @@ func _format_ability_lines(stats: Node) -> Array[String]:
 		var mod_str: String = "%+d" % ability["modifier"]
 		var mod_color: String = "#7bd88f" if ability["modifier"] >= 0 else "#f07d67"
 		lines.append(
-			"[color=#d8d6e0]%s[/color]  %2d  [color=%s](%s)[/color]"
-			% [ability["name"], ability["value"], mod_color, mod_str]
+			(
+				"[color=#d8d6e0]%s[/color]  %2d  [color=%s](%s)[/color]"
+				% [ability["name"], ability["value"], mod_color, mod_str]
+			)
 		)
 		lines.append("  [color=#aaa6b8]%s[/color]" % ability["effects"])
 		lines.append("  [color=#7d788f]%s[/color]" % ability["flavor"])

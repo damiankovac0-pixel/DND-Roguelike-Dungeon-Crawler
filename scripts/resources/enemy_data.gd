@@ -1,3 +1,4 @@
+## Resource defining an enemy template: stats, floor gates, spawn weight, and damage affinities.
 class_name EnemyData
 extends Resource
 

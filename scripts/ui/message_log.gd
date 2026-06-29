@@ -1,3 +1,4 @@
+## Color-coded scrolling log of combat, loot, floor, and system messages.
 class_name MessageLog
 extends PanelContainer
 

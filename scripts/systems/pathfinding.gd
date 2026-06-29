@@ -1,3 +1,4 @@
+## BFS next-step pathfinding for enemy AI toward a goal cell.
 class_name Pathfinding
 extends RefCounted
 

@@ -1,3 +1,4 @@
+## Tile type enum, map dimensions, glyph/color tables, and walkable/opaque helpers.
 extends Node
 class_name DungeonData
 

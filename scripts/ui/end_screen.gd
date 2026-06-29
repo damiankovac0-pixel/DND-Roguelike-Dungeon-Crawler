@@ -1,3 +1,4 @@
+## Victory or death screen with retry and quit options.
 class_name EndScreen
 extends Control
 

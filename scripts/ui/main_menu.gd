@@ -1,3 +1,4 @@
+## Landing screen with start, library, and quit buttons.
 class_name MainMenu
 extends Control
 

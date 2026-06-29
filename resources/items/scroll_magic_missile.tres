@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Magic Missile"
-description = "Targeted scroll. Hits one visible enemy without an attack roll."
+description = "Targeted scroll: range 7. Hits one visible enemy without an attack roll for 2d4+2 force damage plus double positive WIS modifier."
 glyph = "?"
 color = Color(0.65, 0.85, 1, 1)
 kind = 0

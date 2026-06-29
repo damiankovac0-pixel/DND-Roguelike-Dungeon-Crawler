@@ -1,3 +1,4 @@
+## Lists and uses consumable items from the player's inventory.
 class_name ConsumablePanel
 extends PanelContainer
 
@@ -80,7 +81,12 @@ func _render() -> void:
 	for list_index: int in range(_consumable_indices.size()):
 		var item: Resource = inventory.items[_consumable_indices[list_index]]
 		var marker: String = ">" if list_index == _selected_index else " "
-		lines.append("%s %s  [color=#777788]%s[/color]" % [marker, _colored_item_name(item), _effect_summary(item)])
+		lines.append(
+			(
+				"%s %s  [color=#777788]%s[/color]"
+				% [marker, _colored_item_name(item), _effect_summary(item)]
+			)
+		)
 	lines.append("")
 	lines.append("[color=#3f3a4c]──────────────────────────────────[/color]")
 	lines.append_array(_selected_details())
@@ -121,45 +127,81 @@ func _request_use_selected() -> void:
 
 
 func _effect_summary(item: Resource) -> String:
+	var summary: String = "unknown"
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			return "+%d HP +INT" % item.healing_amount
+			summary = "+%d HP +INT scaling" % item.healing_amount
 		ItemDataScript.ItemUse.REGEN:
-			return "regen %d x %d" % [item.healing_amount, item.effect_duration]
+			summary = "regen %d x %d" % [item.healing_amount, item.effect_duration]
 		ItemDataScript.ItemUse.SHIELD:
-			return "+%d AC" % item.armor_bonus
+			summary = "+%d AC" % item.armor_bonus
 		ItemDataScript.ItemUse.HASTE:
-			return "haste %d" % item.effect_duration
+			summary = "haste %d" % item.effect_duration
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			return "target %dd%d +WIS" % [item.damage_dice, item.damage_sides]
+			summary = "WIS hit %dd%d +WISx2" % [item.damage_dice, item.damage_sides]
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			return "force %dd%d +WIS" % [item.damage_dice, item.damage_sides]
+			summary = "force %dd%d +WISx2" % [item.damage_dice, item.damage_sides]
 		ItemDataScript.ItemUse.SLEEP:
-			return "sleep r%d" % item.target_radius
+			summary = "sleep radius %d" % item.target_radius
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			return "area r%d %dd%d +WIS" % [item.target_radius, item.damage_dice, item.damage_sides]
-	return "unknown"
+			summary = (
+				"area r%d %dd%d +WISx2" % [item.target_radius, item.damage_dice, item.damage_sides]
+			)
+	return summary
 
 
 func _effect_detail(item: Resource) -> String:
+	var detail: String = "No effect."
 	match item.use_effect:
 		ItemDataScript.ItemUse.HEAL:
-			return "Use immediately: restores %d HP plus INT modifier (min +0). Not consumed at full HP." % item.healing_amount
+			detail = (
+				(
+					"Use immediately: restores %d HP + INT modifier + 10%% base per positive INT. "
+					+ "Not consumed at full HP."
+				)
+				% item.healing_amount
+			)
 		ItemDataScript.ItemUse.REGEN:
-			return "Use immediately: restores %d HP for %d turns." % [item.healing_amount, item.effect_duration]
+			detail = (
+				"Use immediately: restores %d HP for %d turns."
+				% [item.healing_amount, item.effect_duration]
+			)
 		ItemDataScript.ItemUse.SHIELD:
-			return "Use immediately: %+d AC for %d turns." % [item.armor_bonus, item.effect_duration]
+			detail = (
+				"Use immediately: %+d AC for %d turns." % [item.armor_bonus, item.effect_duration]
+			)
 		ItemDataScript.ItemUse.HASTE:
-			return "Use immediately: skips %d enemy phase." % item.effect_duration
+			detail = "Use immediately: skips %d enemy phase." % item.effect_duration
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			return "Targets one creature in range %d. Damage adds WIS modifier (min +0). Canceling does not consume it." % item.range
+			detail = (
+				(
+					"Targets one creature in range %d. Attack roll uses WIS. "
+					+ "Damage adds double positive WIS modifier. Canceling does not consume it."
+				)
+				% item.range
+			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			return "Targets one creature in range %d and cannot miss. Damage adds WIS modifier (min +0)." % item.range
+			detail = (
+				(
+					"Targets one creature in range %d and cannot miss. "
+					+ "Damage adds double positive WIS modifier."
+				)
+				% item.range
+			)
 		ItemDataScript.ItemUse.SLEEP:
-			return "Targets a cell in range %d; sleeps enemies in radius %d." % [item.range, item.target_radius]
+			detail = (
+				"Targets a cell in range %d; highlighted radius %d shows which enemies sleep."
+				% [item.range, item.target_radius]
+			)
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			return "Targets a cell in range %d; damages enemies in radius %d and adds WIS modifier (min +0)." % [item.range, item.target_radius]
-	return "No effect."
+			detail = (
+				(
+					"Targets a cell in range %d; highlighted radius %d shows every visible enemy hit. "
+					+ "Damage adds double positive WIS modifier."
+				)
+				% [item.range, item.target_radius]
+			)
+	return detail
 
 
 func _colored_item_name(item: Resource) -> String:

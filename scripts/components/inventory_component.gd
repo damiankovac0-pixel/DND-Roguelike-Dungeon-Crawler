@@ -1,3 +1,4 @@
+## Holds items and equipped weapon/armor/accessory slots with add/remove/equip logic.
 class_name InventoryComponent
 extends Node
 
@@ -110,6 +111,7 @@ func get_equipped_ranged_weapon() -> Resource:
 		return equipped_weapon
 	return _find_best_weapon(true)
 
+
 func get_equipped_items() -> Array[Resource]:
 	var equipped_items: Array[Resource] = []
 	for item: Resource in [
@@ -135,7 +137,9 @@ func get_equipped_special_items(special_effect: int) -> Array[Resource]:
 func toggle_equipped(item: Resource) -> bool:
 	match item.kind:
 		ItemDataScript.ItemKind.WEAPON:
-			var equipped_slot: Resource = equipped_ranged_weapon if item.is_ranged_weapon else equipped_melee_weapon
+			var equipped_slot: Resource = (
+				equipped_ranged_weapon if item.is_ranged_weapon else equipped_melee_weapon
+			)
 			var is_now_equipped: bool = equipped_slot != item
 			if item.is_ranged_weapon:
 				equipped_ranged_weapon = item if is_now_equipped else null
@@ -189,13 +193,16 @@ func consume_first_potion() -> Resource:
 			return item
 	return null
 
+
 func _find_best_weapon(wants_ranged: bool) -> Resource:
 	var best_weapon: Resource = null
 	var best_score: int = -1
 	for item: Resource in items:
 		if item.kind != ItemDataScript.ItemKind.WEAPON or item.is_ranged_weapon != wants_ranged:
 			continue
-		var score: int = item.damage_dice * max(1, item.damage_sides) + item.damage_bonus + item.attack_bonus * 2
+		var score: int = (
+			item.damage_dice * max(1, item.damage_sides) + item.damage_bonus + item.attack_bonus * 2
+		)
 		if wants_ranged:
 			score += item.range
 		if score > best_score:

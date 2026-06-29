@@ -86,6 +86,18 @@ bbcode_enabled = true
 fit_content = true
 scroll_active = false
 
+[node name="Dungeon Notes" type="ScrollContainer" parent="Margin/VBox/Tabs"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="DungeonNotesText" type="RichTextLabel" parent="Margin/VBox/Tabs/Dungeon Notes"]
+custom_minimum_size = Vector2(980, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
 [node name="Info" type="ScrollContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0

@@ -1,3 +1,4 @@
+## Heads-up display: name, HP, floor depth, ability stats, gold, and help text.
 class_name HUD
 extends Control
 

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Superior Health Potion"
-description = "A bright red tonic that restores a serious wound before it becomes fatal."
+description = "A bright red tonic that restores 32 HP, plus INT modifier and extra INT scaling."
 glyph = "!"
 color = Color(1, 0.28, 0.28, 1)
 kind = 0

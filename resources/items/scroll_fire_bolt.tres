@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Fire Bolt"
-description = "Targeted scroll. A risky ranged spell attack that burns one enemy."
+description = "Targeted scroll: range 6. A WIS-based spell attack against one enemy for 1d10+2 fire damage plus double positive WIS modifier."
 glyph = "?"
 color = Color(1, 0.36, 0.12, 1)
 kind = 0
@@ -18,4 +18,4 @@ use_effect = 2
 damage_dice = 1
 damage_sides = 10
 attack_bonus = 2
-damage_bonus = 1
+damage_bonus = 2

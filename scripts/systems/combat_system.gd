@@ -1,3 +1,4 @@
+## D&D 5e-style attack resolution: d20 + bonus vs AC, critical hits, and damage rolls.
 class_name CombatSystem
 extends RefCounted
 

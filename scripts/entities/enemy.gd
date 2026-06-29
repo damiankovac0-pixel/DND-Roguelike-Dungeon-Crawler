@@ -1,3 +1,4 @@
+## Enemy actor initialized from an EnemyData resource; extends Actor.
 class_name Enemy
 extends "res://scripts/entities/actor.gd"
 

@@ -1,3 +1,4 @@
+## Resource defining a trap: effect type, damage, detection DC, and display glyph.
 class_name TrapData
 extends Resource
 

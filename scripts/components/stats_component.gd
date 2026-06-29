@@ -1,3 +1,4 @@
+## Ability scores, HP, AC, attack/damage bonuses, XP, level-up, and gold.
 class_name StatsComponent
 extends Node
 
@@ -120,6 +121,7 @@ func grant_xp(amount: int) -> bool:
 func xp_for_next_level() -> int:
 	return level * 100
 
+
 func get_level_label() -> String:
 	return format_level_label(level)
 
@@ -138,11 +140,14 @@ func format_level_bbcode(level_value: int) -> String:
 	if level_value <= STAT_LEVEL_CAP:
 		return "%d" % level_value
 	var prestige_level: int = level_value - STAT_LEVEL_CAP
-	return "%d[color=%s]+%d[/color]" % [
-		STAT_LEVEL_CAP,
-		get_prestige_level_color(prestige_level),
-		prestige_level,
-	]
+	return (
+		"%d[color=%s]+%d[/color]"
+		% [
+			STAT_LEVEL_CAP,
+			get_prestige_level_color(prestige_level),
+			prestige_level,
+		]
+	)
 
 
 func get_prestige_level_color(prestige_level: int) -> String:
@@ -181,7 +186,6 @@ func increase_ability(stat_key: String) -> bool:
 	return true
 
 
-
 func get_summary_lines() -> Array[String]:
 	return [
 		"STR %d (%+d)" % [strength, Dice.modifier(strength)],
@@ -210,13 +214,18 @@ func get_ability_effects() -> Array[Dictionary]:
 	var int_mod: int = Dice.modifier(intelligence)
 	var wis_mod: int = Dice.modifier(wisdom)
 	var cha_mod: int = Dice.modifier(charisma)
+	var sight_radius: int = 8
+	if intelligence >= 20:
+		sight_radius = 10
+	elif intelligence >= 15:
+		sight_radius = 9
 	return [
 		{
 			"key": "str",
 			"name": "STR",
 			"value": strength,
 			"modifier": str_mod,
-			"effects": "Melee attack %+d, damage %+d" % [str_mod, str_mod],
+			"effects": "Melee accuracy %+d, melee damage %+d" % [str_mod, str_mod],
 			"flavor": "Raw power for blade and brawl.",
 		},
 		{
@@ -224,7 +233,7 @@ func get_ability_effects() -> Array[Dictionary]:
 			"name": "DEX",
 			"value": dexterity,
 			"modifier": dex_mod,
-			"effects": "AC %+d, ranged attack %+d" % [dex_mod, dex_mod],
+			"effects": "AC %+d, ranged weapon accuracy %+d" % [dex_mod, dex_mod],
 			"flavor": "Quick hands and steady aim.",
 		},
 		{
@@ -240,15 +249,15 @@ func get_ability_effects() -> Array[Dictionary]:
 			"name": "INT",
 			"value": intelligence,
 			"modifier": int_mod,
-			"effects": "Potions restore %+d HP (min +0)" % max(0, int_mod),
-			"flavor": "A sharper mind wastes less medicine.",
+			"effects": "Potions scale with INT; sight radius %d" % sight_radius,
+			"flavor": "A sharper mind wastes less medicine and reads the dark.",
 		},
 		{
 			"key": "wis",
 			"name": "WIS",
 			"value": wisdom,
 			"modifier": wis_mod,
-			"effects": "Magic scroll damage %+d (min +0)" % max(0, wis_mod),
+			"effects": "Scroll accuracy %+d, damage %+d" % [wis_mod, max(0, wis_mod * 2)],
 			"flavor": "Insight turns glyphs into force.",
 		},
 		{
@@ -256,7 +265,8 @@ func get_ability_effects() -> Array[Dictionary]:
 			"name": "CHA",
 			"value": charisma,
 			"modifier": cha_mod,
-			"effects": (
+			"effects":
+			(
 				"Buy %d%%, sell %d%% value"
 				% [
 					max(50, 100 - 5 * cha_mod),
@@ -266,6 +276,7 @@ func get_ability_effects() -> Array[Dictionary]:
 			"flavor": "A silver tongue opens purses.",
 		},
 	]
+
 
 func _get_ability_value(stat_key: String) -> int:
 	match stat_key:

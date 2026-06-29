@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Greater Health Potion"
-description = "A deep crimson draught that restores a larger burst of health."
+description = "A deep crimson draught that restores 18 HP, plus INT modifier and extra INT scaling."
 glyph = "!"
 color = Color(1, 0.18, 0.18, 1)
 kind = 0

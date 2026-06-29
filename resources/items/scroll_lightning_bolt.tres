@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Lightning Bolt"
-description = "Targeted scroll. Fires a bolt of lightning dealing 3d6 damage at range."
+description = "Targeted scroll: range 6. A WIS-based lightning attack against one enemy for 3d6+1 lightning damage plus double positive WIS modifier."
 glyph = "?"
 color = Color(0.3, 0.6, 1, 1)
 kind = 0
@@ -17,4 +17,4 @@ range = 6
 use_effect = 2
 damage_dice = 3
 damage_sides = 6
-damage_bonus = 0
+damage_bonus = 1

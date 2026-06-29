@@ -1,3 +1,4 @@
+## Bootstrapper that redirects to the main menu scene on ready.
 extends Node
 
 

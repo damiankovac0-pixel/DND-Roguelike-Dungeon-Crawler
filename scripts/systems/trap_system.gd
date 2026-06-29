@@ -1,3 +1,4 @@
+## Static trap detection, triggering, and effect resolution (damage, poison, teleport, alarm).
 class_name TrapSystem
 extends RefCounted
 
