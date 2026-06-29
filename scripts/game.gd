@@ -28,24 +28,6 @@ const TrapSystem = preload("res://scripts/systems/trap_system.gd")
 const CONTAINER_TYPE_CHEST: StringName = &"chest"
 const CONTAINER_TYPE_CLUTTER: StringName = &"clutter"
 const CHEST_GLYPHS: Array[String] = ["c", "c", "C", "C", "C", "C", "C"]
-const CHEST_NAMES: Array[String] = [
-	"Plain Chest",
-	"Green Chest",
-	"Blue Chest",
-	"Violet Chest",
-	"Golden Chest",
-	"Mythic Chest",
-	"Ascended Chest",
-]
-const CHEST_COLORS: Array[Color] = [
-	Color(0.78, 0.78, 0.78),
-	Color(0.48, 0.85, 0.56),
-	Color(0.56, 0.70, 1.0),
-	Color(0.82, 0.56, 1.0),
-	Color(1.0, 0.72, 0.30),
-	Color(1.0, 0.36, 0.84),
-	Color(0.40, 1.0, 0.94),
-]
 const CLUTTER_NAMES: Array[String] = ["Cracked Vase", "Old Box"]
 const CLUTTER_GLYPHS: Array[String] = ["v", "b"]
 const CLUTTER_COLORS: Array[Color] = [Color(0.55, 0.45, 0.35), Color(0.45, 0.34, 0.24)]
@@ -799,12 +781,15 @@ func _is_container_spawn_blocked(cell: Vector2i) -> bool:
 
 
 func _make_chest_container(rarity: int) -> Dictionary:
+	var chest_rarity: int = clampi(
+		rarity, ItemDataScript.ItemRarity.COMMON, ItemDataScript.RARITY_NAMES.size() - 1
+	)
 	return {
 		"type": CONTAINER_TYPE_CHEST,
-		"rarity": rarity,
-		"display_name": CHEST_NAMES[clampi(rarity, 0, CHEST_NAMES.size() - 1)],
-		"glyph": CHEST_GLYPHS[clampi(rarity, 0, CHEST_GLYPHS.size() - 1)],
-		"color": CHEST_COLORS[clampi(rarity, 0, CHEST_COLORS.size() - 1)],
+		"rarity": chest_rarity,
+		"display_name": "%s Chest" % ItemDataScript.RARITY_NAMES[chest_rarity],
+		"glyph": CHEST_GLYPHS[clampi(chest_rarity, 0, CHEST_GLYPHS.size() - 1)],
+		"color": Color.html(ItemDataScript.RARITY_COLORS[chest_rarity]),
 	}
 
 

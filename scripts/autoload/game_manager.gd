@@ -11,8 +11,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "9.9"
-const LAST_UPDATED: String = "2026-06-29 16:58 CEST"
+const GAME_VERSION: String = "9.91"
+const LAST_UPDATED: String = "2026-06-29 22:06 CEST"
 
 # === Public Variables ===
 var player: Node2D

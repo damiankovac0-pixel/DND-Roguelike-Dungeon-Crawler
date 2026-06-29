@@ -45,6 +45,7 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V9.7[/color] — Archive pass: Library gained a dedicated Archive tab for all recorded runs and stored version metadata.",
 	"[color=#f1c75b]V9.8[/color] — Menu presentation pass: animated ASCII depth backdrop, no central button box, and no debug-style corner labels.",
 	"[color=#f1c75b]V9.9[/color] — Level-up input pass: WASD now moves through stat choices alongside arrows, numbers, and mouse.",
+	"[color=#f1c75b]V9.91[/color] — Chest clarity pass: chest names and colors now mirror item rarities, with the color ladder documented in Info.",
 ]
 
 # === Onready ===
@@ -161,9 +162,7 @@ func _build_dungeon_scrolls_text() -> String:
 		"- [color=#9b7a45]/[/color] Open door.",
 		"- [color=#ffff66]>[/color] Stairs down. Every third floor offers extraction.",
 		"- [color=#ffd152]S[/color] Shopkeeper. Step into them to open the shop.",
-		"- [color=#d8d8d8]Plain[/color] < [color=#7bd88f]Green[/color] < [color=#8fb3ff]Blue[/color] < [color=#d78fff]Violet[/color] < [color=#ffb84d]Golden[/color] < [color=#ff5fd7]Mythic[/color] < [color=#66fff0]Ascended[/color] chests.",
-		"- Better chest colors mean higher reward floors, better rarity bands, and extra item rolls at high tiers.",
-		"- Chest glyphs: [color=#d8d8d8]c[/color] is plain/green; [color=#8fb3ff]C[/color] marks rare and above.",
+		"- Chests use item-rarity colors: [color=#d8d8d8]gray Common[/color], [color=#7bd88f]green Uncommon[/color], [color=#8fb3ff]blue Rare[/color], [color=#d78fff]purple Epic[/color], [color=#ffb84d]gold Legendary[/color], [color=#ff5fd7]pink Mythic[/color], [color=#66fff0]cyan Ascended[/color].",
 		"- [color=#8c7259]v/b[/color] Cracked vases and old boxes. Can hold gold, potions, or XP orbs.",
 		"- [color=#b894ff]?[/color] Revealed weak wall. Attack, shoot, or blast it twice to open a secret room.",
 		"- [color=#ff9f6e]^ v ! ◎[/color] Revealed traps. Step around them.",
@@ -188,7 +187,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		GameManager.get_version_label() + ". Exact v9.9 mechanics.",
+		GameManager.get_version_label() + ". Exact v9.91 mechanics.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",
