@@ -10,11 +10,11 @@ enum TileType {
 }
 
 const TILE_COLORS: Dictionary = {
-	TileType.FLOOR: Color(0.35, 0.35, 0.35),
-	TileType.WALL: Color(0.18, 0.18, 0.18),
-	TileType.DOOR: Color(0.55, 0.3, 0.1),
-	TileType.OPEN_DOOR: Color(0.45, 0.35, 0.2),
-	TileType.STAIRS_DOWN: Color(0.8, 0.8, 0.0),
+	TileType.FLOOR: Color(0.72, 0.70, 0.62),
+	TileType.WALL: Color(0.42, 0.36, 0.50),
+	TileType.DOOR: Color(0.82, 0.57, 0.30),
+	TileType.OPEN_DOOR: Color(0.63, 0.52, 0.39),
+	TileType.STAIRS_DOWN: Color(1.0, 0.88, 0.47),
 }
 
 const TILE_CHARS: Dictionary = {

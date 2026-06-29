@@ -2,19 +2,19 @@ class_name MessageLog
 extends PanelContainer
 
 # === Constants ===
-const MAX_MESSAGES: int = 10
+const MAX_MESSAGES: int = 12
 const TYPE_COLORS: Dictionary = {
-	&"neutral": "#d7d8dc",
-	&"combat_hit": "#f07d67",
-	&"combat_miss": "#9aa3ad",
-	&"death": "#c9a45d",
-	&"loot": "#f1c75b",
-	&"gold": "#ffd866",
-	&"heal": "#7bd88f",
-	&"warning": "#ff9f6e",
-	&"floor": "#8db7ff",
-	&"level": "#d899ff",
-	&"equipment": "#8fd3ff",
+	&"neutral": "#fff9e4",
+	&"combat_hit": "#ff5777",
+	&"combat_miss": "#82824c",
+	&"death": "#b53b59",
+	&"loot": "#ffe077",
+	&"gold": "#ffb915",
+	&"heal": "#57b067",
+	&"warning": "#ff8a32",
+	&"floor": "#9972ee",
+	&"level": "#99d7e5",
+	&"equipment": "#47a0bf",
 }
 
 # === Private Variables ===
@@ -46,7 +46,7 @@ func add_message(message: String, message_type: StringName = &"neutral") -> void
 
 	while _messages.size() > MAX_MESSAGES:
 		_messages.pop_front()
-	output.text = "[color=#555566]-- MESSAGES --[/color]\n" + "\n".join(_messages)
+	output.text = "[color=#47426b]-- MESSAGES --[/color]\n" + "\n".join(_messages)
 	output.scroll_to_line(max(0, output.get_line_count() - 1))
 
 

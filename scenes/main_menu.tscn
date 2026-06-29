@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/ascii_backdrop.gd" id="3"]
+[ext_resource type="FontFile" path="res://resources/terminal_font.tres" id="4"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -20,45 +22,48 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.07, 0.06, 0.08, 1)
+color = Color(0.0, 0.02, 0.035, 1)
+script = ExtResource("3")
+font = ExtResource("4")
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
+anchors_preset = 0
+anchor_right = 0.62
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="Center"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 18
 
 [node name="Title" type="Label" parent="Center/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1.0, 0.976, 0.894, 1)
 text = "DUNGEON ADVENTURER"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Center/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.55, 0.5, 0.45, 1)
-text = "The depths below hold only gold and death."
+theme_override_colors/font_color = Color(0.6, 0.843, 0.898, 1)
+text = "ASCII tactics, dangerous treasure, and one more floor."
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(340, 38)
 layout_mode = 2
-text = "Descend into the Dungeon"
+text = "Enter the Dungeon"
 
 [node name="LibraryButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(340, 38)
 layout_mode = 2
-text = "Library (Bestiary, Scribes, Info)"
+text = "Library: Bestiary / Scribes / Info"
 
 [node name="QuitButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(340, 38)
 layout_mode = 2
 text = "Quit"
 
@@ -67,14 +72,14 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -410.0
-offset_top = 30.0
-offset_right = -30.0
-offset_bottom = 300.0
+offset_left = -420.0
+offset_top = 36.0
+offset_right = -28.0
+offset_bottom = 318.0
 grow_horizontal = 0
 
 [node name="HistoryOutput" type="RichTextLabel" parent="HistoryPanel"]
-custom_minimum_size = Vector2(360, 250)
+custom_minimum_size = Vector2(368, 258)
 layout_mode = 2
 bbcode_enabled = true
 text = "CHARACTER HISTORY\n\nNo previous characters."

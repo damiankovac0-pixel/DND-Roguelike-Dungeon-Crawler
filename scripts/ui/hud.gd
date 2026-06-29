@@ -18,7 +18,7 @@ func _ready() -> void:
 	stats_label.bbcode_enabled = true
 	stats_label.fit_content = true
 	stats_label.scroll_active = false
-	help_label.text = "WASD move   Space search/listen\nF fire   H consumables\nI inventory   C sheet\nEsc pause"
+	help_label.text = "WASD move     Space search/listen\nF fire         H consumables\nI inventory    C sheet\nEsc pause"
 
 
 # === Public Methods ===
@@ -32,7 +32,7 @@ func bind_player(player: Node) -> void:
 
 # === Private Methods ===
 func _update_floor(floor_number: int) -> void:
-	floor_label.text = "Floor %d" % floor_number
+	floor_label.text = "Depth %d" % floor_number
 
 
 func _update_hp(current_hp: int, max_hp: int) -> void:
