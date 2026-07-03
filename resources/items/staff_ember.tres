@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ember Staff"
+description = "A staff tipped with smoldering coals that crackle with each arcane bolt."
+glyph = "/"
+color = Color(0.85, 0.35, 0.1, 1)
+kind = 1
+rarity = 1
+base_price = 60
+spawn_weight = 7
+min_floor = 3
+is_ranged_weapon = true
+is_staff = true
+range = 5
+use_effect = 2
+damage_dice = 1
+damage_sides = 6
+attack_bonus = 1
+damage_bonus = 1
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 5

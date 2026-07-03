@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Siphon Rapier"
+description = "A rare black rapier from the Siphon set. With its ring, taking damage can trigger a small restorative pulse."
+glyph = "/"
+color = Color(0.72, 0.28, 0.58, 1)
+kind = 1
+rarity = 2
+base_price = 135
+spawn_weight = 4
+min_floor = 9
+damage_sides = 8
+attack_bonus = 2
+damage_bonus = 2
+weapon_damage_type = &"melee"
+set_id = &"siphon"
+set_display_name = "Siphon Set"
+set_required_count = 2
+set_proc_chance_percent = 20
+set_proc_heal_percent = 6

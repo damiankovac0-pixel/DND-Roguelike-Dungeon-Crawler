@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Briar Witch"
+glyph = "i"
+color = Color(0.86, 0.46, 0.66, 1)
+max_hp = 24
+armor_class = 13
+attack_bonus = 7
+damage_sides = 8
+damage_bonus = 3
+xp_reward = 170
+min_floor = 8
+max_floor = 10
+spawn_weight = 5
+melee_damage_percent = 120
+magic_damage_percent = 75
+ranged_attack_range = 4
+ranged_attack_interval = 3
+ranged_damage_sides = 6
+ranged_damage_bonus = 3
+ranged_damage_type = &"magic"
+ai_preferred_range = 3

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ascendant Staff"
+description = "The pinnacle of arcane craftsmanship. This staff bends the very fabric of magic to its wielder's will."
+glyph = "/"
+color = Color(0.4, 1, 0.94, 1)
+kind = 1
+rarity = 6
+base_price = 780
+spawn_weight = 1
+min_floor = 23
+is_ranged_weapon = true
+is_staff = true
+range = 7
+use_effect = 2
+damage_dice = 2
+damage_sides = 12
+attack_bonus = 4
+damage_bonus = 6
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 30

@@ -7,6 +7,9 @@ signal use_requested(inventory_index: int)
 
 # === Constants ===
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const RarityShimmerEffect = preload("res://scripts/ui/rarity_shimmer_effect.gd")
+const LIST_START_LINE: int = 3
+const SELECTED_SCROLL_MARGIN: int = 4
 
 # === Private Variables ===
 var _player: Node
@@ -20,6 +23,7 @@ var _consumable_indices: Array[int] = []
 # === Lifecycle Methods ===
 func _ready() -> void:
 	output.bbcode_enabled = true
+	output.install_effect(RarityShimmerEffect.new())
 
 
 func _input(event: InputEvent) -> void:
@@ -80,17 +84,22 @@ func _render() -> void:
 	var inventory: Node = _player.inventory_component
 	for list_index: int in range(_consumable_indices.size()):
 		var item: Resource = inventory.items[_consumable_indices[list_index]]
-		var marker: String = ">" if list_index == _selected_index else " "
+		var selected: bool = list_index == _selected_index
 		lines.append(
 			(
-				"%s %s  [color=#777788]%s[/color]"
-				% [marker, _colored_item_name(item), _effect_summary(item)]
+				"%s%s  [color=#777788]%s[/color]"
+				% [
+					_selection_prefix(selected),
+					_item_name_for_row(item, selected),
+					_effect_summary(item)
+				]
 			)
 		)
 	lines.append("")
 	lines.append("[color=#3f3a4c]──────────────────────────────────[/color]")
 	lines.append_array(_selected_details())
 	output.text = "\n".join(lines)
+	_queue_scroll_selected_into_view()
 
 
 func _selected_details() -> Array[String]:
@@ -138,14 +147,18 @@ func _effect_summary(item: Resource) -> String:
 		ItemDataScript.ItemUse.HASTE:
 			summary = "haste %d" % item.effect_duration
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			summary = "WIS hit %dd%d +WISx2" % [item.damage_dice, item.damage_sides]
+			summary = "WIS hit %dd%d +WIS/depth" % [item.damage_dice, item.damage_sides]
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			summary = "force %dd%d +WISx2" % [item.damage_dice, item.damage_sides]
+			summary = (
+				"force x%d %dd%d +WIS/depth"
+				% [item.target_count, item.damage_dice, item.damage_sides]
+			)
 		ItemDataScript.ItemUse.SLEEP:
 			summary = "sleep radius %d" % item.target_radius
 		ItemDataScript.ItemUse.AREA_DAMAGE:
 			summary = (
-				"area r%d %dd%d +WISx2" % [item.target_radius, item.damage_dice, item.damage_sides]
+				"area r%d %dd%d +WIS/depth"
+				% [item.target_radius, item.damage_dice, item.damage_sides]
 			)
 	return summary
 
@@ -176,17 +189,18 @@ func _effect_detail(item: Resource) -> String:
 			detail = (
 				(
 					"Targets one creature in range %d. Attack roll uses WIS. "
-					+ "Damage adds double positive WIS modifier. Canceling does not consume it."
+					+ "Damage adds double positive WIS modifier plus floor-depth scaling. "
+					+ "Canceling does not consume it."
 				)
 				% item.range
 			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
 			detail = (
 				(
-					"Targets one creature in range %d and cannot miss. "
-					+ "Damage adds double positive WIS modifier."
+					"Targets up to %d creatures in range %d and cannot miss. "
+					+ "Damage adds double positive WIS modifier plus floor-depth scaling."
 				)
-				% item.range
+				% [item.target_count, item.range]
 			)
 		ItemDataScript.ItemUse.SLEEP:
 			detail = (
@@ -197,15 +211,45 @@ func _effect_detail(item: Resource) -> String:
 			detail = (
 				(
 					"Targets a cell in range %d; highlighted radius %d shows every visible enemy hit. "
-					+ "Damage adds double positive WIS modifier."
+					+ "Damage adds double positive WIS modifier plus floor-depth scaling."
 				)
 				% [item.range, item.target_radius]
 			)
 	return detail
 
 
+func _item_name_for_row(item: Resource, selected: bool) -> String:
+	var item_name: String = _colored_item_name(item)
+	if selected:
+		return "[bgcolor=#201a33]%s[/bgcolor]" % item_name
+	return item_name
+
+
+func _selection_prefix(selected: bool) -> String:
+	if selected:
+		return "[wave amp=1.0 freq=2.2 connected=1][color=#f1c75b]›[/color][/wave]   "
+	return "  "
+
+
 func _colored_item_name(item: Resource) -> String:
-	return "[color=%s]%s[/color]" % [item.get_rarity_color(), item.display_name]
+	return item.get_display_name_bbcode()
+
+
+func _queue_scroll_selected_into_view() -> void:
+	if _consumable_indices.is_empty():
+		return
+	call_deferred("_scroll_selected_into_view")
+
+
+func _scroll_selected_into_view() -> void:
+	if _consumable_indices.is_empty():
+		return
+	var selected_line: int = LIST_START_LINE + _selected_index
+	var visible_lines: int = max(1, output.get_visible_line_count())
+	var target_line: int = max(
+		0, selected_line - min(SELECTED_SCROLL_MARGIN, int(visible_lines / 2))
+	)
+	output.scroll_to_line(target_line)
 
 
 func _is_escape_key(event: InputEvent) -> bool:

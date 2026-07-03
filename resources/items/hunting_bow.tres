@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Hunting Bow"
+description = "A sturdy starter bow with reliable range. Favored by ranger trainees across the realms."
+glyph = "/"
+color = Color(0.72, 0.54, 0.32, 1)
+kind = 1
+rarity = 0
+base_price = 30
+spawn_weight = 12
+min_floor = 1
+is_ranged_weapon = true
+range = 5
+use_effect = 2
+damage_dice = 1
+damage_sides = 6
+attack_bonus = 0
+damage_bonus = 0
+required_class = &"ranger"
+weapon_damage_type = &"ranged"
+class_damage_type = &"ranged"
+class_damage_percent_bonus = 0

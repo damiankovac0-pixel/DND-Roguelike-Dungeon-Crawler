@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Clockwork Spider"
+glyph = "x"
+color = Color(0.78, 0.60, 0.32, 1)
+max_hp = 10
+armor_class = 14
+attack_bonus = 5
+damage_sides = 4
+damage_bonus = 1
+xp_reward = 60
+min_floor = 2
+max_floor = 5
+spawn_weight = 7
+poison_chance_percent = 8
+poison_turns = 2
+poison_damage_sides = 2
+ranged_damage_percent = 75

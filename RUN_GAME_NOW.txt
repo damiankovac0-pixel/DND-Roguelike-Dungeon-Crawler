@@ -3,3 +3,10 @@ Run the game directly from this project folder with:
   /usr/local/bin/godot scenes/game.tscn
 
 This opens the game scene immediately, skipping the menu and character creation screens.
+
+If the command prints missing class_name types (StatsComponent, Enemy, LevelUpPanel) or missing
+res://.godot/imported/*.fontdata files, the local Godot import cache is missing. Build it once with:
+
+  /usr/local/bin/godot --headless --path . --import
+
+Then run the game command above again.

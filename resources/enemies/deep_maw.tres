@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Deep Maw"
+glyph = "U"
+color = Color(0.55, 0.20, 0.62, 1)
+max_hp = 120
+armor_class = 18
+attack_bonus = 14
+damage_sides = 16
+damage_bonus = 13
+xp_reward = 1050
+min_floor = 27
+spawn_weight = 2
+melee_damage_percent = 80
+magic_damage_percent = 130
+poison_chance_percent = 20
+poison_turns = 3
+poison_damage_sides = 4

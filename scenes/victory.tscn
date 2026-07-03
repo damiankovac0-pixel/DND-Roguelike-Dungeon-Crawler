@@ -12,8 +12,8 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2")
 script = ExtResource("1")
-title_text = "Safe Return"
-body_text = "You chose to leave the endless dungeon with your life."
+title_text = "Dungeon Conquered"
+body_text = "You reached floor 25 and left the dungeon victorious."
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

@@ -4,6 +4,9 @@ extends PanelContainer
 
 # === Constants ===
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const RarityShimmerEffect = preload("res://scripts/ui/rarity_shimmer_effect.gd")
+const LIST_START_LINE: int = 3
+const SELECTED_SCROLL_MARGIN: int = 4
 
 # === Private Variables ===
 var _player: Node
@@ -16,6 +19,7 @@ var _selected_index: int = 0
 # === Lifecycle Methods ===
 func _ready() -> void:
 	output.bbcode_enabled = true
+	output.install_effect(RarityShimmerEffect.new())
 
 
 func _input(event: InputEvent) -> void:
@@ -40,11 +44,16 @@ func refresh(player: Node) -> void:
 	]
 	for index: int in range(inventory.items.size()):
 		var item: Resource = inventory.items[index]
-		var marker: String = ">" if index == _selected_index else " "
+		var selected: bool = index == _selected_index
 		var equipped_tag: String = (
 			"  [color=#7bd88f][equipped][/color]" if inventory.is_equipped(item) else ""
 		)
-		lines.append("%s %s%s" % [marker, _colored_item_name(item), equipped_tag])
+		lines.append(
+			(
+				"%s%s%s"
+				% [_selection_prefix(selected), _item_name_for_row(item, selected), equipped_tag]
+			)
+		)
 	if inventory.items.is_empty():
 		lines.append("[color=#c8c4d8]Your pack is empty.[/color]")
 		lines.append(
@@ -54,6 +63,7 @@ func refresh(player: Node) -> void:
 	lines.append("[color=#3f3a4c]──────────────────────────────────[/color]")
 	lines.append_array(_get_selected_item_details())
 	output.text = "\n".join(lines)
+	_queue_scroll_selected_into_view()
 
 
 func select_previous() -> void:
@@ -77,6 +87,15 @@ func toggle_selected_equipment() -> String:
 	var item: Resource = inventory.items[_selected_index]
 	if item.kind == ItemDataScript.ItemKind.CONSUMABLE:
 		return "Press H to open the consumable menu."
+	if (
+		item.required_class != &""
+		and item.required_class != GameManager.pending_character_class
+		and not inventory.is_equipped(item)
+	):
+		return (
+			"Only %s can equip %s."
+			% [GameManager.get_character_class_label(item.required_class), item.display_name]
+		)
 	var equipped: bool = inventory.toggle_equipped(item)
 	refresh(_player)
 	return "%s %s." % ["Equipped" if equipped else "Unequipped", item.display_name]
@@ -96,7 +115,10 @@ func has_selection() -> bool:
 func _get_selected_item_details() -> Array[String]:
 	if _player == null or _player.inventory_component.items.is_empty():
 		return [
-			"[color=#8a86a0]Loot appears here after you pick it up. H opens potions and scrolls; ranged weapons use F.[/color]"
+			(
+				"[color=#8a86a0]Loot appears here after you pick it up. "
+				+ "H opens potions and scrolls; ranged weapons use F.[/color]"
+			)
 		]
 
 	var inventory: Node = _player.inventory_component
@@ -109,6 +131,10 @@ func _get_selected_item_details() -> Array[String]:
 		item.description,
 		"",
 	]
+	var decision_lines: Array[String] = _decision_lines(item, inventory)
+	if not decision_lines.is_empty():
+		lines.append_array(decision_lines)
+		lines.append("")
 	match item.kind:
 		ItemDataScript.ItemKind.WEAPON:
 			var current_weapon: Resource = (
@@ -225,12 +251,33 @@ func _get_selected_item_details() -> Array[String]:
 						)
 					)
 				)
-		ItemDataScript.ItemKind.CONSUMABLE:
-			_append_consumable_details(lines, item)
-			lines.append("Press H to open the consumable menu.")
 	var special_line: String = _special_detail(item)
+	var class_lines: Array[String] = _class_gear_detail(item)
+	if not class_lines.is_empty():
+		lines.append_array(class_lines)
 	if not special_line.is_empty():
 		lines.append(special_line)
+	return lines
+
+
+func _decision_lines(item: Resource, inventory: Node) -> Array[String]:
+	var lines: Array[String] = []
+	if item.required_class != &"" and item.required_class != GameManager.pending_character_class:
+		lines.append("[color=#d97d7d]Fit:[/color] Sell-only for your class.")
+	elif item.required_class != &"":
+		lines.append("[color=#7bd88f]Fit:[/color] Built for your class.")
+	if item.set_id != &"":
+		var set_name: String = (
+			item.set_display_name if not item.set_display_name.is_empty() else String(item.set_id)
+		)
+		var equipped_count: int = inventory._get_equipped_set_piece_count(item.set_id)
+		var required_count: int = max(2, item.set_required_count)
+		if equipped_count + 1 >= required_count and not inventory.is_equipped(item):
+			lines.append("[color=#7bd88f]Set:[/color] Equipping this completes %s." % set_name)
+		elif inventory.is_equipped(item) and equipped_count >= required_count:
+			lines.append("[color=#d97d7d]Set:[/color] Unequipping this breaks %s." % set_name)
+	if item.is_staff:
+		lines.append("[color=#aaa6b8]Scaling:[/color] Staff accuracy and damage use WIS.")
 	return lines
 
 
@@ -264,7 +311,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus double positive WIS modifier"
+						"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus WIS/depth scaling"
 						% [
 							item.range,
 							item.damage_dice,
@@ -279,9 +326,13 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, cannot miss, force damage %dd%d%+d plus double positive WIS modifier"
+						(
+							"Targeted: range %d, up to %d targets, cannot miss, "
+							+ "force damage %dd%d%+d plus WIS/depth scaling"
+						)
 						% [
 							item.range,
+							item.target_count,
 							item.damage_dice,
 							item.damage_sides,
 							item.damage_bonus,
@@ -301,7 +352,10 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, highlighted radius %d, hits every visible enemy for %dd%d%+d plus double positive WIS modifier"
+						(
+							"Targeted: range %d, highlighted radius %d, hits every visible enemy "
+							+ "for %dd%d%+d plus WIS/depth scaling"
+						)
 						% [
 							item.range,
 							item.target_radius,
@@ -330,8 +384,80 @@ func _special_detail(item: Resource) -> String:
 	return ""
 
 
+func _class_gear_detail(item: Resource) -> Array[String]:
+	var lines: Array[String] = []
+	if item.is_staff:
+		lines.append("Staff: WIS-based magic ranged weapon")
+	if item.kind == ItemDataScript.ItemKind.WEAPON and item.weapon_damage_type != &"":
+		lines.append("Damage type: %s" % item.weapon_damage_type)
+	if item.required_class != &"":
+		var required_label: String = GameManager.get_character_class_label(item.required_class)
+		lines.append("Requires: %s" % required_label)
+		var class_fit: String = (
+			"usable by your class"
+			if item.required_class == GameManager.pending_character_class
+			else "sell-only for your class"
+		)
+		lines.append("Class fit: %s" % class_fit)
+	if item.class_damage_percent_bonus != 0:
+		var class_dmg_type: String = (
+			String(item.class_damage_type) if item.class_damage_type != &"" else "all"
+		)
+		var bonus_str: String = "%+d%%" % item.class_damage_percent_bonus
+		lines.append("Class bonus: %s %s damage" % [bonus_str, class_dmg_type])
+	if item.set_id != &"":
+		var set_name: String = (
+			item.set_display_name if not item.set_display_name.is_empty() else String(item.set_id)
+		)
+		var equipped_count: int = 0
+		if _player != null and _player.inventory_component != null:
+			equipped_count = _player.inventory_component._get_equipped_set_piece_count(item.set_id)
+		var required_count: int = max(2, item.set_required_count)
+		lines.append("Set: %s (%d/%d equipped)" % [set_name, equipped_count, required_count])
+		if item.set_damage_resist_percent > 0:
+			lines.append("Set bonus: -%d%% incoming damage" % item.set_damage_resist_percent)
+		if item.set_proc_chance_percent > 0 and item.set_proc_heal_percent > 0:
+			lines.append(
+				(
+					"Set bonus: %d%% chance after damage to heal %d%% max HP"
+					% [item.set_proc_chance_percent, item.set_proc_heal_percent]
+				)
+			)
+	return lines
+
+
+func _item_name_for_row(item: Resource, selected: bool) -> String:
+	var item_name: String = _colored_item_name(item)
+	if selected:
+		return "[bgcolor=#201a33]%s[/bgcolor]" % item_name
+	return item_name
+
+
+func _selection_prefix(selected: bool) -> String:
+	if selected:
+		return "[wave amp=1.0 freq=2.2 connected=1][color=#f1c75b]›[/color][/wave]   "
+	return "  "
+
+
 func _colored_item_name(item: Resource) -> String:
-	return "[color=%s]%s[/color]" % [item.get_rarity_color(), item.display_name]
+	return item.get_display_name_bbcode()
+
+
+func _queue_scroll_selected_into_view() -> void:
+	if _player == null or _player.inventory_component.items.is_empty():
+		return
+	call_deferred("_scroll_selected_into_view")
+
+
+func _scroll_selected_into_view() -> void:
+	if _player == null or _player.inventory_component.items.is_empty():
+		return
+	var selected_line: int = LIST_START_LINE + _selected_index
+	var visible_lines: int = max(1, output.get_visible_line_count())
+	var target_line: int = max(
+		0, selected_line - min(SELECTED_SCROLL_MARGIN, int(visible_lines / 2))
+	)
+	output.scroll_to_line(target_line)
 
 
 func _is_escape_key(event: InputEvent) -> bool:

@@ -1,11 +1,18 @@
 ## Landing screen with start, library, and quit buttons.
+## V16 keeps the title fade but removes looping button-scale motion.
 class_name MainMenu
 extends Control
+
+# === Constants ===
+const ENTRANCE_DURATION: float = 0.5
+const ENTRANCE_STAGGER: float = 0.12
 
 # === Onready ===
 @onready var start_button: Button = $Center/VBox/StartButton
 @onready var library_button: Button = $Center/VBox/LibraryButton
 @onready var quit_button: Button = $Center/VBox/QuitButton
+@onready var title_label: Label = $Center/VBox/Title
+@onready var subtitle_label: Label = $Center/VBox/Subtitle
 
 
 # === Lifecycle Methods ===
@@ -13,10 +20,29 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	library_button.pressed.connect(_on_library_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	_play_entrance()
 	start_button.grab_focus()
 
 
 # === Private Methods ===
+func _play_entrance() -> void:
+	## Short staggered fade: enough ceremony for the title screen, no long wait.
+	var entrance_nodes: Array[Control] = [
+		title_label, subtitle_label, start_button, library_button, quit_button
+	]
+	for index: int in range(entrance_nodes.size()):
+		var node: Control = entrance_nodes[index]
+		node.modulate = Color(1, 1, 1, 0)
+		var tween: Tween = create_tween()
+		tween.tween_interval(float(index) * ENTRANCE_STAGGER)
+		(
+			tween
+			. tween_property(node, "modulate", Color.WHITE, ENTRANCE_DURATION)
+			. set_ease(Tween.EASE_OUT)
+			. set_trans(Tween.TRANS_CUBIC)
+		)
+
+
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/character_creation.tscn")
 

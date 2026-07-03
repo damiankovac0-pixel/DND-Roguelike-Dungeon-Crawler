@@ -38,6 +38,10 @@ func refresh(player: Node) -> void:
 		"[font_size=22][color=#f2f2f2]%s[/color][/font_size]" % player.display_name,
 		"[color=#9bbcff]CHARACTER SHEET[/color]  [color=#7d788f]Esc close[/color]",
 		"",
+		"Class    %s" % GameManager.get_character_class_label(),
+		"[color=#7d788f]%s[/color]" % GameManager.get_character_class_description(),
+		"[color=#7d788f]Q abilities: Lv1/Lv6/Lv12.  Passives: Lv5/10/15/20.[/color]",
+		"",
 		"[color=#f1c75b]COMBAT[/color]",
 		"AC              %d" % stats.get_armor_class(),
 		"Melee accuracy %+d" % stats.get_attack_bonus(),
@@ -58,6 +62,12 @@ func refresh(player: Node) -> void:
 			lines.append("Acc. 2   %s" % accessory_2_name)
 	else:
 		lines.append("Acc.     (empty)")
+	var class_bonus_line: String = _get_class_damage_bonus_line(inventory)
+	if not class_bonus_line.is_empty():
+		lines.append(class_bonus_line)
+	var set_bonus_lines: Array[String] = _get_active_set_bonus_lines(inventory)
+	if not set_bonus_lines.is_empty():
+		lines.append_array(set_bonus_lines)
 	lines.append("")
 	lines.append("[color=#d899ff]ABILITIES[/color]")
 	lines.append_array(_format_ability_lines(stats))
@@ -92,3 +102,41 @@ func _is_escape_key(event: InputEvent) -> bool:
 		and not key_event.echo
 		and (key_event.keycode == KEY_ESCAPE or key_event.physical_keycode == KEY_ESCAPE)
 	)
+
+
+func _get_class_damage_bonus_line(inventory: Node) -> String:
+	var class_bonus_parts: Array[String] = []
+	for item: Resource in inventory.get_equipped_items():
+		if item.class_damage_percent_bonus != 0:
+			var dmg_type: String = (
+				String(item.class_damage_type) if item.class_damage_type != &"" else "all"
+			)
+			class_bonus_parts.append(
+				"%s: %+d%% %s" % [item.display_name, item.class_damage_percent_bonus, dmg_type]
+			)
+	if class_bonus_parts.is_empty():
+		return ""
+	var prefix: String = "[color=#aaa6b8]Class dmg bonus[/color] "
+	return prefix + "  ".join(class_bonus_parts)
+
+
+func _get_active_set_bonus_lines(inventory: Node) -> Array[String]:
+	var lines: Array[String] = []
+	if not inventory.has_method("_get_active_set_bonuses"):
+		return lines
+	for data: Dictionary in inventory._get_active_set_bonuses():
+		var parts: Array[String] = []
+		if int(data["damage_resist_percent"]) > 0:
+			parts.append("-%d%% incoming damage" % int(data["damage_resist_percent"]))
+		if int(data["proc_chance_percent"]) > 0 and int(data["proc_heal_percent"]) > 0:
+			parts.append(
+				(
+					"%d%% after-damage heal %d%% HP"
+					% [int(data["proc_chance_percent"]), int(data["proc_heal_percent"])]
+				)
+			)
+		if not parts.is_empty():
+			lines.append(
+				"[color=#aaa6b8]Set[/color] %s: %s" % [data["display_name"], ", ".join(parts)]
+			)
+	return lines

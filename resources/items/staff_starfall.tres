@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Starfall Staff"
+description = "Forged from a fallen meteorite, this staff channels raw celestial fury into devastating magic."
+glyph = "/"
+color = Color(1, 0.35, 0.8, 1)
+kind = 1
+rarity = 5
+base_price = 540
+spawn_weight = 1
+min_floor = 19
+is_ranged_weapon = true
+is_staff = true
+range = 7
+use_effect = 2
+damage_dice = 2
+damage_sides = 10
+attack_bonus = 3
+damage_bonus = 5
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 25

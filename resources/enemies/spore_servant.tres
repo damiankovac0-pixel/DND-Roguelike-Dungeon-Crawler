@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Spore Servant"
+glyph = "p"
+color = Color(0.62, 0.72, 0.38, 1)
+max_hp = 26
+armor_class = 10
+attack_bonus = 5
+damage_sides = 8
+damage_bonus = 2
+xp_reward = 110
+min_floor = 6
+max_floor = 10
+spawn_weight = 8
+revive_chance_percent = 15
+revive_hp_percent = 30
+poison_chance_percent = 15
+poison_turns = 3
+poison_damage_sides = 4

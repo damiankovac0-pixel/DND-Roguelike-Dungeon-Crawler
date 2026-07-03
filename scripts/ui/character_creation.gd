@@ -13,16 +13,20 @@ const STAT_DESCRIPTIONS: Array[String] = [
 	"CON: max HP now and HP gained every level.",
 	"INT: stronger potions; sight radius +1 at 15 and +2 at 20.",
 	"WIS: scroll accuracy and stronger scroll damage.",
-	"CHA: shops sell cheaper and buy for more.",
+	"CHA: shops sell cheaper, buy for more, and feature one golden deal at 15+.",
 ]
+const CLASS_IDS: Array[StringName] = [&"fighter", &"ranger", &"wizard"]
 # === Private Variables ===
 var _rolls: Array[int] = []
 var _selectors: Array[OptionButton] = []
 var _assignments: Array[int] = []
 var _is_swapping: bool = false
+var _selected_class_index: int = 0
 
 # === Onready ===
 @onready var name_input: LineEdit = $Center/Panel/Margin/VBox/NameInput
+@onready var class_selector: OptionButton = $Center/Panel/Margin/VBox/ClassRow/ClassSelector
+@onready var class_description: Label = $Center/Panel/Margin/VBox/ClassRow/ClassDescription
 @onready var assignments: VBoxContainer = $Center/Panel/Margin/VBox/Assignments
 @onready var status_label: Label = $Center/Panel/Margin/VBox/StatusLabel
 @onready var reroll_button: Button = $Center/Panel/Margin/VBox/Buttons/RerollButton
@@ -36,6 +40,8 @@ func _ready() -> void:
 	begin_button.pressed.connect(_begin_run)
 	back_button.pressed.connect(_go_back)
 	name_input.text_changed.connect(_on_selection_changed)
+	class_selector.item_selected.connect(_on_class_selected)
+	_populate_class_selector()
 	_build_assignment_rows()
 	_roll_abilities()
 	name_input.call_deferred("grab_focus")
@@ -93,6 +99,28 @@ func _build_assignment_rows() -> void:
 		_selectors.append(selector)
 
 
+func _populate_class_selector() -> void:
+	class_selector.clear()
+	for class_index: int in range(CLASS_IDS.size()):
+		var class_id: StringName = CLASS_IDS[class_index]
+		class_selector.add_item(GameManager.get_character_class_label(class_id), class_index)
+	class_selector.select(_selected_class_index)
+	_update_class_description()
+
+
+func _selected_class_id() -> StringName:
+	return CLASS_IDS[clamp(_selected_class_index, 0, CLASS_IDS.size() - 1)]
+
+
+func _update_class_description() -> void:
+	class_description.text = GameManager.get_character_class_description(_selected_class_id())
+
+
+func _on_class_selected(selected_item_index: int) -> void:
+	_selected_class_index = selected_item_index
+	_update_class_description()
+
+
 func _roll_abilities() -> void:
 	_rolls.clear()
 	_assignments.clear()
@@ -115,7 +143,7 @@ func _begin_run() -> void:
 	for index: int in range(STAT_KEYS.size()):
 		var roll_index: int = _selectors[index].get_selected_id()
 		ability_scores[STAT_KEYS[index]] = _rolls[roll_index]
-	GameManager.prepare_character(name_input.text, ability_scores)
+	GameManager.prepare_character(name_input.text, ability_scores, _selected_class_id())
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 
 

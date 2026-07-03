@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Moonstring Longbow"
+description = "A legendary bow strung with silver thread. In ranger hands it turns patient spacing into deep, reliable shots."
+glyph = "/"
+color = Color(0.92, 0.78, 1, 1)
+kind = 1
+rarity = 4
+base_price = 340
+spawn_weight = 2
+min_floor = 18
+is_ranged_weapon = true
+range = 8
+use_effect = 2
+damage_dice = 2
+damage_sides = 6
+attack_bonus = 3
+damage_bonus = 3
+required_class = &"ranger"
+weapon_damage_type = &"ranged"
+class_damage_type = &"ranged"
+class_damage_percent_bonus = 12

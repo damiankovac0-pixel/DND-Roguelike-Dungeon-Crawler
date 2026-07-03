@@ -8,6 +8,8 @@ enum TrapEffect {
 	POTSON,
 	TELEPORT,
 	ALARM,
+	STUN,
+	AMBUSH,
 }
 
 # === Exports ===

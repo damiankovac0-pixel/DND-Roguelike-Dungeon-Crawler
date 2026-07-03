@@ -8,6 +8,9 @@ const MIN_LEAF_SIZE: int = 10
 const MIN_ROOM_SIZE: int = 5
 const MAX_DEPTH: int = 4
 const TRAP_CHANCE: float = 0.3
+const DOOR_KEEP_RATIO: float = 0.40
+const MIN_DOORS_PER_LEVEL: int = 1
+const DOOR_CORRIDOR_PAIR_BLOCK_DISTANCE: int = 7
 const SECRET_ROOM_MIN_FLOOR: int = 2
 const SECRET_ROOM_CHANCE: float = 0.50
 const SECRET_ROOM_GUARANTEE_INTERVAL: int = 4
@@ -103,7 +106,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 
 
 func _generate_secret_room(
-	map_data: Array, rooms: Array[Rect2i], occupied_spawns: Dictionary, floor_number: int
+	map_data: Array, rooms: Array[Rect2i], _occupied_spawns: Dictionary, floor_number: int
 ) -> Dictionary:
 	var result: Dictionary = {
 		"secret_walls": {},
@@ -347,29 +350,103 @@ func _connect_rooms(map_data: Array, room_a: Rect2i, room_b: Rect2i) -> void:
 
 
 func _place_room_doors(map_data: Array, rooms: Array[Rect2i]) -> void:
+	var candidates: Array[Dictionary] = _collect_room_door_candidates(map_data, rooms)
+	if candidates.is_empty():
+		return
+	candidates.shuffle()
+	var target_count: int = max(
+		MIN_DOORS_PER_LEVEL, int(round(candidates.size() * DOOR_KEEP_RATIO))
+	)
+	target_count = min(target_count, candidates.size())
+	var placed: int = 0
+	for candidate: Dictionary in candidates:
+		if placed >= target_count:
+			return
+		var door_cell: Vector2i = candidate["door_cell"]
+		var outward: Vector2i = candidate["outward"]
+		if _has_adjacent_door(map_data, door_cell):
+			continue
+		if _has_corridor_run_door(map_data, door_cell, outward):
+			continue
+		map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.DOOR
+		placed += 1
+	if placed == 0:
+		_place_fallback_door(map_data, candidates)
+
+
+func _collect_room_door_candidates(map_data: Array, rooms: Array[Rect2i]) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
 	for room: Rect2i in rooms:
 		for x: int in range(room.position.x + 1, room.end.x - 1):
-			_try_place_room_door(map_data, Vector2i(x, room.position.y), Vector2i.UP)
-			_try_place_room_door(map_data, Vector2i(x, room.end.y - 1), Vector2i.DOWN)
+			_append_room_door_candidate(
+				candidates, map_data, rooms, Vector2i(x, room.position.y), Vector2i.UP
+			)
+			_append_room_door_candidate(
+				candidates, map_data, rooms, Vector2i(x, room.end.y - 1), Vector2i.DOWN
+			)
 		for y: int in range(room.position.y + 1, room.end.y - 1):
-			_try_place_room_door(map_data, Vector2i(room.position.x, y), Vector2i.LEFT)
-			_try_place_room_door(map_data, Vector2i(room.end.x - 1, y), Vector2i.RIGHT)
+			_append_room_door_candidate(
+				candidates, map_data, rooms, Vector2i(room.position.x, y), Vector2i.LEFT
+			)
+			_append_room_door_candidate(
+				candidates, map_data, rooms, Vector2i(room.end.x - 1, y), Vector2i.RIGHT
+			)
+	return candidates
 
 
-func _try_place_room_door(map_data: Array, cell: Vector2i, outward: Vector2i) -> void:
-	var outside_cell: Vector2i = cell + outward
-	var inside_cell: Vector2i = cell - outward
-	if not _is_inside_map(map_data, outside_cell) or not _is_inside_map(map_data, inside_cell):
+func _append_room_door_candidate(
+	candidates: Array[Dictionary],
+	map_data: Array,
+	rooms: Array[Rect2i],
+	room_edge_cell: Vector2i,
+	outward: Vector2i
+) -> void:
+	if not _is_valid_room_door_candidate(map_data, rooms, room_edge_cell, outward):
 		return
-	if map_data[cell.y][cell.x] != DungeonDataScript.TileType.FLOOR:
+	candidates.append({"door_cell": room_edge_cell + outward, "outward": outward})
+
+
+func _is_valid_room_door_candidate(
+	map_data: Array, rooms: Array[Rect2i], room_edge_cell: Vector2i, outward: Vector2i
+) -> bool:
+	var door_cell: Vector2i = room_edge_cell + outward
+	var corridor_cell: Vector2i = door_cell + outward
+	var room_inside_cell: Vector2i = room_edge_cell - outward
+	if (
+		not _is_inside_map(map_data, door_cell)
+		or not _is_inside_map(map_data, corridor_cell)
+		or not _is_inside_map(map_data, room_inside_cell)
+	):
+		return false
+	return (
+		map_data[room_edge_cell.y][room_edge_cell.x] == DungeonDataScript.TileType.FLOOR
+		and map_data[room_inside_cell.y][room_inside_cell.x] == DungeonDataScript.TileType.FLOOR
+		and map_data[door_cell.y][door_cell.x] == DungeonDataScript.TileType.FLOOR
+		and map_data[corridor_cell.y][corridor_cell.x] == DungeonDataScript.TileType.FLOOR
+		and not _is_room_cell(rooms, door_cell)
+		and not _is_room_cell(rooms, corridor_cell)
+	)
+
+
+func _place_fallback_door(map_data: Array, candidates: Array[Dictionary]) -> void:
+	for candidate: Dictionary in candidates:
+		var door_cell: Vector2i = candidate["door_cell"]
+		if _has_adjacent_door(map_data, door_cell):
+			continue
+		map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.DOOR
 		return
-	if map_data[outside_cell.y][outside_cell.x] != DungeonDataScript.TileType.FLOOR:
-		return
-	if map_data[inside_cell.y][inside_cell.x] != DungeonDataScript.TileType.FLOOR:
-		return
-	if _has_adjacent_door(map_data, cell):
-		return
-	map_data[cell.y][cell.x] = DungeonDataScript.TileType.DOOR
+
+
+func _is_room_cell(rooms: Array[Rect2i], cell: Vector2i) -> bool:
+	for room: Rect2i in rooms:
+		if (
+			cell.x >= room.position.x
+			and cell.x < room.end.x
+			and cell.y >= room.position.y
+			and cell.y < room.end.y
+		):
+			return true
+	return false
 
 
 func _has_adjacent_door(map_data: Array, cell: Vector2i) -> bool:
@@ -380,6 +457,19 @@ func _has_adjacent_door(map_data: Array, cell: Vector2i) -> bool:
 			and map_data[neighbor.y][neighbor.x] == DungeonDataScript.TileType.DOOR
 		):
 			return true
+	return false
+
+
+func _has_corridor_run_door(map_data: Array, door_cell: Vector2i, outward: Vector2i) -> bool:
+	for step: int in range(1, DOOR_CORRIDOR_PAIR_BLOCK_DISTANCE + 1):
+		var cell: Vector2i = door_cell + outward * step
+		if not _is_inside_map(map_data, cell):
+			return false
+		var tile_type: int = map_data[cell.y][cell.x]
+		if tile_type == DungeonDataScript.TileType.DOOR:
+			return true
+		if tile_type != DungeonDataScript.TileType.FLOOR:
+			return false
 	return false
 
 

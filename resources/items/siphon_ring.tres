@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Siphon Ring"
+description = "A rare garnet ring from the Siphon set. Paired with the rapier, incoming harm can kindle a short healing pulse."
+glyph = "="
+color = Color(0.72, 0.28, 0.58, 1)
+kind = 3
+rarity = 2
+base_price = 100
+spawn_weight = 4
+min_floor = 9
+attack_bonus = 1
+damage_bonus = 1
+set_id = &"siphon"
+set_display_name = "Siphon Set"
+set_required_count = 2
+set_proc_chance_percent = 20
+set_proc_heal_percent = 6

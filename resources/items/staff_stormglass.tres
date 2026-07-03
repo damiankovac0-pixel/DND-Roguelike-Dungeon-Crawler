@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Stormglass Staff"
+description = "A staff of fused sea-glass that hums with stored lightning, releasing crackling energy on impact."
+glyph = "/"
+color = Color(0.45, 0.8, 1, 1)
+kind = 1
+rarity = 2
+base_price = 105
+spawn_weight = 5
+min_floor = 7
+is_ranged_weapon = true
+is_staff = true
+range = 5
+use_effect = 2
+damage_dice = 1
+damage_sides = 8
+attack_bonus = 1
+damage_bonus = 2
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 10

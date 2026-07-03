@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Harpooner"
+glyph = "H"
+color = Color(0.48, 0.76, 0.78, 1)
+max_hp = 46
+armor_class = 15
+attack_bonus = 9
+damage_sides = 10
+damage_bonus = 6
+xp_reward = 360
+min_floor = 16
+max_floor = 20
+spawn_weight = 7
+ranged_attack_range = 5
+ranged_attack_interval = 3
+ranged_damage_sides = 8
+ranged_damage_bonus = 5
+ranged_damage_type = &"piercing"
+ai_preferred_range = 3

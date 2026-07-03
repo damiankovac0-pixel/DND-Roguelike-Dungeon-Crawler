@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Frost Guardian"
+glyph = "F"
+color = Color(0.6, 0.85, 1, 1)
+max_hp = 28
+armor_class = 16
+attack_bonus = 6
+damage_sides = 8
+damage_bonus = 3
+xp_reward = 140
+min_floor = 6
+max_floor = 11
+spawn_weight = 6
+melee_damage_percent = 75
+ranged_damage_percent = 80
+magic_damage_percent = 125
+ranged_attack_range = 3
+ranged_attack_interval = 3
+ranged_damage_sides = 4
+ranged_damage_bonus = 2
+ranged_damage_type = &"cold"
+ai_preferred_range = 2

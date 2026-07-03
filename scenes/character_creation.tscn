@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/character_creation.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/ascii_backdrop.gd" id="3"]
+[ext_resource type="FontFile" path="res://resources/terminal_font.tres" id="4"]
 
 [node name="CharacterCreation" type="Control"]
 layout_mode = 3
@@ -21,6 +23,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.05, 0.07, 1)
+script = ExtResource("3")
+font = ExtResource("4")
+mode = 1
+intensity = 0.55
+glyph_density = 0.035
 
 
 [node name="Center" type="CenterContainer" parent="."]
@@ -32,7 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(1040, 600)
+custom_minimum_size = Vector2(1040, 660)
 layout_mode = 2
 
 [node name="Margin" type="MarginContainer" parent="Center/Panel"]
@@ -55,14 +62,37 @@ horizontal_alignment = 1
 [node name="Instructions" type="Label" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.55, 0.5, 1)
-text = "The dungeon gives no second chances. Choose your name and ready your fate."
+text = "The dungeon gives no second chances. Choose your name, class, and fate."
 horizontal_alignment = 1
 autowrap_mode = 2
+
 
 [node name="NameInput" type="LineEdit" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
 placeholder_text = "Character name (must not be empty)"
 max_length = 24
+
+[node name="ClassSeparator" type="HSeparator" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+[node name="ClassRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ClassLabel" type="Label" parent="Center/Panel/Margin/VBox/ClassRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "CLASS"
+
+[node name="ClassSelector" type="OptionButton" parent="Center/Panel/Margin/VBox/ClassRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+
+[node name="ClassDescription" type="Label" parent="Center/Panel/Margin/VBox/ClassRow"]
+custom_minimum_size = Vector2(650, 0)
+layout_mode = 2
+text = "+50% melee damage. Cleave (1 use/floor, Q ability): primes next melee; successful hit splashes adjacent enemies for 50% damage. Lv5+: 12% chance on hit for extra strike."
+autowrap_mode = 2
 
 [node name="Assignments" type="VBoxContainer" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2

@@ -65,10 +65,11 @@ func configure_enemy(enemy_data: Resource) -> void:
 
 
 func apply_damage(amount: int) -> int:
-	current_hp = max(0, current_hp - amount)
+	var final_amount: int = _apply_set_damage_resistance(amount)
+	current_hp = max(0, current_hp - final_amount)
 	if current_hp <= 0:
 		died.emit()
-	return current_hp
+	return final_amount
 
 
 func heal(amount: int) -> int:
@@ -198,6 +199,27 @@ func get_summary_lines() -> Array[String]:
 
 
 # === Private Methods ===
+func _apply_set_damage_resistance(amount: int) -> int:
+	var safe_amount: int = max(0, amount)
+	var resist_percent: int = _get_set_damage_resist_percent()
+	if safe_amount <= 0 or resist_percent <= 0:
+		return safe_amount
+	if resist_percent >= 100:
+		return 0
+	return max(1, int(round(safe_amount * (100 - resist_percent) / 100.0)))
+
+
+func _get_set_damage_resist_percent() -> int:
+	var inventory: Node = inventory_component
+	if inventory == null:
+		var owner: Node = get_parent()
+		if owner != null:
+			inventory = owner.get("inventory_component")
+	if inventory == null or not inventory.has_method("_get_set_damage_resist_percent"):
+		return 0
+	return clampi(inventory._get_set_damage_resist_percent(), 0, 100)
+
+
 func _recalculate_derived_stats() -> void:
 	max_hp = 12 + Dice.modifier(constitution)
 	base_armor_class = 10
@@ -279,20 +301,21 @@ func get_ability_effects() -> Array[Dictionary]:
 
 
 func _get_ability_value(stat_key: String) -> int:
+	var ability_value: int = MAX_ABILITY_SCORE
 	match stat_key:
 		"str":
-			return strength
+			ability_value = strength
 		"dex":
-			return dexterity
+			ability_value = dexterity
 		"con":
-			return constitution
+			ability_value = constitution
 		"int":
-			return intelligence
+			ability_value = intelligence
 		"wis":
-			return wisdom
+			ability_value = wisdom
 		"cha":
-			return charisma
-	return MAX_ABILITY_SCORE
+			ability_value = charisma
+	return ability_value
 
 
 func _set_ability_value(stat_key: String, value: int) -> void:

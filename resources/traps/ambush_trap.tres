@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrapData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/trap_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ambush Trap"
+description = "A hidden alarm-sigil calls three basic monsters from nearby shadows."
+glyph = "*"
+color = Color(1.0, 0.32, 0.18, 1)
+effect = 5
+min_damage = 0
+max_damage = 0
+detect_dc = 12
+reveal_on_detect = true

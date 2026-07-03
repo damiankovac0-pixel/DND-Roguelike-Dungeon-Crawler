@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Void Herald"
+glyph = "V"
+color = Color(0.78, 0.36, 1, 1)
+max_hp = 92
+armor_class = 20
+attack_bonus = 13
+damage_sides = 14
+damage_bonus = 12
+xp_reward = 900
+min_floor = 26
+spawn_weight = 2
+ranged_attack_range = 6
+ranged_attack_interval = 3
+ranged_damage_sides = 10
+ranged_damage_bonus = 8
+ranged_damage_type = &"magic"
+ai_preferred_range = 5

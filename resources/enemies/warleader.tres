@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Warleader"
+glyph = "W"
+color = Color(0.85, 0.5, 0.15, 1)
+max_hp = 35
+armor_class = 17
+attack_bonus = 7
+damage_sides = 10
+damage_bonus = 4
+xp_reward = 210
+min_floor = 9
+max_floor = 14
+spawn_weight = 5
+melee_damage_percent = 110
+ranged_damage_percent = 105
+magic_damage_percent = 65
+summon_interval = 5
+summon_count = 1
+summon_max_active = 2
+summon_enemy_path = "res://resources/enemies/orc.tres"

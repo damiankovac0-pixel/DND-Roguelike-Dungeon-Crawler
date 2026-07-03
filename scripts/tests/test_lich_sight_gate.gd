@@ -60,6 +60,32 @@ func _run() -> void:
 		_fail("visible lich failed to summon a minion")
 		return
 
+	# Verify all summoned minions are melee (no ranged attack capabilities).
+	var summoner_id: int = lich.get_instance_id()
+	for candidate in game._enemies:
+		if (
+			candidate != null
+			and is_instance_valid(candidate)
+			and candidate.is_alive()
+			and candidate.get_meta("summoner_id", 0) == summoner_id
+		):
+			if candidate.enemy_data.ranged_attack_range != 0:
+				_fail(
+					(
+						"lich summoned minion has ranged_attack_range %d, expected 0"
+						% candidate.enemy_data.ranged_attack_range
+					)
+				)
+				return
+			if candidate.enemy_data.ai_preferred_range != 0:
+				_fail(
+					(
+						"lich summoned minion has ai_preferred_range %d, expected 0"
+						% candidate.enemy_data.ai_preferred_range
+					)
+				)
+				return
+
 	print("lich sight gate check passed")
 	quit(0)
 

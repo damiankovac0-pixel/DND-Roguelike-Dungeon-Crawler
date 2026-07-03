@@ -1,9 +1,8 @@
 ## Hardcoded resource paths for web-export compatibility (DirAccess does not work in web builds).
 ##
 ## When adding new .tres resources, append their paths to the appropriate array here.
-extends RefCounted
-
 class_name ResourcePaths
+extends RefCounted
 
 const ENEMY_PATHS: Array[String] = [
 	"res://resources/enemies/bat.tres",
@@ -20,11 +19,36 @@ const ENEMY_PATHS: Array[String] = [
 	"res://resources/enemies/troll.tres",
 	"res://resources/enemies/wraith.tres",
 	"res://resources/enemies/zombie.tres",
+	"res://resources/enemies/stone_sentry.tres",
+	"res://resources/enemies/eye_acolyte.tres",
+	"res://resources/enemies/clockwork_spider.tres",
+	"res://resources/enemies/thorn_lasher.tres",
+	"res://resources/enemies/spore_servant.tres",
+	"res://resources/enemies/briar_witch.tres",
+	"res://resources/enemies/ash_revenant.tres",
+	"res://resources/enemies/ember_archer.tres",
+	"res://resources/enemies/flame_acolyte.tres",
+	"res://resources/enemies/drowned_knight.tres",
+	"res://resources/enemies/harpooner.tres",
+	"res://resources/enemies/abyssal_eel.tres",
+	"res://resources/enemies/tidecaller.tres",
+	"res://resources/enemies/mirror_duelist.tres",
+	"res://resources/enemies/prism_seer.tres",
+	"res://resources/enemies/shard_golem.tres",
+	"res://resources/enemies/glass_dragonling.tres",
+	"res://resources/enemies/void_herald.tres",
+	"res://resources/enemies/deep_maw.tres",
+	"res://resources/enemies/starved_godling.tres",
+	# === Staff/Class Update Enemies ===
+	"res://resources/enemies/frost_guardian.tres",
+	"res://resources/enemies/warleader.tres",
+	"res://resources/enemies/shadow_weaver.tres",
 ]
 
 const ITEM_PATHS: Array[String] = [
 	"res://resources/items/ascendant_elixir.tres",
 	"res://resources/items/ascended_aegis.tres",
+	"res://resources/items/ascended_sword.tres",
 	"res://resources/items/amulet_of_guarding.tres",
 	"res://resources/items/battle_axe.tres",
 	"res://resources/items/bracers_of_power.tres",
@@ -75,11 +99,40 @@ const ITEM_PATHS: Array[String] = [
 	"res://resources/items/tonic_of_regeneration.tres",
 	"res://resources/items/warhammer.tres",
 	"res://resources/items/voidglass_rapier.tres",
+	# === Starter / Class Weapons ===
+	"res://resources/items/apprentice_staff.tres",
+	"res://resources/items/hunting_bow.tres",
+	"res://resources/items/training_sword.tres",
+	# === Staff Ladder ===
+	"res://resources/items/staff_ember.tres",
+	"res://resources/items/staff_stormglass.tres",
+	"res://resources/items/staff_void.tres",
+	"res://resources/items/staff_astral.tres",
+	"res://resources/items/staff_starfall.tres",
+	"res://resources/items/staff_ascendant.tres",
+	# === Class Gear ===
+	"res://resources/items/vanguard_blade.tres",
+	"res://resources/items/warlord_greatsword.tres",
+	"res://resources/items/eaglewood_bow.tres",
+	"res://resources/items/moonstring_longbow.tres",
+	"res://resources/items/warriors_ring.tres",
+	"res://resources/items/soldiers_plate.tres",
+	"res://resources/items/deft_gloves.tres",
+	"res://resources/items/scouts_cloak.tres",
+	"res://resources/items/mana_circlet.tres",
+	"res://resources/items/arcane_robes.tres",
+	# === Gear Sets ===
+	"res://resources/items/guardian_mail.tres",
+	"res://resources/items/guardian_charm.tres",
+	"res://resources/items/siphon_rapier.tres",
+	"res://resources/items/siphon_ring.tres",
 ]
 
 const TRAP_PATHS: Array[String] = [
 	"res://resources/traps/alarm_trap.tres",
+	"res://resources/traps/ambush_trap.tres",
 	"res://resources/traps/poison_dart_trap.tres",
 	"res://resources/traps/spike_trap.tres",
+	"res://resources/traps/stun_trap.tres",
 	"res://resources/traps/teleport_trap.tres",
 ]

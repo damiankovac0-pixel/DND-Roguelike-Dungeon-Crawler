@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Astral Staff"
+description = "A crystalline staff pulsing with starlight. Its bolts arc through the astral plane before striking."
+glyph = "/"
+color = Color(1, 0.65, 0.2, 1)
+kind = 1
+rarity = 4
+base_price = 340
+spawn_weight = 2
+min_floor = 15
+is_ranged_weapon = true
+is_staff = true
+range = 6
+use_effect = 2
+damage_dice = 2
+damage_sides = 8
+attack_bonus = 3
+damage_bonus = 4
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 20

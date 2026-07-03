@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ember Archer"
+glyph = "E"
+color = Color(1, 0.46, 0.16, 1)
+max_hp = 32
+armor_class = 15
+attack_bonus = 8
+damage_sides = 8
+damage_bonus = 4
+xp_reward = 230
+min_floor = 11
+max_floor = 15
+spawn_weight = 7
+ranged_attack_range = 5
+ranged_attack_interval = 3
+ranged_damage_sides = 8
+ranged_damage_bonus = 4
+ranged_damage_type = &"fire"
+ai_preferred_range = 4

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Void Staff"
+description = "Wrought from dark crystal pulled from the space between stars. Each bolt leaves a trail of nothingness."
+glyph = "/"
+color = Color(0.55, 0.25, 0.85, 1)
+kind = 1
+rarity = 3
+base_price = 190
+spawn_weight = 3
+min_floor = 11
+is_ranged_weapon = true
+is_staff = true
+range = 6
+use_effect = 2
+damage_dice = 2
+damage_sides = 6
+attack_bonus = 2
+damage_bonus = 3
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 15

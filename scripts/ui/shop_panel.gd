@@ -9,8 +9,16 @@ signal reroll_requested
 
 # === Constants ===
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const RarityShimmerEffect = preload("res://scripts/ui/rarity_shimmer_effect.gd")
 const MODE_BUY: StringName = &"buy"
 const MODE_SELL: StringName = &"sell"
+const SHOP_ROW_MIN_HEIGHT: int = 34
+const SHOP_DEAL_COLOR: Color = Color(1.0, 0.725, 0.082)
+const SHOP_ROW_BG: Color = Color(0.094, 0.118, 0.165)
+const SHOP_ROW_SELECTED_BG: Color = Color(0.14, 0.32, 0.26)
+const SHOP_ROW_HOVER_BG: Color = Color(0.12, 0.20, 0.22)
+const SHOP_ROW_BORDER: Color = Color(0.282, 0.259, 0.392)
+const SHOP_ROW_SELECTED_BORDER: Color = Color(0.60, 0.843, 0.898)
 
 # === Private Variables ===
 var _player: Node
@@ -20,6 +28,8 @@ var _item_buttons: Array[Button] = []
 var _item_list: VBoxContainer
 var _mode: StringName = MODE_BUY
 var _reroll_cost: int = 0
+var _selection_marker_time: float = 0.0
+var _selection_marker_frame: int = 0
 
 # === Onready ===
 @onready var content_box: VBoxContainer = $Margin/VBox
@@ -34,14 +44,29 @@ var _reroll_cost: int = 0
 # === Lifecycle Methods ===
 func _ready() -> void:
 	output.bbcode_enabled = true
+	output.install_effect(RarityShimmerEffect.new())
 	output.custom_minimum_size = Vector2(700, 320)
 	item_scroll.custom_minimum_size = Vector2(700, 224)
 	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	item_scroll.follow_focus = true
 	_ensure_item_list()
 	close_button.pressed.connect(_request_close)
 	buy_tab_button.pressed.connect(_set_mode.bind(MODE_BUY))
 	sell_tab_button.pressed.connect(_set_mode.bind(MODE_SELL))
 	reroll_button.pressed.connect(_request_reroll)
+	visibility_changed.connect(_update_marker_processing)
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	if not visible or _item_buttons.is_empty():
+		return
+	_selection_marker_time += delta
+	if _selection_marker_time < 0.28:
+		return
+	_selection_marker_time = 0.0
+	_selection_marker_frame = wrapi(_selection_marker_frame + 1, 0, 4)
+	_refresh_item_buttons(_get_player_gold())
 
 
 func _input(event: InputEvent) -> void:
@@ -79,6 +104,8 @@ func refresh(player: Node, stock: Array, reroll_cost: int = 0) -> void:
 	_refresh_controls(gold)
 	_rebuild_item_buttons(gold)
 	_refresh_details(gold)
+	_queue_scroll_selected_button_into_view()
+	_update_marker_processing()
 
 
 func select_previous() -> void:
@@ -88,7 +115,7 @@ func select_previous() -> void:
 	_selected_index = wrapi(_selected_index - 1, 0, active_items.size())
 	_refresh_item_buttons(_get_player_gold())
 	_refresh_details(_get_player_gold())
-	_grab_selected_button_focus()
+	_queue_scroll_selected_button_into_view()
 
 
 func select_next() -> void:
@@ -98,7 +125,7 @@ func select_next() -> void:
 	_selected_index = wrapi(_selected_index + 1, 0, active_items.size())
 	_refresh_item_buttons(_get_player_gold())
 	_refresh_details(_get_player_gold())
-	_grab_selected_button_focus()
+	_queue_scroll_selected_button_into_view()
 
 
 func activate_selected() -> void:
@@ -134,7 +161,7 @@ func _set_mode(mode: StringName) -> void:
 	_mode = mode
 	_selected_index = 0
 	refresh(_player, _stock, _reroll_cost)
-	_grab_selected_button_focus()
+	_queue_scroll_selected_button_into_view()
 
 
 func _request_reroll() -> void:
@@ -196,7 +223,7 @@ func _rebuild_item_buttons(gold: int) -> void:
 	var active_items: Array = _get_active_items()
 	for index: int in range(active_items.size()):
 		var button: Button = Button.new()
-		button.custom_minimum_size = Vector2(0, 32)
+		button.custom_minimum_size = Vector2(0, SHOP_ROW_MIN_HEIGHT)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.clip_text = true
 		button.focus_mode = Control.FOCUS_NONE
@@ -205,13 +232,16 @@ func _rebuild_item_buttons(gold: int) -> void:
 		_item_list.add_child(button)
 		_item_buttons.append(button)
 	_refresh_item_buttons(gold)
+	_queue_scroll_selected_button_into_view()
+	_update_marker_processing()
 
 
 func _refresh_item_buttons(gold: int) -> void:
 	var active_items: Array = _get_active_items()
 	for index: int in range(_item_buttons.size()):
 		var item: Resource = active_items[index]
-		var marker: String = ">" if index == _selected_index else " "
+		var selected: bool = index == _selected_index
+		var featured_deal: bool = _is_featured_deal(index)
 		var price_text: String = ""
 		var suffix: String = ""
 		if _mode == MODE_SELL:
@@ -219,17 +249,19 @@ func _refresh_item_buttons(gold: int) -> void:
 			if _player != null and _player.inventory_component.is_equipped(item):
 				suffix = " [equipped]"
 		else:
-			var price: int = _get_item_price_for_player(item)
+			var price: int = _get_item_price_for_player(item, index)
 			var missing_gold: int = max(0, price - gold)
 			var afford_text: String = "" if missing_gold == 0 else " (need %dg)" % missing_gold
 			price_text = "%dg" % price
-			suffix = afford_text
-		_item_buttons[index].text = "%s %s - %s%s" % [marker, item.display_name, price_text, suffix]
-		_item_buttons[index].tooltip_text = (
-			"%s\n%s" % [item.description, ", ".join(_item_effect_tags(item))]
+			suffix = "  golden deal" if featured_deal else afford_text
+		_item_buttons[index].text = _shop_row_text(
+			item, price_text, suffix, selected, featured_deal
 		)
-		var button_color: String = "#f2f2f2" if index == _selected_index else "#c7c3d6"
-		_item_buttons[index].add_theme_color_override("font_color", Color.html(button_color))
+		_item_buttons[index].tooltip_text = ""
+		_item_buttons[index].add_theme_color_override(
+			"font_color", _item_button_color(item, selected, featured_deal)
+		)
+		_apply_item_button_style(_item_buttons[index], selected, featured_deal)
 
 
 func _refresh_details(gold: int) -> void:
@@ -253,6 +285,16 @@ func _refresh_details(gold: int) -> void:
 				(
 					"[color=#9999aa]CHA: buys cost %d%% base, sells pay %d%% value.[/color]"
 					% [price_pct, sell_pct]
+				)
+			)
+		if _mode == MODE_BUY and _has_featured_deal():
+			lines.append(
+				(
+					(
+						"[color=#f1c75b]Golden deal: CHA 15+ marks the first stock item "
+						+ "for an extra %d%% off.[/color]"
+					)
+					% GameManager.SHOP_FEATURED_DEAL_DISCOUNT_PERCENT
 				)
 			)
 	lines.append("")
@@ -280,13 +322,16 @@ func _get_selected_item_details() -> Array[String]:
 			]
 		)
 	else:
+		var featured_deal: bool = _is_featured_deal(_selected_index)
+		var deal_note: String = ", golden deal" if featured_deal else ""
 		value_line = (
-			"%s %s  %dg (base %dg)"
+			"%s %s  %dg (base %dg%s)"
 			% [
 				item.get_rarity_name(),
 				item.get_kind_name(),
-				_get_item_price_for_player(item),
-				item.get_price()
+				_get_item_price_for_player(item, _selected_index),
+				item.get_price(),
+				deal_note,
 			]
 		)
 	var lines: Array[String] = [
@@ -295,6 +340,10 @@ func _get_selected_item_details() -> Array[String]:
 		item.description,
 		"",
 	]
+	var decision_lines: Array[String] = _decision_lines(item)
+	if not decision_lines.is_empty():
+		lines.append_array(decision_lines)
+		lines.append("")
 	match item.kind:
 		ItemDataScript.ItemKind.WEAPON:
 			_append_weapon_shop_details(lines, item)
@@ -305,6 +354,9 @@ func _get_selected_item_details() -> Array[String]:
 		ItemDataScript.ItemKind.CONSUMABLE:
 			_append_consumable_details(lines, item)
 	var special_line: String = _special_detail(item)
+	var class_lines: Array[String] = _class_gear_detail(item)
+	if not class_lines.is_empty():
+		lines.append_array(class_lines)
 	if not special_line.is_empty():
 		lines.append(special_line)
 	return lines
@@ -439,13 +491,10 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				)
 			)
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			(
-				lines
-				. append(
-					(
-						"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus double positive WIS modifier"
-						% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
-					)
+			lines.append(
+				(
+					"Targeted: range %d, WIS accuracy, magic damage %dd%d%+d plus WIS/depth scaling"
+					% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
 				)
 			)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
@@ -453,8 +502,17 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 				lines
 				. append(
 					(
-						"Targeted: range %d, cannot miss, force damage %dd%d%+d plus double positive WIS modifier"
-						% [item.range, item.damage_dice, item.damage_sides, item.damage_bonus]
+						(
+							"Targeted: range %d, up to %d targets, cannot miss, "
+							+ "force damage %dd%d%+d plus WIS/depth scaling"
+						)
+						% [
+							item.range,
+							item.target_count,
+							item.damage_dice,
+							item.damage_sides,
+							item.damage_bonus,
+						]
 					)
 				)
 			)
@@ -469,7 +527,7 @@ func _append_consumable_details(lines: Array[String], item: Resource) -> void:
 			var area_text: String = (
 				(
 					"Targeted: range %d, highlighted radius %d, hits every visible enemy "
-					+ "for %dd%d%+d plus double positive WIS modifier"
+					+ "for %dd%d%+d plus WIS/depth scaling"
 				)
 				% [
 					item.range,
@@ -494,7 +552,7 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 		tags.append("heals %d HP +INT scaling" % item.healing_amount)
 	if item.damage_sides > 0:
 		var stat_bonus_tag: String = (
-			" +WISx2" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
+			" +WIS/depth" if item.kind == ItemDataScript.ItemKind.CONSUMABLE else ""
 		)
 		(
 			tags
@@ -519,6 +577,40 @@ func _item_effect_tags(item: Resource) -> Array[String]:
 	return tags
 
 
+func _decision_lines(item: Resource) -> Array[String]:
+	var lines: Array[String] = []
+	if item.required_class != &"" and item.required_class != GameManager.pending_character_class:
+		lines.append("[color=#ff8a32]Fit:[/color] sell-only for your class.")
+	elif item.required_class != &"":
+		lines.append(
+			(
+				"[color=#7bd88f]Fit:[/color] made for your %s."
+				% GameManager.get_character_class_label(item.required_class)
+			)
+		)
+	elif item.kind != ItemDataScript.ItemKind.CONSUMABLE:
+		lines.append("[color=#8fb3ff]Fit:[/color] usable by any class.")
+	if item.is_staff:
+		lines.append("Staff: WIS accuracy, magic damage, ranged controls.")
+	if item.set_id != &"" and _player != null and _player.inventory_component != null:
+		var equipped_count: int = _player.inventory_component._get_equipped_set_piece_count(
+			item.set_id
+		)
+		var required_count: int = max(2, item.set_required_count)
+		if equipped_count + 1 >= required_count and _mode == MODE_BUY:
+			lines.append(
+				"[color=#f1c75b]Set:[/color] buying this completes %s." % item.set_display_name
+			)
+		elif equipped_count > 0:
+			lines.append(
+				(
+					"[color=#aaa6b8]Set:[/color] %d/%d pieces found for %s."
+					% [equipped_count, required_count, item.set_display_name]
+				)
+			)
+	return lines
+
+
 func _special_detail(item: Resource) -> String:
 	match item.special_effect:
 		ItemDataScript.ItemSpecial.KILL_REGEN_PERCENT:
@@ -530,6 +622,64 @@ func _special_detail(item: Resource) -> String:
 	return ""
 
 
+func _class_gear_detail(item: Resource) -> Array[String]:
+	var lines: Array[String] = []
+	if item.is_staff:
+		lines.append("Staff: WIS-based magic ranged weapon")
+	if item.kind == ItemDataScript.ItemKind.WEAPON and item.weapon_damage_type != &"":
+		lines.append("Damage type: %s" % item.weapon_damage_type)
+	if item.required_class != &"":
+		var required_label: String = GameManager.get_character_class_label(item.required_class)
+		lines.append("Requires: %s" % required_label)
+		var class_fit: String = (
+			"usable by your class"
+			if item.required_class == GameManager.pending_character_class
+			else "sell-only for your class"
+		)
+		lines.append("Class fit: %s" % class_fit)
+	if item.class_damage_percent_bonus != 0:
+		var class_dmg_type: String = (
+			String(item.class_damage_type) if item.class_damage_type != &"" else "all"
+		)
+		var bonus_str: String = "%+d%%" % item.class_damage_percent_bonus
+		lines.append("Class bonus: %s %s damage" % [bonus_str, class_dmg_type])
+	if item.set_id != &"":
+		var set_name: String = (
+			item.set_display_name if not item.set_display_name.is_empty() else String(item.set_id)
+		)
+		var equipped_count: int = 0
+		if _player != null and _player.inventory_component != null:
+			equipped_count = _player.inventory_component._get_equipped_set_piece_count(item.set_id)
+		var required_count: int = max(2, item.set_required_count)
+		lines.append("Set: %s (%d/%d equipped)" % [set_name, equipped_count, required_count])
+		if item.set_damage_resist_percent > 0:
+			lines.append("Set bonus: -%d%% incoming damage" % item.set_damage_resist_percent)
+		if item.set_proc_chance_percent > 0 and item.set_proc_heal_percent > 0:
+			lines.append(
+				(
+					"Set bonus: %d%% chance after damage to heal %d%% max HP"
+					% [item.set_proc_chance_percent, item.set_proc_heal_percent]
+				)
+			)
+	return lines
+
+
+func _shop_row_prefix(selected: bool) -> String:
+	if selected:
+		return "%s    " % _selection_marker()
+	return "  "
+
+
+func _selection_marker() -> String:
+	if _selection_marker_frame == 2:
+		return "»"
+	return "›"
+
+
+func _update_marker_processing() -> void:
+	set_process(visible and not _item_buttons.is_empty())
+
+
 func _select_index(index: int) -> void:
 	var active_items: Array = _get_active_items()
 	if index < 0 or index >= active_items.size() or index == _selected_index:
@@ -538,17 +688,12 @@ func _select_index(index: int) -> void:
 	var gold: int = _get_player_gold()
 	_refresh_item_buttons(gold)
 	_refresh_details(gold)
+	_queue_scroll_selected_button_into_view()
 
 
 func _on_item_button_pressed(index: int) -> void:
 	_select_index(index)
 	activate_selected()
-
-
-func _grab_selected_button_focus() -> void:
-	if _selected_index < 0 or _selected_index >= _item_buttons.size():
-		return
-	_item_buttons[_selected_index].grab_focus()
 
 
 func _get_player_gold() -> int:
@@ -562,7 +707,84 @@ func _request_close() -> void:
 
 
 func _colored_item_name(item: Resource) -> String:
-	return "[color=%s]%s[/color]" % [item.get_rarity_color(), item.display_name]
+	return item.get_display_name_bbcode()
+
+
+func _queue_scroll_selected_button_into_view() -> void:
+	if _selected_index < 0 or _selected_index >= _item_buttons.size():
+		return
+	call_deferred("_scroll_selected_button_into_view")
+
+
+func _scroll_selected_button_into_view() -> void:
+	if _selected_index < 0 or _selected_index >= _item_buttons.size():
+		return
+	item_scroll.ensure_control_visible(_item_buttons[_selected_index])
+
+
+func _item_button_color(item: Resource, selected: bool, featured_deal: bool = false) -> Color:
+	if featured_deal:
+		return SHOP_DEAL_COLOR
+	if item.rarity >= ItemDataScript.ItemRarity.LEGENDARY:
+		return Color.html(item.get_rarity_color())
+	return Color.html("#f2f2f2" if selected else "#c7c3d6")
+
+
+func _shop_row_text(
+	item: Resource, price_text: String, suffix: String, selected: bool, featured_deal: bool
+) -> String:
+	var prefix: String = _shop_row_prefix(selected)
+	var deal_prefix: String = "◆ " if featured_deal else ""
+	return "%s%s%s - %s%s" % [prefix, deal_prefix, item.display_name, price_text, suffix]
+
+
+func _apply_item_button_style(button: Button, selected: bool, featured_deal: bool) -> void:
+	var border_color: Color = SHOP_ROW_SELECTED_BORDER if selected else SHOP_ROW_BORDER
+	if featured_deal:
+		border_color = SHOP_DEAL_COLOR
+	var bg_color: Color = SHOP_ROW_BG
+	if selected:
+		bg_color = SHOP_ROW_SELECTED_BG.lightened(0.04 * float(_selection_marker_frame % 2))
+	var normal_style: StyleBoxFlat = _shop_button_style(bg_color, border_color)
+	var hover_style: StyleBoxFlat = _shop_button_style(
+		SHOP_ROW_HOVER_BG if not selected else SHOP_ROW_SELECTED_BG.lightened(0.08),
+		border_color.lightened(0.12)
+	)
+	button.add_theme_stylebox_override("normal", normal_style)
+	button.add_theme_stylebox_override("hover", hover_style)
+	button.add_theme_stylebox_override("pressed", hover_style)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+
+func _shop_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.content_margin_left = 14.0
+	style.content_margin_top = 7.0
+	style.content_margin_right = 14.0
+	style.content_margin_bottom = 7.0
+	return style
+
+
+func _is_featured_deal(stock_index: int) -> bool:
+	if _mode != MODE_BUY:
+		return false
+	return GameManager._is_shop_featured_deal(_get_player_charisma(), stock_index)
+
+
+func _has_featured_deal() -> bool:
+	return not _stock.is_empty() and GameManager._is_shop_featured_deal(_get_player_charisma(), 0)
+
+
+func _get_player_charisma() -> int:
+	if _player == null or _player.stats_component == null:
+		return 10
+	return _player.stats_component.charisma
 
 
 func _is_escape_key(event: InputEvent) -> bool:
@@ -587,18 +809,13 @@ func _is_tab_key(event: InputEvent) -> bool:
 	)
 
 
-func _get_item_price_for_player(item: Resource) -> int:
-	var base_price: int = item.get_price()
+func _get_item_price_for_player(item: Resource, stock_index: int = -1) -> int:
 	if _player == null or _player.stats_component == null:
-		return base_price
-	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
-	var multiplier: float = clampf(1.0 - 0.05 * cha_mod, 0.5, 1.5)
-	return max(1, ceili(base_price * multiplier))
+		return item.get_price()
+	return GameManager._get_shop_buy_price(item, _get_player_charisma(), stock_index)
 
 
 func _get_item_sell_price(item: Resource) -> int:
 	if _player == null or _player.stats_component == null:
 		return max(1, floori(item.get_price() * 0.35))
-	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
-	var multiplier: float = clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50)
-	return max(1, floori(item.get_price() * multiplier))
+	return GameManager._get_shop_sell_price(item, _get_player_charisma())

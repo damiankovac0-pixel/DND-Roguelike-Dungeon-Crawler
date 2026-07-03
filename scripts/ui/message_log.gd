@@ -3,11 +3,11 @@ class_name MessageLog
 extends PanelContainer
 
 # === Constants ===
-const MAX_MESSAGES: int = 12
+const MAX_MESSAGES: int = 7
 const TYPE_COLORS: Dictionary = {
 	&"neutral": "#fff9e4",
 	&"combat_hit": "#ff5777",
-	&"combat_miss": "#82824c",
+	&"combat_miss": "#a6a66a",
 	&"death": "#b53b59",
 	&"loot": "#ffe077",
 	&"gold": "#ffb915",
@@ -17,12 +17,15 @@ const TYPE_COLORS: Dictionary = {
 	&"level": "#99d7e5",
 	&"equipment": "#47a0bf",
 }
+const LOG_PULSE_SCALE: Vector2 = Vector2(1.015, 1.015)
+const LOG_PULSE_SECONDS: float = 0.18
 
 # === Private Variables ===
 var _messages: Array[String] = []
 var _last_message: String = ""
 var _last_type: StringName = &"neutral"
 var _repeat_count: int = 0
+var _message_tween: Tween
 
 # === Onready ===
 @onready var output: RichTextLabel = $Output
@@ -47,8 +50,9 @@ func add_message(message: String, message_type: StringName = &"neutral") -> void
 
 	while _messages.size() > MAX_MESSAGES:
 		_messages.pop_front()
-	output.text = "[color=#47426b]-- MESSAGES --[/color]\n" + "\n".join(_messages)
+	output.text = "[color=#8178b5]MESSAGES[/color]\n" + "\n".join(_messages)
 	output.scroll_to_line(max(0, output.get_line_count() - 1))
+	_pulse_output(message_type)
 
 
 # === Private Methods ===
@@ -56,3 +60,16 @@ func _format_message(message: String, message_type: StringName, repeat_count: in
 	var color: String = TYPE_COLORS.get(message_type, TYPE_COLORS[&"neutral"])
 	var suffix: String = " (x%d)" % repeat_count if repeat_count > 1 else ""
 	return "[color=%s]%s%s[/color]" % [color, message, suffix]
+
+
+func _pulse_output(message_type: StringName) -> void:
+	if _message_tween != null and _message_tween.is_valid():
+		_message_tween.kill()
+	var color: Color = Color.html(TYPE_COLORS.get(message_type, TYPE_COLORS[&"neutral"]))
+	output.scale = LOG_PULSE_SCALE
+	output.modulate = Color(color.r, color.g, color.b, 1.0)
+	_message_tween = create_tween()
+	_message_tween.set_trans(Tween.TRANS_QUART)
+	_message_tween.set_ease(Tween.EASE_OUT)
+	_message_tween.tween_property(output, "scale", Vector2.ONE, LOG_PULSE_SECONDS)
+	_message_tween.parallel().tween_property(output, "modulate", Color.WHITE, LOG_PULSE_SECONDS)

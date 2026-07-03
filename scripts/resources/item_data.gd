@@ -75,6 +75,7 @@ const RARITY_COLORS: Array[String] = [
 @export var use_effect: ItemUse = ItemUse.NONE
 @export var effect_duration: int = 0
 @export var target_radius: int = 0
+@export var target_count: int = 1
 @export var healing_amount: int = 0
 @export var damage_dice: int = 1
 @export var damage_sides: int = 0
@@ -84,6 +85,17 @@ const RARITY_COLORS: Array[String] = [
 @export var special_effect: ItemSpecial = ItemSpecial.NONE
 @export var special_amount: int = 0
 @export var special_cooldown: int = 0
+@export var required_class: StringName = &""
+@export var is_staff: bool = false
+@export var weapon_damage_type: StringName = &"melee"
+@export var class_damage_type: StringName = &""
+@export var class_damage_percent_bonus: int = 0
+@export var set_id: StringName = &""
+@export var set_display_name: String = ""
+@export var set_required_count: int = 2
+@export var set_damage_resist_percent: int = 0
+@export var set_proc_chance_percent: int = 0
+@export var set_proc_heal_percent: int = 0
 
 
 # === Public Methods ===
@@ -112,6 +124,48 @@ func get_rarity_color() -> String:
 	return RARITY_COLORS[ItemRarity.COMMON]
 
 
+func get_display_name_bbcode(animated: bool = true) -> String:
+	return format_rarity_text(display_name, rarity, animated)
+
+
+static func format_rarity_text(text: String, rarity_value: int, animated: bool = true) -> String:
+	var safe_rarity: int = clampi(rarity_value, ItemRarity.COMMON, RARITY_COLORS.size() - 1)
+	var color: String = RARITY_COLORS[safe_rarity]
+	var colored_text: String = "[color=%s]%s[/color]" % [color, _escape_bbcode(text)]
+	if not animated:
+		return colored_text
+	match safe_rarity:
+		ItemRarity.LEGENDARY:
+			return _rarity_shimmer_text(colored_text, color, "#fff1a0", 2.05, 0.48, 0.58, 0.0)
+		ItemRarity.MYTHIC:
+			return _rarity_shimmer_text(colored_text, color, "#ffd6ff", 2.45, 0.62, 0.62, 0.35)
+		ItemRarity.ASCENDED:
+			return _rarity_shimmer_text(colored_text, color, "#ffffff", 2.25, 0.58, 0.70, 0.55)
+	return colored_text
+
+
+static func _rarity_shimmer_text(
+	colored_text: String,
+	base_color: String,
+	accent_color: String,
+	speed: float,
+	spread: float,
+	intensity: float,
+	lift: float
+) -> String:
+	return (
+		(
+			"[rarity_shimmer base=%s accent=%s speed=%.2f spread=%.2f intensity=%.2f lift=%.2f]"
+			+ "%s[/rarity_shimmer]"
+		)
+		% [base_color, accent_color, speed, spread, intensity, lift, colored_text]
+	)
+
+
+static func _escape_bbcode(text: String) -> String:
+	return text.replace("[", "[lb]").replace("]", "[rb]")
+
+
 func get_price() -> int:
 	var rarity_multiplier: float = 1.0
 	match rarity:
@@ -126,7 +180,7 @@ func get_price() -> int:
 		ItemRarity.LEGENDARY:
 			rarity_multiplier = 6.0
 		ItemRarity.MYTHIC:
-			rarity_multiplier = 10.0
+			rarity_multiplier = 8.0
 		ItemRarity.ASCENDED:
-			rarity_multiplier = 18.0
+			rarity_multiplier = 12.0
 	return max(1, int(ceil(base_price * rarity_multiplier)))

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Starved Godling"
+glyph = "A"
+color = Color(1, 0.32, 0.88, 1)
+max_hp = 132
+armor_class = 21
+attack_bonus = 16
+damage_sides = 20
+damage_bonus = 15
+xp_reward = 1300
+min_floor = 30
+spawn_weight = 1
+magic_damage_percent = 120
+fireball_range = 6
+fireball_interval = 3
+fireball_damage_dice = 2
+fireball_damage_sides = 8
+fireball_damage_bonus = 7

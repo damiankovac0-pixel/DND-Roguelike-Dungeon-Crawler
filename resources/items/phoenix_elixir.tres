@@ -12,6 +12,6 @@ kind = 0
 rarity = 5
 base_price = 380
 spawn_weight = 1
-min_floor = 10
+min_floor = 15
 healing_amount = 90
 use_effect = 1

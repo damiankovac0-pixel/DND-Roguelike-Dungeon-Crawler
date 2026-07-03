@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Apprentice Staff"
+description = "A simple wooden staff that focuses a novice wizard's arcane energy into controlled bolts."
+glyph = "/"
+color = Color(0.55, 0.55, 0.9, 1)
+kind = 1
+rarity = 0
+base_price = 35
+spawn_weight = 12
+min_floor = 1
+is_ranged_weapon = true
+is_staff = true
+range = 4
+use_effect = 2
+damage_dice = 1
+damage_sides = 4
+attack_bonus = 0
+damage_bonus = 0
+required_class = &"wizard"
+weapon_damage_type = &"magic"
+class_damage_type = &"magic"
+class_damage_percent_bonus = 0

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Mirror Duelist"
+glyph = "m"
+color = Color(0.78, 0.76, 0.95, 1)
+max_hp = 62
+armor_class = 19
+attack_bonus = 11
+damage_sides = 12
+damage_bonus = 8
+xp_reward = 500
+min_floor = 21
+max_floor = 25
+spawn_weight = 7
+melee_damage_percent = 85
+ranged_damage_percent = 85
+magic_damage_percent = 125

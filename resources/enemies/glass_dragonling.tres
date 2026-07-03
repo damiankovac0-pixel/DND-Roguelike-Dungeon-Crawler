@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Glass Dragonling"
+glyph = "j"
+color = Color(0.82, 0.95, 1, 1)
+max_hp = 72
+armor_class = 18
+attack_bonus = 12
+damage_sides = 12
+damage_bonus = 10
+xp_reward = 720
+min_floor = 24
+max_floor = 25
+spawn_weight = 2
+melee_damage_percent = 110
+magic_damage_percent = 75
+fireball_range = 6
+fireball_interval = 4
+fireball_damage_dice = 2
+fireball_damage_sides = 6
+fireball_damage_bonus = 5

@@ -12,5 +12,5 @@ kind = 2
 rarity = 6
 base_price = 760
 spawn_weight = 1
-min_floor = 12
+min_floor = 21
 armor_bonus = 10

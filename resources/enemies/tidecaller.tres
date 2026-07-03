@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Tidecaller"
+glyph = "t"
+color = Color(0.38, 0.68, 0.94, 1)
+max_hp = 52
+armor_class = 16
+attack_bonus = 10
+damage_sides = 10
+damage_bonus = 7
+xp_reward = 480
+min_floor = 18
+max_floor = 20
+spawn_weight = 4
+magic_damage_percent = 75
+ranged_attack_range = 5
+ranged_attack_interval = 3
+ranged_damage_sides = 8
+ranged_damage_bonus = 6
+ranged_damage_type = &"magic"
+ai_preferred_range = 4

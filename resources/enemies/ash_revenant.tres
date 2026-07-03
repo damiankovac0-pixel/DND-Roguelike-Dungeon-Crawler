@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ash Revenant"
+glyph = "a"
+color = Color(0.70, 0.34, 0.26, 1)
+max_hp = 38
+armor_class = 15
+attack_bonus = 8
+damage_sides = 10
+damage_bonus = 5
+xp_reward = 240
+min_floor = 11
+max_floor = 15
+spawn_weight = 7
+revive_chance_percent = 15
+revive_hp_percent = 35
+magic_damage_percent = 125

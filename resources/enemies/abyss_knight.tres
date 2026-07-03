@@ -15,4 +15,4 @@ damage_bonus = 7
 xp_reward = 280
 min_floor = 11
 max_floor = 0
-spawn_weight = 4
+spawn_weight = 5

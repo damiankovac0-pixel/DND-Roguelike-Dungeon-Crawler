@@ -25,6 +25,11 @@ func _run() -> void:
 	var game: Node = game_scene.instantiate()
 	root.add_child(game)
 	await process_frame
+	if game_manager.player.stats_component.level != 20:
+		_fail(
+			"debug run started at level %d, expected 20" % game_manager.player.stats_component.level
+		)
+		return
 
 	# Descend 9 floors via debug to reach floor 10
 	for _index: int in range(9):
@@ -35,9 +40,9 @@ func _run() -> void:
 		return
 
 	# Verify shop stock at key floor thresholds
-	_check_stock(game, 2, 6, 5, ItemDataScript.ItemRarity.COMMON, true, 0)
-	_check_stock(game, 10, 8, 19, ItemDataScript.ItemRarity.RARE, false, 2)
-	_check_stock(game, 14, 9, 26, ItemDataScript.ItemRarity.EPIC, false, 4)
+	_check_stock(game, 2, 6, 4, ItemDataScript.ItemRarity.COMMON, true, 0)
+	_check_stock(game, 10, 8, 14, ItemDataScript.ItemRarity.UNCOMMON, false, 0)
+	_check_stock(game, 16, 9, 21, ItemDataScript.ItemRarity.EPIC, false, 2)
 	print("shop scaling check passed")
 	quit(0)
 

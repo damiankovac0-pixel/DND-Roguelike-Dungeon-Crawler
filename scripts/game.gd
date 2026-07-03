@@ -1,24 +1,53 @@
-## Main game scene controller: floor generation, combat, shop, containers, traps, items, and player input.
+## Main game scene controller: floor generation, combat, shop, containers,
+## traps, items, and player input.
 extends Node2D
 
 # === Constants ===
 const PLAYER_SCENE_NAME: String = "Player"
-const EXTRACTION_INTERVAL: int = 3
+const FINAL_VICTORY_FLOOR: int = 25
+const GOLD_TIER_FLOOR_SPAN: int = 3
 const CARDINAL_DIRECTIONS: Array[Vector2i] = [
 	Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT
 ]
-const STARTER_WEAPON_PATH: String = "res://resources/items/dagger.tres"
-const SHOP_SPAWN_CHANCE: float = 0.90
+const STARTER_WEAPON_FIGHTER: String = "res://resources/items/training_sword.tres"
+const STARTER_WEAPON_RANGER: String = "res://resources/items/hunting_bow.tres"
+const STARTER_WEAPON_WIZARD: String = "res://resources/items/apprentice_staff.tres"
 const SHOP_STOCK_SIZE: int = 6
 const SHOP_STOCK_MAX_BONUS: int = 3
-const SHOP_EFFECTIVE_FLOOR_BONUS_FACTOR: float = 0.75
-const SHOP_DEPTH_PICK_BONUS_FACTOR: float = 0.40
-const SHOP_REROLL_BASE_COST: int = 20
-const SHOP_REROLL_FLOOR_COST: int = 5
+const SHOP_EFFECTIVE_FLOOR_BONUS_FACTOR: float = 0.25
+const SHOP_DEPTH_PICK_BONUS_FACTOR: float = 0.25
+const SHOP_REROLL_BASE_COST: int = 15
+const SHOP_REROLL_FLOOR_COST: int = 4
+const BUILD_MATCH_WEIGHT_PERCENT: int = 190
+const WRONG_CLASS_WEIGHT_PERCENT: int = 35
+const SET_COMPLETION_WEIGHT_PERCENT: int = 260
+const LATE_TRAP_DAMAGE_DEPTH_STEP: int = 4
+const LATE_TRAP_MAX_DC_BONUS: int = 4
+const PAUSE_VOLUME_SLIDER_PATH: String = "MasterVolumeRow/MasterVolumeSlider"
+const PAUSE_VOLUME_VALUE_LABEL_PATH: String = "MasterVolumeRow/MasterVolumeValueLabel"
+const FINAL_CAPSTONE_ANCHOR_NAME: String = "Ancient Dragon"
+const FINAL_CAPSTONE_GUARD_NAMES: Array[String] = [
+	"Mirror Duelist",
+	"Prism Seer",
+	"Shard Golem",
+	"Glass Dragonling",
+]
+const AMBUSH_APEX_EXCLUDE_NAMES: Array[String] = [
+	"Ancient Dragon",
+	"Void Herald",
+	"Deep Maw",
+	"Starved Godling",
+]
+const ACTION_BURST_LOOT_COLOR: Color = Color(1.0, 0.82, 0.18)
+const ACTION_BURST_HIT_COLOR: Color = Color(1.0, 0.34, 0.47)
+const ACTION_BURST_MAGIC_COLOR: Color = Color(0.68, 0.48, 1.0)
+const ACTION_BURST_MISS_COLOR: Color = Color(0.64, 0.62, 0.50)
+const ACTION_BURST_WARNING_COLOR: Color = Color(1.0, 0.54, 0.20)
 const SHOPKEEPER_NAME: String = "Shopkeeper"
 const SHOPKEEPER_GLYPH: String = "S"
 const SHOPKEEPER_COLOR: Color = Color(1.0, 0.82, 0.32)
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
+const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
 const DungeonGeneratorScript = preload("res://scripts/dungeon/dungeon_generator.gd")
 const ActorScript = preload("res://scripts/entities/actor.gd")
 const PlayerScript = preload("res://scripts/entities/player.gd")
@@ -39,6 +68,8 @@ const CLUTTER_NAMES: Array[String] = ["Cracked Vase", "Old Box"]
 const CLUTTER_GLYPHS: Array[String] = ["v", "b"]
 const CLUTTER_COLORS: Array[Color] = [Color(0.55, 0.45, 0.35), Color(0.45, 0.34, 0.24)]
 const SECRET_WALL_HP: int = 2
+const MAGIC_MISSILE_DEFAULT_TARGET_COUNT: int = 3
+const SCROLL_DAMAGE_DEPTH_STEP: int = 6
 const SECRET_WALL_HINT_COLOR: Color = Color(0.72, 0.58, 1.0)
 const SECRET_WALL_LISTEN_RADIUS: int = 8
 const VASE_XP_ORB_CHANCE: float = 0.35
@@ -48,6 +79,26 @@ const DASH_LOG_NAME: String = "Windstep"
 const BASE_FOV_RADIUS: int = 8
 const INT_FOV_BONUS_SCORE: int = 15
 const INT_FOV_MASTER_SCORE: int = 20
+const STUN_TRAP_ACTIONS: int = 3
+const AMBUSH_TRAP_ENEMY_COUNT: int = 3
+const AMBUSH_TRAP_MIN_DISTANCE: int = 2
+const AMBUSH_TRAP_MAX_DISTANCE: int = 5
+const AMBUSH_BASIC_ENEMY_NAMES: Array[String] = [
+	"Rat",
+	"Goblin",
+	"Kobold",
+	"Skeleton",
+	"Clockwork Spider",
+	"Zombie",
+	"Thorn Lasher",
+	"Spore Servant",
+	"Ash Revenant",
+	"Ember Archer",
+	"Drowned Knight",
+	"Harpooner",
+	"Mirror Duelist",
+	"Shard Golem",
+]
 
 # === Private Variables ===
 var _generator: RefCounted = DungeonGeneratorScript.new()
@@ -80,6 +131,7 @@ var _regen_heal_amount: int = 0
 var _dash_charge: int = 0
 var _poison_turns: int = 0
 var _poison_damage_sides: int = 4
+var _stun_actions: int = 0
 var _enemy_action_counts: Dictionary = {}
 var _sleeping_enemies: Dictionary = {}
 var _ranged_recovery_enemies: Dictionary = {}
@@ -88,6 +140,19 @@ var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
 var _trap_resources: Array = []
 var _resume_turn_after_level_choice: bool = false
+var _last_announced_biome_index: int = -1
+var _biome_overlay_tween: Tween
+var _fighter_cleave_charges: int = 0
+var _fighter_second_wind_charges: int = 0
+var _fighter_whirlwind_charges: int = 0
+var _ranger_focus_charges: int = 0
+var _ranger_volley_charges: int = 0
+var _ranger_quickstep_charges: int = 0
+var _wizard_spark_charges: int = 0
+var _wizard_frost_nova_charges: int = 0
+var _wizard_chain_lightning_charges: int = 0
+var _cleave_primed: bool = false
+var _hunter_focus_primed: bool = false
 
 # === Onready ===
 @onready var map_view: Node2D = $MapView
@@ -97,7 +162,14 @@ var _resume_turn_after_level_choice: bool = false
 @onready var shop_panel: PanelContainer = $UI/ShopPanel
 @onready var consumable_panel: PanelContainer = $UI/ConsumablePanel
 @onready var level_up_panel: LevelUpPanel = $UI/LevelUpPanel
+@onready var biome_overlay: Control = $UI/BiomeOverlay
+@onready var biome_overlay_panel: PanelContainer = $UI/BiomeOverlay/Center/Panel
+@onready var biome_kicker_label: Label = $UI/BiomeOverlay/Center/Panel/Margin/VBox/KickerLabel
+@onready var biome_title_label: Label = $UI/BiomeOverlay/Center/Panel/Margin/VBox/TitleLabel
+@onready var biome_divider: ColorRect = $UI/BiomeOverlay/Center/Panel/Margin/VBox/Divider
+@onready var biome_subtitle_label: Label = $UI/BiomeOverlay/Center/Panel/Margin/VBox/SubtitleLabel
 @onready var extraction_panel: PanelContainer = $UI/ExtractionPanel
+@onready var extraction_title_label: Label = $UI/ExtractionPanel/Margin/VBox/TitleLabel
 @onready var extraction_label: Label = $UI/ExtractionPanel/Margin/VBox/PromptLabel
 @onready var leave_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/LeaveButton
 @onready var descend_button: Button = $UI/ExtractionPanel/Margin/VBox/Buttons/DescendButton
@@ -106,7 +178,17 @@ var _resume_turn_after_level_choice: bool = false
 @onready var pause_resume_button: Button = $UI/PausePanel/Margin/VBox/ResumeButton
 @onready var pause_main_menu_button: Button = $UI/PausePanel/Margin/VBox/MainMenuButton
 @onready var debug_descend_button: Button = $UI/PausePanel/Margin/VBox/DebugDescendButton
+@onready var sensory_feedback: Control = $UI/SensoryFeedback
+@onready var pause_menu_box: VBoxContainer = $UI/PausePanel/Margin/VBox
+@onready var pause_audio_header_label: Label = pause_menu_box.get_node("AudioHeaderLabel")
+@onready var pause_audio_enabled_button: CheckButton = pause_menu_box.get_node("AudioEnabledButton")
+@onready var pause_master_volume_slider: HSlider = pause_menu_box.get_node(PAUSE_VOLUME_SLIDER_PATH)
+@onready
+var pause_master_volume_value_label: Label = pause_menu_box.get_node(PAUSE_VOLUME_VALUE_LABEL_PATH)
+@onready
+var pause_ambience_enabled_button: CheckButton = pause_menu_box.get_node("AmbienceEnabledButton")
 @onready var turn_manager: Node = $TurnManager
+@onready var class_ability_panel: PanelContainer = $UI/ClassAbilityPanel
 
 
 # === Lifecycle Methods ===
@@ -138,7 +220,15 @@ func _ready() -> void:
 	consumable_panel.connect("use_requested", _on_consumable_panel_use_requested)
 	level_up_panel.stat_selected.connect(_on_level_up_panel_stat_selected)
 	level_up_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	class_ability_panel.connect("close_requested", _on_class_ability_panel_close_requested)
+	class_ability_panel.connect("ability_requested", _on_class_ability_requested)
+	class_ability_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	consumable_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	# Audio controls
+	pause_audio_enabled_button.toggled.connect(_on_audio_enabled_toggled)
+	pause_master_volume_slider.value_changed.connect(_on_volume_slider_changed)
+	pause_ambience_enabled_button.toggled.connect(_on_ambience_enabled_toggled)
+	_refresh_audio_controls()
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
 
@@ -172,12 +262,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		or pause_panel.visible
 		or consumable_panel.visible
 		or level_up_panel.visible
+		or class_ability_panel.visible
 	):
 		return
 	if _targeting_active:
 		_handle_targeting_input(event)
 	elif _is_escape_key(event):
 		_close_open_overlay()
+	elif _stun_actions > 0 and _handle_stunned_input(event):
+		return
 	elif event.is_action_pressed(&"inventory"):
 		inventory_panel.visible = not inventory_panel.visible
 		if inventory_panel.visible:
@@ -188,6 +281,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if character_sheet.visible:
 			inventory_panel.visible = false
 			character_sheet.refresh(_player)
+	elif event.is_action_pressed(&"class_ability"):
+		_toggle_class_ability_panel()
+		get_viewport().set_input_as_handled()
 	elif inventory_panel.visible:
 		if event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"move_up"):
 			inventory_panel.select_previous()
@@ -265,6 +361,38 @@ func _is_debug_descend_key(event: InputEvent) -> bool:
 	)
 
 
+func _handle_stunned_input(event: InputEvent) -> bool:
+	if event.is_action_pressed(&"use_potion"):
+		_open_consumable_menu()
+		return true
+	if event.is_action_pressed(&"inventory") or event.is_action_pressed(&"character_sheet"):
+		GameManager.add_log_message("You are stunned; only consumables respond.", &"warning")
+		return true
+	if event.is_action_pressed(&"class_ability"):
+		GameManager.add_log_message("You are stunned; only consumables respond.", &"warning")
+		return true
+	if (
+		_input_direction(event) != Vector2i.ZERO
+		or event.is_action_pressed(&"fire_ranged")
+		or event.is_action_pressed(&"wait")
+		or event.is_action_pressed(&"ui_accept")
+	):
+		_spend_stunned_action()
+		return true
+	return false
+
+
+func _spend_stunned_action() -> void:
+	GameManager.add_log_message(
+		(
+			"You are stunned and lose the action (%d action%s left)."
+			% [_stun_actions, "" if _stun_actions == 1 else "s"]
+		),
+		&"warning"
+	)
+	_finish_player_action()
+
+
 # ===== Pause & Overlay Management =====
 func _open_pause_menu() -> void:
 	_clear_targeting()
@@ -274,11 +402,46 @@ func _open_pause_menu() -> void:
 		pause_hint_label.text = "The dungeon waits. Debug: Shift+> or PageDown descends."
 	else:
 		pause_hint_label.text = "The dungeon waits."
+	_refresh_audio_controls()
 	pause_resume_button.grab_focus()
 
 
 func _close_pause_menu() -> void:
 	pause_panel.visible = false
+
+
+## Synchronises the pause-menu audio controls with the current SensoryFeedback
+## state.  Safe to call when sensory_feedback is null.
+func _refresh_audio_controls() -> void:
+	if not is_instance_valid(sensory_feedback):
+		return
+	var sf: Object = sensory_feedback
+	if sf.has_method(&"is_audio_enabled"):
+		pause_audio_enabled_button.set_pressed_no_signal(bool(sf.call(&"is_audio_enabled")))
+	if sf.has_method(&"is_ambience_enabled"):
+		pause_ambience_enabled_button.set_pressed_no_signal(bool(sf.call(&"is_ambience_enabled")))
+	if sf.has_method(&"get_master_volume"):
+		var vol: float = float(sf.call(&"get_master_volume"))
+		var vol_int: int = int(round(vol * 100.0))
+		pause_master_volume_slider.set_value_no_signal(float(vol_int))
+		pause_master_volume_value_label.text = "%d%%" % vol_int
+
+
+func _on_audio_enabled_toggled(button_pressed: bool) -> void:
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_audio_enabled"):
+		sensory_feedback.call(&"set_audio_enabled", button_pressed, false)
+
+
+func _on_volume_slider_changed(value: float) -> void:
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_master_volume"):
+		var normalized: float = clampf(value / 100.0, 0.0, 1.0)
+		sensory_feedback.call(&"set_master_volume", normalized)
+		pause_master_volume_value_label.text = "%d%%" % int(round(normalized * 100.0))
+
+
+func _on_ambience_enabled_toggled(button_pressed: bool) -> void:
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_ambience_enabled"):
+		sensory_feedback.call(&"set_ambience_enabled", button_pressed)
 
 
 func _on_pause_resume_pressed() -> void:
@@ -301,22 +464,26 @@ func _on_pause_main_menu_pressed() -> void:
 
 
 func _close_open_overlay() -> bool:
+	var closed_overlay: bool = false
 	if shop_panel.visible:
 		shop_panel.visible = false
-		return true
-	if consumable_panel.visible:
+		closed_overlay = true
+	elif consumable_panel.visible:
 		consumable_panel.visible = false
-		return true
-	if inventory_panel.visible:
+		closed_overlay = true
+	elif inventory_panel.visible:
 		inventory_panel.visible = false
-		return true
-	if character_sheet.visible:
+		closed_overlay = true
+	elif character_sheet.visible:
 		character_sheet.visible = false
-		return true
-	if extraction_panel.visible:
+		closed_overlay = true
+	elif extraction_panel.visible:
 		extraction_panel.visible = false
-		return true
-	return false
+		closed_overlay = true
+	elif class_ability_panel.visible:
+		class_ability_panel.visible = false
+		closed_overlay = true
+	return closed_overlay
 
 
 func _refresh_overlay_visibility() -> void:
@@ -327,6 +494,7 @@ func _refresh_overlay_visibility() -> void:
 		and not extraction_panel.visible
 		and not pause_panel.visible
 		and not consumable_panel.visible
+		and not class_ability_panel.visible
 		and not level_up_panel.visible
 	)
 
@@ -426,7 +594,7 @@ func _handle_player_level_up() -> void:
 
 
 func _finish_player_action() -> void:
-	if level_up_panel.visible:
+	if level_up_panel and level_up_panel.visible:
 		_resume_turn_after_level_choice = true
 		return
 	_end_player_turn()
@@ -511,15 +679,34 @@ func _start_or_resume_player() -> void:
 
 
 func _grant_starter_weapon() -> void:
-	var starter_template: Resource = load(STARTER_WEAPON_PATH)
+	var starter_path: String
+	var starter_message: String
+	var is_ranged: bool = false
+	match GameManager.pending_character_class:
+		&"ranger":
+			starter_path = STARTER_WEAPON_RANGER
+			starter_message = "You notch an arrow on your hunting bow."
+			is_ranged = true
+		&"wizard":
+			starter_path = STARTER_WEAPON_WIZARD
+			starter_message = "The apprentice staff hums with latent energy."
+			is_ranged = true
+		_:
+			starter_path = STARTER_WEAPON_FIGHTER
+			starter_message = "You heft your trusty training sword."
+	var starter_template: Resource = load(starter_path)
 	if starter_template == null:
-		push_warning("Starter weapon missing: %s" % STARTER_WEAPON_PATH)
+		push_warning("Starter weapon missing: %s" % starter_path)
 		return
 	var starter_weapon: Resource = starter_template.duplicate(true)
 	_player.inventory_component.add_item(starter_weapon)
-	_player.inventory_component.equipped_weapon = starter_weapon
-	_player.inventory_component.equipped_melee_weapon = starter_weapon
-	GameManager.add_log_message("You grip a reliable dagger.", &"equipment")
+	if is_ranged:
+		_player.inventory_component.equipped_ranged_weapon = starter_weapon
+		_player.inventory_component.equipped_weapon = starter_weapon
+	else:
+		_player.inventory_component.equipped_melee_weapon = starter_weapon
+		_player.inventory_component.equipped_weapon = starter_weapon
+	GameManager.add_log_message(starter_message, &"equipment")
 
 
 func _grant_debug_loadout() -> void:
@@ -546,9 +733,23 @@ func _grant_debug_loadout() -> void:
 				_player.inventory_component.equipped_accessory_2 = item
 	_player.inventory_component.equipped_weapon = _player.inventory_component.equipped_melee_weapon
 	_player.stats_component.gold = 9999
+	_raise_debug_player_to_level_twenty()
 	GameManager.add_log_message(
-		"Debug kit granted: 20 stats, full item set, and 9999 gold.", &"loot"
+		"Debug kit granted: level 20, 20 stats, full item set, and 9999 gold.", &"loot"
 	)
+
+
+func _raise_debug_player_to_level_twenty() -> void:
+	var stats: StatsComponent = _player.stats_component
+	stats.level = StatsComponent.STAT_LEVEL_CAP
+	stats.xp = 0
+	stats.last_levels_gained = 0
+	stats.pending_stat_increases = 0
+	stats.proficiency_bonus = 2 + int((StatsComponent.STAT_LEVEL_CAP - 1) / 4)
+	var constitution_modifier: int = Dice.modifier(stats.constitution)
+	var level_hp_gain: int = max(1, 5 + constitution_modifier)
+	stats.max_hp = 12 + constitution_modifier + (StatsComponent.STAT_LEVEL_CAP - 1) * level_hp_gain
+	stats.current_hp = stats.max_hp
 
 
 # ===== Floor Generation & Spawning =====
@@ -578,12 +779,25 @@ func _generate_floor(floor_number: int) -> void:
 	_regen_heal_amount = 0
 	_poison_turns = 0
 	_poison_damage_sides = 4
+	_stun_actions = 0
 	_enemy_action_counts.clear()
 	_sleeping_enemies.clear()
 	_ranged_recovery_enemies.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
 	_triggered_traps.clear()
+	var player_level: int = _get_player_level()
+	_fighter_cleave_charges = 2 if player_level >= 20 else 1
+	_fighter_second_wind_charges = 1
+	_fighter_whirlwind_charges = 1
+	_ranger_focus_charges = 2 if player_level >= 20 else 1
+	_ranger_volley_charges = 1
+	_ranger_quickstep_charges = 1
+	_wizard_spark_charges = 2 if player_level >= 20 else 1
+	_wizard_frost_nova_charges = 1
+	_wizard_chain_lightning_charges = 1
+	_cleave_primed = false
+	_hunter_focus_primed = false
 	var generation_result: Dictionary = _generator.generate(
 		DungeonDataScript.MAP_WIDTH, DungeonDataScript.MAP_HEIGHT, floor_number
 	)
@@ -592,6 +806,12 @@ func _generate_floor(floor_number: int) -> void:
 	for secret_floor_cell: Vector2i in generation_result.get("secret_floor_cells", []):
 		_secret_floor_cells[secret_floor_cell] = true
 	GameManager.start_floor(floor_number)
+	var biome_theme: Dictionary = _apply_biome_theme(floor_number)
+	if (
+		is_instance_valid(sensory_feedback)
+		and sensory_feedback.has_method(&"set_floor_audio_context")
+	):
+		sensory_feedback.call(&"set_floor_audio_context", floor_number, biome_theme)
 	_stairs_position = generation_result["stairs_position"]
 	_player.set_grid_position(generation_result["player_start"])
 	_spawn_shopkeeper(generation_result, floor_number)
@@ -599,6 +819,8 @@ func _generate_floor(floor_number: int) -> void:
 	_spawn_items(generation_result["item_spawns"], floor_number)
 	_spawn_traps(generation_result.get("trap_spawns", []), floor_number)
 	_spawn_containers(generation_result, floor_number)
+	_spawn_final_floor_capstone(generation_result, floor_number)
+	hud.set_floor_context(floor_number, _shopkeeper != null)
 	_refresh_visibility()
 	_refresh_map()
 	inventory_panel.visible = false
@@ -607,6 +829,7 @@ func _generate_floor(floor_number: int) -> void:
 	pause_panel.visible = false
 	consumable_panel.visible = false
 	GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
+	_show_biome_title_if_needed(floor_number, biome_theme)
 	if _shopkeeper != null:
 		GameManager.add_log_message("A shopkeeper waits near the entrance.", &"loot")
 
@@ -641,10 +864,6 @@ func _spawn_items(spawn_positions: Array, floor_number: int) -> void:
 
 
 func _spawn_shopkeeper(generation_result: Dictionary, floor_number: int) -> void:
-	if floor_number < 2:
-		return
-	if floor_number > 2 and randf() >= SHOP_SPAWN_CHANCE:
-		return
 	var rooms: Array = generation_result.get("rooms", [])
 	if rooms.is_empty():
 		return
@@ -665,12 +884,26 @@ func _spawn_shopkeeper(generation_result: Dictionary, floor_number: int) -> void
 	_shop_stock = _generate_shop_stock(floor_number)
 
 
-func _spawn_traps(trap_spawns: Array, _floor_number: int) -> void:
+func _spawn_traps(trap_spawns: Array, floor_number: int) -> void:
 	for spawn_position: Vector2i in trap_spawns:
 		if _trap_resources.is_empty():
 			return
-		var trap: Resource = _trap_resources[randi_range(0, _trap_resources.size() - 1)]
+		var trap: Resource = _trap_resources[randi_range(0, _trap_resources.size() - 1)].duplicate(
+			true
+		)
+		_scale_trap_for_floor(trap, floor_number)
 		_trap_data[spawn_position] = trap
+
+
+func _scale_trap_for_floor(trap: Resource, floor_number: int) -> void:
+	var depth: int = max(0, floor_number - 1)
+	var dc_bonus: int = clampi(int(depth / 6), 0, LATE_TRAP_MAX_DC_BONUS)
+	trap.detect_dc += dc_bonus
+	if trap.min_damage <= 0 and trap.max_damage <= 0:
+		return
+	var damage_step: int = max(0, int(depth / LATE_TRAP_DAMAGE_DEPTH_STEP))
+	trap.min_damage += max(0, damage_step - 1)
+	trap.max_damage += damage_step * 2
 
 
 func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void:
@@ -704,6 +937,66 @@ func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void
 			_container_positions[cell] = _make_chest_container(
 				secret_container.get("rarity", _choose_chest_rarity(floor_number))
 			)
+
+
+func _spawn_final_floor_capstone(_generation_result: Dictionary, floor_number: int) -> void:
+	if floor_number != FINAL_VICTORY_FLOOR:
+		return
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
+	var anchor_data: Resource = _find_enemy_data_by_display_name(FINAL_CAPSTONE_ANCHOR_NAME)
+	if anchor_data != null:
+		var anchor_cell: Vector2i = _find_capstone_spawn_cell(blocked_cells)
+		if anchor_cell != Vector2i.ZERO:
+			_spawn_enemy_instance(anchor_data, anchor_cell, floor_number, true)
+			blocked_cells[anchor_cell] = true
+	var guard_count: int = 0
+	for guard_name: String in FINAL_CAPSTONE_GUARD_NAMES:
+		if guard_count >= 2:
+			break
+		var guard_data: Resource = _find_enemy_data_by_display_name(guard_name)
+		if guard_data == null:
+			continue
+		var guard_cell: Vector2i = _find_capstone_spawn_cell(blocked_cells)
+		if guard_cell == Vector2i.ZERO:
+			continue
+		_spawn_enemy_instance(guard_data, guard_cell, floor_number, true)
+		blocked_cells[guard_cell] = true
+		guard_count += 1
+	var chest_cell: Vector2i = _find_capstone_chest_cell()
+	if chest_cell != Vector2i.ZERO:
+		_container_positions[chest_cell] = _make_chest_container(ItemDataScript.ItemRarity.ASCENDED)
+	GameManager.add_log_message("The final guardians stir near the stairs.", &"warning")
+
+
+func _find_capstone_spawn_cell(blocked_cells: Dictionary) -> Vector2i:
+	for radius: int in range(1, 8):
+		var candidates: Array[Vector2i] = []
+		for y_offset: int in range(-radius, radius + 1):
+			for x_offset: int in range(-radius, radius + 1):
+				if max(abs(x_offset), abs(y_offset)) != radius:
+					continue
+				var cell: Vector2i = _stairs_position + Vector2i(x_offset, y_offset)
+				if _is_free_enemy_spawn_cell(cell, blocked_cells):
+					candidates.append(cell)
+		if not candidates.is_empty():
+			return candidates[randi_range(0, candidates.size() - 1)]
+	return Vector2i.ZERO
+
+
+func _find_capstone_chest_cell() -> Vector2i:
+	for radius: int in range(1, 5):
+		for direction: Vector2i in CARDINAL_DIRECTIONS:
+			var cell: Vector2i = _stairs_position + direction * radius
+			if not _is_container_spawn_blocked(cell):
+				return cell
+	return Vector2i.ZERO
+
+
+func _find_enemy_data_by_display_name(display_name: String) -> Resource:
+	for enemy_data: Resource in _enemy_resources:
+		if enemy_data.display_name == display_name:
+			return enemy_data
+	return null
 
 
 func _find_free_container_cell(room: Rect2i) -> Vector2i:
@@ -763,9 +1056,13 @@ func _make_clutter_container() -> Dictionary:
 # ===== Player Movement & Dash =====
 func _attempt_player_move(direction: Vector2i) -> void:
 	var target: Vector2i = _player.grid_position + direction
+	if _stun_actions > 0:
+		_spend_stunned_action()
+		return
 	if _is_closed_door(target):
 		GameManager.map_data[target.y][target.x] = DungeonDataScript.TileType.OPEN_DOOR
 		GameManager.add_log_message("You open the door.", &"neutral")
+		_play_action_burst(target, &"door")
 		_refresh_visibility()
 		_refresh_map()
 		_finish_player_action()
@@ -800,8 +1097,10 @@ func _attempt_player_move(direction: Vector2i) -> void:
 			GameManager.map_data,
 			GameManager.add_log_message,
 			_refresh_trap_aftermath,
-			_game_over
+			_game_over,
+			_handle_special_trap
 		)
+		_play_action_burst(target, &"trap")
 		_finish_player_action()
 		return
 
@@ -885,9 +1184,14 @@ func _advance_dash_charge() -> void:
 # ===== Combat Resolution =====
 func _resolve_attack(attacker: Node, defender: Node) -> void:
 	var damage_percent: int = _get_damage_percent(defender, &"melee")
-	var outcome: Dictionary = CombatSystemScript.attack(attacker, defender, damage_percent)
+	var attacker_damage_percent: int = _get_attacker_damage_percent(attacker, &"melee")
+	var outcome: Dictionary = CombatSystemScript.attack(
+		attacker, defender, damage_percent, attacker_damage_percent
+	)
 	if outcome["hit"]:
-		_log_damage_affinity(defender, &"melee", outcome["raw_damage"], outcome["damage"])
+		_log_damage_affinity(
+			defender, &"melee", outcome["attacker_scaled_damage"], outcome["damage"]
+		)
 		var critical_text: String = " (critical)" if outcome["critical"] else ""
 		GameManager.add_log_message(
 			(
@@ -896,13 +1200,23 @@ func _resolve_attack(attacker: Node, defender: Node) -> void:
 			),
 			&"combat_hit"
 		)
+		_play_action_burst(
+			defender.grid_position, &"critical" if outcome["critical"] else &"melee_hit"
+		)
 	else:
 		GameManager.add_log_message(
 			"%s misses %s." % [attacker.display_name, defender.display_name], &"combat_miss"
 		)
+		_play_action_burst(defender.grid_position, &"miss")
 
 	_try_apply_attack_poison(attacker, defender, outcome)
-	_handle_defender_after_damage(defender)
+	_handle_defender_after_damage(defender, outcome["damage"] > 0)
+
+	if attacker == _player and _cleave_primed and outcome["hit"]:
+		_apply_cleave_splash(defender, outcome)
+
+	if attacker == _player and outcome["hit"]:
+		_apply_fighter_extra_strike(defender)
 
 
 func _get_damage_percent(defender: Node, damage_type: StringName) -> int:
@@ -920,12 +1234,21 @@ func _get_damage_percent(defender: Node, damage_type: StringName) -> int:
 
 
 func _apply_typed_damage(defender: Node, raw_damage: int, damage_type: StringName) -> int:
+	var class_scaled_damage: int = _scale_damage(
+		raw_damage, _get_player_class_damage_percent(damage_type, _get_player_level())
+	)
 	var damage_percent: int = _get_damage_percent(defender, damage_type)
-	var damage: int = _scale_damage(raw_damage, damage_percent)
-	_log_damage_affinity(defender, damage_type, raw_damage, damage)
+	var damage: int = _scale_damage(class_scaled_damage, damage_percent)
+	_log_damage_affinity(defender, damage_type, class_scaled_damage, damage)
 	if damage > 0:
-		defender.stats_component.apply_damage(damage)
+		damage = defender.stats_component.apply_damage(damage)
 	return damage
+
+
+func _get_attacker_damage_percent(attacker: Node, damage_type: StringName) -> int:
+	if attacker == _player:
+		return _get_player_class_damage_percent(damage_type, _get_player_level())
+	return 100
 
 
 func _scale_damage(raw_damage: int, damage_percent: int) -> int:
@@ -981,9 +1304,11 @@ func _try_apply_attack_poison(attacker: Node, defender: Node, outcome: Dictionar
 	)
 
 
-func _handle_defender_after_damage(defender: Node) -> void:
+func _handle_defender_after_damage(defender: Node, took_damage: bool = true) -> void:
 	if defender == _player:
 		GameManager.emit_player_damaged()
+		if took_damage:
+			_try_apply_player_set_proc()
 		if not _player.is_alive():
 			_game_over(false)
 	elif not defender.is_alive():
@@ -1011,6 +1336,826 @@ func _apply_player_kill_specials() -> void:
 			)
 
 
+func _try_apply_player_set_proc() -> void:
+	if _player == null or not _player.is_alive():
+		return
+	var inventory: Node = _player.inventory_component
+	if inventory == null:
+		return
+	var proc_chance: int = inventory._get_set_proc_chance_percent()
+	var heal_percent: int = inventory._get_set_proc_heal_percent()
+	if proc_chance <= 0 or heal_percent <= 0:
+		return
+	if randi_range(1, 100) > proc_chance:
+		return
+	var heal_amount: int = max(1, int(ceil(_player.stats_component.max_hp * heal_percent / 100.0)))
+	var before_hp: int = _player.stats_component.current_hp
+	_player.stats_component.heal(heal_amount)
+	var healed: int = _player.stats_component.current_hp - before_hp
+	if healed <= 0:
+		return
+	GameManager.emit_player_damaged()
+	GameManager.add_log_message(
+		"%s restores %d HP." % [inventory._get_set_proc_display_name(), healed], &"heal"
+	)
+
+
+# ===== Class Abilities =====
+func _toggle_class_ability_panel() -> void:
+	if _stun_actions > 0:
+		GameManager.add_log_message("You are stunned; only consumables respond.", &"warning")
+		return
+	if class_ability_panel.visible:
+		class_ability_panel.visible = false
+	else:
+		_close_open_overlay()
+		class_ability_panel.refresh(_get_class_ability_entries())
+		class_ability_panel.visible = true
+
+
+func _get_class_ability_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	var player_class: StringName = GameManager.pending_character_class
+	var player_level: int = _get_player_level()
+	match player_class:
+		GameManager.CLASS_FIGHTER:
+			entries.append(_make_fighter_ability_entry(&"fighter_cleave", player_level))
+			entries.append(_make_fighter_ability_entry(&"fighter_second_wind", player_level))
+			entries.append(_make_fighter_ability_entry(&"fighter_whirlwind", player_level))
+		GameManager.CLASS_RANGER:
+			entries.append(_make_ranger_ability_entry(&"ranger_focus", player_level))
+			entries.append(_make_ranger_ability_entry(&"ranger_volley", player_level))
+			entries.append(_make_ranger_ability_entry(&"ranger_quickstep", player_level))
+		GameManager.CLASS_WIZARD:
+			entries.append(_make_wizard_ability_entry(&"arcane_spark", player_level))
+			entries.append(_make_wizard_ability_entry(&"wizard_frost_nova", player_level))
+			entries.append(_make_wizard_ability_entry(&"wizard_chain_lightning", player_level))
+	return entries
+
+
+func _make_ability_entry_core(
+	ability_id: StringName,
+	name: String,
+	player_level: int,
+	summary: String,
+	details: String,
+	active: bool
+) -> Dictionary:
+	var unlock_level: int = _get_ability_unlock_level(ability_id)
+	var charges_current: int = _get_ability_charges_current(ability_id)
+	var charges_max: int = _get_ability_charges_max(ability_id)
+	var unlocked: bool = player_level >= unlock_level
+	var entry: Dictionary = {
+		"ability_id": ability_id,
+		"name": name,
+		"charges_current": charges_current if unlocked else 0,
+		"charges_max": charges_max,
+		"summary": summary,
+		"details": details,
+		"active": active if unlocked else false,
+	}
+	if unlocked:
+		entry["enabled"] = charges_current > 0 and not active
+	else:
+		entry["enabled"] = false
+		entry["unlock_level"] = unlock_level
+		entry["disabled_reason"] = "Unlocks at level %d." % unlock_level
+	return entry
+
+
+func _make_fighter_ability_entry(ability_id: StringName, player_level: int) -> Dictionary:
+	match ability_id:
+		&"fighter_cleave":
+			var splash_percent: int = _get_fighter_cleave_splash_percent(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Cleave",
+				player_level,
+				"Next melee attack splashes adjacent enemies for %d%% damage." % splash_percent,
+				(
+					(
+						"Your next successful melee hit deals %d%% splash damage to adjacent enemies. "
+						+ "Does not consume your turn to activate."
+					)
+					% splash_percent
+				),
+				_cleave_primed
+			)
+		&"fighter_second_wind":
+			var heal_percent: int = _get_second_wind_heal_percent(player_level)
+			var shield_value: int = _get_second_wind_shield_value(player_level)
+			var shield_turns_count: int = _get_second_wind_shield_turns(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Second Wind",
+				player_level,
+				(
+					"Heal %d%% max HP and gain +%d AC for %d turns."
+					% [heal_percent, shield_value, shield_turns_count]
+				),
+				(
+					(
+						"Recover %d%% of your maximum HP and gain +%d AC for %d turns. "
+						+ "Consumes your action."
+					)
+					% [heal_percent, shield_value, shield_turns_count]
+				),
+				false
+			)
+		&"fighter_whirlwind":
+			return _make_ability_entry_core(
+				ability_id,
+				"Whirlwind",
+				player_level,
+				"Melee attack all adjacent enemies once.",
+				(
+					"Lash out at every enemy cardinally adjacent to you with a melee attack. "
+					+ "Consumes your action only when at least one enemy is hit."
+				),
+				false
+			)
+	return _make_ability_entry_core(ability_id, "Unknown", player_level, "", "", false)
+
+
+func _make_ranger_ability_entry(ability_id: StringName, player_level: int) -> Dictionary:
+	match ability_id:
+		&"ranger_focus":
+			var accuracy_bonus: int = _get_hunter_focus_accuracy(player_level)
+			var multiplier: int = _get_hunter_focus_multiplier(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Hunter's Focus",
+				player_level,
+				(
+					"Next ranged shot gains +%d accuracy and %d%% damage."
+					% [accuracy_bonus, multiplier]
+				),
+				(
+					(
+						"Your next ranged weapon attack gains +%d attack and %d%% raw damage. "
+						+ "Consumed on hit or miss. Does not consume your turn to activate."
+					)
+					% [accuracy_bonus, multiplier]
+				),
+				_hunter_focus_primed
+			)
+		&"ranger_volley":
+			var target_count: int = _get_volley_target_count(player_level)
+			var damage_percent: int = _get_volley_damage_percent(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Volley",
+				player_level,
+				(
+					"Fire at %d nearest enemies in weapon range for %d%% damage each."
+					% [target_count, damage_percent]
+				),
+				(
+					(
+						"Requires equipped ranged weapon. Hits the %d nearest visible enemies in range "
+						+ "for %d%% raw ranged damage each. Consumes your action only with targets."
+					)
+					% [target_count, damage_percent]
+				),
+				false
+			)
+		&"ranger_quickstep":
+			var haste_phases: int = _get_quickstep_haste_phases(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Quickstep",
+				player_level,
+				"Your next %d enemy phases are hasted." % haste_phases,
+				(
+					(
+						"Move faster than the dungeon: your next %d enemy phase%s is skipped. "
+						+ "Consumes your action."
+					)
+					% [haste_phases, "" if haste_phases == 1 else "s"]
+				),
+				false
+			)
+	return _make_ability_entry_core(ability_id, "Unknown", player_level, "", "", false)
+
+
+func _make_wizard_ability_entry(ability_id: StringName, player_level: int) -> Dictionary:
+	match ability_id:
+		&"arcane_spark":
+			var spark_range: int = _get_arcane_spark_range(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Arcane Spark",
+				player_level,
+				(
+					"Strike nearest visible enemy in range %d for 1d4+WIS+level/5 magic damage."
+					% spark_range
+				),
+				(
+					(
+						"Unleash a bolt at the nearest visible enemy in range %d. "
+						+ "Damage: 1d4 + WIS modifier + level/5 magic damage."
+					)
+					% spark_range
+				),
+				false
+			)
+		&"wizard_frost_nova":
+			var nova_radius: int = _get_frost_nova_radius(player_level)
+			var sleep_turns: int = _get_frost_nova_sleep_turns(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Frost Nova",
+				player_level,
+				(
+					"Freeze visible enemies within radius %d for 1d4+WIS+level/4 magic damage."
+					% nova_radius
+				),
+				(
+					(
+						"Blast visible enemies within radius %d for 1d4 + WIS modifier + level/4 magic damage "
+						+ "and sleep them for %d turn%s. Consumes action only if at least one enemy is affected."
+					)
+					% [nova_radius, sleep_turns, "" if sleep_turns == 1 else "s"]
+				),
+				false
+			)
+		&"wizard_chain_lightning":
+			var chain_range: int = _get_chain_lightning_range(player_level)
+			var target_count: int = _get_chain_lightning_target_count(player_level)
+			return _make_ability_entry_core(
+				ability_id,
+				"Chain Lightning",
+				player_level,
+				(
+					"Chain to %d nearest enemies in range %d for 1d6+WIS+level/2 magic damage each."
+					% [target_count, chain_range]
+				),
+				(
+					(
+						"Strike the %d nearest visible enemies in range %d for 1d6 + WIS modifier + level/2 "
+						+ "magic damage each. Consumes action only if at least one enemy is hit."
+					)
+					% [target_count, chain_range]
+				),
+				false
+			)
+	return _make_ability_entry_core(ability_id, "Unknown", player_level, "", "", false)
+
+
+func _on_class_ability_panel_close_requested() -> void:
+	class_ability_panel.visible = false
+
+
+func _on_class_ability_requested(ability_id: StringName) -> void:
+	match ability_id:
+		&"fighter_cleave":
+			_activate_fighter_cleave()
+		&"fighter_second_wind":
+			_activate_fighter_second_wind()
+		&"fighter_whirlwind":
+			_activate_fighter_whirlwind()
+		&"ranger_focus":
+			_activate_ranger_focus()
+		&"ranger_volley":
+			_activate_ranger_volley()
+		&"ranger_quickstep":
+			_activate_ranger_quickstep()
+		&"arcane_spark":
+			_activate_wizard_spark()
+		&"wizard_frost_nova":
+			_activate_wizard_frost_nova()
+		&"wizard_chain_lightning":
+			_activate_wizard_chain_lightning()
+	class_ability_panel.visible = false
+
+
+func _activate_fighter_cleave() -> void:
+	if _fighter_cleave_charges <= 0 or _cleave_primed:
+		return
+	_fighter_cleave_charges -= 1
+	_cleave_primed = true
+	GameManager.add_log_message(
+		"Cleave primed: your next melee attack splashes to adjacent enemies.", &"magic"
+	)
+
+
+func _activate_fighter_second_wind() -> void:
+	if _fighter_second_wind_charges <= 0:
+		return
+	var player_level: int = _get_player_level()
+	var heal_percent: int = _get_second_wind_heal_percent(player_level)
+	var shield_value: int = _get_second_wind_shield_value(player_level)
+	var shield_turns_count: int = _get_second_wind_shield_turns(player_level)
+	_fighter_second_wind_charges -= 1
+	# Heal
+	var heal_amount: int = max(1, int(round(_player.stats_component.max_hp * heal_percent / 100.0)))
+	var before_hp: int = _player.stats_component.current_hp
+	_player.stats_component.heal(heal_amount)
+	var healed: int = _player.stats_component.current_hp - before_hp
+	if healed > 0:
+		GameManager.add_log_message("Second Wind restores %d HP." % healed, &"heal")
+	# Shield
+	_shield_turns = max(_shield_turns, shield_turns_count + 1)
+	_shield_armor_bonus = max(_shield_armor_bonus, shield_value)
+	_refresh_temporary_stats()
+	GameManager.add_log_message(
+		"Second Wind grants +%d AC for %d turns." % [shield_value, shield_turns_count], &"magic"
+	)
+	GameManager.emit_player_damaged()
+	_finish_player_action()
+
+
+func _activate_fighter_whirlwind() -> void:
+	if _fighter_whirlwind_charges <= 0:
+		return
+	var adjacent_enemies: Array[Node2D] = _get_adjacent_enemies(_player.grid_position)
+	if adjacent_enemies.is_empty():
+		GameManager.add_log_message("Whirlwind has no adjacent enemies.", &"warning")
+		return
+	_fighter_whirlwind_charges -= 1
+	for target: Node2D in adjacent_enemies:
+		var damage_percent: int = _get_damage_percent(target, &"melee")
+		var attacker_damage_percent: int = _get_player_class_damage_percent(
+			&"melee", _get_player_level()
+		)
+		var outcome: Dictionary = CombatSystemScript.attack(
+			_player, target, damage_percent, attacker_damage_percent
+		)
+		if outcome["hit"]:
+			_log_damage_affinity(
+				target, &"melee", outcome["attacker_scaled_damage"], outcome["damage"]
+			)
+			GameManager.add_log_message(
+				"Whirlwind hits %s for %d melee damage." % [target.display_name, outcome["damage"]],
+				&"combat_hit"
+			)
+		else:
+			GameManager.add_log_message(
+				"Whirlwind misses %s." % target.display_name, &"combat_miss"
+			)
+		_handle_defender_after_damage(target)
+	_finish_player_action()
+
+
+func _activate_ranger_focus() -> void:
+	if _ranger_focus_charges <= 0 or _hunter_focus_primed:
+		return
+	_ranger_focus_charges -= 1
+	_hunter_focus_primed = true
+	var player_level: int = _get_player_level()
+	var accuracy: int = _get_hunter_focus_accuracy(player_level)
+	var multiplier: int = _get_hunter_focus_multiplier(player_level)
+	(
+		GameManager
+		. add_log_message(
+			(
+				("Hunter's Focus primed: your next ranged weapon shot gains +%d accuracy and %d%% damage.")
+				% [accuracy, multiplier]
+			),
+			&"magic"
+		)
+	)
+
+
+func _activate_ranger_volley() -> void:
+	if _ranger_volley_charges <= 0:
+		return
+	if not _has_ranged_weapon():
+		GameManager.add_log_message("Volley requires an equipped ranged weapon.", &"warning")
+		return
+	var ranged_weapon: Resource = _player.inventory_component.get_equipped_ranged_weapon()
+	var volley_range: int = ranged_weapon.range
+	var visible_enemies: Array[Node2D] = _find_visible_enemies_in_range(volley_range)
+	if visible_enemies.is_empty():
+		GameManager.add_log_message(
+			"Volley has no visible targets within weapon range %d." % volley_range, &"warning"
+		)
+		return
+	_ranger_volley_charges -= 1
+	var player_level: int = _get_player_level()
+	var target_count: int = _get_volley_target_count(player_level)
+	var damage_percent: int = _get_volley_damage_percent(player_level)
+	var targets: Array[Node2D] = []
+	# Sort by distance, take up to target_count
+	visible_enemies.sort_custom(
+		func(a: Node2D, b: Node2D) -> bool:
+			return (
+				a.grid_position.distance_to(_player.grid_position)
+				< b.grid_position.distance_to(_player.grid_position)
+			)
+	)
+	for i: int in range(min(target_count, visible_enemies.size())):
+		targets.append(visible_enemies[i])
+	for target: Node2D in targets:
+		var dex_mod: int = Dice.modifier(_player.stats_component.dexterity)
+		var raw_damage: int = max(1, Dice.roll(ranged_weapon.damage_sides) + dex_mod)
+		raw_damage = max(1, int(round(raw_damage * damage_percent / 100.0)))
+		var damage: int = _apply_typed_damage(target, raw_damage, &"ranged")
+		GameManager.add_log_message(
+			"Volley hits %s for %d damage." % [target.display_name, damage], &"combat_hit"
+		)
+		_handle_defender_after_damage(target)
+	_finish_player_action()
+
+
+func _activate_ranger_quickstep() -> void:
+	if _ranger_quickstep_charges <= 0:
+		return
+	_ranger_quickstep_charges -= 1
+	var haste_phases: int = _get_quickstep_haste_phases(_get_player_level())
+	_haste_enemy_phases = max(_haste_enemy_phases, haste_phases)
+	GameManager.add_log_message(
+		(
+			"Quickstep: your next %d enemy phase%s will be skipped."
+			% [haste_phases, "" if haste_phases == 1 else "s"]
+		),
+		&"magic"
+	)
+	_finish_player_action()
+
+
+func _activate_wizard_spark() -> void:
+	if _wizard_spark_charges <= 0:
+		return
+	var player_level: int = _get_player_level()
+	var spark_range: int = _get_arcane_spark_range(player_level)
+	var nearest_enemy: Node2D = _find_nearest_visible_enemy_in_range(spark_range)
+	if nearest_enemy == null:
+		GameManager.add_log_message(
+			"Arcane Spark has no visible target within range %d." % spark_range, &"warning"
+		)
+		return
+	_wizard_spark_charges -= 1
+	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
+	var raw_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 5)
+	var damage: int = _apply_typed_damage(nearest_enemy, raw_damage, &"magic")
+	GameManager.add_log_message(
+		"Arcane Spark hits %s for %d force damage." % [nearest_enemy.display_name, damage], &"magic"
+	)
+	_handle_defender_after_damage(nearest_enemy)
+	_finish_player_action()
+
+
+func _activate_wizard_frost_nova() -> void:
+	if _wizard_frost_nova_charges <= 0:
+		return
+	var player_level: int = _get_player_level()
+	var nova_radius: int = _get_frost_nova_radius(player_level)
+	var sleep_turns: int = _get_frost_nova_sleep_turns(player_level)
+	# Collect affected enemies
+	var affected_enemies: Array[Node2D] = []
+	for enemy: Node2D in _enemies:
+		if enemy == null or not enemy.is_alive():
+			continue
+		if not _visible_cells.has(enemy.grid_position):
+			continue
+		if enemy.grid_position.distance_to(_player.grid_position) <= nova_radius:
+			affected_enemies.append(enemy)
+	if affected_enemies.is_empty():
+		GameManager.add_log_message(
+			"Frost Nova has no visible enemies within radius %d." % nova_radius, &"warning"
+		)
+		return
+	_wizard_frost_nova_charges -= 1
+	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
+	var base_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 4)
+	for target: Node2D in affected_enemies:
+		var damage: int = _apply_typed_damage(target, base_damage, &"magic")
+		GameManager.add_log_message(
+			"Frost Nova hits %s for %d cold damage." % [target.display_name, damage], &"combat_hit"
+		)
+		_sleeping_enemies[target] = sleep_turns
+		_handle_defender_after_damage(target)
+	_finish_player_action()
+
+
+func _activate_wizard_chain_lightning() -> void:
+	if _wizard_chain_lightning_charges <= 0:
+		return
+	var player_level: int = _get_player_level()
+	var chain_range: int = _get_chain_lightning_range(player_level)
+	var target_count: int = _get_chain_lightning_target_count(player_level)
+	var candidates: Array[Node2D] = _find_visible_enemies_in_range(chain_range)
+	if candidates.is_empty():
+		GameManager.add_log_message(
+			"Chain Lightning has no visible targets within range %d." % chain_range, &"warning"
+		)
+		return
+	_wizard_chain_lightning_charges -= 1
+	# Sort by distance, take up to target_count
+	candidates.sort_custom(
+		func(a: Node2D, b: Node2D) -> bool:
+			return (
+				a.grid_position.distance_to(_player.grid_position)
+				< b.grid_position.distance_to(_player.grid_position)
+			)
+	)
+	var targets: Array[Node2D] = []
+	for i: int in range(min(target_count, candidates.size())):
+		targets.append(candidates[i])
+	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
+	var base_damage: int = Dice.roll(6) + max(0, wis_mod) + int(player_level / 2)
+	for target: Node2D in targets:
+		var damage: int = _apply_typed_damage(target, base_damage, &"magic")
+		GameManager.add_log_message(
+			"Chain Lightning strikes %s for %d lightning damage." % [target.display_name, damage],
+			&"combat_hit"
+		)
+		_handle_defender_after_damage(target)
+	_finish_player_action()
+
+
+func _find_nearest_visible_enemy_in_range(target_range: int) -> Node2D:
+	var nearest_enemy: Node2D = null
+	var nearest_distance: float = INF
+	for enemy: Node2D in _enemies:
+		if enemy == null or not enemy.is_alive():
+			continue
+		var distance: float = enemy.grid_position.distance_to(_player.grid_position)
+		if (
+			distance <= target_range
+			and _visible_cells.has(enemy.grid_position)
+			and distance < nearest_distance
+		):
+			nearest_distance = distance
+			nearest_enemy = enemy
+	return nearest_enemy
+
+
+# ===== Class Ability Helpers =====
+func _get_player_level() -> int:
+	if _player == null:
+		return 1
+	if _player.stats_component == null:
+		return 1
+	return _player.stats_component.level
+
+
+func _get_ability_unlock_level(ability_id: StringName) -> int:
+	match ability_id:
+		&"fighter_cleave", &"ranger_focus", &"arcane_spark":
+			return 1
+		&"fighter_second_wind", &"ranger_volley", &"wizard_frost_nova":
+			return 6
+		&"fighter_whirlwind", &"ranger_quickstep", &"wizard_chain_lightning":
+			return 12
+	return 99
+
+
+func _get_ability_charges_current(ability_id: StringName) -> int:
+	var charges: int = 0
+	match ability_id:
+		&"fighter_cleave":
+			charges = _fighter_cleave_charges
+		&"fighter_second_wind":
+			charges = _fighter_second_wind_charges
+		&"fighter_whirlwind":
+			charges = _fighter_whirlwind_charges
+		&"ranger_focus":
+			charges = _ranger_focus_charges
+		&"ranger_volley":
+			charges = _ranger_volley_charges
+		&"ranger_quickstep":
+			charges = _ranger_quickstep_charges
+		&"arcane_spark":
+			charges = _wizard_spark_charges
+		&"wizard_frost_nova":
+			charges = _wizard_frost_nova_charges
+		&"wizard_chain_lightning":
+			charges = _wizard_chain_lightning_charges
+	return charges
+
+
+func _get_ability_charges_max(ability_id: StringName) -> int:
+	var player_level: int = _get_player_level()
+	# Core level-1 abilities gain a second charge at level 20
+	match ability_id:
+		&"fighter_cleave", &"ranger_focus", &"arcane_spark":
+			return 2 if player_level >= 20 else 1
+	return 1
+
+
+func _get_player_class_damage_percent(damage_type: StringName, character_level: int = 1) -> int:
+	var base_percent: int = GameManager.get_character_class_damage_percent(
+		damage_type, GameManager.pending_character_class, character_level
+	)
+	if _player != null and _player.inventory_component != null:
+		base_percent += _player.inventory_component.get_class_damage_percent_bonus(damage_type)
+	return base_percent
+
+
+func _find_visible_enemies_in_range(target_range: int) -> Array[Node2D]:
+	var enemies_in_range: Array[Node2D] = []
+	for enemy: Node2D in _enemies:
+		if enemy == null or not enemy.is_alive():
+			continue
+		var distance: float = enemy.grid_position.distance_to(_player.grid_position)
+		if distance <= target_range and _visible_cells.has(enemy.grid_position):
+			enemies_in_range.append(enemy)
+	return enemies_in_range
+
+
+func _get_adjacent_enemies(cell: Vector2i) -> Array[Node2D]:
+	var adjacent: Array[Node2D] = []
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		var neighbor: Vector2i = cell + direction
+		var enemy: Node2D = _get_enemy_at(neighbor)
+		if enemy != null and enemy.is_alive():
+			adjacent.append(enemy)
+	return adjacent
+
+
+func _has_ranged_weapon() -> bool:
+	if _player == null:
+		return false
+	return _player.inventory_component.get_equipped_ranged_weapon() != null
+
+
+# ===== Level Scaling Helpers =====
+
+
+# Fighter Cleave
+func _get_fighter_cleave_splash_percent(player_level: int) -> int:
+	if player_level >= 20:
+		return 100
+	if player_level >= 15:
+		return 75
+	if player_level >= 10:
+		return 60
+	return 50
+
+
+# Fighter Second Wind
+func _get_second_wind_heal_percent(player_level: int) -> int:
+	if player_level >= 20:
+		return 30
+	if player_level >= 15:
+		return 25
+	return 20
+
+
+func _get_second_wind_shield_value(player_level: int) -> int:
+	if player_level >= 20:
+		return 4
+	if player_level >= 15:
+		return 3
+	return 2
+
+
+func _get_second_wind_shield_turns(player_level: int) -> int:
+	if player_level >= 20:
+		return 5
+	if player_level >= 15:
+		return 4
+	return 3
+
+
+# Fighter Extra Strike Chance
+func _get_fighter_extra_strike_chance(player_level: int) -> int:
+	if player_level >= 20:
+		return 30
+	if player_level >= 15:
+		return 24
+	if player_level >= 10:
+		return 18
+	if player_level >= 5:
+		return 12
+	return 0
+
+
+# Ranger Hunter's Focus
+func _get_hunter_focus_accuracy(player_level: int) -> int:
+	if player_level >= 20:
+		return 6
+	if player_level >= 10:
+		return 5
+	return 4
+
+
+func _get_hunter_focus_multiplier(player_level: int) -> int:
+	if player_level >= 20:
+		return 200
+	if player_level >= 15:
+		return 175
+	return 150
+
+
+# Ranger Volley
+func _get_volley_target_count(player_level: int) -> int:
+	if player_level >= 20:
+		return 4
+	if player_level >= 15:
+		return 3
+	return 2
+
+
+func _get_volley_damage_percent(player_level: int) -> int:
+	if player_level >= 20:
+		return 100
+	if player_level >= 15:
+		return 90
+	return 80
+
+
+# Ranger Quickstep
+func _get_quickstep_haste_phases(player_level: int) -> int:
+	return 2 if player_level >= 20 else 1
+
+
+# Wizard Arcane Spark
+func _get_arcane_spark_range(player_level: int) -> int:
+	if player_level >= 20:
+		return 8
+	if player_level >= 10:
+		return 7
+	return 6
+
+
+# Wizard Frost Nova
+func _get_frost_nova_radius(player_level: int) -> int:
+	if player_level >= 15:
+		return 3
+	return 2
+
+
+func _get_frost_nova_sleep_turns(player_level: int) -> int:
+	return 2 if player_level >= 20 else 1
+
+
+# Wizard Chain Lightning
+func _get_chain_lightning_range(player_level: int) -> int:
+	if player_level >= 20:
+		return 8
+	return 7
+
+
+func _get_chain_lightning_target_count(player_level: int) -> int:
+	if player_level >= 20:
+		return 4
+	return 3
+
+
+func _apply_cleave_splash(primary_target: Node, outcome: Dictionary) -> void:
+	_cleave_primed = false
+	var splash_percent: int = _get_fighter_cleave_splash_percent(_get_player_level())
+	var splash_base: int = max(
+		1, int(round(outcome["attacker_scaled_damage"] * splash_percent / 100.0))
+	)
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		var splash_cell: Vector2i = primary_target.grid_position + direction
+		var splash_target: Node2D = _get_enemy_at(splash_cell)
+		if splash_target == null or not splash_target.is_alive():
+			continue
+		var splash_affinity: int = _get_damage_percent(splash_target, &"melee")
+		var splash_damage: int = _scale_damage(splash_base, splash_affinity)
+		if splash_damage > 0:
+			splash_damage = splash_target.stats_component.apply_damage(splash_damage)
+		if splash_damage > 0:
+			GameManager.add_log_message(
+				(
+					"Cleave hits %s for %d splash damage."
+					% [splash_target.display_name, splash_damage]
+				),
+				&"combat_hit"
+			)
+		_handle_defender_after_damage(splash_target)
+
+
+func _apply_fighter_extra_strike(defender: Node) -> void:
+	if GameManager.pending_character_class != GameManager.CLASS_FIGHTER:
+		return
+	var extra_strike_chance: int = _get_fighter_extra_strike_chance(_get_player_level())
+	if extra_strike_chance <= 0:
+		return
+	if not defender.is_alive():
+		return
+	if randi_range(1, 100) > extra_strike_chance:
+		return
+	GameManager.add_log_message("Fighter's training kicks in: an extra strike!", &"combat_hit")
+	# No recursive extra strikes — only one follow-up per hit, no chaining
+	var damage_percent: int = _get_damage_percent(defender, &"melee")
+	var attacker_damage_percent: int = _get_attacker_damage_percent(_player, &"melee")
+	var extra_outcome: Dictionary = CombatSystemScript.attack(
+		_player, defender, damage_percent, attacker_damage_percent
+	)
+	if extra_outcome["hit"]:
+		_log_damage_affinity(
+			defender, &"melee", extra_outcome["attacker_scaled_damage"], extra_outcome["damage"]
+		)
+		GameManager.add_log_message(
+			(
+				"Extra strike hits %s for %d melee damage."
+				% [defender.display_name, extra_outcome["damage"]]
+			),
+			&"combat_hit"
+		)
+	else:
+		GameManager.add_log_message(
+			"Extra strike misses %s." % [defender.display_name], &"combat_miss"
+		)
+	_handle_defender_after_damage(defender)
+
+
 # ===== Items & Containers =====
 func _collect_item_at(cell: Vector2i) -> void:
 	if not _item_positions.has(cell):
@@ -1019,6 +2164,7 @@ func _collect_item_at(cell: Vector2i) -> void:
 	_player.inventory_component.add_item(item)
 	_item_positions.erase(cell)
 	GameManager.add_log_message("You pick up %s." % item.display_name, &"loot")
+	_play_action_burst(cell, &"loot")
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
 
@@ -1027,6 +2173,7 @@ func _open_container_at(cell: Vector2i) -> void:
 	if not _container_positions.has(cell):
 		return
 	var container_data: Dictionary = _container_positions[cell]
+	_play_container_open_burst(cell, container_data)
 	_container_positions.erase(cell)
 	if container_data.get("type", CONTAINER_TYPE_CHEST) == CONTAINER_TYPE_CLUTTER:
 		_open_clutter_container(container_data)
@@ -1035,6 +2182,46 @@ func _open_container_at(cell: Vector2i) -> void:
 	inventory_panel.refresh(_player)
 	character_sheet.refresh(_player)
 	hud.bind_player(_player)
+
+
+func _play_action_burst(cell: Vector2i, burst_type: StringName) -> void:
+	if map_view == null or not map_view.has_method("play_cell_burst"):
+		return
+	var color: Color = ACTION_BURST_HIT_COLOR
+	var glyph: String = "*"
+	match burst_type:
+		&"critical":
+			color = ACTION_BURST_LOOT_COLOR
+			glyph = "✦"
+		&"ranged_hit":
+			color = Color(0.58, 0.82, 1.0)
+			glyph = "›"
+		&"magic_hit":
+			color = ACTION_BURST_MAGIC_COLOR
+			glyph = "✦"
+		&"miss":
+			color = ACTION_BURST_MISS_COLOR
+			glyph = "·"
+		&"loot":
+			color = ACTION_BURST_LOOT_COLOR
+			glyph = "$"
+		&"door":
+			color = Color(0.82, 0.57, 0.30)
+			glyph = "+"
+		&"trap":
+			color = ACTION_BURST_WARNING_COLOR
+			glyph = "!"
+	map_view.play_cell_burst(cell, color, glyph)
+
+
+func _play_container_open_burst(cell: Vector2i, container_data: Dictionary) -> void:
+	if map_view == null or not map_view.has_method("play_cell_burst"):
+		return
+	var burst_color: Color = container_data.get("color", Color(1.0, 0.88, 0.47))
+	var burst_glyph: String = "✦"
+	if container_data.get("type", CONTAINER_TYPE_CHEST) == CONTAINER_TYPE_CLUTTER:
+		burst_glyph = "·"
+	map_view.play_cell_burst(cell, burst_color, burst_glyph)
 
 
 func _open_clutter_container(container_data: Dictionary) -> void:
@@ -1119,15 +2306,22 @@ func _find_item_by_display_name(display_name: String) -> Resource:
 
 # ===== Stairs, Status & Turn End =====
 func _reach_stairs() -> void:
-	if GameManager.current_floor % EXTRACTION_INTERVAL == 0:
-		extraction_label.text = (
-			"You survived floor %d.\nLeave safely, or descend deeper for greater danger?"
-			% GameManager.current_floor
-		)
-		extraction_panel.visible = true
-		leave_button.grab_focus()
+	if GameManager.current_floor == FINAL_VICTORY_FLOOR:
+		_show_victory_choice()
 		return
 	_generate_floor(GameManager.current_floor + 1)
+
+
+func _show_victory_choice() -> void:
+	extraction_title_label.text = "FINAL CHOICE"
+	extraction_label.text = (
+		"You reached the end of the dungeon.\n"
+		+ "Leave victorious, or descend into the Endless Deeps until death?"
+	)
+	leave_button.text = "Leave Victorious"
+	descend_button.text = "Delve Forever"
+	extraction_panel.visible = true
+	leave_button.grab_focus()
 
 
 func _apply_regen_tick() -> void:
@@ -1147,7 +2341,7 @@ func _apply_poison_tick() -> bool:
 		return true
 	_poison_turns -= 1
 	var damage: int = Dice.roll(_poison_damage_sides)
-	_player.stats_component.apply_damage(damage)
+	damage = _player.stats_component.apply_damage(damage)
 	GameManager.emit_player_damaged()
 	GameManager.add_log_message(
 		(
@@ -1159,12 +2353,22 @@ func _apply_poison_tick() -> bool:
 	if not _player.is_alive():
 		_game_over(false)
 		return false
+	_try_apply_player_set_proc()
 	return true
+
+
+func _tick_stun_action() -> void:
+	if _stun_actions <= 0:
+		return
+	_stun_actions -= 1
+	if _stun_actions == 0:
+		GameManager.add_log_message("You shake off the stun.", &"heal")
 
 
 func _end_player_turn() -> void:
 	if _shield_turns > 0:
 		_shield_turns -= 1
+	_tick_stun_action()
 	if not _apply_poison_tick():
 		return
 	_apply_regen_tick()
@@ -1179,7 +2383,8 @@ func _end_player_turn() -> void:
 		GameManager.begin_player_turn()
 		_refresh_map()
 		return
-	turn_manager.run_enemy_phase(_process_enemy_turns)
+	if turn_manager != null:
+		turn_manager.run_enemy_phase(_process_enemy_turns)
 
 
 # ===== Enemy AI =====
@@ -1307,7 +2512,7 @@ func _resolve_enemy_ranged_attack(enemy: Node) -> void:
 	var damage_type: StringName = enemy_data.ranged_damage_type
 	if damage_type == &"":
 		damage_type = &"piercing"
-	_player.stats_component.apply_damage(damage)
+	damage = _player.stats_component.apply_damage(damage)
 	var action_text: String = "casts a spell at" if damage_type == &"magic" else "shoots"
 	var message_type: StringName = &"magic" if damage_type == &"magic" else &"combat_hit"
 	GameManager.add_log_message(
@@ -1324,7 +2529,7 @@ func _resolve_enemy_fireball(enemy: Node) -> void:
 	for _die_index: int in range(max(1, enemy_data.fireball_damage_dice)):
 		raw_damage += Dice.roll(max(2, enemy_data.fireball_damage_sides))
 	var damage: int = max(1, raw_damage)
-	_player.stats_component.apply_damage(damage)
+	damage = _player.stats_component.apply_damage(damage)
 	GameManager.add_log_message(
 		"%s hurls a fireball at you for %d fire damage." % [enemy.display_name, damage], &"magic"
 	)
@@ -1337,7 +2542,7 @@ func _try_enemy_summon(enemy: Node, blocked_cells: Dictionary) -> bool:
 	var active_minions: int = _count_summoned_minions(enemy)
 	if active_minions >= enemy_data.summon_max_active:
 		return false
-	var summon_data: Resource = load(enemy_data.summon_enemy_path)
+	var summon_data: Resource = _create_summoned_enemy_data(enemy_data)
 	if summon_data == null:
 		return false
 	var summon_count: int = min(
@@ -1374,6 +2579,21 @@ func _try_enemy_summon(enemy: Node, blocked_cells: Dictionary) -> bool:
 		)
 		return true
 	return false
+
+
+func _create_summoned_enemy_data(summoner_data: Resource) -> Resource:
+	var summon_data: Resource = load(summoner_data.summon_enemy_path)
+	if summon_data == null:
+		return null
+	var summoned_data: Resource = summon_data.duplicate(true)
+	if summoner_data.display_name == "Lich":
+		summoned_data.display_name = "Brittle Skeleton"
+		summoned_data.ranged_attack_range = 0
+		summoned_data.ranged_attack_interval = 0
+		summoned_data.ranged_damage_sides = 0
+		summoned_data.ranged_damage_bonus = 0
+		summoned_data.ai_preferred_range = 0
+	return summoned_data
 
 
 func _count_summoned_minions(enemy: Node) -> int:
@@ -1414,6 +2634,76 @@ func _is_free_enemy_spawn_cell(cell: Vector2i, blocked_cells: Dictionary) -> boo
 	)
 
 
+# ===== Biome Presentation =====
+func _apply_biome_theme(floor_number: int) -> Dictionary:
+	var theme: Dictionary = BiomeCatalogScript.theme_for_floor(floor_number)
+	map_view.set_biome_theme(theme)
+	hud.set_biome_theme(theme)
+	return theme
+
+
+func _show_biome_title_if_needed(floor_number: int, theme: Dictionary) -> void:
+	var biome_index: int = BiomeCatalogScript.biome_index_for_floor(floor_number)
+	if biome_index == _last_announced_biome_index:
+		return
+	_last_announced_biome_index = biome_index
+	_show_biome_title(theme)
+
+
+func _show_biome_title(theme: Dictionary) -> void:
+	var accent_color: Color = _theme_color(theme, "accent_color", Color(0.6, 0.843, 0.898))
+	var title_color: Color = _theme_color(theme, "title_color", Color(1.0, 0.82, 0.32))
+	var subtitle_color: Color = _theme_color(theme, "subtitle_color", Color(0.72, 0.70, 0.62))
+	_apply_biome_overlay_style(theme, accent_color)
+	biome_kicker_label.text = str(theme.get("kicker", "ENTERING BIOME"))
+	biome_kicker_label.add_theme_color_override("font_color", accent_color)
+	biome_title_label.text = str(theme.get("name", "The Tower"))
+	biome_title_label.add_theme_color_override("font_color", title_color)
+	biome_subtitle_label.text = str(theme.get("range_label", "Depths 1-5"))
+	biome_subtitle_label.add_theme_color_override("font_color", subtitle_color)
+	biome_divider.color = Color(accent_color.r, accent_color.g, accent_color.b, 0.85)
+	if _biome_overlay_tween != null and _biome_overlay_tween.is_valid():
+		_biome_overlay_tween.kill()
+	biome_overlay.visible = true
+	biome_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_biome_overlay_tween = create_tween()
+	_biome_overlay_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_biome_overlay_tween.set_trans(Tween.TRANS_CUBIC)
+	_biome_overlay_tween.set_ease(Tween.EASE_OUT)
+	_biome_overlay_tween.tween_property(biome_overlay, "modulate:a", 1.0, 0.35)
+	_biome_overlay_tween.tween_interval(1.15)
+	_biome_overlay_tween.set_ease(Tween.EASE_IN)
+	_biome_overlay_tween.tween_property(biome_overlay, "modulate:a", 0.0, 0.45)
+	_biome_overlay_tween.tween_callback(_hide_biome_overlay)
+
+
+func _apply_biome_overlay_style(theme: Dictionary, accent_color: Color) -> void:
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = _theme_color(theme, "overlay_bg_color", Color(0.047, 0.059, 0.082, 0.94))
+	panel_style.border_color = accent_color
+	panel_style.border_width_left = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_bottom = 2
+	panel_style.content_margin_left = 28.0
+	panel_style.content_margin_top = 22.0
+	panel_style.content_margin_right = 28.0
+	panel_style.content_margin_bottom = 22.0
+	biome_overlay_panel.add_theme_stylebox_override("panel", panel_style)
+
+
+func _hide_biome_overlay() -> void:
+	biome_overlay.visible = false
+	biome_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+
+
+func _theme_color(theme: Dictionary, key: String, fallback: Color) -> Color:
+	var color: Variant = theme.get(key, fallback)
+	if color is Color:
+		return color
+	return fallback
+
+
 # ===== Visibility & Map =====
 func _refresh_visibility() -> void:
 	_visible_cells = FOVSystemScript.calculate_visible_cells(
@@ -1424,25 +2714,75 @@ func _refresh_visibility() -> void:
 	_search_for_secret_walls(true)
 
 
+func _build_enemy_intents() -> Dictionary:
+	var intents: Dictionary = {}
+	if _player == null:
+		return intents
+	for enemy in _enemies:
+		if enemy == null or not enemy.is_alive():
+			continue
+		if not _visible_cells.has(enemy.grid_position):
+			continue
+		if _is_enemy_sleeping(enemy):
+			intents[enemy.grid_position] = &"sleeping"
+			continue
+		var enemy_actor: Enemy = enemy as Enemy
+		if enemy_actor == null or enemy_actor.enemy_data == null:
+			continue
+		var enemy_data: Resource = enemy_actor.enemy_data
+		var distance_to_player: float = enemy.grid_position.distance_to(_player.grid_position)
+		var next_action_count: int = int(_enemy_action_counts.get(enemy, 0)) + 1
+		if distance_to_player <= 1.1:
+			intents[enemy.grid_position] = &"melee"
+		elif (
+			enemy_data.fireball_range > 0
+			and distance_to_player <= enemy_data.fireball_range
+			and next_action_count % max(1, enemy_data.fireball_interval) == 0
+		):
+			intents[enemy.grid_position] = &"fireball"
+		elif (
+			enemy_data.ranged_attack_range > 0
+			and distance_to_player <= enemy_data.ranged_attack_range
+			and next_action_count % max(1, enemy_data.ranged_attack_interval) == 0
+		):
+			intents[enemy.grid_position] = &"ranged"
+		elif enemy_data.summon_interval > 0 and next_action_count % enemy_data.summon_interval == 0:
+			intents[enemy.grid_position] = &"summon"
+		elif distance_to_player <= 8.0:
+			intents[enemy.grid_position] = &"aware"
+	return intents
+
+
 func _refresh_map() -> void:
 	var actors: Array = [_player]
 	if _shopkeeper != null:
 		actors.append(_shopkeeper)
 	for enemy in _enemies:
 		actors.append(enemy)
-	map_view.configure_map(GameManager.map_data)
-	map_view.set_visibility(_visible_cells, _explored_cells)
-	map_view.set_actors(actors)
-	map_view.set_items(_item_positions)
-	map_view.set_containers(_container_positions)
-	map_view.set_targeting(
-		_targeting_active, _target_cursor, _targeting_range_cells, _targeting_area_cells
-	)
-	map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
-	map_view.set_secret_walls(_secret_walls, _revealed_secret_walls, SECRET_WALL_HINT_COLOR)
-	hud.bind_player(_player)
-	inventory_panel.refresh(_player)
-	character_sheet.refresh(_player)
+	var enemy_intents: Dictionary = _build_enemy_intents()
+	if map_view != null:
+		map_view.configure_map(GameManager.map_data)
+		map_view.set_visibility(_visible_cells, _explored_cells)
+		map_view.set_actors(actors)
+		map_view.set_items(_item_positions)
+		map_view.set_containers(_container_positions)
+		if map_view.has_method(&"set_enemy_intents"):
+			map_view.set_enemy_intents(enemy_intents)
+	if map_view != null:
+		map_view.set_targeting(
+			_targeting_active, _target_cursor, _targeting_range_cells, _targeting_area_cells
+		)
+	if map_view != null:
+		map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
+		map_view.set_secret_walls(_secret_walls, _revealed_secret_walls, SECRET_WALL_HINT_COLOR)
+	if hud != null and _player != null:
+		hud.bind_player(_player)
+		if hud.has_method(&"set_visible_enemy_intents"):
+			hud.set_visible_enemy_intents(enemy_intents)
+	if inventory_panel != null and _player != null:
+		inventory_panel.refresh(_player)
+	if character_sheet != null and _player != null:
+		character_sheet.refresh(_player)
 
 
 func _is_walkable(cell: Vector2i) -> bool:
@@ -1526,11 +2866,7 @@ func _keeps_floor_connected(blocked_cell: Vector2i, origin: Vector2i) -> bool:
 	for y: int in range(GameManager.map_data.size()):
 		for x: int in range(GameManager.map_data[y].size()):
 			var cell: Vector2i = Vector2i(x, y)
-			if (
-				cell != blocked_cell
-				and not _secret_floor_cells.has(cell)
-				and DungeonDataScript.is_walkable(GameManager.map_data[y][x])
-			):
+			if _is_connectivity_walkable(cell, blocked_cell):
 				walkable_count += 1
 
 	var frontier: Array[Vector2i] = [origin]
@@ -1541,16 +2877,18 @@ func _keeps_floor_connected(blocked_cell: Vector2i, origin: Vector2i) -> bool:
 		cursor += 1
 		for direction: Vector2i in CARDINAL_DIRECTIONS:
 			var neighbor: Vector2i = current + direction
-			if (
-				neighbor == blocked_cell
-				or visited.has(neighbor)
-				or _secret_floor_cells.has(neighbor)
-				or not _is_walkable(neighbor)
-			):
+			if visited.has(neighbor) or not _is_connectivity_walkable(neighbor, blocked_cell):
 				continue
 			visited[neighbor] = true
 			frontier.append(neighbor)
 	return visited.size() == walkable_count
+
+
+func _is_connectivity_walkable(cell: Vector2i, blocked_cell: Vector2i) -> bool:
+	if cell == blocked_cell or _secret_floor_cells.has(cell) or not _is_inside_map(cell):
+		return false
+	var tile: int = GameManager.map_data[cell.y][cell.x]
+	return DungeonDataScript.is_walkable(tile) or tile == DungeonDataScript.TileType.DOOR
 
 
 # ===== Perception, FOV & Secrets =====
@@ -1628,8 +2966,89 @@ func _damage_secret_wall(cell: Vector2i, amount: int, source: StringName) -> boo
 
 func _refresh_trap_aftermath() -> void:
 	GameManager.emit_player_damaged()
+	_try_apply_player_set_proc()
 	_refresh_visibility()
 	_refresh_map()
+
+
+func _handle_special_trap(trap: Resource, trap_cell: Vector2i) -> void:
+	match trap.effect:
+		TrapDataScript.TrapEffect.STUN:
+			_apply_stun_trap()
+		TrapDataScript.TrapEffect.AMBUSH:
+			_trigger_ambush_trap(trap_cell)
+
+
+func _apply_stun_trap() -> void:
+	_stun_actions = max(_stun_actions, STUN_TRAP_ACTIONS + 1)
+	GameManager.add_log_message(
+		"You are stunned for %d actions. Only consumables still work." % STUN_TRAP_ACTIONS,
+		&"warning"
+	)
+
+
+func _trigger_ambush_trap(_trap_cell: Vector2i) -> void:
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
+	var spawned: int = 0
+	for _index: int in range(AMBUSH_TRAP_ENEMY_COUNT):
+		var enemy_data: Resource = _choose_ambush_enemy_data()
+		if enemy_data == null:
+			break
+		var spawn_cell: Vector2i = _find_ambush_spawn_cell(_player.grid_position, blocked_cells)
+		if spawn_cell == Vector2i.ZERO:
+			break
+		_spawn_enemy_instance(enemy_data, spawn_cell, GameManager.current_floor, true)
+		blocked_cells[spawn_cell] = true
+		spawned += 1
+	if spawned <= 0:
+		GameManager.add_log_message("The ambush trap clicks, but nothing answers.", &"neutral")
+		return
+	GameManager.add_log_message(
+		"%d enem%s rush from the shadows!" % [spawned, "y" if spawned == 1 else "ies"], &"warning"
+	)
+
+
+func _current_actor_blocked_cells() -> Dictionary:
+	var blocked_cells: Dictionary = {_player.grid_position: true}
+	if _shopkeeper != null:
+		blocked_cells[_shopkeeper.grid_position] = true
+	for enemy in _enemies:
+		if enemy != null and enemy.is_alive():
+			blocked_cells[enemy.grid_position] = true
+	return blocked_cells
+
+
+func _choose_ambush_enemy_data() -> Resource:
+	var candidates: Array[Resource] = []
+	for enemy_data: Resource in _enemy_resources:
+		if not AMBUSH_BASIC_ENEMY_NAMES.has(enemy_data.display_name):
+			continue
+		if _can_spawn_enemy(enemy_data, GameManager.current_floor):
+			candidates.append(enemy_data)
+	if candidates.is_empty() and GameManager.current_floor >= 16:
+		for enemy_data: Resource in _enemy_resources:
+			if AMBUSH_APEX_EXCLUDE_NAMES.has(enemy_data.display_name):
+				continue
+			if _can_spawn_enemy(enemy_data, GameManager.current_floor):
+				candidates.append(enemy_data)
+	if candidates.is_empty():
+		return null
+	return candidates[randi_range(0, candidates.size() - 1)]
+
+
+func _find_ambush_spawn_cell(origin: Vector2i, blocked_cells: Dictionary) -> Vector2i:
+	for radius: int in range(AMBUSH_TRAP_MIN_DISTANCE, AMBUSH_TRAP_MAX_DISTANCE + 1):
+		var candidates: Array[Vector2i] = []
+		for y_offset: int in range(-radius, radius + 1):
+			for x_offset: int in range(-radius, radius + 1):
+				if max(abs(x_offset), abs(y_offset)) != radius:
+					continue
+				var cell: Vector2i = origin + Vector2i(x_offset, y_offset)
+				if _is_free_enemy_spawn_cell(cell, blocked_cells):
+					candidates.append(cell)
+		if not candidates.is_empty():
+			return candidates[randi_range(0, candidates.size() - 1)]
+	return Vector2i.ZERO
 
 
 # ===== Consumable Use & Targeting =====
@@ -1700,17 +3119,24 @@ func _use_consumable(item: Resource) -> bool:
 			_refresh_map()
 			_finish_player_action()
 		ItemDataScript.ItemUse.RANGED_ATTACK:
-			_start_targeting(item, &"consumable")
+			_use_targeted_consumable_or_spend_stun(item)
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			_start_targeting(item, &"consumable")
+			_use_targeted_consumable_or_spend_stun(item)
 		ItemDataScript.ItemUse.SLEEP:
-			_start_targeting(item, &"consumable")
+			_use_targeted_consumable_or_spend_stun(item)
 		ItemDataScript.ItemUse.AREA_DAMAGE:
-			_start_targeting(item, &"consumable")
+			_use_targeted_consumable_or_spend_stun(item)
 		_:
 			GameManager.add_log_message("Nothing happens.", &"warning")
 			used = false
 	return used
+
+
+func _use_targeted_consumable_or_spend_stun(item: Resource) -> void:
+	if _stun_actions > 0:
+		_spend_stunned_action()
+		return
+	_start_targeting(item, &"consumable")
 
 
 func _attempt_fire_ranged() -> void:
@@ -1749,6 +3175,8 @@ func _start_targeting(item: Resource, source: StringName) -> void:
 	var area_hint: String = ""
 	if _is_area_targeting_item(item):
 		area_hint = " Radius %d is highlighted." % item.target_radius
+	elif item.use_effect == ItemDataScript.ItemUse.MAGIC_MISSILE:
+		area_hint = " Up to %d targets are highlighted." % _get_magic_missile_target_count(item)
 	GameManager.add_log_message(
 		(
 			"Choose a target for %s.%s WASD moves marker; Enter confirms; F or Esc cancels."
@@ -1775,7 +3203,13 @@ func _refresh_targeting_area() -> void:
 
 func _get_target_area_cells(item: Resource, center: Vector2i) -> Dictionary:
 	var area_cells: Dictionary = {}
-	if item == null or not _is_area_targeting_item(item):
+	if item == null:
+		return area_cells
+	if item.use_effect == ItemDataScript.ItemUse.MAGIC_MISSILE:
+		for target: Node2D in _get_magic_missile_targets(item, center):
+			area_cells[target.grid_position] = true
+		return area_cells
+	if not _is_area_targeting_item(item):
 		return area_cells
 	if not _visible_cells.has(center) or not _targeting_range_cells.has(center):
 		return area_cells
@@ -1819,6 +3253,52 @@ func _nearest_targetable_enemy_cell(target_range: int) -> Vector2i:
 	return nearest_cell
 
 
+func _get_magic_missile_targets(item: Resource, primary_cell: Vector2i) -> Array[Node2D]:
+	var targets: Array[Node2D] = []
+	var primary_target: Node2D = _get_enemy_at(primary_cell)
+	if primary_target == null or not _is_enemy_valid_magic_missile_target(primary_target, item):
+		return targets
+	targets.append(primary_target)
+	var target_count: int = _get_magic_missile_target_count(item)
+	while targets.size() < target_count:
+		var nearest_target: Node2D = null
+		var nearest_primary_distance: float = INF
+		var nearest_player_distance: float = INF
+		for enemy in _enemies:
+			if targets.has(enemy) or not _is_enemy_valid_magic_missile_target(enemy, item):
+				continue
+			var primary_distance: float = enemy.grid_position.distance_to(primary_cell)
+			var player_distance: float = enemy.grid_position.distance_to(_player.grid_position)
+			if (
+				primary_distance < nearest_primary_distance
+				or (
+					is_equal_approx(primary_distance, nearest_primary_distance)
+					and player_distance < nearest_player_distance
+				)
+			):
+				nearest_target = enemy
+				nearest_primary_distance = primary_distance
+				nearest_player_distance = player_distance
+		if nearest_target == null:
+			break
+		targets.append(nearest_target)
+	return targets
+
+
+func _is_enemy_valid_magic_missile_target(enemy: Node, item: Resource) -> bool:
+	if enemy == null or not enemy.is_alive():
+		return false
+	if not _visible_cells.has(enemy.grid_position):
+		return false
+	return enemy.grid_position.distance_to(_player.grid_position) <= item.range
+
+
+func _get_magic_missile_target_count(item: Resource) -> int:
+	if item == null:
+		return MAGIC_MISSILE_DEFAULT_TARGET_COUNT
+	return max(1, item.target_count)
+
+
 func _move_target_cursor(direction: Vector2i) -> void:
 	var next_cursor: Vector2i = _target_cursor + direction
 	if not _is_inside_map(next_cursor):
@@ -1829,6 +3309,11 @@ func _move_target_cursor(direction: Vector2i) -> void:
 
 
 func _confirm_targeting() -> void:
+	if _stun_actions > 0:
+		_clear_targeting()
+		_refresh_map()
+		_spend_stunned_action()
+		return
 	if not _is_valid_target_cell(_target_cursor, _targeting_item):
 		GameManager.add_log_message("No valid target there.", &"warning")
 		return
@@ -1874,22 +3359,7 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 			_resolve_ranged_attack(item, ranged_target, source)
 			return true
 		ItemDataScript.ItemUse.MAGIC_MISSILE:
-			var missile_target: Node2D = _get_enemy_at(cell)
-			if missile_target == null:
-				return false
-			var missile_raw_damage: int = _roll_item_damage(item, _get_magic_damage_bonus())
-			var missile_damage: int = _apply_typed_damage(
-				missile_target, missile_raw_damage, &"magic"
-			)
-			GameManager.add_log_message(
-				(
-					"%s hits %s for %d force damage."
-					% [item.display_name, missile_target.display_name, missile_damage]
-				),
-				&"magic"
-			)
-			_handle_defender_after_damage(missile_target)
-			return true
+			return _resolve_magic_missile(item, cell)
 		ItemDataScript.ItemUse.AREA_DAMAGE:
 			return _resolve_area_damage(item, cell)
 		ItemDataScript.ItemUse.SLEEP:
@@ -1897,17 +3367,43 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 	return false
 
 
+func _resolve_magic_missile(item: Resource, cell: Vector2i) -> bool:
+	var missile_targets: Array[Node2D] = _get_magic_missile_targets(item, cell)
+	if missile_targets.is_empty():
+		GameManager.add_log_message("No visible enemy is in missile range.", &"warning")
+		return false
+	for target: Node2D in missile_targets:
+		var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
+		var damage: int = _apply_typed_damage(target, raw_damage, &"magic")
+		GameManager.add_log_message(
+			"%s strikes %s for %d magic damage." % [item.display_name, target.display_name, damage],
+			&"magic"
+		)
+		_play_action_burst(target.grid_position, &"magic_hit")
+		_handle_defender_after_damage(target)
+	return true
+
+
 func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName) -> void:
+	var is_magic_weapon: bool = (
+		source == &"weapon" and (item.is_staff or item.weapon_damage_type == &"magic")
+	)
 	var roll_result: int = Dice.d20()
 	var close_weapon_shot: bool = (
-		source == &"weapon" and defender.grid_position.distance_to(_player.grid_position) <= 2.0
+		source == &"weapon"
+		and not is_magic_weapon
+		and defender.grid_position.distance_to(_player.grid_position) <= 2.0
 	)
 	if close_weapon_shot:
 		roll_result = min(roll_result, Dice.d20())
 		GameManager.add_log_message("Too close for a clean shot — disadvantage.", &"warning")
 	var stats: Node = _player.stats_component
 	var inventory: Node = _player.inventory_component
-	var ability_bonus: int = Dice.modifier(stats.dexterity)
+	var ability_bonus: int
+	if is_magic_weapon:
+		ability_bonus = Dice.modifier(stats.wisdom)
+	else:
+		ability_bonus = Dice.modifier(stats.dexterity)
 	var accessory_accuracy_bonus: int = inventory.get_accessory_attack_bonus()
 	if source == &"consumable":
 		ability_bonus = _get_scroll_hit_bonus()
@@ -1919,15 +3415,28 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 		+ item.attack_bonus
 		+ accessory_accuracy_bonus
 	)
+	var hunter_focus_active: bool = (
+		_hunter_focus_primed and source == &"weapon" and not is_magic_weapon
+	)
+	if hunter_focus_active:
+		var focus_accuracy: int = _get_hunter_focus_accuracy(_get_player_level())
+		attack_total += focus_accuracy
 	var is_critical: bool = roll_result == 20
 	var hit: bool = is_critical or attack_total >= defender.stats_component.get_armor_class()
 	if hit:
-		var damage_bonus: int = _get_magic_damage_bonus()
+		var damage_bonus: int = _get_scroll_damage_bonus(item)
 		if source == &"weapon":
-			damage_bonus = Dice.modifier(stats.dexterity) + inventory.get_accessory_damage_bonus()
+			var weapon_stat_mod: int = (
+				Dice.modifier(stats.wisdom) if is_magic_weapon else Dice.modifier(stats.dexterity)
+			)
+			damage_bonus = weapon_stat_mod + inventory.get_accessory_damage_bonus()
 		var raw_damage: int = _roll_item_damage(item, damage_bonus)
 		if is_critical:
 			raw_damage += _roll_item_base_dice(item)
+		var focus_mult: int = (
+			_get_hunter_focus_multiplier(_get_player_level()) if hunter_focus_active else 100
+		)
+		raw_damage = max(1, int(round(raw_damage * focus_mult / 100.0)))
 		if item.special_effect == ItemDataScript.ItemSpecial.CURRENT_HP_DAMAGE_PERCENT:
 			var percent_damage: int = max(
 				1, int(ceil(defender.stats_component.current_hp * item.special_amount / 100.0))
@@ -1940,18 +3449,42 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 				),
 				&"magic"
 			)
-		var damage_type: StringName = &"ranged" if source == &"weapon" else &"magic"
+		var damage_type: StringName
+		var verb: String
+		if is_magic_weapon:
+			damage_type = &"magic"
+			verb = "blasts"
+		elif source == &"weapon":
+			damage_type = &"ranged"
+			verb = "shoots"
+		else:
+			damage_type = &"magic"
+			verb = "scorches"
 		var damage: int = _apply_typed_damage(defender, raw_damage, damage_type)
-		var verb: String = "shoots" if source == &"weapon" else "scorches"
 		GameManager.add_log_message(
 			"%s %s %s for %d damage." % [_player.display_name, verb, defender.display_name, damage],
 			&"combat_hit"
+		)
+		_play_action_burst(
+			defender.grid_position,
+			(
+				&"critical"
+				if is_critical
+				else (&"magic_hit" if damage_type == &"magic" else &"ranged_hit")
+			)
 		)
 		_handle_defender_after_damage(defender)
 	else:
 		GameManager.add_log_message(
 			"%s misses %s." % [_player.display_name, defender.display_name], &"combat_miss"
 		)
+		_play_action_burst(defender.grid_position, &"miss")
+	if hunter_focus_active:
+		_hunter_focus_primed = false
+		if hit:
+			GameManager.add_log_message("Hunter's Focus consumed.", &"magic")
+		else:
+			GameManager.add_log_message("Hunter's Focus consumed on the miss.", &"magic")
 
 
 func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
@@ -1960,7 +3493,7 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
-			var raw_damage: int = _roll_item_damage(item, _get_magic_damage_bonus())
+			var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
 			var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
 			GameManager.add_log_message(
 				(
@@ -1969,6 +3502,7 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 				),
 				&"magic"
 			)
+			_play_action_burst(enemy.grid_position, &"magic_hit")
 			_handle_defender_after_damage(enemy)
 			affected_count += 1
 	if affected_count <= 0:
@@ -1984,6 +3518,7 @@ func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
 			_sleeping_enemies[enemy] = item.effect_duration
+			_play_action_burst(enemy.grid_position, &"magic_hit")
 			affected_count += 1
 	if affected_count <= 0:
 		GameManager.add_log_message("No enemies are in the sleep radius.", &"warning")
@@ -2004,6 +3539,18 @@ func _get_potion_heal_amount(item: Resource) -> int:
 
 func _get_magic_damage_bonus() -> int:
 	return max(0, Dice.modifier(_player.stats_component.wisdom) * 2)
+
+
+func _get_scroll_damage_bonus(item: Resource) -> int:
+	return _get_magic_damage_bonus() + _get_scroll_depth_damage_bonus(item)
+
+
+func _get_scroll_depth_damage_bonus(item: Resource) -> int:
+	if item == null:
+		return 0
+	var starting_floor: int = max(1, item.min_floor)
+	var depth_delta: int = max(0, GameManager.current_floor - starting_floor)
+	return floori(float(depth_delta) / SCROLL_DAMAGE_DEPTH_STEP)
 
 
 func _get_scroll_hit_bonus() -> int:
@@ -2150,7 +3697,7 @@ func _on_shop_panel_purchase_requested(stock_index: int) -> void:
 	if stock_index < 0 or stock_index >= _shop_stock.size():
 		return
 	var item: Resource = _shop_stock[stock_index]
-	var price: int = _get_item_shop_price(item)
+	var price: int = _get_item_shop_price(item, stock_index)
 	if _player.stats_component.gold < price:
 		GameManager.add_log_message(
 			(
@@ -2234,15 +3781,35 @@ func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
 	var depth_bonus: int = max(0, floor_number - 1)
 	var early_depth: int = min(depth_bonus, 9)
 	var late_depth: int = max(0, depth_bonus - 9)
-	var armor_bonus: int = int(depth_bonus / 6)
-	var attack_bonus: int = int(depth_bonus / 5)
-	var damage_bonus: int = int(max(0, depth_bonus - 2) / 6)
-	enemy.stats_component.max_hp += early_depth + late_depth * 2
+	var hp_bonus: int = int(ceil(early_depth * 0.75)) + late_depth
+	var armor_bonus: int = int(depth_bonus / 8)
+	var attack_bonus: int = int(depth_bonus / 7)
+	var damage_bonus: int = int(max(0, depth_bonus - 3) / 8)
+	enemy.stats_component.max_hp += hp_bonus
 	enemy.stats_component.current_hp = enemy.stats_component.max_hp
 	enemy.stats_component.base_armor_class += armor_bonus
 	enemy.stats_component.base_attack_bonus += attack_bonus
 	enemy.stats_component.base_damage_bonus += damage_bonus
-	enemy.stats_component.xp_reward += depth_bonus * 7
+	enemy.stats_component.xp_reward += depth_bonus * 6
+	_scale_enemy_special_attacks(enemy, int(depth_bonus / 6))
+
+
+func _scale_enemy_special_attacks(enemy: Node, special_damage_bonus: int) -> void:
+	if special_damage_bonus <= 0:
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	if (
+		enemy_actor.enemy_data.ranged_damage_sides <= 0
+		and enemy_actor.enemy_data.fireball_damage_dice <= 0
+	):
+		return
+	enemy_actor.enemy_data = enemy_actor.enemy_data.duplicate(true)
+	if enemy_actor.enemy_data.ranged_damage_sides > 0:
+		enemy_actor.enemy_data.ranged_damage_bonus += special_damage_bonus
+	if enemy_actor.enemy_data.fireball_damage_dice > 0:
+		enemy_actor.enemy_data.fireball_damage_bonus += special_damage_bonus
 
 
 func _choose_enemy_data_for_floor(floor_number: int) -> Resource:
@@ -2252,7 +3819,7 @@ func _choose_enemy_data_for_floor(floor_number: int) -> Resource:
 		if not _can_spawn_enemy(enemy_data, floor_number):
 			continue
 		candidates.append(enemy_data)
-		total_weight += max(1, enemy_data.spawn_weight)
+		total_weight += _enemy_spawn_weight(enemy_data, floor_number)
 
 	if candidates.is_empty():
 		return _enemy_resources[0]
@@ -2260,7 +3827,7 @@ func _choose_enemy_data_for_floor(floor_number: int) -> Resource:
 	var roll: int = randi_range(1, total_weight)
 	var running_weight: int = 0
 	for enemy_data: Resource in candidates:
-		running_weight += max(1, enemy_data.spawn_weight)
+		running_weight += _enemy_spawn_weight(enemy_data, floor_number)
 		if roll <= running_weight:
 			return enemy_data
 	return candidates.back()
@@ -2291,7 +3858,24 @@ func _choose_weighted_item(candidates: Array[Resource], floor_number: int) -> Re
 func _can_spawn_enemy(enemy_data: Resource, floor_number: int) -> bool:
 	if floor_number < enemy_data.min_floor:
 		return false
-	return enemy_data.max_floor <= 0 or floor_number <= enemy_data.max_floor
+	if not _is_endless_floor(floor_number):
+		if enemy_data.max_floor > 0 and floor_number > enemy_data.max_floor:
+			return false
+	var biome_index: int = BiomeCatalogScript.biome_index_for_floor(floor_number)
+	return BiomeCatalogScript.enemy_path_allowed_for_biome(enemy_data.resource_path, biome_index)
+
+
+func _enemy_spawn_weight(enemy_data: Resource, floor_number: int) -> int:
+	var weight: int = max(1, enemy_data.spawn_weight)
+	if _is_endless_floor(floor_number) and enemy_data.max_floor > 0:
+		return max(1, int(ceil(weight * 0.35)))
+	return weight
+
+
+func _is_endless_floor(floor_number: int) -> bool:
+	return (
+		BiomeCatalogScript.biome_index_for_floor(floor_number) == BiomeCatalogScript.MAX_BIOME_INDEX
+	)
 
 
 func _can_spawn_item(item_data: Resource, floor_number: int) -> bool:
@@ -2312,7 +3896,45 @@ func _item_loot_weight(item_data: Resource, floor_number: int) -> int:
 	var rarity_weight: int = _rarity_weight_for_floor(item_data.rarity, floor_number)
 	if rarity_weight <= 0:
 		return 0
-	return max(1, item_data.spawn_weight) * rarity_weight
+	var build_weight_percent: int = _build_relevance_weight_percent(item_data)
+	return max(
+		1, int(ceil(max(1, item_data.spawn_weight) * rarity_weight * build_weight_percent / 100.0))
+	)
+
+
+func _build_relevance_weight_percent(item_data: Resource) -> int:
+	var weight_percent: int = 100
+	if item_data.required_class != &"":
+		if item_data.required_class == GameManager.pending_character_class:
+			weight_percent = BUILD_MATCH_WEIGHT_PERCENT
+		else:
+			weight_percent = WRONG_CLASS_WEIGHT_PERCENT
+	if _would_complete_known_set(item_data):
+		weight_percent = max(weight_percent, SET_COMPLETION_WEIGHT_PERCENT)
+	return weight_percent
+
+
+func _is_wrong_class_item(item_data: Resource) -> bool:
+	return (
+		item_data.required_class != &""
+		and item_data.required_class != GameManager.pending_character_class
+	)
+
+
+func _would_complete_known_set(item_data: Resource) -> bool:
+	if item_data.set_id == &"" or _player == null or _player.inventory_component == null:
+		return false
+	var inventory: Node = _player.inventory_component
+	var required_count: int = max(2, item_data.set_required_count)
+	var owned_other_piece: bool = false
+	var matching_count: int = 0
+	for owned_item: Resource in inventory.items:
+		if owned_item.set_id != item_data.set_id:
+			continue
+		matching_count += 1
+		if owned_item.display_name != item_data.display_name:
+			owned_other_piece = true
+	return owned_other_piece and matching_count + 1 >= required_count
 
 
 func _rarity_weight_for_floor(rarity: int, floor_number: int) -> int:
@@ -2387,11 +4009,11 @@ func _get_shop_stock_size(floor_number: int) -> int:
 
 
 func _get_shop_minimum_rarity(floor_number: int) -> int:
-	if floor_number >= 14:
+	if floor_number >= 16:
 		return ItemDataScript.ItemRarity.EPIC
-	if floor_number >= 10:
+	if floor_number >= 11:
 		return ItemDataScript.ItemRarity.RARE
-	if floor_number >= 6:
+	if floor_number >= 7:
 		return ItemDataScript.ItemRarity.UNCOMMON
 	return ItemDataScript.ItemRarity.COMMON
 
@@ -2409,6 +4031,12 @@ func _generate_shop_stock(floor_number: int) -> Array:
 	if luxury_item != null and not stock.has(luxury_item):
 		stock.append(luxury_item)
 		candidates.erase(luxury_item)
+	var build_item: Resource = _choose_build_relevant_shop_item(
+		candidates, stock, safe_floor, effective_floor
+	)
+	if build_item != null and not stock.has(build_item):
+		stock.append(build_item)
+		candidates.erase(build_item)
 
 	while stock.size() < _get_shop_stock_size(safe_floor) and not candidates.is_empty():
 		var item_data: Resource = _choose_weighted_shop_item(
@@ -2439,21 +4067,50 @@ func _get_shop_candidates_for_floor(floor_number: int, effective_floor: int) -> 
 
 
 func _choose_guaranteed_shop_potion(floor_number: int, effective_floor: int) -> Resource:
-	var potion_candidates: Array[Resource] = []
-	for item_data: Resource in _item_resources:
-		if not _can_spawn_item(item_data, effective_floor):
-			continue
-		if item_data.kind == ItemDataScript.ItemKind.CONSUMABLE and item_data.healing_amount > 0:
-			potion_candidates.append(item_data)
+	var potion_floor: int = effective_floor if floor_number <= 4 else floor_number
+	var potion_candidates: Array[Resource] = _get_healing_shop_candidates(potion_floor)
+	if potion_candidates.is_empty() and potion_floor != effective_floor:
+		potion_floor = effective_floor
+		potion_candidates = _get_healing_shop_candidates(potion_floor)
 	if potion_candidates.is_empty():
 		return null
-	if floor_number <= 4 or floor_number >= 10:
+	if floor_number <= 4:
 		var best_potion: Resource = potion_candidates[0]
 		for potion: Resource in potion_candidates:
 			if potion.healing_amount > best_potion.healing_amount:
 				best_potion = potion
 		return best_potion
-	return _choose_weighted_shop_item(potion_candidates, floor_number, effective_floor)
+	return _choose_weighted_shop_item(potion_candidates, floor_number, potion_floor)
+
+
+func _get_healing_shop_candidates(candidate_floor: int) -> Array[Resource]:
+	var potion_candidates: Array[Resource] = []
+	for item_data: Resource in _item_resources:
+		if not _can_spawn_item(item_data, candidate_floor):
+			continue
+		if item_data.kind == ItemDataScript.ItemKind.CONSUMABLE and item_data.healing_amount > 0:
+			potion_candidates.append(item_data)
+	return potion_candidates
+
+
+func _choose_build_relevant_shop_item(
+	candidates: Array[Resource], stock: Array, floor_number: int, effective_floor: int
+) -> Resource:
+	if floor_number < 7:
+		return null
+	var build_candidates: Array[Resource] = []
+	for item_data: Resource in candidates:
+		if stock.has(item_data) or item_data.kind == ItemDataScript.ItemKind.CONSUMABLE:
+			continue
+		if _is_wrong_class_item(item_data):
+			continue
+		if item_data.required_class != &"" or _would_complete_known_set(item_data):
+			build_candidates.append(item_data)
+		elif item_data.rarity >= _get_shop_minimum_rarity(floor_number):
+			build_candidates.append(item_data)
+	if build_candidates.is_empty():
+		return null
+	return _choose_weighted_shop_item(build_candidates, floor_number, effective_floor)
 
 
 func _choose_luxury_shop_item(floor_number: int, effective_floor: int) -> Resource:
@@ -2507,8 +4164,20 @@ func _shop_item_weight(item_data: Resource, floor_number: int, effective_floor: 
 		floor_weight_percent = max(15, floor_weight_percent - (safe_floor - item_floor - 4) * 20)
 	if item_data.rarity < _get_shop_minimum_rarity(safe_floor):
 		floor_weight_percent = max(10, int(floor_weight_percent * 0.35))
+	var build_weight_percent: int = _build_relevance_weight_percent(item_data)
 	return max(
-		1, int(ceil(max(1, item_data.spawn_weight) * rarity_weight * floor_weight_percent / 100.0))
+		1,
+		int(
+			ceil(
+				(
+					max(1, item_data.spawn_weight)
+					* rarity_weight
+					* floor_weight_percent
+					* build_weight_percent
+					/ 10000.0
+				)
+			)
+		)
 	)
 
 
@@ -2537,7 +4206,7 @@ func _roll_enemy_gold_reward(enemy: Node = null) -> int:
 	var floor_number: int = max(1, GameManager.current_floor)
 	var base_reward: int = randi_range(6, 12)
 	var depth_bonus: int = randi_range(1, max(1, floor_number * 2))
-	var tier_bonus: int = int(floor_number / EXTRACTION_INTERVAL) * 2
+	var tier_bonus: int = int(floor_number / GOLD_TIER_FLOOR_SPAN) * 2
 	var reward: int = base_reward + depth_bonus + tier_bonus
 	var enemy_actor: Enemy = enemy as Enemy
 	if (
@@ -2564,16 +4233,10 @@ func _game_over(victory: bool) -> void:
 
 
 # === Price Helpers ===
-func _get_item_shop_price(item: Resource) -> int:
-	"""Returns item price adjusted by player CHA modifier."""
-	var base_price: int = item.get_price()
-	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
-	# 5% per CHA modifier point, min 50% of base price, cap penalty at +50%
-	var multiplier: float = clampf(1.0 - 0.05 * cha_mod, 0.5, 1.5)
-	return max(1, ceili(base_price * multiplier))
+func _get_item_shop_price(item: Resource, stock_index: int = -1) -> int:
+	"""Returns item price adjusted by player CHA and first-slot Golden Deal."""
+	return GameManager._get_shop_buy_price(item, _player.stats_component.charisma, stock_index)
 
 
 func _get_item_sell_price(item: Resource) -> int:
-	var cha_mod: int = Dice.modifier(_player.stats_component.charisma)
-	var multiplier: float = clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50)
-	return max(1, floori(item.get_price() * multiplier))
+	return GameManager._get_shop_sell_price(item, _player.stats_component.charisma)

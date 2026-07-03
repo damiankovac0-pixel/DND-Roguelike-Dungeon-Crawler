@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Shard Golem"
+glyph = "Q"
+color = Color(0.62, 0.86, 1, 1)
+max_hp = 84
+armor_class = 17
+attack_bonus = 11
+damage_sides = 14
+damage_bonus = 9
+xp_reward = 620
+min_floor = 22
+max_floor = 25
+spawn_weight = 5
+ranged_damage_percent = 60
+magic_damage_percent = 130

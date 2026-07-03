@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Stone Sentry"
+glyph = "u"
+color = Color(0.62, 0.62, 0.68, 1)
+max_hp = 16
+armor_class = 15
+attack_bonus = 4
+damage_sides = 6
+damage_bonus = 2
+xp_reward = 70
+min_floor = 2
+max_floor = 5
+spawn_weight = 6
+melee_damage_percent = 85
+magic_damage_percent = 125

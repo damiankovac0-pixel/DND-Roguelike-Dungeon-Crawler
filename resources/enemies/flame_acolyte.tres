@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Flame Acolyte"
+glyph = "f"
+color = Color(1, 0.64, 0.26, 1)
+max_hp = 34
+armor_class = 16
+attack_bonus = 9
+damage_sides = 8
+damage_bonus = 5
+xp_reward = 320
+min_floor = 13
+max_floor = 15
+spawn_weight = 4
+magic_damage_percent = 75
+fireball_range = 5
+fireball_interval = 4
+fireball_damage_dice = 2
+fireball_damage_sides = 4
+fireball_damage_bonus = 3
