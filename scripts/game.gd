@@ -2723,7 +2723,7 @@ func _build_enemy_intents() -> Dictionary:
 			continue
 		if not _visible_cells.has(enemy.grid_position):
 			continue
-		if _is_enemy_sleeping(enemy):
+		if int(_sleeping_enemies.get(enemy, 0)) > 0:
 			intents[enemy.grid_position] = &"sleeping"
 			continue
 		var enemy_actor: Enemy = enemy as Enemy
