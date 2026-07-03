@@ -618,6 +618,11 @@ layout_mode = 2
 text = "Ambience"
 button_pressed = true
 
+[node name="ReducedVfxButton" type="CheckButton" parent="UI/PausePanel/Margin/VBox"]
+layout_mode = 2
+text = "Reduce VFX"
+tooltip_text = "Greatly lowers screen flashes and keeps only subtle corner marks."
+
 [node name="ResumeButton" type="Button" parent="UI/PausePanel/Margin/VBox"]
 layout_mode = 2
 text = "Continue"

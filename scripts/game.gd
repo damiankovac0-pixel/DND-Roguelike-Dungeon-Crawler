@@ -25,6 +25,7 @@ const LATE_TRAP_DAMAGE_DEPTH_STEP: int = 4
 const LATE_TRAP_MAX_DC_BONUS: int = 4
 const PAUSE_VOLUME_SLIDER_PATH: String = "MasterVolumeRow/MasterVolumeSlider"
 const PAUSE_VOLUME_VALUE_LABEL_PATH: String = "MasterVolumeRow/MasterVolumeValueLabel"
+const PAUSE_REDUCED_VFX_BUTTON_PATH: String = "ReducedVfxButton"
 const FINAL_CAPSTONE_ANCHOR_NAME: String = "Ancient Dragon"
 const FINAL_CAPSTONE_GUARD_NAMES: Array[String] = [
 	"Mirror Duelist",
@@ -187,6 +188,8 @@ var _hunter_focus_primed: bool = false
 var pause_master_volume_value_label: Label = pause_menu_box.get_node(PAUSE_VOLUME_VALUE_LABEL_PATH)
 @onready
 var pause_ambience_enabled_button: CheckButton = pause_menu_box.get_node("AmbienceEnabledButton")
+@onready
+var pause_reduced_vfx_button: CheckButton = pause_menu_box.get_node(PAUSE_REDUCED_VFX_BUTTON_PATH)
 @onready var turn_manager: Node = $TurnManager
 @onready var class_ability_panel: PanelContainer = $UI/ClassAbilityPanel
 
@@ -228,6 +231,7 @@ func _ready() -> void:
 	pause_audio_enabled_button.toggled.connect(_on_audio_enabled_toggled)
 	pause_master_volume_slider.value_changed.connect(_on_volume_slider_changed)
 	pause_ambience_enabled_button.toggled.connect(_on_ambience_enabled_toggled)
+	pause_reduced_vfx_button.toggled.connect(_on_reduced_vfx_toggled)
 	_refresh_audio_controls()
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
@@ -420,6 +424,8 @@ func _refresh_audio_controls() -> void:
 		pause_audio_enabled_button.set_pressed_no_signal(bool(sf.call(&"is_audio_enabled")))
 	if sf.has_method(&"is_ambience_enabled"):
 		pause_ambience_enabled_button.set_pressed_no_signal(bool(sf.call(&"is_ambience_enabled")))
+	if sf.has_method(&"is_reduced_vfx_enabled"):
+		pause_reduced_vfx_button.set_pressed_no_signal(bool(sf.call(&"is_reduced_vfx_enabled")))
 	if sf.has_method(&"get_master_volume"):
 		var vol: float = float(sf.call(&"get_master_volume"))
 		var vol_int: int = int(round(vol * 100.0))
@@ -442,6 +448,14 @@ func _on_volume_slider_changed(value: float) -> void:
 func _on_ambience_enabled_toggled(button_pressed: bool) -> void:
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_ambience_enabled"):
 		sensory_feedback.call(&"set_ambience_enabled", button_pressed)
+
+
+func _on_reduced_vfx_toggled(button_pressed: bool) -> void:
+	if (
+		is_instance_valid(sensory_feedback)
+		and sensory_feedback.has_method(&"set_reduced_vfx_enabled")
+	):
+		sensory_feedback.call(&"set_reduced_vfx_enabled", button_pressed, true)
 
 
 func _on_pause_resume_pressed() -> void:

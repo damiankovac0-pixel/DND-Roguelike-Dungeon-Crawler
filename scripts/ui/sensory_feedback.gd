@@ -1,6 +1,5 @@
-## V16.0.0 Sensory Feedback — procedural audio cues, ambience, and
-## pause-menu audio controls with per-cue profiles, rate limiting, and
-## peak-normalized synthesis.
+## V16.5.0 Sensory Feedback — quieter procedural audio cues, ambience,
+## remembered reduced-VFX mode, and calmer pause-menu controls.
 ##
 ## Place as `UI/SensoryFeedback` in `scenes/game.tscn`: full-rect, mouse-filter
 ## ignore, z_index below BiomeOverlay (z=80).  No external audio assets needed.
@@ -9,12 +8,19 @@ extends Control
 
 # === Constants ===
 const SAMPLE_RATE: int = 22050
-const VERSION: String = "16.0.0"
-const VERSION_LABEL: String = "V16.0.0 — Enemy Intent Telegraphs"
+const VERSION: String = "16.5.0"
+const VERSION_LABEL: String = "V16.5.0 — Reduced VFX & Audio Polish"
 const PLAYER_POOL_SIZE: int = 6
 const MIN_VOLUME_DB: float = -60.0
 const MAX_VOLUME_DB: float = 0.0
-const DEFAULT_VOLUME: float = 0.50
+const DEFAULT_VOLUME: float = 0.42
+const SETTINGS_PATH: String = "user://dungeon_delver_settings.cfg"
+const SETTINGS_SECTION: String = "sensory"
+const SETTING_REDUCED_VFX: String = "reduced_vfx"
+const REDUCED_VFX_ALPHA_SCALE: float = 0.22
+const REDUCED_VFX_MAX_ALPHA: float = 0.045
+const REDUCED_VFX_DURATION_SCALE: float = 0.58
+const REDUCED_VFX_MIN_DURATION: float = 0.08
 
 # Cue name identifiers
 const CUE_COMBAT_HIT: StringName = &"combat_hit"
@@ -83,20 +89,20 @@ const CUE_VISUAL: Dictionary = {
 # Per-cue audio profile: gain_db, min_interval (seconds between plays),
 # duration (expected length in seconds), category label.
 const CUE_PROFILES: Dictionary = {
-	CUE_COMBAT_HIT: {"gain_db": -4.0, "min_interval": 0.15, "duration": 0.12, "category": "combat"},
+	CUE_COMBAT_HIT: {"gain_db": -8.0, "min_interval": 0.22, "duration": 0.12, "category": "combat"},
 	CUE_COMBAT_MISS:
-	{"gain_db": -7.0, "min_interval": 0.10, "duration": 0.05, "category": "combat"},
-	CUE_DAMAGE: {"gain_db": -3.0, "min_interval": 0.30, "duration": 0.30, "category": "damage"},
-	CUE_DEATH: {"gain_db": -2.0, "min_interval": 2.00, "duration": 0.80, "category": "death"},
-	CUE_LOOT: {"gain_db": -4.0, "min_interval": 0.50, "duration": 0.28, "category": "item"},
-	CUE_GOLD: {"gain_db": -3.0, "min_interval": 0.30, "duration": 0.20, "category": "item"},
-	CUE_HEAL: {"gain_db": -3.0, "min_interval": 0.50, "duration": 0.40, "category": "buff"},
-	CUE_WARNING: {"gain_db": -9.0, "min_interval": 0.50, "duration": 0.15, "category": "warning"},
-	CUE_FLOOR: {"gain_db": -5.0, "min_interval": 2.00, "duration": 0.60, "category": "progression"},
-	CUE_LEVEL: {"gain_db": -4.0, "min_interval": 1.50, "duration": 0.80, "category": "progression"},
-	CUE_EQUIPMENT: {"gain_db": -6.0, "min_interval": 0.20, "duration": 0.04, "category": "item"},
-	CUE_MAGIC: {"gain_db": -5.0, "min_interval": 0.25, "duration": 0.35, "category": "magic"},
-	CUE_VICTORY: {"gain_db": -2.0, "min_interval": 5.00, "duration": 1.00, "category": "victory"},
+	{"gain_db": -10.0, "min_interval": 0.15, "duration": 0.05, "category": "combat"},
+	CUE_DAMAGE: {"gain_db": -7.0, "min_interval": 0.45, "duration": 0.30, "category": "damage"},
+	CUE_DEATH: {"gain_db": -5.0, "min_interval": 2.50, "duration": 0.80, "category": "death"},
+	CUE_LOOT: {"gain_db": -8.0, "min_interval": 0.65, "duration": 0.28, "category": "item"},
+	CUE_GOLD: {"gain_db": -7.0, "min_interval": 0.45, "duration": 0.20, "category": "item"},
+	CUE_HEAL: {"gain_db": -7.0, "min_interval": 0.65, "duration": 0.40, "category": "buff"},
+	CUE_WARNING: {"gain_db": -12.0, "min_interval": 0.70, "duration": 0.15, "category": "warning"},
+	CUE_FLOOR: {"gain_db": -9.0, "min_interval": 2.50, "duration": 0.60, "category": "progression"},
+	CUE_LEVEL: {"gain_db": -7.0, "min_interval": 1.80, "duration": 0.80, "category": "progression"},
+	CUE_EQUIPMENT: {"gain_db": -12.0, "min_interval": 0.30, "duration": 0.04, "category": "item"},
+	CUE_MAGIC: {"gain_db": -9.0, "min_interval": 0.40, "duration": 0.35, "category": "magic"},
+	CUE_VICTORY: {"gain_db": -5.0, "min_interval": 5.00, "duration": 1.00, "category": "victory"},
 }
 
 # === Exports ===
@@ -119,6 +125,7 @@ var _visual_active: bool = false
 var _visual_color: Color = Color.TRANSPARENT
 var _visual_duration: float = 0.0
 var _visual_elapsed: float = 0.0
+var _reduced_vfx_enabled: bool = false
 
 # === GameManager Access ===
 
@@ -142,6 +149,7 @@ func _ready() -> void:
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_load_preferences()
 
 	# Start with visual processing off (event-gated only).
 	set_process(false)
@@ -197,6 +205,10 @@ func _draw() -> void:
 	var fade: float = 1.0
 	if progress > 0.7:
 		fade = 1.0 - (progress - 0.7) / 0.3
+
+	if _reduced_vfx_enabled:
+		_draw_reduced_visual(fade)
+		return
 
 	# --- Flash overlay ---
 	var flash_color: Color = _visual_color
@@ -289,6 +301,11 @@ func trigger_cue(cue_name: StringName) -> void:
 	if visual_config is Dictionary:
 		_visual_color = visual_config.get("color", Color.TRANSPARENT)
 		_visual_duration = visual_config.get("duration", 0.25)
+		if _reduced_vfx_enabled:
+			_visual_color.a = min(_visual_color.a * REDUCED_VFX_ALPHA_SCALE, REDUCED_VFX_MAX_ALPHA)
+			_visual_duration = max(
+				REDUCED_VFX_MIN_DURATION, _visual_duration * REDUCED_VFX_DURATION_SCALE
+			)
 		_visual_elapsed = 0.0
 		_visual_active = true
 		set_process(true)
@@ -367,6 +384,28 @@ func is_ambience_enabled() -> bool:
 	return _ambience_enabled
 
 
+## Enables or disables calmer event visuals and persists the setting by default.
+func set_reduced_vfx_enabled(enabled: bool, persist: bool = true) -> void:
+	_reduced_vfx_enabled = enabled
+	if persist:
+		_save_preferences()
+
+
+## Returns `true` if reduced event visuals are enabled.
+func is_reduced_vfx_enabled() -> bool:
+	return _reduced_vfx_enabled
+
+
+## Toggle reduced event visuals, optionally announcing via log.
+func toggle_reduced_vfx_enabled(announce: bool = true) -> void:
+	set_reduced_vfx_enabled(not _reduced_vfx_enabled)
+	if announce:
+		var status: String = "reduced" if _reduced_vfx_enabled else "full"
+		var gm: Node = _game_manager()
+		if gm != null:
+			gm.add_log_message("Visual effects set to %s." % status, &"neutral")
+
+
 ## Updates the floor/biome ambience context, generating a new procedural
 ## ambient stream appropriate for the given floor and biome theme.
 func set_floor_audio_context(floor_number: int, biome_theme: Dictionary) -> void:
@@ -401,6 +440,46 @@ func get_ambience_stream() -> AudioStreamWAV:
 ## Returns the current ambience profile Dictionary with floor/biome context.
 func get_ambience_profile() -> Dictionary:
 	return _ambience_profile.duplicate()
+
+
+func _draw_reduced_visual(fade: float) -> void:
+	var flash_color: Color = _visual_color
+	flash_color.a = min(flash_color.a * fade, REDUCED_VFX_MAX_ALPHA)
+	if flash_color.a > 0.0:
+		draw_rect(Rect2(Vector2.ZERO, size), flash_color)
+	var mark_color: Color = Color(
+		_visual_color.r * 1.35,
+		_visual_color.g * 1.35,
+		_visual_color.b * 1.35,
+		min(_visual_color.a * 2.2 * fade, 0.16)
+	)
+	var inset: float = 8.0
+	var corner_len: float = 34.0
+	draw_line(Vector2(inset, inset), Vector2(inset + corner_len, inset), mark_color, 1.2)
+	draw_line(Vector2(inset, inset), Vector2(inset, inset + corner_len), mark_color, 1.2)
+	draw_line(
+		Vector2(size.x - inset, inset), Vector2(size.x - inset - corner_len, inset), mark_color, 1.2
+	)
+	draw_line(
+		Vector2(size.x - inset, inset), Vector2(size.x - inset, inset + corner_len), mark_color, 1.2
+	)
+
+
+func _load_preferences() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var error: int = config.load(SETTINGS_PATH)
+	if error != OK:
+		return
+	_reduced_vfx_enabled = bool(
+		config.get_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, _reduced_vfx_enabled)
+	)
+
+
+func _save_preferences() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	config.load(SETTINGS_PATH)
+	config.set_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, _reduced_vfx_enabled)
+	config.save(SETTINGS_PATH)
 
 
 # === Private Audio Methods ===

@@ -1,14 +1,14 @@
-## Headless test for V16.0.0 Feeling Upgrade:
-##   - V16 version string contract
-##   - New audio API methods (is_audio_enabled, toggle, set with announce param,
-##     master volume, ambience, floor context, cue profile, play count)
+## Headless test for V16.5.0 Feeling Upgrade:
+##   - V16.5 version string contract
+##   - New audio/VFX API methods (is_audio_enabled, toggle, set with announce param,
+##     master volume, ambience, reduced VFX, floor context, cue profile, play count)
 ##   - Mute does not block visual feedback
 ##   - Streams remain non-empty WAVs; unknown cues no-op
 ##   - MapView atmosphere API and cell burst (V13) compatibility
-##   - Scene integration: game.tscn has UI/SensoryFeedback and pause audio controls
+##   - Scene integration: game.tscn has UI/SensoryFeedback and pause audio/VFX controls
 ##   - Main menu / library / character creation have AsciiBackdrop Background
-##   - GameManager version 16.0.0
-##   - Library version history includes V16, V15, and V14
+##   - GameManager version 16.5.0
+##   - Library version history includes V16.5, V16, V15, and V14
 ##
 ## Defensive: uses runtime load() with explicit null checks so every missing
 ## contract produces a clear _fail().  Skips deeper method-level tests when a
@@ -44,10 +44,10 @@ func _run() -> void:
 	# === 0. Attempt runtime script loads ===
 	_load_scripts()
 
-	# === 1. V16 Version ===
+	# === 1. V16.5 Version ===
 	_check_v15_version()
 
-	# === 2. SensoryFeedback V16 Audio API ===
+	# === 2. SensoryFeedback V16.5 Audio/VFX API ===
 	if _sf_loaded:
 		_check_audio_api()
 
@@ -108,7 +108,7 @@ func _run() -> void:
 
 	await process_frame
 
-	print("V16.0.0 feeling upgrade tests passed")
+	print("V16.5.0 feeling upgrade tests passed")
 	quit(0)
 
 
@@ -156,12 +156,12 @@ func _check_v15_version() -> void:
 		_fail("SensoryFeedback instance missing VERSION property")
 
 	var version: String = sf_instance.VERSION
-	if version != "16.0.0":
+	if version != "16.5.0":
 		_fail(
 			(
 				(
-					"SensoryFeedback.VERSION expected '16.0.0', got '%s' — "
-					+ "V16 version string contract not yet updated"
+					"SensoryFeedback.VERSION expected '16.5.0', got '%s' — "
+					+ "V16.5 version string contract not yet updated"
 				)
 				% version
 			)
@@ -633,6 +633,7 @@ func _check_game_scene_integration() -> void:
 	_maybe_check_node(
 		pause_panel, "Margin/VBox/AmbienceEnabledButton", "Pause panel AmbienceEnabledButton"
 	)
+	_maybe_check_node(pause_panel, "Margin/VBox/ReducedVfxButton", "Pause panel ReducedVfxButton")
 
 	gm.abandon_run()
 	game.queue_free()
@@ -761,29 +762,29 @@ func _check_game_manager_version() -> void:
 		_fail("GameManager instance missing GAME_VERSION property")
 
 	var gm_version: String = gm.GAME_VERSION
-	if gm_version != "16.0.0":
+	if gm_version != "16.5.0":
 		_fail(
 			(
 				(
-					"GameManager.GAME_VERSION expected '16.0.0', got '%s' — "
-					+ "V16 version not yet set"
+					"GameManager.GAME_VERSION expected '16.5.0', got '%s' — "
+					+ "V16.5 version not yet set"
 				)
 				% gm_version
 			)
 		)
 	else:
-		print("  GameManager.GAME_VERSION = 16.0.0")
+		print("  GameManager.GAME_VERSION = 16.5.0")
 
 	var label: String = gm.get_version_label()
-	if not "16.0.0" in label:
+	if not "16.5.0" in label:
 		print(
 			(
 				"  WARNING: GameManager.get_version_label() = '%s' — "
-				+ "may not reference 16.0.0" % label
+				+ "may not reference 16.5.0" % label
 			)
 		)
 	else:
-		print("  GameManager.get_version_label() references 16.0.0")
+		print("  GameManager.get_version_label() references 16.5.0")
 
 
 # ======================================================================
@@ -794,13 +795,16 @@ func _check_library_version_history() -> void:
 	if history == null or history.is_empty():
 		_fail("LibraryMenu.VERSION_HISTORY is empty or missing")
 
+	var has_v16_5: bool = false
 	var has_v16: bool = false
 	var has_v15: bool = false
 	var has_v14: bool = false
 	var has_v13: bool = false
 	for entry: Variant in history:
 		var line: String = str(entry)
-		if line.contains("V16") or line.contains("16.0.0"):
+		if line.contains("V16.5") or line.contains("16.5.0"):
+			has_v16_5 = true
+		if line.contains("V16.0.0") or line.contains("16.0.0"):
 			has_v16 = true
 		if line.contains("V15") or line.contains("15.0.0"):
 			has_v15 = true
@@ -809,6 +813,13 @@ func _check_library_version_history() -> void:
 		if line.contains("V13") or line.contains("13.0.0"):
 			has_v13 = true
 
+	if not has_v16_5:
+		_fail(
+			(
+				"Library version history must include V16.5 or 16.5.0 entry — "
+				+ "did not find 'V16.5' or '16.5.0' in VERSION_HISTORY"
+			)
+		)
 	if not has_v16:
 		_fail(
 			(
@@ -834,8 +845,9 @@ func _check_library_version_history() -> void:
 		print("  NOTE: V13 entry not found in VERSION_HISTORY (acceptable if trimmed)")
 	print(
 		(
-			"  Library version history: V16 %s, V15 %s, V14 %s, V13 %s"
+			"  Library version history: V16.5 %s, V16 %s, V15 %s, V14 %s, V13 %s"
 			% [
+				"✓" if has_v16_5 else "✗",
 				"✓" if has_v16 else "✗",
 				"✓" if has_v15 else "✗",
 				"✓" if has_v14 else "✗",
@@ -856,15 +868,23 @@ func _check_library_history_raw() -> void:
 		_fail("Could not read version_history.gd for version history check")
 		return
 
-	var has_v16: bool = "16.0.0" in content or "V16" in content
+	var has_v16_5: bool = "16.5.0" in content or "V16.5" in content
+	var has_v16: bool = "16.0.0" in content or "V16.0" in content
 	var has_v15: bool = "15.0.0" in content or "V15" in content
 	var has_v14: bool = "14.0.0" in content or "V14" in content
 
+	if not has_v16_5:
+		_fail(
+			(
+				"Library version history must include V16.5 or 16.5.0 entry — "
+				+ "scanned raw file, no '16.5.0' or 'V16.5' found"
+			)
+		)
 	if not has_v16:
 		_fail(
 			(
 				"Library version history must include V16 or 16.0.0 entry — "
-				+ "scanned raw file, no '16.0.0' or 'V16' found"
+				+ "scanned raw file, no '16.0.0' or 'V16.0' found"
 			)
 		)
 	if not has_v15:
@@ -892,8 +912,9 @@ func _check_library_history_raw() -> void:
 
 	print(
 		(
-			"  Library version history (raw scan): V16 %s, V15 %s, V14 %s — %d entries"
+			"  Library version history (raw scan): V16.5 %s, V16 %s, V15 %s, V14 %s — %d entries"
 			% [
+				"✓" if has_v16_5 else "✗",
 				"✓" if has_v16 else "✗",
 				"✓" if has_v15 else "✗",
 				"✓" if has_v14 else "✗",
