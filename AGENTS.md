@@ -70,6 +70,8 @@ Item/enemy/trap `.tres` paths are hardcoded in `scripts/resource_paths.gd` (`cla
 - Run `gdformat` before committing (installed via `uv tool install gdtoolkit==4.5.0`)
 - Run `gdlint` to check style (note: `game.gd` exceeds `max-file-lines` by design; other warnings are pre-existing)
 - Run tests: `/usr/local/bin/godot --headless --path . --script res://scripts/tests/test_shop_scaling.gd`
+
+- **Always commit after meaningful changes**: After completing a feature or fix, commit each logical change as a separate commit with a descriptive message, then `git push origin main`. Group related changes but keep commits atomic — one concern per commit.
 - `game.gd` has `# ===== Section Name =====` markers — `grep "# =====" scripts/game.gd` gives a table of contents
 
 ## MCP Tool
