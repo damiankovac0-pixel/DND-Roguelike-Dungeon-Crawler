@@ -1,0 +1,81 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
+[ext_resource type="AudioStreamOggVorbis" path="res://assets/audio/boss/8bit_action_boss_battle_climax_bpm185.ogg" id="3"]
+
+[sub_resource type="Resource" id="Resource_nyxara_ray"]
+script = ExtResource("2")
+id = &"mirror_ray"
+intent = &"boss_attack"
+phase_min = 1
+cooldown = 2
+telegraph_turns = 1
+shape = &"line_to_player"
+range = 7
+width = 1
+damage_dice = 3
+damage_sides = 8
+damage_bonus = 5
+damage_type = &"magic"
+warning_text = "Nyxara aligns a mirror ray."
+resolve_text = "Nyxara's mirror ray cuts you for %d magic damage."
+
+[sub_resource type="Resource" id="Resource_nyxara_fracture"]
+script = ExtResource("2")
+id = &"prism_fracture"
+intent = &"boss_attack"
+phase_min = 2
+cooldown = 3
+telegraph_turns = 1
+shape = &"cross"
+range = 7
+damage_dice = 3
+damage_sides = 6
+damage_bonus = 6
+damage_type = &"magic"
+warning_text = "Nyxara fractures the light into a cross."
+resolve_text = "Nyxara's prism fracture rips you for %d magic damage."
+
+[sub_resource type="Resource" id="Resource_nyxara_guard"]
+script = ExtResource("2")
+id = &"mirror_guard"
+intent = &"boss_attack"
+phase_min = 2
+cooldown = 4
+telegraph_turns = 1
+shape = &"summon"
+summon_enemy_path = "res://resources/enemies/mirror_duelist.tres"
+summon_count = 1
+warning_text = "Nyxara beckons a mirror guard."
+
+[resource]
+script = ExtResource("1")
+display_name = "Nyxara, the Mirror Witch"
+glyph = "N"
+color = Color(0.70, 0.48, 1, 1)
+max_hp = 172
+armor_class = 19
+attack_bonus = 12
+damage_sides = 12
+damage_bonus = 7
+xp_reward = 1100
+min_floor = 25
+max_floor = 25
+spawn_weight = 0
+melee_damage_percent = 120
+ranged_damage_percent = 90
+magic_damage_percent = 70
+is_boss = true
+boss_id = &"nyxara"
+boss_floor = 25
+boss_room_title = "The Last Reflection"
+boss_reward_gold = 900
+boss_reward_chest_rarity = 6
+boss_phase_hp_percents = Array[int]([75, 45, 20])
+boss_footprint_offsets = Array[Vector2i]([Vector2i(-2, -2), Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+boss_visual_frames = Array[PackedStringArray]([PackedStringArray("╱╲N╱╲", "|◇ ◇|", "╲╱_╲╱", " ╱_╲ "), PackedStringArray("╱╲N╱╲", "|◆ ◆|", "╲╱_╲╱", " ╲_╱ ")])
+boss_visual_frame_seconds = 0.32
+boss_attacks = Array[Resource]([SubResource("Resource_nyxara_ray"), SubResource("Resource_nyxara_fracture"), SubResource("Resource_nyxara_guard")])
+boss_music_stream = ExtResource("3")
+boss_climax_music_stream = ExtResource("3")

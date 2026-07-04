@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
+[ext_resource type="AudioStreamOggVorbis" path="res://assets/audio/boss/8bit_action_boss_battle_bpm145.ogg" id="3"]
+[ext_resource type="AudioStreamOggVorbis" path="res://assets/audio/boss/8bit_action_boss_battle_climax_bpm185.ogg" id="4"]
+
+[sub_resource type="Resource" id="Resource_observer_gaze"]
+script = ExtResource("2")
+id = &"observer_gaze"
+intent = &"boss_attack"
+phase_min = 1
+cooldown = 2
+telegraph_turns = 1
+shape = &"line_to_player"
+range = 6
+width = 1
+damage_dice = 2
+damage_sides = 6
+damage_bonus = 2
+damage_type = &"magic"
+warning_text = "The Observer focuses a burning gaze."
+resolve_text = "The Observer's gaze sears you for %d magic damage."
+
+[sub_resource type="Resource" id="Resource_observer_blink"]
+script = ExtResource("2")
+id = &"blink_pulse"
+intent = &"boss_attack"
+phase_min = 2
+cooldown = 3
+telegraph_turns = 1
+shape = &"ring"
+radius = 2
+damage_dice = 1
+damage_sides = 8
+damage_bonus = 2
+damage_type = &"magic"
+warning_text = "The Observer blinks; pressure ripples outward."
+resolve_text = "The blink pulse crushes you for %d magic damage."
+
+[resource]
+script = ExtResource("1")
+display_name = "The Observer"
+glyph = "O"
+color = Color(0.84, 0.88, 1, 1)
+max_hp = 72
+armor_class = 15
+attack_bonus = 7
+damage_sides = 8
+damage_bonus = 3
+xp_reward = 220
+min_floor = 5
+max_floor = 5
+spawn_weight = 0
+melee_damage_percent = 100
+ranged_damage_percent = 85
+magic_damage_percent = 115
+is_boss = true
+boss_id = &"observer"
+boss_floor = 5
+boss_room_title = "The Unblinking Gate"
+boss_reward_gold = 180
+boss_reward_chest_rarity = 5
+boss_phase_hp_percents = Array[int]([65, 35])
+boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-2, 0), Vector2i(0, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ╱-╲ ", "| o |", " ╲_╱ "), PackedStringArray(" ╱~╲ ", "| O |", " ╲-╱ ")])
+boss_visual_frame_seconds = 0.32
+boss_attacks = Array[Resource]([SubResource("Resource_observer_gaze"), SubResource("Resource_observer_blink")])
+boss_music_stream = ExtResource("3")
+boss_climax_music_stream = ExtResource("4")

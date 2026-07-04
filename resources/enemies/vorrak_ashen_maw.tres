@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
+[ext_resource type="AudioStreamOggVorbis" path="res://assets/audio/boss/8bit_action_boss_battle_bpm145.ogg" id="3"]
+[ext_resource type="AudioStreamOggVorbis" path="res://assets/audio/boss/8bit_action_boss_battle_climax_bpm185.ogg" id="4"]
+
+[sub_resource type="Resource" id="Resource_vorrak_breath"]
+script = ExtResource("2")
+id = &"ash_breath"
+intent = &"boss_attack"
+phase_min = 1
+cooldown = 2
+telegraph_turns = 1
+shape = &"cone"
+range = 5
+width = 3
+damage_dice = 3
+damage_sides = 6
+damage_bonus = 3
+damage_type = &"fire"
+warning_text = "Vorrak inhales a storm of ash."
+resolve_text = "Vorrak's ash breath burns you for %d fire damage."
+
+[sub_resource type="Resource" id="Resource_vorrak_quake"]
+script = ExtResource("2")
+id = &"maw_quake"
+intent = &"boss_attack"
+phase_min = 2
+cooldown = 3
+telegraph_turns = 1
+shape = &"ring"
+radius = 2
+damage_dice = 2
+damage_sides = 8
+damage_bonus = 4
+damage_type = &"melee"
+warning_text = "Vorrak slams the floor with furnace weight."
+resolve_text = "Vorrak's maw quake batters you for %d melee damage."
+
+[resource]
+script = ExtResource("1")
+display_name = "Vorrak, the Ashen Maw"
+glyph = "V"
+color = Color(1, 0.32, 0.12, 1)
+max_hp = 118
+armor_class = 17
+attack_bonus = 9
+damage_sides = 10
+damage_bonus = 5
+xp_reward = 520
+min_floor = 15
+max_floor = 15
+spawn_weight = 0
+melee_damage_percent = 85
+ranged_damage_percent = 100
+magic_damage_percent = 120
+is_boss = true
+boss_id = &"vorrak"
+boss_floor = 15
+boss_room_title = "The Furnace Throat"
+boss_reward_gold = 360
+boss_reward_chest_rarity = 5
+boss_phase_hp_percents = Array[int]([70, 40])
+boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ╱^^╲", "|@@@|", "|VVV|", " ╲_╱ "), PackedStringArray(" ╱~~╲", "|@@@|", "|vvv|", " ╲_╱ ")])
+boss_visual_frame_seconds = 0.32
+boss_attacks = Array[Resource]([SubResource("Resource_vorrak_breath"), SubResource("Resource_vorrak_quake")])
+boss_music_stream = ExtResource("3")
+boss_climax_music_stream = ExtResource("4")
