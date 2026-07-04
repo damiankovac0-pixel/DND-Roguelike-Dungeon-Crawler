@@ -40,3 +40,17 @@ extends Resource
 @export var fireball_damage_dice: int = 0
 @export var fireball_damage_sides: int = 0
 @export var fireball_damage_bonus: int = 0
+
+@export var is_boss: bool = false
+@export var boss_id: StringName = &""
+@export var boss_floor: int = 0
+@export var boss_room_title: String = ""
+@export var boss_reward_gold: int = 0
+@export var boss_reward_chest_rarity: int = 0
+@export var boss_phase_hp_percents: Array[int] = []
+@export var boss_footprint_offsets: Array[Vector2i] = [Vector2i.ZERO]
+@export var boss_visual_frames: Array[PackedStringArray] = []
+@export var boss_visual_frame_seconds: float = 0.32
+@export var boss_attacks: Array[Resource] = []
+@export var boss_music_stream: AudioStream
+@export var boss_climax_music_stream: AudioStream
