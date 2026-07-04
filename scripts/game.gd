@@ -3870,6 +3870,8 @@ func _choose_weighted_item(candidates: Array[Resource], floor_number: int) -> Re
 
 
 func _can_spawn_enemy(enemy_data: Resource, floor_number: int) -> bool:
+	if enemy_data.is_boss:
+		return false
 	if floor_number < enemy_data.min_floor:
 		return false
 	if not _is_endless_floor(floor_number):

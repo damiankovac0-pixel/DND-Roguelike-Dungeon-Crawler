@@ -8,6 +8,8 @@ enum TileType {
 	DOOR,
 	OPEN_DOOR,
 	STAIRS_DOWN,
+	BOSS_DOOR,
+	SEALED_BOSS_DOOR,
 }
 
 const TILE_COLORS: Dictionary = {
@@ -16,6 +18,8 @@ const TILE_COLORS: Dictionary = {
 	TileType.DOOR: Color(0.82, 0.57, 0.30),
 	TileType.OPEN_DOOR: Color(0.63, 0.52, 0.39),
 	TileType.STAIRS_DOWN: Color(1.0, 0.88, 0.47),
+	TileType.BOSS_DOOR: Color(1.0, 0.72, 0.22),
+	TileType.SEALED_BOSS_DOOR: Color(1.0, 0.24, 0.18),
 }
 
 const TILE_CHARS: Dictionary = {
@@ -24,6 +28,8 @@ const TILE_CHARS: Dictionary = {
 	TileType.DOOR: "+",
 	TileType.OPEN_DOOR: "/",
 	TileType.STAIRS_DOWN: ">",
+	TileType.BOSS_DOOR: "▣",
+	TileType.SEALED_BOSS_DOOR: "╬",
 }
 
 const CELL_SIZE: int = 20
@@ -36,7 +42,12 @@ static func is_walkable(tile: TileType) -> bool:
 
 
 static func is_opaque(tile: TileType) -> bool:
-	return tile == TileType.WALL or tile == TileType.DOOR
+	return (
+		tile == TileType.WALL
+		or tile == TileType.DOOR
+		or tile == TileType.BOSS_DOOR
+		or tile == TileType.SEALED_BOSS_DOOR
+	)
 
 
 static func create_tileset() -> TileSet:

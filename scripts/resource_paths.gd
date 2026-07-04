@@ -39,6 +39,12 @@ const ENEMY_PATHS: Array[String] = [
 	"res://resources/enemies/void_herald.tres",
 	"res://resources/enemies/deep_maw.tres",
 	"res://resources/enemies/starved_godling.tres",
+	# === Boss Encounter Enemies ===
+	"res://resources/enemies/the_observer.tres",
+	"res://resources/enemies/seraphine_thorn_saint.tres",
+	"res://resources/enemies/vorrak_ashen_maw.tres",
+	"res://resources/enemies/kaelros_drowned_king.tres",
+	"res://resources/enemies/nyxara_mirror_witch.tres",
 	# === Staff/Class Update Enemies ===
 	"res://resources/enemies/frost_guardian.tres",
 	"res://resources/enemies/warleader.tres",
