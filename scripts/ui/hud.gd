@@ -11,6 +11,7 @@ const GOLD_FLASH_COLOR: Color = Color(1.0, 0.82, 0.18)
 const XP_FLASH_COLOR: Color = Color(0.55, 0.86, 1.0)
 const LABEL_PULSE_SCALE: Vector2 = Vector2(1.08, 1.08)
 const LABEL_PULSE_SECONDS: float = 0.24
+const BOSS_HP_BAR_CELLS: int = 12
 
 # === Private Variables ===
 var _biome_name: String = "The Tower"
@@ -20,7 +21,13 @@ var _last_hp: int = -1
 var _last_gold: int = -1
 var _last_xp: int = -1
 var _visible_enemy_intents: Dictionary = {}
+var _boss_display_name: String = ""
+var _boss_floor_active: bool = false
+var _boss_locked: bool = false
+var _boss_defeated: bool = false
+var _last_boss_hp: int = -1
 var _hp_tween: Tween
+var _boss_hp_tween: Tween
 var _gold_tween: Tween
 var _xp_tween: Tween
 
@@ -28,6 +35,9 @@ var _xp_tween: Tween
 @onready var name_label: Label = $Margin/VBox/NameLabel
 @onready var hp_label: Label = $Margin/VBox/HpLabel
 @onready var floor_label: Label = $Margin/VBox/FloorLabel
+@onready var sep_boss_label: Label = $Margin/VBox/SepBoss
+@onready var boss_name_label: Label = $Margin/VBox/BossNameLabel
+@onready var boss_hp_label: Label = $Margin/VBox/BossHpLabel
 @onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
@@ -72,7 +82,52 @@ func set_visible_enemy_intents(enemy_intents: Dictionary) -> void:
 	_update_goal_text()
 
 
+func set_boss_goal_state(display_name: String, active: bool, locked: bool, defeated: bool) -> void:
+	_boss_display_name = display_name
+	_boss_floor_active = active
+	_boss_locked = locked
+	_boss_defeated = defeated
+	_update_goal_text()
+
+
+func show_boss_health(display_name: String, current_hp: int, max_hp: int) -> void:
+	_boss_display_name = display_name
+	_boss_floor_active = true
+	sep_boss_label.visible = true
+	boss_name_label.visible = true
+	boss_hp_label.visible = true
+	boss_name_label.text = display_name
+	_update_boss_hp(current_hp, max_hp)
+	_update_goal_text()
+
+
+func update_boss_health(current_hp: int, max_hp: int) -> void:
+	_update_boss_hp(current_hp, max_hp)
+
+
+func hide_boss_health() -> void:
+	sep_boss_label.visible = false
+	boss_name_label.visible = false
+	boss_hp_label.visible = false
+	_last_boss_hp = -1
+	_update_goal_text()
+
+
 # === Private Methods ===
+func _update_boss_hp(current_hp: int, max_hp: int) -> void:
+	var filled_cells: int = 0
+	if max_hp > 0:
+		filled_cells = clampi(int(round(float(current_hp) / float(max_hp) * BOSS_HP_BAR_CELLS)), 0, BOSS_HP_BAR_CELLS)
+	var empty_cells: int = BOSS_HP_BAR_CELLS - filled_cells
+	var bar: String = "█".repeat(filled_cells) + "░".repeat(empty_cells)
+	boss_hp_label.text = "[%s] %d / %d" % [bar, current_hp, max_hp]
+	boss_hp_label.add_theme_color_override("font_color", _hp_status_color(current_hp, max_hp))
+	if _last_boss_hp >= 0 and current_hp != _last_boss_hp:
+		var flash_color: Color = HP_HEAL_FLASH_COLOR if current_hp > _last_boss_hp else HP_DANGER_COLOR
+		_boss_hp_tween = _pulse_label(boss_hp_label, _boss_hp_tween, flash_color)
+	_last_boss_hp = current_hp
+
+
 func _update_floor(floor_number: int) -> void:
 	_current_floor = floor_number
 	floor_label.text = "Depth %d // %s" % [floor_number, _biome_name]
@@ -131,13 +186,20 @@ func _pulse_label(label: Control, active_tween: Tween, flash_color: Color) -> Tw
 
 func _update_goal_text() -> void:
 	var goal_text: String = "Goal: find stairs"
-	if _current_floor >= 25:
+	if _boss_floor_active:
+		if _boss_defeated:
+			goal_text = "Goal: claim chest or descend"
+		elif _boss_locked:
+			goal_text = "Goal: defeat %s" % _boss_display_name
+		else:
+			goal_text = "Goal: enter the boss gate"
+	elif _current_floor >= 25:
 		goal_text = "Goal: reach stairs for the final choice"
 	elif _has_shopkeeper:
 		goal_text = "Goal: shop or find stairs"
 	var intent_text: String = ""
 	if not _visible_enemy_intents.is_empty():
-		intent_text = "Intent: ! melee  → ranged  * spell  + summon  z asleep\n"
+		intent_text = "Intent: ! melee  → ranged  * spell  + summon  ▲ windup  z asleep\n"
 	help_label.text = (
 		"%s\n" % goal_text
 		+ intent_text

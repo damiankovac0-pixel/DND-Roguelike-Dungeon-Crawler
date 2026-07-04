@@ -111,6 +111,25 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.843, 0.898, 1)
 text = "Depth 1"
 
+[node name="SepBoss" type="Label" parent="UI/HUD/Margin/VBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_top = 8
+theme_override_colors/font_color = Color(0.56, 0.50, 0.74, 1)
+text = "BOSS"
+
+[node name="BossNameLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.72, 0.28, 1)
+text = "Boss"
+
+[node name="BossHpLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+visible = false
+layout_mode = 2
+text = "[░░░░░░░░░░░░] 0 / 0"
+theme_override_colors/font_color = Color(0.92, 0.86, 0.74, 1)
+
 [node name="StatsLabel" type="RichTextLabel" parent="UI/HUD/Margin/VBox"]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2

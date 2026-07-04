@@ -26,13 +26,20 @@ const LATE_TRAP_MAX_DC_BONUS: int = 4
 const PAUSE_VOLUME_SLIDER_PATH: String = "MasterVolumeRow/MasterVolumeSlider"
 const PAUSE_VOLUME_VALUE_LABEL_PATH: String = "MasterVolumeRow/MasterVolumeValueLabel"
 const PAUSE_REDUCED_VFX_BUTTON_PATH: String = "ReducedVfxButton"
-const FINAL_CAPSTONE_ANCHOR_NAME: String = "Ancient Dragon"
-const FINAL_CAPSTONE_GUARD_NAMES: Array[String] = [
-	"Mirror Duelist",
-	"Prism Seer",
-	"Shard Golem",
-	"Glass Dragonling",
-]
+const BOSS_FLOORS: Dictionary = {
+	5: &"observer",
+	10: &"seraphine",
+	15: &"vorrak",
+	20: &"kaelros",
+	25: &"nyxara",
+}
+const BOSS_RESOURCE_BY_ID: Dictionary = {
+	&"observer": "res://resources/enemies/the_observer.tres",
+	&"seraphine": "res://resources/enemies/seraphine_thorn_saint.tres",
+	&"vorrak": "res://resources/enemies/vorrak_ashen_maw.tres",
+	&"kaelros": "res://resources/enemies/kaelros_drowned_king.tres",
+	&"nyxara": "res://resources/enemies/nyxara_mirror_witch.tres",
+}
 const AMBUSH_APEX_EXCLUDE_NAMES: Array[String] = [
 	"Ancient Dragon",
 	"Void Herald",
@@ -136,6 +143,10 @@ var _stun_actions: int = 0
 var _enemy_action_counts: Dictionary = {}
 var _sleeping_enemies: Dictionary = {}
 var _ranged_recovery_enemies: Dictionary = {}
+var _boss_states: Dictionary = {}
+var _active_boss_encounter: Dictionary = {}
+var _boss_telegraphs: Dictionary = {}
+var _unknown_boss_attack_shapes: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
@@ -797,6 +808,10 @@ func _generate_floor(floor_number: int) -> void:
 	_enemy_action_counts.clear()
 	_sleeping_enemies.clear()
 	_ranged_recovery_enemies.clear()
+	_boss_states.clear()
+	_active_boss_encounter.clear()
+	_boss_telegraphs.clear()
+	_unknown_boss_attack_shapes.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
 	_triggered_traps.clear()
@@ -833,7 +848,7 @@ func _generate_floor(floor_number: int) -> void:
 	_spawn_items(generation_result["item_spawns"], floor_number)
 	_spawn_traps(generation_result.get("trap_spawns", []), floor_number)
 	_spawn_containers(generation_result, floor_number)
-	_spawn_final_floor_capstone(generation_result, floor_number)
+	_initialize_boss_encounter(generation_result, floor_number)
 	hud.set_floor_context(floor_number, _shopkeeper != null)
 	_refresh_visibility()
 	_refresh_map()
@@ -926,10 +941,14 @@ func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void
 		return
 	var chest_limit: int = min(max(1, 1 + int(floor_number / 5)), max(1, int(rooms.size() / 3)))
 	var clutter_limit: int = min(2 + int(floor_number / 8), 4)
+	var boss_encounter: Dictionary = generation_result.get("boss_encounter", {"active": false})
+	var boss_room: Rect2i = boss_encounter.get("boss_room", Rect2i())
 	var chest_count: int = 0
 	var clutter_count: int = 0
 	for room_index: int in range(1, rooms.size()):
 		var room: Rect2i = rooms[room_index]
+		if bool(boss_encounter.get("active", false)) and room == boss_room:
+			continue
 		if chest_count < chest_limit and randf() < clampf(0.16 + floor_number * 0.015, 0.16, 0.45):
 			var chest_cell: Vector2i = _find_free_container_cell(room)
 			if chest_cell != Vector2i.ZERO:
@@ -953,64 +972,362 @@ func _spawn_containers(generation_result: Dictionary, floor_number: int) -> void
 			)
 
 
-func _spawn_final_floor_capstone(_generation_result: Dictionary, floor_number: int) -> void:
-	if floor_number != FINAL_VICTORY_FLOOR:
-		return
-	var blocked_cells: Dictionary = _current_actor_blocked_cells()
-	var anchor_data: Resource = _find_enemy_data_by_display_name(FINAL_CAPSTONE_ANCHOR_NAME)
-	if anchor_data != null:
-		var anchor_cell: Vector2i = _find_capstone_spawn_cell(blocked_cells)
-		if anchor_cell != Vector2i.ZERO:
-			_spawn_enemy_instance(anchor_data, anchor_cell, floor_number, true)
-			blocked_cells[anchor_cell] = true
-	var guard_count: int = 0
-	for guard_name: String in FINAL_CAPSTONE_GUARD_NAMES:
-		if guard_count >= 2:
-			break
-		var guard_data: Resource = _find_enemy_data_by_display_name(guard_name)
-		if guard_data == null:
-			continue
-		var guard_cell: Vector2i = _find_capstone_spawn_cell(blocked_cells)
-		if guard_cell == Vector2i.ZERO:
-			continue
-		_spawn_enemy_instance(guard_data, guard_cell, floor_number, true)
-		blocked_cells[guard_cell] = true
-		guard_count += 1
-	var chest_cell: Vector2i = _find_capstone_chest_cell()
-	if chest_cell != Vector2i.ZERO:
-		_container_positions[chest_cell] = _make_chest_container(ItemDataScript.ItemRarity.ASCENDED)
-	GameManager.add_log_message("The final guardians stir near the stairs.", &"warning")
+func _boss_id_for_floor(floor_number: int) -> StringName:
+	return BOSS_FLOORS.get(floor_number, &"")
 
 
-func _find_capstone_spawn_cell(blocked_cells: Dictionary) -> Vector2i:
-	for radius: int in range(1, 8):
-		var candidates: Array[Vector2i] = []
-		for y_offset: int in range(-radius, radius + 1):
-			for x_offset: int in range(-radius, radius + 1):
-				if max(abs(x_offset), abs(y_offset)) != radius:
-					continue
-				var cell: Vector2i = _stairs_position + Vector2i(x_offset, y_offset)
-				if _is_free_enemy_spawn_cell(cell, blocked_cells):
-					candidates.append(cell)
-		if not candidates.is_empty():
-			return candidates[randi_range(0, candidates.size() - 1)]
-	return Vector2i.ZERO
-
-
-func _find_capstone_chest_cell() -> Vector2i:
-	for radius: int in range(1, 5):
-		for direction: Vector2i in CARDINAL_DIRECTIONS:
-			var cell: Vector2i = _stairs_position + direction * radius
-			if not _is_container_spawn_blocked(cell):
-				return cell
-	return Vector2i.ZERO
-
-
-func _find_enemy_data_by_display_name(display_name: String) -> Resource:
+func _boss_resource_for_floor(floor_number: int) -> Resource:
+	var boss_id: StringName = _boss_id_for_floor(floor_number)
+	if boss_id == &"":
+		return null
 	for enemy_data: Resource in _enemy_resources:
-		if enemy_data.display_name == display_name:
+		if enemy_data.is_boss and enemy_data.boss_id == boss_id:
 			return enemy_data
-	return null
+	var path: String = BOSS_RESOURCE_BY_ID.get(boss_id, "")
+	if path.is_empty():
+		return null
+	return load(path)
+
+
+func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int) -> void:
+	_active_boss_encounter.clear()
+	_boss_telegraphs.clear()
+	var boss_metadata: Dictionary = generation_result.get("boss_encounter", {"active": false})
+	if not bool(boss_metadata.get("active", false)):
+		_refresh_boss_presentation()
+		return
+	var boss_data: Resource = _boss_resource_for_floor(floor_number)
+	var stairs_cell: Vector2i = boss_metadata.get("boss_stairs_cell", generation_result["stairs_position"])
+	if boss_data == null:
+		GameManager.add_log_message("Boss resource missing for floor %d." % floor_number, &"warning")
+		GameManager.map_data[stairs_cell.y][stairs_cell.x] = DungeonDataScript.TileType.STAIRS_DOWN
+		_stairs_position = stairs_cell
+		_refresh_boss_presentation()
+		return
+	var boss_spawn_cell: Vector2i = boss_metadata.get("boss_spawn_cell", stairs_cell)
+	var boss: Node2D = _spawn_enemy_instance(boss_data, boss_spawn_cell, floor_number, true)
+	var state: Dictionary = _make_boss_state(boss)
+	_boss_states[boss] = state
+	_active_boss_encounter = {
+		"boss_id": boss_data.boss_id,
+		"boss_name": boss_data.display_name,
+		"boss": boss,
+		"boss_data": boss_data,
+		"room": boss_metadata.get("boss_room", Rect2i()),
+		"room_cells": boss_metadata.get("boss_room_cells", {}),
+		"door_cells": boss_metadata.get("boss_door_cells", []),
+		"locked": false,
+		"defeated": false,
+		"stairs_cell": stairs_cell,
+		"chest_cell": boss_metadata.get("boss_chest_cell", stairs_cell),
+		"entered": false,
+	}
+	_refresh_boss_occupied_cells(boss)
+	GameManager.add_log_message("A boss gate waits at the far chamber.", &"warning")
+	_refresh_boss_presentation()
+
+
+func _make_boss_state(enemy: Node) -> Dictionary:
+	return {
+		"phase": 1,
+		"pending_attack": null,
+		"telegraph_turns": 0,
+		"telegraph_cells": {},
+		"last_attack_id": &"",
+		"occupied_cells": _calculate_enemy_occupied_cells(enemy),
+		"reward_claimed": false,
+		"nyxara_summon_toggle": false,
+	}
+
+
+func _boss_state_for(enemy: Node) -> Dictionary:
+	if not _boss_states.has(enemy):
+		_boss_states[enemy] = _make_boss_state(enemy)
+	return _boss_states[enemy]
+
+
+func _is_boss_enemy(enemy: Node) -> bool:
+	var enemy_actor: Enemy = enemy as Enemy
+	return enemy_actor != null and enemy_actor.enemy_data != null and enemy_actor.enemy_data.is_boss
+
+
+func _calculate_enemy_occupied_cells(enemy: Node) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if enemy == null:
+		return cells
+	if not _is_boss_enemy(enemy):
+		cells.append(enemy.grid_position)
+		return cells
+	var enemy_actor: Enemy = enemy as Enemy
+	var offsets: Array = enemy_actor.enemy_data.boss_footprint_offsets
+	if offsets.is_empty():
+		cells.append(enemy.grid_position)
+		return cells
+	for offset: Vector2i in offsets:
+		cells.append(enemy.grid_position + offset)
+	return cells
+
+
+func _refresh_boss_occupied_cells(enemy: Node) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var state: Dictionary = _boss_state_for(enemy)
+	state["occupied_cells"] = _calculate_enemy_occupied_cells(enemy)
+	_boss_states[enemy] = state
+
+
+func _enemy_occupied_cells(enemy: Node) -> Array[Vector2i]:
+	if _is_boss_enemy(enemy):
+		_refresh_boss_occupied_cells(enemy)
+		return _boss_state_for(enemy).get("occupied_cells", [])
+	var cells: Array[Vector2i] = []
+	if enemy != null:
+		cells.append(enemy.grid_position)
+	return cells
+
+
+func _enemy_occupies_cell(enemy: Node, cell: Vector2i) -> bool:
+	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+		if occupied_cell == cell:
+			return true
+	return false
+
+
+func _is_cell_in_active_boss_room(cell: Vector2i) -> bool:
+	if _active_boss_encounter.is_empty():
+		return false
+	var room_cells: Dictionary = _active_boss_encounter.get("room_cells", {})
+	return room_cells.has(cell)
+
+
+func _check_boss_room_entry(previous_cell: Vector2i, new_cell: Vector2i) -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	if bool(_active_boss_encounter.get("defeated", false)):
+		return
+	if bool(_active_boss_encounter.get("locked", false)):
+		return
+	var room_cells: Dictionary = _active_boss_encounter.get("room_cells", {})
+	if room_cells.has(previous_cell) or not room_cells.has(new_cell):
+		return
+	_seal_boss_encounter()
+
+
+func _seal_boss_encounter() -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
+		if _is_inside_map(door_cell):
+			GameManager.map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.SEALED_BOSS_DOOR
+	_active_boss_encounter["locked"] = true
+	_active_boss_encounter["entered"] = true
+	GameManager.add_log_message(
+		(
+			"The gate slams shut. Defeat %s to leave."
+			% _active_boss_encounter.get("boss_name", "the boss")
+		),
+		&"warning"
+	)
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"start_boss_music"):
+		var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
+		var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
+		var base_stream: AudioStream = boss_data.boss_music_stream if boss_data != null else null
+		var climax_stream: AudioStream = boss_data.boss_climax_music_stream if boss_data != null else null
+		sensory_feedback.call(&"start_boss_music", boss_id, base_stream, climax_stream)
+	_refresh_boss_presentation()
+	_refresh_visibility()
+	_refresh_map()
+
+
+func _release_boss_encounter() -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
+		if _is_inside_map(door_cell):
+			GameManager.map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.OPEN_DOOR
+	_active_boss_encounter["locked"] = false
+	_active_boss_encounter["defeated"] = true
+	var stairs_cell: Vector2i = _active_boss_encounter.get("stairs_cell", _stairs_position)
+	GameManager.map_data[stairs_cell.y][stairs_cell.x] = DungeonDataScript.TileType.STAIRS_DOWN
+	_stairs_position = stairs_cell
+	var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
+	var chest_rarity: int = ItemDataScript.ItemRarity.MYTHIC
+	var gold_reward: int = 0
+	if boss_data != null:
+		chest_rarity = boss_data.boss_reward_chest_rarity
+		gold_reward = boss_data.boss_reward_gold
+	var chest_cell: Vector2i = _active_boss_encounter.get("chest_cell", Vector2i.ZERO)
+	var reward_cell: Vector2i = _find_boss_chest_reward_cell(chest_cell)
+	if reward_cell == Vector2i.ZERO:
+		GameManager.add_log_message("No safe space remains for the boss chest.", &"warning")
+	else:
+		_container_positions[reward_cell] = _make_chest_container(chest_rarity)
+		_play_action_burst(reward_cell, &"loot")
+	if gold_reward > 0:
+		_player.stats_component.gold += gold_reward
+		GameManager.add_log_message(
+			(
+				"%s drops %d gold."
+				% [_active_boss_encounter.get("boss_name", "The boss"), gold_reward]
+			),
+			&"gold"
+		)
+	_play_action_burst(stairs_cell, &"floor")
+	_boss_telegraphs.clear()
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"stop_boss_music"):
+		sensory_feedback.call(&"stop_boss_music", 0.6)
+	_refresh_boss_presentation()
+	_refresh_visibility()
+	_refresh_map()
+
+
+func _find_boss_chest_reward_cell(preferred_cell: Vector2i) -> Vector2i:
+	if preferred_cell != Vector2i.ZERO and not _is_container_spawn_blocked(preferred_cell):
+		return preferred_cell
+	if _active_boss_encounter.is_empty():
+		return Vector2i.ZERO
+	var room_cells: Dictionary = _active_boss_encounter.get("room_cells", {})
+	for radius: int in range(1, 9):
+		var candidates: Array[Vector2i] = []
+		for cell: Vector2i in room_cells.keys():
+			if preferred_cell != Vector2i.ZERO and max(abs(cell.x - preferred_cell.x), abs(cell.y - preferred_cell.y)) != radius:
+				continue
+			if not _is_container_spawn_blocked(cell):
+				candidates.append(cell)
+		if not candidates.is_empty():
+			candidates.sort_custom(
+				func(a: Vector2i, b: Vector2i) -> bool:
+					return a.distance_squared_to(preferred_cell) < b.distance_squared_to(preferred_cell)
+			)
+			return candidates[0]
+	return Vector2i.ZERO
+
+
+func _handle_boss_defeated(enemy: Node) -> bool:
+	if not _is_boss_enemy(enemy):
+		return false
+	var state: Dictionary = _boss_state_for(enemy)
+	if bool(state.get("reward_claimed", false)):
+		return true
+	state["reward_claimed"] = true
+	_boss_states[enemy] = state
+	_release_boss_encounter()
+	return true
+
+
+func _refresh_boss_presentation() -> void:
+	var boss_alive: bool = false
+	var boss: Node = null
+	var boss_data: Resource = null
+	if not _active_boss_encounter.is_empty():
+		boss = _active_boss_encounter.get("boss", null)
+		boss_data = _active_boss_encounter.get("boss_data", null)
+		boss_alive = boss != null and boss.is_alive() and not bool(_active_boss_encounter.get("defeated", false))
+	if map_view != null and map_view.has_method(&"set_boss_room"):
+		if _active_boss_encounter.is_empty() or bool(_active_boss_encounter.get("defeated", false)):
+			map_view.call(&"set_boss_room", {}, [], false)
+		else:
+			map_view.call(
+				&"set_boss_room",
+				_active_boss_encounter.get("room_cells", {}),
+				_active_boss_encounter.get("door_cells", []),
+				bool(_active_boss_encounter.get("locked", false))
+			)
+	if map_view != null and map_view.has_method(&"set_boss_visuals"):
+		if boss_alive and boss_data != null:
+			var state: Dictionary = _boss_state_for(boss)
+			var visuals: Dictionary = {
+				boss.grid_position: {
+					"display_name": boss_data.display_name,
+					"frames": boss_data.boss_visual_frames,
+					"frame_seconds": boss_data.boss_visual_frame_seconds,
+					"color": boss.color,
+					"occupied_cells": state.get("occupied_cells", []),
+					"phase": state.get("phase", 1),
+				}
+			}
+			map_view.call(&"set_boss_visuals", visuals)
+		elif map_view.has_method(&"clear_boss_visuals"):
+			map_view.call(&"clear_boss_visuals")
+	if map_view != null and map_view.has_method(&"set_boss_telegraphs"):
+		map_view.call(&"set_boss_telegraphs", _build_boss_telegraph_payload() if boss_alive else {})
+	if hud != null:
+		if hud.has_method(&"set_boss_goal_state"):
+			hud.call(
+				&"set_boss_goal_state",
+				_active_boss_encounter.get("boss_name", ""),
+				not _active_boss_encounter.is_empty(),
+				bool(_active_boss_encounter.get("locked", false)),
+				bool(_active_boss_encounter.get("defeated", false))
+			)
+		if boss_alive and boss != null and hud.has_method(&"show_boss_health"):
+			hud.call(
+				&"show_boss_health",
+				boss.display_name,
+				boss.stats_component.current_hp,
+				boss.stats_component.max_hp
+			)
+		elif hud.has_method(&"hide_boss_health"):
+			hud.call(&"hide_boss_health")
+	if boss_alive and bool(_active_boss_encounter.get("locked", false)) and is_instance_valid(sensory_feedback):
+		if sensory_feedback.has_method(&"update_boss_music_intensity"):
+			sensory_feedback.call(
+				&"update_boss_music_intensity",
+				boss.stats_component.current_hp,
+				boss.stats_component.max_hp
+			)
+		if sensory_feedback.has_method(&"is_boss_music_playing") and sensory_feedback.has_method(&"start_boss_music"):
+			if not bool(sensory_feedback.call(&"is_boss_music_playing")) and boss_data != null:
+				sensory_feedback.call(
+					&"start_boss_music",
+					_active_boss_encounter.get("boss_id", &""),
+					boss_data.boss_music_stream,
+					boss_data.boss_climax_music_stream
+				)
+
+
+func _can_place_boss_at(enemy: Node, anchor_cell: Vector2i, blocked_cells: Dictionary) -> bool:
+	if not _is_boss_enemy(enemy):
+		return false
+	var enemy_actor: Enemy = enemy as Enemy
+	for offset: Vector2i in enemy_actor.enemy_data.boss_footprint_offsets:
+		var cell: Vector2i = anchor_cell + offset
+		if not _is_cell_in_active_boss_room(cell):
+			return false
+		if not _is_walkable(cell):
+			return false
+		if cell == _player.grid_position:
+			return false
+		if blocked_cells.has(cell):
+			return false
+		if _is_sealed_boss_door(cell):
+			return false
+		var occupying_enemy: Node2D = _get_enemy_at(cell)
+		if occupying_enemy != null and occupying_enemy != enemy:
+			return false
+	return true
+
+
+func _try_move_boss_toward_player(enemy: Node, blocked_cells: Dictionary) -> bool:
+	if not _is_boss_enemy(enemy):
+		return false
+	var delta: Vector2i = _player.grid_position - enemy.grid_position
+	var directions: Array[Vector2i] = []
+	if abs(delta.x) >= abs(delta.y):
+		directions.append(Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT)
+		if delta.y != 0:
+			directions.append(Vector2i.DOWN if delta.y > 0 else Vector2i.UP)
+	else:
+		directions.append(Vector2i.DOWN if delta.y > 0 else Vector2i.UP)
+		if delta.x != 0:
+			directions.append(Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT)
+	for direction: Vector2i in directions:
+		var target_anchor: Vector2i = enemy.grid_position + direction
+		if _can_place_boss_at(enemy, target_anchor, blocked_cells):
+			enemy.set_grid_position(target_anchor)
+			_refresh_boss_occupied_cells(enemy)
+			return true
+	return false
 
 
 func _find_free_container_cell(room: Rect2i) -> Vector2i:
@@ -1073,6 +1390,21 @@ func _attempt_player_move(direction: Vector2i) -> void:
 	if _stun_actions > 0:
 		_spend_stunned_action()
 		return
+	if _is_boss_door(target):
+		GameManager.map_data[target.y][target.x] = DungeonDataScript.TileType.OPEN_DOOR
+		GameManager.add_log_message("The boss gate grinds open.", &"warning")
+		_play_action_burst(target, &"door")
+		_refresh_visibility()
+		_refresh_map()
+		_finish_player_action()
+		return
+	if _is_sealed_boss_door(target):
+		GameManager.add_log_message(
+			"The boss gate is sealed. Defeat %s."
+			% _active_boss_encounter.get("boss_name", "the boss"),
+			&"warning"
+		)
+		return
 	if _is_closed_door(target):
 		GameManager.map_data[target.y][target.x] = DungeonDataScript.TileType.OPEN_DOOR
 		GameManager.add_log_message("You open the door.", &"neutral")
@@ -1124,7 +1456,9 @@ func _attempt_player_move(direction: Vector2i) -> void:
 		target = dash_target
 		GameManager.add_log_message("%s carries you two tiles." % DASH_LOG_NAME, &"magic")
 
+	var previous_cell: Vector2i = _player.grid_position
 	_player.set_grid_position(target)
+	_check_boss_room_entry(previous_cell, target)
 	_collect_item_at(target)
 	_open_container_at(target)
 	if target == _stairs_position:
@@ -2222,6 +2556,9 @@ func _play_action_burst(cell: Vector2i, burst_type: StringName) -> void:
 		&"door":
 			color = Color(0.82, 0.57, 0.30)
 			glyph = "+"
+		&"floor":
+			color = Color(1.0, 0.88, 0.47)
+			glyph = ">"
 		&"trap":
 			color = ACTION_BURST_WARNING_COLOR
 			glyph = "!"
@@ -2320,6 +2657,17 @@ func _find_item_by_display_name(display_name: String) -> Resource:
 
 # ===== Stairs, Status & Turn End =====
 func _reach_stairs() -> void:
+	if (
+		not _active_boss_encounter.is_empty()
+		and not bool(_active_boss_encounter.get("defeated", false))
+		and BOSS_FLOORS.has(GameManager.current_floor)
+	):
+		GameManager.add_log_message(
+			"The stairs are sealed by %s."
+			% _active_boss_encounter.get("boss_name", "the boss"),
+			&"warning"
+		)
+		return
 	if GameManager.current_floor == FINAL_VICTORY_FLOOR:
 		_show_victory_choice()
 		return
@@ -2406,7 +2754,8 @@ func _process_enemy_turns() -> void:
 	var blocked_cells: Dictionary = {}
 	for enemy in _enemies:
 		if enemy != null and enemy.is_alive():
-			blocked_cells[enemy.grid_position] = true
+			for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+				blocked_cells[occupied_cell] = true
 	if _shopkeeper != null:
 		blocked_cells[_shopkeeper.grid_position] = true
 	blocked_cells[_player.grid_position] = true
@@ -2416,8 +2765,9 @@ func _process_enemy_turns() -> void:
 			continue
 		if _is_enemy_sleeping(enemy):
 			continue
-		blocked_cells.erase(enemy.grid_position)
-		var distance_to_player: float = enemy.grid_position.distance_to(_player.grid_position)
+		for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+			blocked_cells.erase(occupied_cell)
+		var distance_to_player: float = _enemy_distance_to_player(enemy)
 		var action_count: int = _advance_enemy_action(enemy)
 		if _process_enemy_special_turn(enemy, distance_to_player, action_count, blocked_cells):
 			if not _player.is_alive():
@@ -2426,13 +2776,16 @@ func _process_enemy_turns() -> void:
 			_resolve_attack(enemy, _player)
 			if not _player.is_alive():
 				return
+		elif _is_boss_enemy(enemy):
+			_try_move_boss_toward_player(enemy, blocked_cells)
 		elif distance_to_player <= 8.0:
 			var next_step: Vector2i = PathfindingScript.find_next_step(
 				enemy.grid_position, _player.grid_position, GameManager.map_data, blocked_cells
 			)
 			if next_step != enemy.grid_position and next_step != _player.grid_position:
 				enemy.set_grid_position(next_step)
-		blocked_cells[enemy.grid_position] = true
+		for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+			blocked_cells[occupied_cell] = true
 
 
 func _advance_enemy_action(enemy: Node) -> int:
@@ -2448,6 +2801,8 @@ func _process_enemy_special_turn(
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return false
 	var enemy_data: Resource = enemy_actor.enemy_data
+	if enemy_data.is_boss and _process_boss_turn(enemy, distance_to_player, action_count, blocked_cells):
+		return true
 	var recovering_from_shot: bool = _ranged_recovery_enemies.has(enemy)
 	if recovering_from_shot:
 		_ranged_recovery_enemies.erase(enemy)
@@ -2648,6 +3003,294 @@ func _is_free_enemy_spawn_cell(cell: Vector2i, blocked_cells: Dictionary) -> boo
 	)
 
 
+func _enemy_distance_to_player(enemy: Node) -> float:
+	var best_distance: float = INF
+	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+		best_distance = min(best_distance, occupied_cell.distance_to(_player.grid_position))
+	return best_distance if best_distance < INF else enemy.grid_position.distance_to(_player.grid_position)
+
+
+func _process_boss_turn(
+	enemy: Node, distance_to_player: float, action_count: int, blocked_cells: Dictionary
+) -> bool:
+	if not _is_boss_enemy(enemy):
+		return false
+	_update_boss_phase(enemy)
+	var state: Dictionary = _boss_state_for(enemy)
+	var pending_attack: Resource = state.get("pending_attack", null)
+	if pending_attack != null:
+		state["telegraph_turns"] = int(state.get("telegraph_turns", 0)) - 1
+		if int(state["telegraph_turns"]) <= 0:
+			_resolve_boss_attack(enemy, pending_attack, state.get("telegraph_cells", {}))
+			state["pending_attack"] = null
+			state["telegraph_cells"] = {}
+			state["telegraph_turns"] = 0
+			_boss_telegraphs.clear()
+		_boss_states[enemy] = state
+		_refresh_boss_presentation()
+		_refresh_map()
+		return true
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor.enemy_data.boss_id == &"observer" and distance_to_player > 2.0:
+		if _try_move_boss_toward_player(enemy, blocked_cells):
+			return true
+	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
+	if attack == null:
+		return false
+	var cells: Dictionary = _boss_attack_cells(enemy, attack)
+	if cells.is_empty() and attack.shape != &"summon":
+		if distance_to_player > 2.0 and _try_move_boss_toward_player(enemy, blocked_cells):
+			return true
+		return false
+	_queue_boss_attack(enemy, attack, cells)
+	if not attack.warning_text.is_empty():
+		GameManager.add_log_message(attack.warning_text, &"warning")
+	else:
+		GameManager.add_log_message(
+			"%s prepares %s." % [enemy.display_name, attack.id], &"warning"
+		)
+	_refresh_boss_presentation()
+	_refresh_map()
+	return true
+
+
+func _update_boss_phase(enemy: Node) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	var state: Dictionary = _boss_state_for(enemy)
+	var hp_percent: float = (
+		float(enemy.stats_component.current_hp) / max(1.0, float(enemy.stats_component.max_hp)) * 100.0
+	)
+	var phase: int = 1
+	for threshold: int in enemy_actor.enemy_data.boss_phase_hp_percents:
+		if hp_percent <= float(threshold):
+			phase += 1
+	state["phase"] = phase
+	_boss_states[enemy] = state
+
+
+func _choose_boss_attack(enemy: Node, action_count: int, _distance_to_player: float) -> Resource:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return null
+	var state: Dictionary = _boss_state_for(enemy)
+	var phase: int = int(state.get("phase", 1))
+	var candidates: Array[Resource] = []
+	for attack: Resource in enemy_actor.enemy_data.boss_attacks:
+		if attack == null:
+			continue
+		if attack.phase_min > phase:
+			continue
+		if action_count % max(1, attack.cooldown) != 0:
+			continue
+		candidates.append(attack)
+	if candidates.is_empty():
+		return null
+	var last_attack_id: StringName = state.get("last_attack_id", &"")
+	for attack: Resource in candidates:
+		if attack.id != last_attack_id:
+			return attack
+	return candidates[0]
+
+
+func _boss_has_windup_intent(enemy: Node, action_count: int, distance_to_player: float) -> bool:
+	_update_boss_phase(enemy)
+	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
+	if attack == null:
+		return false
+	return attack.shape == &"summon" or not _boss_attack_cells(enemy, attack).is_empty()
+
+
+func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
+	var cells: Dictionary = {}
+	if attack == null or _player == null:
+		return cells
+	var shape: StringName = attack.shape
+	match shape:
+		&"single_player":
+			_add_boss_attack_cell(cells, _player.grid_position)
+		&"line_to_player":
+			_add_boss_line_cells(cells, enemy, attack)
+		&"cross":
+			_add_boss_cross_cells(cells, enemy, attack)
+		&"ring":
+			_add_boss_ring_cells(cells, enemy, attack)
+		&"cone":
+			_add_boss_cone_cells(cells, enemy, attack)
+		&"summon":
+			pass
+		_:
+			if not _unknown_boss_attack_shapes.has(shape):
+				_unknown_boss_attack_shapes[shape] = true
+				GameManager.add_log_message(
+					"Unknown boss attack shape %s; targeting you instead." % shape,
+					&"warning"
+				)
+			_add_boss_attack_cell(cells, _player.grid_position)
+	return cells
+
+
+func _add_boss_attack_cell(cells: Dictionary, cell: Vector2i) -> void:
+	if _is_inside_map(cell) and _is_cell_in_active_boss_room(cell):
+		cells[cell] = true
+
+
+func _dominant_direction_to_player(enemy: Node) -> Vector2i:
+	var delta: Vector2i = _player.grid_position - enemy.grid_position
+	if abs(delta.x) >= abs(delta.y):
+		return Vector2i.RIGHT if delta.x >= 0 else Vector2i.LEFT
+	return Vector2i.DOWN if delta.y >= 0 else Vector2i.UP
+
+
+func _perpendicular(direction: Vector2i) -> Vector2i:
+	if direction.x != 0:
+		return Vector2i.DOWN
+	return Vector2i.RIGHT
+
+
+func _add_boss_line_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var direction: Vector2i = _dominant_direction_to_player(enemy)
+	var perpendicular: Vector2i = _perpendicular(direction)
+	var half_width: int = max(0, int(floor(float(max(1, attack.width)) / 2.0)))
+	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
+	for origin: Vector2i in occupied:
+		if occupied.has(origin + direction):
+			continue
+		for distance: int in range(1, max(1, attack.range) + 1):
+			var center: Vector2i = origin + direction * distance
+			for side: int in range(-half_width, half_width + 1):
+				_add_boss_attack_cell(cells, center + perpendicular * side)
+
+
+func _add_boss_cross_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		for distance: int in range(1, max(1, attack.range) + 1):
+			_add_boss_attack_cell(cells, enemy.grid_position + direction * distance)
+	_add_boss_attack_cell(cells, _player.grid_position)
+
+
+func _add_boss_ring_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var radius: int = max(1, attack.radius)
+	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+		for y_offset: int in range(-radius, radius + 1):
+			for x_offset: int in range(-radius, radius + 1):
+				if max(abs(x_offset), abs(y_offset)) != radius:
+					continue
+				_add_boss_attack_cell(cells, occupied_cell + Vector2i(x_offset, y_offset))
+
+
+func _add_boss_cone_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var direction: Vector2i = _dominant_direction_to_player(enemy)
+	var perpendicular: Vector2i = _perpendicular(direction)
+	var max_range: int = max(1, attack.range)
+	var cone_width: int = max(1, attack.width)
+	for distance: int in range(1, max_range + 1):
+		var spread: int = max(1, int(floor(float(distance * cone_width) / float(max_range))))
+		var center: Vector2i = enemy.grid_position + direction * distance
+		for side: int in range(-spread, spread + 1):
+			_add_boss_attack_cell(cells, center + perpendicular * side)
+
+
+func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
+	if attack == null:
+		return
+	if attack.shape == &"summon":
+		_resolve_boss_summon(enemy, attack)
+		return
+	if cells.has(_player.grid_position):
+		var raw_damage: int = attack.damage_bonus
+		for _die_index: int in range(max(1, attack.damage_dice)):
+			raw_damage += Dice.roll(max(2, attack.damage_sides))
+		var damage: int = _player.stats_component.apply_damage(max(1, raw_damage))
+		var message: String = attack.resolve_text
+		if message.is_empty():
+			message = "%s's %s hits you for %d %s damage." % [
+				enemy.display_name, attack.id, damage, attack.damage_type
+			]
+		elif message.contains("%d"):
+			message = message % damage
+		GameManager.add_log_message(message, &"magic" if attack.damage_type == &"magic" or attack.damage_type == &"fire" else &"combat_hit")
+		_handle_defender_after_damage(_player, damage > 0)
+		_play_action_burst(_player.grid_position, &"magic_hit")
+	else:
+		GameManager.add_log_message(
+			"You evade %s's %s." % [enemy.display_name, attack.id], &"combat_miss"
+		)
+
+
+func _resolve_boss_summon(enemy: Node, attack: Resource) -> void:
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
+	var summon_path: String = _boss_summon_path(enemy, attack)
+	var summon_data: Resource = load(summon_path) if not summon_path.is_empty() else null
+	if summon_data == null:
+		GameManager.add_log_message("%s's summons fail to answer." % enemy.display_name, &"warning")
+		return
+	var spawned: int = 0
+	for _index: int in range(max(1, attack.summon_count)):
+		var summon_cell: Vector2i = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
+		if summon_cell == Vector2i.ZERO:
+			break
+		var minion: Node2D = _spawn_enemy_instance(
+			summon_data, summon_cell, GameManager.current_floor, true
+		)
+		minion.set_meta("summoned_minion", true)
+		minion.set_meta("summoner_id", enemy.get_instance_id())
+		minion.stats_component.xp_reward = 0
+		blocked_cells[summon_cell] = true
+		spawned += 1
+	if spawned <= 0:
+		GameManager.add_log_message("%s's summons find no room." % enemy.display_name, &"warning")
+	else:
+		GameManager.add_log_message("%s summons %d ally%s." % [enemy.display_name, spawned, "" if spawned == 1 else "ies"], &"magic")
+
+
+func _boss_summon_path(enemy: Node, attack: Resource) -> String:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor != null and enemy_actor.enemy_data.boss_id == &"nyxara" and attack.id == &"mirror_guard":
+		var state: Dictionary = _boss_state_for(enemy)
+		var use_prism: bool = bool(state.get("nyxara_summon_toggle", false))
+		state["nyxara_summon_toggle"] = not use_prism
+		_boss_states[enemy] = state
+		return "res://resources/enemies/prism_seer.tres" if use_prism else "res://resources/enemies/mirror_duelist.tres"
+	return attack.summon_enemy_path
+
+
+func _find_boss_room_summon_cell(origin: Vector2i, blocked_cells: Dictionary) -> Vector2i:
+	var room_cells: Dictionary = _active_boss_encounter.get("room_cells", {})
+	for radius: int in range(1, 9):
+		var candidates: Array[Vector2i] = []
+		for cell: Vector2i in room_cells.keys():
+			if max(abs(cell.x - origin.x), abs(cell.y - origin.y)) != radius:
+				continue
+			if _is_free_enemy_spawn_cell(cell, blocked_cells):
+				candidates.append(cell)
+		if not candidates.is_empty():
+			candidates.shuffle()
+			return candidates[0]
+	return Vector2i.ZERO
+
+
+func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
+	var state: Dictionary = _boss_state_for(enemy)
+	state["pending_attack"] = attack
+	state["telegraph_turns"] = max(1, attack.telegraph_turns)
+	state["telegraph_cells"] = cells.duplicate(true)
+	state["last_attack_id"] = attack.id
+	_boss_states[enemy] = state
+	_boss_telegraphs.clear()
+	for cell: Vector2i in cells.keys():
+		_boss_telegraphs[cell] = {
+			"glyph": "!",
+			"attack_id": attack.id,
+			"boss": enemy,
+		}
+
+
+func _build_boss_telegraph_payload() -> Dictionary:
+	return _boss_telegraphs.duplicate(true)
+
+
 # ===== Biome Presentation =====
 func _apply_biome_theme(floor_number: int) -> Dictionary:
 	var theme: Dictionary = BiomeCatalogScript.theme_for_floor(floor_number)
@@ -2744,8 +3387,17 @@ func _build_enemy_intents() -> Dictionary:
 		if enemy_actor == null or enemy_actor.enemy_data == null:
 			continue
 		var enemy_data: Resource = enemy_actor.enemy_data
-		var distance_to_player: float = enemy.grid_position.distance_to(_player.grid_position)
+		var distance_to_player: float = _enemy_distance_to_player(enemy)
 		var next_action_count: int = int(_enemy_action_counts.get(enemy, 0)) + 1
+		if enemy_data.is_boss:
+			var state: Dictionary = _boss_state_for(enemy)
+			if state.get("pending_attack", null) != null:
+				intents[enemy.grid_position] = &"boss_attack"
+			elif _boss_has_windup_intent(enemy, next_action_count, distance_to_player):
+				intents[enemy.grid_position] = &"boss_windup"
+			elif distance_to_player <= 8.0:
+				intents[enemy.grid_position] = &"aware"
+			continue
 		if distance_to_player <= 1.1:
 			intents[enemy.grid_position] = &"melee"
 		elif (
@@ -2786,6 +3438,8 @@ func _refresh_map() -> void:
 		map_view.set_targeting(
 			_targeting_active, _target_cursor, _targeting_range_cells, _targeting_area_cells
 		)
+		if map_view.has_method(&"set_boss_telegraphs"):
+			map_view.call(&"set_boss_telegraphs", _build_boss_telegraph_payload())
 	if map_view != null:
 		map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
 		map_view.set_secret_walls(_secret_walls, _revealed_secret_walls, SECRET_WALL_HINT_COLOR)
@@ -2793,6 +3447,7 @@ func _refresh_map() -> void:
 		hud.bind_player(_player)
 		if hud.has_method(&"set_visible_enemy_intents"):
 			hud.set_visible_enemy_intents(enemy_intents)
+	_refresh_boss_presentation()
 	if inventory_panel != null and _player != null:
 		inventory_panel.refresh(_player)
 	if character_sheet != null and _player != null:
@@ -2813,9 +3468,21 @@ func _is_closed_door(cell: Vector2i) -> bool:
 	return GameManager.map_data[cell.y][cell.x] == DungeonDataScript.TileType.DOOR
 
 
+func _is_boss_door(cell: Vector2i) -> bool:
+	if not _is_inside_map(cell):
+		return false
+	return GameManager.map_data[cell.y][cell.x] == DungeonDataScript.TileType.BOSS_DOOR
+
+
+func _is_sealed_boss_door(cell: Vector2i) -> bool:
+	if not _is_inside_map(cell):
+		return false
+	return GameManager.map_data[cell.y][cell.x] == DungeonDataScript.TileType.SEALED_BOSS_DOOR
+
+
 func _get_enemy_at(cell: Vector2i) -> Node2D:
 	for enemy in _enemies:
-		if enemy != null and enemy.is_alive() and enemy.grid_position == cell:
+		if enemy != null and enemy.is_alive() and _enemy_occupies_cell(enemy, cell):
 			return enemy
 	return null
 
@@ -2902,7 +3569,11 @@ func _is_connectivity_walkable(cell: Vector2i, blocked_cell: Vector2i) -> bool:
 	if cell == blocked_cell or _secret_floor_cells.has(cell) or not _is_inside_map(cell):
 		return false
 	var tile: int = GameManager.map_data[cell.y][cell.x]
-	return DungeonDataScript.is_walkable(tile) or tile == DungeonDataScript.TileType.DOOR
+	return (
+		DungeonDataScript.is_walkable(tile)
+		or tile == DungeonDataScript.TileType.DOOR
+		or tile == DungeonDataScript.TileType.BOSS_DOOR
+	)
 
 
 # ===== Perception, FOV & Secrets =====
@@ -3028,7 +3699,8 @@ func _current_actor_blocked_cells() -> Dictionary:
 		blocked_cells[_shopkeeper.grid_position] = true
 	for enemy in _enemies:
 		if enemy != null and enemy.is_alive():
-			blocked_cells[enemy.grid_position] = true
+			for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+				blocked_cells[occupied_cell] = true
 	return blocked_cells
 
 
@@ -3647,7 +4319,9 @@ func _on_enemy_died(enemy: Node) -> void:
 		hud.bind_player(_player)
 		_refresh_map()
 		return
-	if enemy.get_meta("summoned_minion", false):
+	if _handle_boss_defeated(enemy):
+		GameManager.add_log_message("%s is defeated." % enemy.display_name, &"death")
+	elif enemy.get_meta("summoned_minion", false):
 		GameManager.add_log_message(
 			"%s crumbles into dust (summoned; no reward)." % enemy.display_name, &"death"
 		)
@@ -3659,6 +4333,7 @@ func _on_enemy_died(enemy: Node) -> void:
 		)
 	_enemy_action_counts.erase(enemy)
 	_ranged_recovery_enemies.erase(enemy)
+	_boss_states.erase(enemy)
 	GameManager.remove_enemy(enemy)
 	hud.bind_player(_player)
 	_refresh_map()

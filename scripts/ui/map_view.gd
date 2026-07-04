@@ -17,6 +17,8 @@ const TILE_FOREGROUND_COLORS: Dictionary = {
 	DungeonDataScript.TileType.DOOR: Color(0.82, 0.57, 0.30),
 	DungeonDataScript.TileType.OPEN_DOOR: Color(0.63, 0.52, 0.39),
 	DungeonDataScript.TileType.STAIRS_DOWN: Color(1.0, 0.88, 0.47),
+	DungeonDataScript.TileType.BOSS_DOOR: Color(1.0, 0.72, 0.22),
+	DungeonDataScript.TileType.SEALED_BOSS_DOOR: Color(1.0, 0.24, 0.18),
 }
 const TILE_BACKGROUND_COLORS: Dictionary = {
 	DungeonDataScript.TileType.FLOOR: Color(0.06, 0.075, 0.095),
@@ -24,6 +26,8 @@ const TILE_BACKGROUND_COLORS: Dictionary = {
 	DungeonDataScript.TileType.DOOR: Color(0.18, 0.11, 0.06),
 	DungeonDataScript.TileType.OPEN_DOOR: Color(0.10, 0.085, 0.065),
 	DungeonDataScript.TileType.STAIRS_DOWN: Color(0.22, 0.19, 0.05),
+	DungeonDataScript.TileType.BOSS_DOOR: Color(0.16, 0.08, 0.02),
+	DungeonDataScript.TileType.SEALED_BOSS_DOOR: Color(0.20, 0.02, 0.02),
 }
 
 # === Exports ===
@@ -57,6 +61,14 @@ var _secret_wall_hint_color: Color = Color(0.72, 0.58, 1.0)
 var _biome_theme: Dictionary = BiomeCatalogScript.theme_for_floor(1)
 var _cell_bursts: Array[Dictionary] = []
 var _enemy_intents: Dictionary = {}
+var _boss_room_cells: Dictionary = {}
+var _boss_door_cells: Array[Vector2i] = []
+var _boss_room_locked: bool = false
+var _boss_visuals: Dictionary = {}
+var _boss_occupied_cells: Dictionary = {}
+var _boss_telegraphs: Dictionary = {}
+var _boss_frame_elapsed: float = 0.0
+var _boss_frame_index: int = 0
 # === Atmosphere State ===
 var _atmosphere_enabled: bool = true
 var _atmosphere_time: float = 0.0
@@ -133,6 +145,40 @@ func set_secret_walls(
 	queue_redraw()
 
 
+func set_boss_room(room_cells: Dictionary, door_cells: Array, locked: bool) -> void:
+	_boss_room_cells = room_cells.duplicate(true)
+	_boss_door_cells.clear()
+	for door_cell: Vector2i in door_cells:
+		_boss_door_cells.append(door_cell)
+	_boss_room_locked = locked
+	queue_redraw()
+
+
+func set_boss_visuals(boss_visuals: Dictionary) -> void:
+	_boss_visuals = boss_visuals.duplicate(true)
+	_rebuild_boss_occupied_cells()
+	_update_processing_state()
+	queue_redraw()
+
+
+func clear_boss_visuals() -> void:
+	_boss_visuals.clear()
+	_boss_occupied_cells.clear()
+	_boss_frame_elapsed = 0.0
+	_boss_frame_index = 0
+	_update_processing_state()
+	queue_redraw()
+
+
+func set_boss_telegraphs(telegraphs: Dictionary) -> void:
+	_boss_telegraphs = telegraphs.duplicate(true)
+	queue_redraw()
+
+
+func has_active_boss_visuals() -> bool:
+	return not _boss_visuals.is_empty()
+
+
 func play_cell_burst(cell: Vector2i, color: Color, glyph: String = "✦") -> void:
 	(
 		_cell_bursts
@@ -173,7 +219,9 @@ func get_atmosphere_profile() -> Dictionary:
 
 func _update_processing_state() -> void:
 	set_process(
-		not _cell_bursts.is_empty() or (_atmosphere_enabled and not _atmosphere_profile.is_empty())
+		not _cell_bursts.is_empty()
+		or not _boss_visuals.is_empty()
+		or (_atmosphere_enabled and not _atmosphere_profile.is_empty())
 	)
 
 
@@ -188,6 +236,13 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_atmosphere_time += delta
+	if not _boss_visuals.is_empty():
+		_boss_frame_elapsed += delta
+		var frame_seconds: float = _boss_visual_frame_seconds()
+		if _boss_frame_elapsed >= frame_seconds:
+			_boss_frame_elapsed = 0.0
+			_boss_frame_index += 1
+			queue_redraw()
 	for index: int in range(_cell_bursts.size() - 1, -1, -1):
 		_cell_bursts[index]["age"] = float(_cell_bursts[index].get("age", 0.0)) + delta
 		if float(_cell_bursts[index]["age"]) >= CELL_BURST_DURATION:
@@ -249,6 +304,8 @@ func _draw() -> void:
 				_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
 			)
 
+	_draw_boss_room_tint(playfield_rect)
+
 	for target_cell: Vector2i in _target_range_cells.keys():
 		if not _visible_cells.has(target_cell) or not _explored_cells.has(target_cell):
 			continue
@@ -268,6 +325,8 @@ func _draw() -> void:
 			continue
 		_draw_cell_highlight(area_cell, Color(1.0, 0.30, 0.08, 0.24), Color(1.0, 0.55, 0.18, 0.78))
 		_draw_glyph(draw_font, area_point, "*", Color(1.0, 0.72, 0.28, 0.95), false)
+	_draw_boss_telegraphs(draw_font, ascent, playfield_rect)
+
 	for item_position: Vector2i in _items.keys():
 		if not _visible_cells.has(item_position):
 			continue
@@ -324,8 +383,12 @@ func _draw() -> void:
 		)
 		_draw_glyph(draw_font, trap_point, trap.glyph, trap_color)
 
+	_draw_boss_visuals(draw_font, ascent, playfield_rect)
+
 	for actor in _actors:
 		if actor == null or not actor.is_alive():
+			continue
+		if _boss_visuals.has(actor.grid_position):
 			continue
 		if not _visible_cells.has(actor.grid_position):
 			continue
@@ -350,6 +413,83 @@ func _draw() -> void:
 
 	if _atmosphere_enabled and not _atmosphere_profile.is_empty():
 		_draw_atmosphere_effects(draw_font, ascent, playfield_rect)
+
+
+func _draw_boss_room_tint(playfield_rect: Rect2) -> void:
+	if _boss_room_cells.is_empty():
+		return
+	var fill_color: Color = (
+		Color(1.0, 0.18, 0.16, 0.10) if _boss_room_locked else Color(1.0, 0.72, 0.22, 0.06)
+	)
+	for cell: Vector2i in _boss_room_cells.keys():
+		if not _visible_cells.has(cell) and not _explored_cells.has(cell):
+			continue
+		var point: Vector2 = _cell_draw_position(cell, 0.0)
+		if not _is_inside_playfield(point + Vector2(0, font_size), playfield_rect):
+			continue
+		draw_rect(_inset_cell_rect(cell, 1.0), fill_color)
+
+
+func _draw_boss_telegraphs(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for cell: Vector2i in _boss_telegraphs.keys():
+		if not _visible_cells.has(cell):
+			continue
+		var point: Vector2 = _cell_draw_position(cell, ascent)
+		if not _is_inside_playfield(point, playfield_rect):
+			continue
+		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		var glyph: String = str(payload.get("glyph", "!"))
+		_draw_cell_highlight(cell, Color(1.0, 0.16, 0.10, 0.26), Color(1.0, 0.52, 0.18, 0.78))
+		_draw_glyph(draw_font, point, glyph, Color(1.0, 0.64, 0.20, 1.0), false)
+
+
+func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for anchor_cell: Vector2i in _boss_visuals.keys():
+		var visual: Dictionary = _boss_visuals[anchor_cell]
+		var frames: Array = visual.get("frames", [])
+		if frames.is_empty():
+			continue
+		var frame: PackedStringArray = frames[_boss_frame_index % frames.size()]
+		var frame_height: int = frame.size()
+		var frame_width: int = _boss_frame_width(frame)
+		var origin: Vector2i = anchor_cell - Vector2i(int(frame_width / 2), int(frame_height / 2))
+		var color: Color = visual.get("color", Color.WHITE)
+		for y: int in range(frame_height):
+			var row: String = frame[y]
+			for x: int in range(row.length()):
+				var glyph: String = row.substr(x, 1)
+				if glyph == " ":
+					continue
+				var cell: Vector2i = origin + Vector2i(x, y)
+				if not _visible_cells.has(cell):
+					continue
+				var point: Vector2 = _cell_draw_position(cell, ascent)
+				if not _is_inside_playfield(point, playfield_rect):
+					continue
+				_draw_cell_highlight(cell, Color(color.r, color.g, color.b, 0.16), Color(0, 0, 0, 0))
+				_draw_glyph(draw_font, point, glyph, color)
+
+
+func _boss_frame_width(frame: PackedStringArray) -> int:
+	var width: int = 0
+	for row: String in frame:
+		width = max(width, row.length())
+	return width
+
+
+func _boss_visual_frame_seconds() -> float:
+	for anchor_cell: Vector2i in _boss_visuals.keys():
+		var visual: Dictionary = _boss_visuals[anchor_cell]
+		return max(0.05, float(visual.get("frame_seconds", 0.32)))
+	return 0.32
+
+
+func _rebuild_boss_occupied_cells() -> void:
+	_boss_occupied_cells.clear()
+	for anchor_cell: Vector2i in _boss_visuals.keys():
+		var visual: Dictionary = _boss_visuals[anchor_cell]
+		for cell: Vector2i in visual.get("occupied_cells", []):
+			_boss_occupied_cells[cell] = anchor_cell
 
 
 func _draw_cell_bursts(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -399,6 +539,12 @@ func _draw_enemy_intents(draw_font: Font, ascent: float, playfield_rect: Rect2) 
 			&"sleeping":
 				glyph = "z"
 				color = Color(0.48, 0.52, 0.58)
+			&"boss_attack":
+				glyph = "!"
+				color = Color(1.0, 0.12, 0.10)
+			&"boss_windup":
+				glyph = "▲"
+				color = Color(1.0, 0.62, 0.18)
 			&"aware":
 				glyph = "?"
 				color = Color(0.66, 0.62, 0.48)

@@ -118,6 +118,11 @@ var _ambience_enabled: bool = true
 var _ambience_player: AudioStreamPlayer
 var _ambience_stream: AudioStreamWAV = null
 var _ambience_profile: Dictionary = {}
+var _music_player: AudioStreamPlayer
+var _boss_music_stream: AudioStream
+var _boss_climax_stream: AudioStream
+var _boss_music_id: StringName = &""
+var _boss_music_climax_active: bool = false
 var _cue_last_play_time: Dictionary = {}  # StringName → float (time in seconds)
 var _cue_play_count: Dictionary = {}  # StringName → int
 
@@ -165,6 +170,11 @@ func _ready() -> void:
 	_ambience_player.name = "AmbiencePlayer"
 	_ambience_player.bus = &"Master"
 	add_child(_ambience_player)
+
+	_music_player = AudioStreamPlayer.new()
+	_music_player.name = "BossMusicPlayer"
+	_music_player.bus = &"Master"
+	add_child(_music_player)
 	_master_volume = clampf(default_master_volume, 0.0, 1.0)
 	_update_player_volumes()
 
@@ -336,6 +346,8 @@ func set_audio_enabled(enabled: bool, announce: bool = false) -> void:
 	_audio_enabled = enabled
 	_update_player_volumes()
 	_sync_ambience_player()
+	if not _audio_enabled and is_instance_valid(_music_player):
+		_music_player.stop()
 	if announce:
 		var status: String = "enabled" if _audio_enabled else "disabled"
 		var gm: Node = _game_manager()
@@ -419,6 +431,56 @@ func set_floor_audio_context(floor_number: int, biome_theme: Dictionary) -> void
 		_sync_ambience_player()
 
 
+func start_boss_music(
+	boss_id: StringName, base_stream: AudioStream, climax_stream: AudioStream = null
+) -> void:
+	if base_stream == null:
+		stop_boss_music(0.0)
+		return
+	_boss_music_id = boss_id
+	_boss_music_stream = base_stream
+	_boss_climax_stream = climax_stream
+	_boss_music_climax_active = false
+	var stream_to_play: AudioStream = base_stream
+	if boss_id == &"nyxara" and climax_stream != null:
+		stream_to_play = climax_stream
+		_boss_music_climax_active = true
+	_apply_boss_music_stream(stream_to_play)
+
+
+func update_boss_music_intensity(current_hp: int, max_hp: int) -> void:
+	if _boss_music_id == &"" or _boss_climax_stream == null or _boss_music_climax_active:
+		return
+	if max_hp <= 0:
+		return
+	if float(current_hp) / float(max_hp) > 0.35:
+		return
+	_boss_music_climax_active = true
+	_apply_boss_music_stream(_boss_climax_stream)
+
+
+func stop_boss_music(_fade_seconds: float = 0.5) -> void:
+	if is_instance_valid(_music_player):
+		_music_player.stop()
+		_music_player.stream = null
+	_boss_music_stream = null
+	_boss_climax_stream = null
+	_boss_music_id = &""
+	_boss_music_climax_active = false
+	_update_player_volumes()
+	_sync_ambience_player()
+
+
+func is_boss_music_playing() -> bool:
+	return is_instance_valid(_music_player) and _music_player.playing
+
+
+func get_boss_music_stream() -> AudioStream:
+	if not is_instance_valid(_music_player):
+		return null
+	return _music_player.stream
+
+
 ## Returns the profile Dictionary for a named cue, or `null` if unknown.
 func get_cue_profile(cue_name: StringName) -> Dictionary:
 	var profile: Variant = CUE_PROFILES.get(cue_name)
@@ -440,6 +502,23 @@ func get_ambience_stream() -> AudioStreamWAV:
 ## Returns the current ambience profile Dictionary with floor/biome context.
 func get_ambience_profile() -> Dictionary:
 	return _ambience_profile.duplicate()
+
+
+func _apply_boss_music_stream(stream: AudioStream) -> void:
+	if not is_instance_valid(_music_player):
+		return
+	var playback_stream: AudioStream = stream
+	if stream != null:
+		playback_stream = stream.duplicate()
+	var ogg_stream: AudioStreamOggVorbis = playback_stream as AudioStreamOggVorbis
+	if ogg_stream != null:
+		ogg_stream.loop = true
+	_music_player.stream = playback_stream
+	_music_player.volume_db = get_effective_volume_db() - 8.0
+	if _audio_enabled:
+		_music_player.play()
+	_update_player_volumes()
+	_sync_ambience_player()
 
 
 func _draw_reduced_visual(fade: float) -> void:
@@ -543,14 +622,22 @@ func _update_player_volumes() -> void:
 		if is_instance_valid(player):
 			player.volume_db = effective_db
 	if is_instance_valid(_ambience_player):
-		_ambience_player.volume_db = effective_db if _ambience_enabled else MIN_VOLUME_DB
+		var ambience_db: float = effective_db
+		if is_instance_valid(_music_player) and _music_player.playing:
+			ambience_db -= 12.0
+		_ambience_player.volume_db = ambience_db if _ambience_enabled else MIN_VOLUME_DB
+	if is_instance_valid(_music_player):
+		_music_player.volume_db = effective_db - 8.0 if _audio_enabled else MIN_VOLUME_DB
 
 
 ## Applies the current audio/ambience state to the ambience player.
 func _sync_ambience_player() -> void:
 	if not is_instance_valid(_ambience_player):
 		return
-	_ambience_player.volume_db = get_effective_volume_db() if _ambience_enabled else MIN_VOLUME_DB
+	var ambience_db: float = get_effective_volume_db()
+	if is_instance_valid(_music_player) and _music_player.playing:
+		ambience_db -= 12.0
+	_ambience_player.volume_db = ambience_db if _ambience_enabled else MIN_VOLUME_DB
 	if not _audio_enabled or not _ambience_enabled or _ambience_stream == null:
 		_ambience_player.stop()
 		return
