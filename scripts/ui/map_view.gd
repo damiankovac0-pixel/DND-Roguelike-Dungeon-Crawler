@@ -10,6 +10,7 @@ const FLOOR_GLYPHS: Array[String] = [".", "·", "'", "`"]
 const WALL_GLYPHS: Array[String] = ["#", "▓", "▒"]
 const GLYPH_SHADOW_OFFSET: Vector2 = Vector2(1, 1)
 const CELL_BURST_DURATION: float = 0.55
+const BOSS_SPAWN_INTRO_SECONDS: float = 0.90
 const CELL_BURST_LIFT: float = 9.0
 const TILE_FOREGROUND_COLORS: Dictionary = {
 	DungeonDataScript.TileType.FLOOR: Color(0.72, 0.70, 0.62),
@@ -69,6 +70,7 @@ var _boss_occupied_cells: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
 var _boss_frame_elapsed: float = 0.0
 var _boss_frame_index: int = 0
+var _boss_spawn_effects: Dictionary = {}
 # === Atmosphere State ===
 var _atmosphere_enabled: bool = true
 var _atmosphere_time: float = 0.0
@@ -161,11 +163,20 @@ func set_boss_visuals(boss_visuals: Dictionary) -> void:
 	queue_redraw()
 
 
+func play_boss_spawn_intro(anchor_cell: Vector2i, visual: Dictionary) -> void:
+	var effect: Dictionary = visual.duplicate(true)
+	effect["age"] = 0.0
+	effect["duration"] = BOSS_SPAWN_INTRO_SECONDS
+	_boss_spawn_effects[anchor_cell] = effect
+	_update_processing_state()
+	queue_redraw()
+
+
 func clear_boss_visuals() -> void:
 	_boss_visuals.clear()
 	_boss_occupied_cells.clear()
+	_boss_spawn_effects.clear()
 	_boss_frame_elapsed = 0.0
-	_boss_frame_index = 0
 	_update_processing_state()
 	queue_redraw()
 
@@ -219,9 +230,12 @@ func get_atmosphere_profile() -> Dictionary:
 
 func _update_processing_state() -> void:
 	set_process(
-		not _cell_bursts.is_empty()
-		or not _boss_visuals.is_empty()
-		or (_atmosphere_enabled and not _atmosphere_profile.is_empty())
+		(
+			not _cell_bursts.is_empty()
+			or not _boss_visuals.is_empty()
+			or not _boss_spawn_effects.is_empty()
+			or (_atmosphere_enabled and not _atmosphere_profile.is_empty())
+		)
 	)
 
 
@@ -243,6 +257,17 @@ func _process(delta: float) -> void:
 			_boss_frame_elapsed = 0.0
 			_boss_frame_index += 1
 			queue_redraw()
+	var spawn_effect_changed: bool = false
+	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
+		var effect: Dictionary = _boss_spawn_effects[anchor_cell]
+		effect["age"] = float(effect.get("age", 0.0)) + delta
+		if float(effect["age"]) >= float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)):
+			_boss_spawn_effects.erase(anchor_cell)
+		else:
+			_boss_spawn_effects[anchor_cell] = effect
+		spawn_effect_changed = true
+	if spawn_effect_changed:
+		queue_redraw()
 	for index: int in range(_cell_bursts.size() - 1, -1, -1):
 		_cell_bursts[index]["age"] = float(_cell_bursts[index].get("age", 0.0)) + delta
 		if float(_cell_bursts[index]["age"]) >= CELL_BURST_DURATION:
@@ -273,9 +298,11 @@ func _draw() -> void:
 
 	var label_color: Color = _theme_color("label_color", Color(0.6, 0.843137, 0.898039))
 	var biome_name: String = str(_biome_theme.get("name", "The Tower")).to_upper()
-	var depth_label: String = (
-		"%s  //  DEPTH %02d" % [biome_name, GameManager.current_floor if GameManager != null else 1]
-	)
+	var floor_number: int = 1
+	var game_manager: Node = get_node_or_null("/root/GameManager")
+	if game_manager != null:
+		floor_number = int(game_manager.current_floor)
+	var depth_label: String = "%s  //  DEPTH %02d" % [biome_name, floor_number]
 	_draw_glyph(
 		draw_font,
 		Vector2(playfield_rect.position.x + 10, playfield_rect.position.y + ascent - 2),
@@ -383,6 +410,7 @@ func _draw() -> void:
 		)
 		_draw_glyph(draw_font, trap_point, trap.glyph, trap_color)
 
+	_draw_boss_spawn_effects(draw_font, ascent, playfield_rect)
 	_draw_boss_visuals(draw_font, ascent, playfield_rect)
 
 	for actor in _actors:
@@ -439,8 +467,11 @@ func _draw_boss_telegraphs(draw_font: Font, ascent: float, playfield_rect: Rect2
 			continue
 		var payload: Dictionary = _boss_telegraphs.get(cell, {})
 		var glyph: String = str(payload.get("glyph", "!"))
-		_draw_cell_highlight(cell, Color(1.0, 0.16, 0.10, 0.26), Color(1.0, 0.52, 0.18, 0.78))
-		_draw_glyph(draw_font, point, glyph, Color(1.0, 0.64, 0.20, 1.0), false)
+		var fill_color: Color = payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26))
+		var border_color: Color = payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78))
+		var glyph_color: Color = payload.get("color", Color(1.0, 0.64, 0.20, 1.0))
+		_draw_cell_highlight(cell, fill_color, border_color)
+		_draw_glyph(draw_font, point, glyph, glyph_color, false)
 
 
 func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -466,8 +497,40 @@ func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 				var point: Vector2 = _cell_draw_position(cell, ascent)
 				if not _is_inside_playfield(point, playfield_rect):
 					continue
-				_draw_cell_highlight(cell, Color(color.r, color.g, color.b, 0.16), Color(0, 0, 0, 0))
+				_draw_cell_highlight(
+					cell, Color(color.r, color.g, color.b, 0.16), Color(0, 0, 0, 0)
+				)
 				_draw_glyph(draw_font, point, glyph, color)
+
+
+func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
+		var effect: Dictionary = _boss_spawn_effects[anchor_cell]
+		var age: float = float(effect.get("age", 0.0))
+		var duration: float = max(0.05, float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)))
+		var progress: float = clampf(age / duration, 0.0, 1.0)
+		var color: Color = effect.get("color", Color(1.0, 0.72, 0.22, 1.0))
+		var cells: Array = effect.get("occupied_cells", [])
+		if cells.is_empty():
+			cells = [anchor_cell]
+		var pulse_alpha: float = sin(progress * PI) * 0.45
+		var glyphs: Array[String] = ["·", "*", "✦", "✹"]
+		var glyph: String = glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()]
+		for raw_cell in cells:
+			if not (raw_cell is Vector2i):
+				continue
+			var cell: Vector2i = raw_cell
+			if not _visible_cells.has(cell):
+				continue
+			var point: Vector2 = _cell_draw_position(cell, ascent)
+			if not _is_inside_playfield(point, playfield_rect):
+				continue
+			_draw_cell_highlight(
+				cell,
+				Color(color.r, color.g, color.b, 0.12 + pulse_alpha),
+				Color(color.r, color.g, color.b, 0.30 + pulse_alpha)
+			)
+			_draw_glyph(draw_font, point, glyph, Color(color.r, color.g, color.b, 0.90), false)
 
 
 func _boss_frame_width(frame: PackedStringArray) -> int:
@@ -488,8 +551,10 @@ func _rebuild_boss_occupied_cells() -> void:
 	_boss_occupied_cells.clear()
 	for anchor_cell: Vector2i in _boss_visuals.keys():
 		var visual: Dictionary = _boss_visuals[anchor_cell]
-		for cell: Vector2i in visual.get("occupied_cells", []):
-			_boss_occupied_cells[cell] = anchor_cell
+		var occupied_cells: Array = visual.get("occupied_cells", [])
+		for raw_cell in occupied_cells:
+			if raw_cell is Vector2i:
+				_boss_occupied_cells[raw_cell] = self
 
 
 func _draw_cell_bursts(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -695,7 +760,9 @@ func _is_inside_playfield(point: Vector2, playfield_rect: Rect2) -> bool:
 	return playfield_rect.encloses(glyph_rect)
 
 
-func _actor_at(cell: Vector2i) -> Node2D:
+func _actor_at(cell: Vector2i) -> Variant:
+	if _boss_occupied_cells.has(cell):
+		return _boss_occupied_cells[cell]
 	for actor in _actors:
 		if actor != null and actor.grid_position == cell and actor.is_alive():
 			return actor

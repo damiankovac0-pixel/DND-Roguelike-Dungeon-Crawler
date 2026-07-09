@@ -36,6 +36,11 @@ const CUE_LEVEL: StringName = &"level"
 const CUE_EQUIPMENT: StringName = &"equipment"
 const CUE_MAGIC: StringName = &"magic"
 const CUE_VICTORY: StringName = &"victory"
+const CUE_BOSS_GATE: StringName = &"boss_gate"
+const CUE_BOSS_SPAWN: StringName = &"boss_spawn"
+const CUE_BOSS_TELEGRAPH: StringName = &"boss_telegraph"
+const CUE_BOSS_PHASE: StringName = &"boss_phase"
+const CUE_BOSS_DEFEAT: StringName = &"boss_defeat"
 
 const ALL_CUES: Array[StringName] = [
 	CUE_COMBAT_HIT,
@@ -51,6 +56,11 @@ const ALL_CUES: Array[StringName] = [
 	CUE_EQUIPMENT,
 	CUE_MAGIC,
 	CUE_VICTORY,
+	CUE_BOSS_GATE,
+	CUE_BOSS_SPAWN,
+	CUE_BOSS_TELEGRAPH,
+	CUE_BOSS_PHASE,
+	CUE_BOSS_DEFEAT,
 ]
 
 # Message type → cue name mapping (subset of cues driven by log messages).
@@ -67,6 +77,11 @@ const MESSAGE_TYPE_CUE_MAP: Dictionary = {
 	&"level": CUE_LEVEL,
 	&"equipment": CUE_EQUIPMENT,
 	&"magic": CUE_MAGIC,
+	&"boss_gate": CUE_BOSS_GATE,
+	&"boss_story": CUE_BOSS_SPAWN,
+	&"boss_telegraph": CUE_BOSS_TELEGRAPH,
+	&"boss_phase": CUE_BOSS_PHASE,
+	&"boss_defeat": CUE_BOSS_DEFEAT,
 }
 
 # Visual colour / duration profile per cue.
@@ -84,6 +99,11 @@ const CUE_VISUAL: Dictionary = {
 	CUE_EQUIPMENT: {"color": Color(0.28, 0.63, 0.75, 0.10), "duration": 0.12},
 	CUE_MAGIC: {"color": Color(0.70, 0.50, 1.0, 0.18), "duration": 0.35},
 	CUE_VICTORY: {"color": Color(1.0, 0.82, 0.32, 0.25), "duration": 1.00},
+	CUE_BOSS_GATE: {"color": Color(1.0, 0.54, 0.20, 0.22), "duration": 0.45},
+	CUE_BOSS_SPAWN: {"color": Color(0.82, 0.20, 0.38, 0.24), "duration": 0.70},
+	CUE_BOSS_TELEGRAPH: {"color": Color(1.0, 0.38, 0.14, 0.16), "duration": 0.20},
+	CUE_BOSS_PHASE: {"color": Color(0.78, 0.48, 1.0, 0.22), "duration": 0.45},
+	CUE_BOSS_DEFEAT: {"color": Color(1.0, 0.82, 0.32, 0.30), "duration": 1.10},
 }
 
 # Per-cue audio profile: gain_db, min_interval (seconds between plays),
@@ -103,6 +123,12 @@ const CUE_PROFILES: Dictionary = {
 	CUE_EQUIPMENT: {"gain_db": -12.0, "min_interval": 0.30, "duration": 0.04, "category": "item"},
 	CUE_MAGIC: {"gain_db": -9.0, "min_interval": 0.40, "duration": 0.35, "category": "magic"},
 	CUE_VICTORY: {"gain_db": -5.0, "min_interval": 5.00, "duration": 1.00, "category": "victory"},
+	CUE_BOSS_GATE: {"gain_db": -8.0, "min_interval": 0.65, "duration": 0.35, "category": "boss"},
+	CUE_BOSS_SPAWN: {"gain_db": -6.0, "min_interval": 1.00, "duration": 0.65, "category": "boss"},
+	CUE_BOSS_TELEGRAPH:
+	{"gain_db": -12.0, "min_interval": 0.35, "duration": 0.16, "category": "boss"},
+	CUE_BOSS_PHASE: {"gain_db": -7.0, "min_interval": 1.50, "duration": 0.42, "category": "boss"},
+	CUE_BOSS_DEFEAT: {"gain_db": -5.0, "min_interval": 3.00, "duration": 1.00, "category": "boss"},
 }
 
 # === Exports ===
@@ -320,6 +346,18 @@ func trigger_cue(cue_name: StringName) -> void:
 		_visual_active = true
 		set_process(true)
 		queue_redraw()
+
+
+func play_boss_intro_cue(_boss_id: StringName) -> void:
+	trigger_cue(CUE_BOSS_SPAWN)
+
+
+func play_boss_phase_cue(_boss_id: StringName, _phase: int) -> void:
+	trigger_cue(CUE_BOSS_PHASE)
+
+
+func play_boss_defeat_cue(_boss_id: StringName) -> void:
+	trigger_cue(CUE_BOSS_DEFEAT)
 
 
 ## Returns an array of all registered cue name StringNames.

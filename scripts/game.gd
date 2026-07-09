@@ -40,6 +40,43 @@ const BOSS_RESOURCE_BY_ID: Dictionary = {
 	&"kaelros": "res://resources/enemies/kaelros_drowned_king.tres",
 	&"nyxara": "res://resources/enemies/nyxara_mirror_witch.tres",
 }
+const BOSS_STORY_BY_ID: Dictionary = {
+	&"observer":
+	{
+		"kicker": "THE GATE UNBLINKS",
+		"title": "THE OBSERVER",
+		"subtitle": "A lidless eye turns the dungeon inside out.",
+		"entry": "The boss gate opens into a sky that should not fit underground.",
+	},
+	&"seraphine":
+	{
+		"kicker": "THE THORNS PART",
+		"title": "SERAPHINE, THORN SAINT",
+		"subtitle": "A blooming reliquary drinks the torchlight.",
+		"entry": "The boss gate flowers into a chapel of roots and bone.",
+	},
+	&"vorrak":
+	{
+		"kicker": "THE ASHEN MAW OPENS",
+		"title": "VORRAK, THE ASHEN MAW",
+		"subtitle": "Heat rolls across a battlefield of black glass.",
+		"entry": "The boss gate tears open on cinders and a breathing furnace.",
+	},
+	&"kaelros":
+	{
+		"kicker": "THE DROWNED COURT RISES",
+		"title": "KAELROS, DROWNED KING",
+		"subtitle": "Cold surf beats against a throne below the world.",
+		"entry": "The boss gate spills brine around your boots.",
+	},
+	&"nyxara":
+	{
+		"kicker": "THE MIRROR BREAKS",
+		"title": "NYXARA, THE MIRROR WITCH",
+		"subtitle": "Every reflection waits half a heartbeat late.",
+		"entry": "The boss gate folds into a hall of impossible reflections.",
+	},
+}
 const AMBUSH_APEX_EXCLUDE_NAMES: Array[String] = [
 	"Ancient Dragon",
 	"Void Herald",
@@ -997,34 +1034,115 @@ func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int
 		_refresh_boss_presentation()
 		return
 	var boss_data: Resource = _boss_resource_for_floor(floor_number)
-	var stairs_cell: Vector2i = boss_metadata.get("boss_stairs_cell", generation_result["stairs_position"])
+	var stairs_cell: Vector2i = boss_metadata.get(
+		"boss_stairs_cell", generation_result["stairs_position"]
+	)
 	if boss_data == null:
-		GameManager.add_log_message("Boss resource missing for floor %d." % floor_number, &"warning")
+		GameManager.add_log_message(
+			"Boss resource missing for floor %d." % floor_number, &"warning"
+		)
 		GameManager.map_data[stairs_cell.y][stairs_cell.x] = DungeonDataScript.TileType.STAIRS_DOWN
 		_stairs_position = stairs_cell
 		_refresh_boss_presentation()
 		return
 	var boss_spawn_cell: Vector2i = boss_metadata.get("boss_spawn_cell", stairs_cell)
-	var boss: Node2D = _spawn_enemy_instance(boss_data, boss_spawn_cell, floor_number, true)
-	var state: Dictionary = _make_boss_state(boss)
-	_boss_states[boss] = state
+	var boss_entry_cell: Vector2i = boss_metadata.get("boss_entry_cell", boss_spawn_cell)
+	var boss_gate_cell: Vector2i = boss_metadata.get("boss_gate_cell", Vector2i.ZERO)
 	_active_boss_encounter = {
+		"active": true,
 		"boss_id": boss_data.boss_id,
 		"boss_name": boss_data.display_name,
-		"boss": boss,
+		"boss": null,
 		"boss_data": boss_data,
 		"room": boss_metadata.get("boss_room", Rect2i()),
 		"room_cells": boss_metadata.get("boss_room_cells", {}),
 		"door_cells": boss_metadata.get("boss_door_cells", []),
+		"gate_cell": boss_gate_cell,
+		"boss_gate_cell": boss_gate_cell,
+		"boss_gate_entry_cell": boss_metadata.get("boss_gate_entry_cell", Vector2i.ZERO),
+		"boss_entry_cell": boss_entry_cell,
+		"boss_spawn_cell": boss_spawn_cell,
+		"entry_cell": boss_entry_cell,
+		"spawn_cell": boss_spawn_cell,
 		"locked": false,
 		"defeated": false,
 		"stairs_cell": stairs_cell,
 		"chest_cell": boss_metadata.get("boss_chest_cell", stairs_cell),
 		"entered": false,
 	}
-	_refresh_boss_occupied_cells(boss)
-	GameManager.add_log_message("A boss gate waits at the far chamber.", &"warning")
+	GameManager.add_log_message("A boss gate waits at the far chamber.", &"boss_gate")
 	_refresh_boss_presentation()
+
+
+func _spawn_active_boss() -> Node2D:
+	if _active_boss_encounter.is_empty():
+		return null
+	var existing_boss: Node2D = _active_boss_encounter.get("boss", null)
+	if is_instance_valid(existing_boss) and existing_boss.is_alive():
+		return existing_boss
+	var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
+	if boss_data == null:
+		return null
+	var spawn_cell: Vector2i = _active_boss_encounter.get("spawn_cell", Vector2i.ZERO)
+	var boss: Node2D = _spawn_enemy_instance(boss_data, spawn_cell, GameManager.current_floor, true)
+	_boss_states[boss] = _make_boss_state(boss)
+	_active_boss_encounter["boss"] = boss
+	_refresh_boss_occupied_cells(boss)
+	return boss
+
+
+func _enter_boss_gate(gate_cell: Vector2i) -> bool:
+	if _active_boss_encounter.is_empty():
+		return false
+	if bool(_active_boss_encounter.get("defeated", false)):
+		return false
+	if bool(_active_boss_encounter.get("entered", false)):
+		GameManager.add_log_message("The sealed boss gate refuses to reopen.", &"warning")
+		return true
+	var door_cells: Array = _active_boss_encounter.get("door_cells", [])
+	if not door_cells.has(gate_cell):
+		return false
+	var entry_cell: Vector2i = _active_boss_encounter.get("entry_cell", Vector2i.ZERO)
+	if entry_cell == Vector2i.ZERO or not _is_cell_in_active_boss_room(entry_cell):
+		entry_cell = _active_boss_encounter.get("spawn_cell", gate_cell)
+	var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
+	var story: Dictionary = BOSS_STORY_BY_ID.get(boss_id, {})
+	GameManager.add_log_message(
+		str(story.get("entry", "The boss gate opens onto a place outside the dungeon.")),
+		&"boss_story"
+	)
+	_play_action_burst(gate_cell, &"door")
+	_player.set_grid_position(entry_cell)
+	_refresh_visibility()
+	var boss: Node2D = _spawn_active_boss()
+	if boss == null:
+		GameManager.add_log_message("The gate collapses; no boss answers.", &"warning")
+		return true
+	_show_boss_title(boss_id, boss.display_name)
+	if (
+		map_view != null
+		and map_view.has_method(&"play_boss_spawn_intro")
+		and _boss_states.has(boss)
+	):
+		(
+			map_view
+			. call(
+				&"play_boss_spawn_intro",
+				boss.grid_position,
+				{
+					"display_name": boss.display_name,
+					"color": boss.color,
+					"occupied_cells": _boss_states[boss].get("occupied_cells", []),
+				}
+			)
+		)
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"play_boss_intro_cue"):
+		sensory_feedback.call(&"play_boss_intro_cue", boss_id)
+	_seal_boss_encounter()
+	GameManager.advance_turn()
+	GameManager.begin_player_turn()
+	_refresh_map()
+	return true
 
 
 func _make_boss_state(enemy: Node) -> Dictionary:
@@ -1118,7 +1236,9 @@ func _seal_boss_encounter() -> void:
 		return
 	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
 		if _is_inside_map(door_cell):
-			GameManager.map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.SEALED_BOSS_DOOR
+			GameManager.map_data[door_cell.y][door_cell.x] = (
+				DungeonDataScript.TileType.SEALED_BOSS_DOOR
+			)
 	_active_boss_encounter["locked"] = true
 	_active_boss_encounter["entered"] = true
 	GameManager.add_log_message(
@@ -1126,13 +1246,15 @@ func _seal_boss_encounter() -> void:
 			"The gate slams shut. Defeat %s to leave."
 			% _active_boss_encounter.get("boss_name", "the boss")
 		),
-		&"warning"
+		&"boss_gate"
 	)
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"start_boss_music"):
 		var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
 		var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
 		var base_stream: AudioStream = boss_data.boss_music_stream if boss_data != null else null
-		var climax_stream: AudioStream = boss_data.boss_climax_music_stream if boss_data != null else null
+		var climax_stream: AudioStream = (
+			boss_data.boss_climax_music_stream if boss_data != null else null
+		)
 		sensory_feedback.call(&"start_boss_music", boss_id, base_stream, climax_stream)
 	_refresh_boss_presentation()
 	_refresh_visibility()
@@ -1174,6 +1296,8 @@ func _release_boss_encounter() -> void:
 		)
 	_play_action_burst(stairs_cell, &"floor")
 	_boss_telegraphs.clear()
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"play_boss_defeat_cue"):
+		sensory_feedback.call(&"play_boss_defeat_cue", _active_boss_encounter.get("boss_id", &""))
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"stop_boss_music"):
 		sensory_feedback.call(&"stop_boss_music", 0.6)
 	_refresh_boss_presentation()
@@ -1190,14 +1314,20 @@ func _find_boss_chest_reward_cell(preferred_cell: Vector2i) -> Vector2i:
 	for radius: int in range(1, 9):
 		var candidates: Array[Vector2i] = []
 		for cell: Vector2i in room_cells.keys():
-			if preferred_cell != Vector2i.ZERO and max(abs(cell.x - preferred_cell.x), abs(cell.y - preferred_cell.y)) != radius:
+			if (
+				preferred_cell != Vector2i.ZERO
+				and max(abs(cell.x - preferred_cell.x), abs(cell.y - preferred_cell.y)) != radius
+			):
 				continue
 			if not _is_container_spawn_blocked(cell):
 				candidates.append(cell)
 		if not candidates.is_empty():
 			candidates.sort_custom(
 				func(a: Vector2i, b: Vector2i) -> bool:
-					return a.distance_squared_to(preferred_cell) < b.distance_squared_to(preferred_cell)
+					return (
+						a.distance_squared_to(preferred_cell)
+						< b.distance_squared_to(preferred_cell)
+					)
 			)
 			return candidates[0]
 	return Vector2i.ZERO
@@ -1222,7 +1352,11 @@ func _refresh_boss_presentation() -> void:
 	if not _active_boss_encounter.is_empty():
 		boss = _active_boss_encounter.get("boss", null)
 		boss_data = _active_boss_encounter.get("boss_data", null)
-		boss_alive = boss != null and boss.is_alive() and not bool(_active_boss_encounter.get("defeated", false))
+		boss_alive = (
+			boss != null
+			and boss.is_alive()
+			and not bool(_active_boss_encounter.get("defeated", false))
+		)
 	if map_view != null and map_view.has_method(&"set_boss_room"):
 		if _active_boss_encounter.is_empty() or bool(_active_boss_encounter.get("defeated", false)):
 			map_view.call(&"set_boss_room", {}, [], false)
@@ -1237,7 +1371,8 @@ func _refresh_boss_presentation() -> void:
 		if boss_alive and boss_data != null:
 			var state: Dictionary = _boss_state_for(boss)
 			var visuals: Dictionary = {
-				boss.grid_position: {
+				boss.grid_position:
+				{
 					"display_name": boss_data.display_name,
 					"frames": boss_data.boss_visual_frames,
 					"frame_seconds": boss_data.boss_visual_frame_seconds,
@@ -1269,14 +1404,21 @@ func _refresh_boss_presentation() -> void:
 			)
 		elif hud.has_method(&"hide_boss_health"):
 			hud.call(&"hide_boss_health")
-	if boss_alive and bool(_active_boss_encounter.get("locked", false)) and is_instance_valid(sensory_feedback):
+	if (
+		boss_alive
+		and bool(_active_boss_encounter.get("locked", false))
+		and is_instance_valid(sensory_feedback)
+	):
 		if sensory_feedback.has_method(&"update_boss_music_intensity"):
 			sensory_feedback.call(
 				&"update_boss_music_intensity",
 				boss.stats_component.current_hp,
 				boss.stats_component.max_hp
 			)
-		if sensory_feedback.has_method(&"is_boss_music_playing") and sensory_feedback.has_method(&"start_boss_music"):
+		if (
+			sensory_feedback.has_method(&"is_boss_music_playing")
+			and sensory_feedback.has_method(&"start_boss_music")
+		):
 			if not bool(sensory_feedback.call(&"is_boss_music_playing")) and boss_data != null:
 				sensory_feedback.call(
 					&"start_boss_music",
@@ -1391,17 +1533,16 @@ func _attempt_player_move(direction: Vector2i) -> void:
 		_spend_stunned_action()
 		return
 	if _is_boss_door(target):
-		GameManager.map_data[target.y][target.x] = DungeonDataScript.TileType.OPEN_DOOR
-		GameManager.add_log_message("The boss gate grinds open.", &"warning")
-		_play_action_burst(target, &"door")
-		_refresh_visibility()
-		_refresh_map()
-		_finish_player_action()
+		if _enter_boss_gate(target):
+			return
+		GameManager.add_log_message("The boss gate is dormant.", &"warning")
 		return
 	if _is_sealed_boss_door(target):
 		GameManager.add_log_message(
-			"The boss gate is sealed. Defeat %s."
-			% _active_boss_encounter.get("boss_name", "the boss"),
+			(
+				"The boss gate is sealed. Defeat %s."
+				% _active_boss_encounter.get("boss_name", "the boss")
+			),
 			&"warning"
 		)
 		return
@@ -2663,8 +2804,7 @@ func _reach_stairs() -> void:
 		and BOSS_FLOORS.has(GameManager.current_floor)
 	):
 		GameManager.add_log_message(
-			"The stairs are sealed by %s."
-			% _active_boss_encounter.get("boss_name", "the boss"),
+			"The stairs are sealed by %s." % _active_boss_encounter.get("boss_name", "the boss"),
 			&"warning"
 		)
 		return
@@ -2801,7 +2941,10 @@ func _process_enemy_special_turn(
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return false
 	var enemy_data: Resource = enemy_actor.enemy_data
-	if enemy_data.is_boss and _process_boss_turn(enemy, distance_to_player, action_count, blocked_cells):
+	if (
+		enemy_data.is_boss
+		and _process_boss_turn(enemy, distance_to_player, action_count, blocked_cells)
+	):
 		return true
 	var recovering_from_shot: bool = _ranged_recovery_enemies.has(enemy)
 	if recovering_from_shot:
@@ -3007,7 +3150,11 @@ func _enemy_distance_to_player(enemy: Node) -> float:
 	var best_distance: float = INF
 	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
 		best_distance = min(best_distance, occupied_cell.distance_to(_player.grid_position))
-	return best_distance if best_distance < INF else enemy.grid_position.distance_to(_player.grid_position)
+	return (
+		best_distance
+		if best_distance < INF
+		else enemy.grid_position.distance_to(_player.grid_position)
+	)
 
 
 func _process_boss_turn(
@@ -3015,6 +3162,8 @@ func _process_boss_turn(
 ) -> bool:
 	if not _is_boss_enemy(enemy):
 		return false
+	if not bool(_active_boss_encounter.get("entered", false)):
+		return true
 	_update_boss_phase(enemy)
 	var state: Dictionary = _boss_state_for(enemy)
 	var pending_attack: Resource = state.get("pending_attack", null)
@@ -3036,18 +3185,20 @@ func _process_boss_turn(
 			return true
 	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
 	if attack == null:
-		return false
+		if distance_to_player > 2.0 and _try_move_boss_toward_player(enemy, blocked_cells):
+			return true
+		return true
 	var cells: Dictionary = _boss_attack_cells(enemy, attack)
 	if cells.is_empty() and attack.shape != &"summon":
 		if distance_to_player > 2.0 and _try_move_boss_toward_player(enemy, blocked_cells):
 			return true
-		return false
+		return true
 	_queue_boss_attack(enemy, attack, cells)
 	if not attack.warning_text.is_empty():
-		GameManager.add_log_message(attack.warning_text, &"warning")
+		GameManager.add_log_message(attack.warning_text, &"boss_telegraph")
 	else:
 		GameManager.add_log_message(
-			"%s prepares %s." % [enemy.display_name, attack.id], &"warning"
+			"%s prepares %s." % [enemy.display_name, attack.id], &"boss_telegraph"
 		)
 	_refresh_boss_presentation()
 	_refresh_map()
@@ -3060,14 +3211,27 @@ func _update_boss_phase(enemy: Node) -> void:
 	var enemy_actor: Enemy = enemy as Enemy
 	var state: Dictionary = _boss_state_for(enemy)
 	var hp_percent: float = (
-		float(enemy.stats_component.current_hp) / max(1.0, float(enemy.stats_component.max_hp)) * 100.0
+		float(enemy.stats_component.current_hp)
+		/ max(1.0, float(enemy.stats_component.max_hp))
+		* 100.0
 	)
 	var phase: int = 1
 	for threshold: int in enemy_actor.enemy_data.boss_phase_hp_percents:
 		if hp_percent <= float(threshold):
 			phase += 1
+	var previous_phase: int = int(state.get("phase", 1))
 	state["phase"] = phase
 	_boss_states[enemy] = state
+	if phase != previous_phase:
+		GameManager.add_log_message(
+			"%s shifts into phase %d." % [enemy.display_name, phase], &"boss_phase"
+		)
+		if (
+			is_instance_valid(sensory_feedback)
+			and sensory_feedback.has_method(&"play_boss_phase_cue")
+		):
+			var enemy_data: Resource = enemy_actor.enemy_data
+			sensory_feedback.call(&"play_boss_phase_cue", enemy_data.boss_id, phase)
 
 
 func _choose_boss_attack(enemy: Node, action_count: int, _distance_to_player: float) -> Resource:
@@ -3124,8 +3288,7 @@ func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
 			if not _unknown_boss_attack_shapes.has(shape):
 				_unknown_boss_attack_shapes[shape] = true
 				GameManager.add_log_message(
-					"Unknown boss attack shape %s; targeting you instead." % shape,
-					&"warning"
+					"Unknown boss attack shape %s; targeting you instead." % shape, &"warning"
 				)
 			_add_boss_attack_cell(cells, _player.grid_position)
 	return cells
@@ -3205,12 +3368,20 @@ func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> v
 		var damage: int = _player.stats_component.apply_damage(max(1, raw_damage))
 		var message: String = attack.resolve_text
 		if message.is_empty():
-			message = "%s's %s hits you for %d %s damage." % [
-				enemy.display_name, attack.id, damage, attack.damage_type
-			]
+			message = (
+				"%s's %s hits you for %d %s damage."
+				% [enemy.display_name, attack.id, damage, attack.damage_type]
+			)
 		elif message.contains("%d"):
 			message = message % damage
-		GameManager.add_log_message(message, &"magic" if attack.damage_type == &"magic" or attack.damage_type == &"fire" else &"combat_hit")
+		GameManager.add_log_message(
+			message,
+			(
+				&"magic"
+				if attack.damage_type == &"magic" or attack.damage_type == &"fire"
+				else &"combat_hit"
+			)
+		)
 		_handle_defender_after_damage(_player, damage > 0)
 		_play_action_burst(_player.grid_position, &"magic_hit")
 	else:
@@ -3242,17 +3413,28 @@ func _resolve_boss_summon(enemy: Node, attack: Resource) -> void:
 	if spawned <= 0:
 		GameManager.add_log_message("%s's summons find no room." % enemy.display_name, &"warning")
 	else:
-		GameManager.add_log_message("%s summons %d ally%s." % [enemy.display_name, spawned, "" if spawned == 1 else "ies"], &"magic")
+		GameManager.add_log_message(
+			"%s summons %d ally%s." % [enemy.display_name, spawned, "" if spawned == 1 else "ies"],
+			&"magic"
+		)
 
 
 func _boss_summon_path(enemy: Node, attack: Resource) -> String:
 	var enemy_actor: Enemy = enemy as Enemy
-	if enemy_actor != null and enemy_actor.enemy_data.boss_id == &"nyxara" and attack.id == &"mirror_guard":
+	if (
+		enemy_actor != null
+		and enemy_actor.enemy_data.boss_id == &"nyxara"
+		and attack.id == &"mirror_guard"
+	):
 		var state: Dictionary = _boss_state_for(enemy)
 		var use_prism: bool = bool(state.get("nyxara_summon_toggle", false))
 		state["nyxara_summon_toggle"] = not use_prism
 		_boss_states[enemy] = state
-		return "res://resources/enemies/prism_seer.tres" if use_prism else "res://resources/enemies/mirror_duelist.tres"
+		return (
+			"res://resources/enemies/prism_seer.tres"
+			if use_prism
+			else "res://resources/enemies/mirror_duelist.tres"
+		)
 	return attack.summon_enemy_path
 
 
@@ -3279,12 +3461,56 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	state["last_attack_id"] = attack.id
 	_boss_states[enemy] = state
 	_boss_telegraphs.clear()
+	var payload: Dictionary = _boss_telegraph_payload_for(enemy, attack)
 	for cell: Vector2i in cells.keys():
-		_boss_telegraphs[cell] = {
-			"glyph": "!",
-			"attack_id": attack.id,
-			"boss": enemy,
-		}
+		_boss_telegraphs[cell] = payload.duplicate(true)
+		_boss_telegraphs[cell]["attack_id"] = attack.id
+		_boss_telegraphs[cell]["boss"] = enemy
+
+
+func _boss_telegraph_payload_for(enemy: Node, attack: Resource) -> Dictionary:
+	var enemy_actor: Enemy = enemy as Enemy
+	var boss_id: StringName = &""
+	if enemy_actor != null and enemy_actor.enemy_data != null:
+		boss_id = enemy_actor.enemy_data.boss_id
+	var glyph: String = "!"
+	var color: Color = Color(1.0, 0.64, 0.20, 1.0)
+	var fill_color: Color = Color(1.0, 0.16, 0.10, 0.26)
+	var border_color: Color = Color(1.0, 0.52, 0.18, 0.78)
+	match boss_id:
+		&"observer":
+			glyph = "⊙"
+			color = Color(0.68, 0.88, 1.0, 1.0)
+			fill_color = Color(0.18, 0.46, 1.0, 0.20)
+			border_color = Color(0.42, 0.78, 1.0, 0.82)
+		&"seraphine":
+			glyph = "^"
+			color = Color(0.78, 1.0, 0.44, 1.0)
+			fill_color = Color(0.18, 0.50, 0.16, 0.24)
+			border_color = Color(0.66, 0.94, 0.34, 0.78)
+		&"vorrak":
+			glyph = "*"
+			color = Color(1.0, 0.38, 0.12, 1.0)
+			fill_color = Color(1.0, 0.18, 0.02, 0.26)
+			border_color = Color(1.0, 0.58, 0.18, 0.84)
+		&"kaelros":
+			glyph = "≈"
+			color = Color(0.42, 0.82, 1.0, 1.0)
+			fill_color = Color(0.05, 0.30, 0.54, 0.25)
+			border_color = Color(0.34, 0.76, 1.0, 0.80)
+		&"nyxara":
+			glyph = "◇"
+			color = Color(0.96, 0.78, 1.0, 1.0)
+			fill_color = Color(0.50, 0.14, 0.72, 0.24)
+			border_color = Color(0.92, 0.62, 1.0, 0.84)
+	if attack != null and attack.shape == &"summon":
+		glyph = "+"
+	return {
+		"glyph": glyph,
+		"color": color,
+		"fill_color": fill_color,
+		"border_color": border_color,
+	}
 
 
 func _build_boss_telegraph_payload() -> Dictionary:
@@ -3331,6 +3557,37 @@ func _show_biome_title(theme: Dictionary) -> void:
 	_biome_overlay_tween.tween_interval(1.15)
 	_biome_overlay_tween.set_ease(Tween.EASE_IN)
 	_biome_overlay_tween.tween_property(biome_overlay, "modulate:a", 0.0, 0.45)
+	_biome_overlay_tween.tween_callback(_hide_biome_overlay)
+
+
+func _show_boss_title(boss_id: StringName, fallback_name: String) -> void:
+	var story: Dictionary = BOSS_STORY_BY_ID.get(boss_id, {})
+	var accent_color: Color = Color(1.0, 0.34, 0.47)
+	var title_color: Color = Color(1.0, 0.82, 0.32)
+	var subtitle_color: Color = Color(0.92, 0.86, 0.74)
+	var theme: Dictionary = {
+		"overlay_bg_color": Color(0.045, 0.018, 0.030, 0.96),
+	}
+	_apply_biome_overlay_style(theme, accent_color)
+	biome_kicker_label.text = str(story.get("kicker", "BOSS ENCOUNTER"))
+	biome_kicker_label.add_theme_color_override("font_color", accent_color)
+	biome_title_label.text = str(story.get("title", fallback_name)).to_upper()
+	biome_title_label.add_theme_color_override("font_color", title_color)
+	biome_subtitle_label.text = str(story.get("subtitle", "The room seals behind you."))
+	biome_subtitle_label.add_theme_color_override("font_color", subtitle_color)
+	biome_divider.color = Color(accent_color.r, accent_color.g, accent_color.b, 0.88)
+	if _biome_overlay_tween != null and _biome_overlay_tween.is_valid():
+		_biome_overlay_tween.kill()
+	biome_overlay.visible = true
+	biome_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_biome_overlay_tween = create_tween()
+	_biome_overlay_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_biome_overlay_tween.set_trans(Tween.TRANS_CUBIC)
+	_biome_overlay_tween.set_ease(Tween.EASE_OUT)
+	_biome_overlay_tween.tween_property(biome_overlay, "modulate:a", 1.0, 0.25)
+	_biome_overlay_tween.tween_interval(1.40)
+	_biome_overlay_tween.set_ease(Tween.EASE_IN)
+	_biome_overlay_tween.tween_property(biome_overlay, "modulate:a", 0.0, 0.40)
 	_biome_overlay_tween.tween_callback(_hide_biome_overlay)
 
 
@@ -3834,16 +4091,20 @@ func _attempt_fire_ranged() -> void:
 
 
 func _handle_targeting_input(event: InputEvent) -> void:
+	var viewport: Viewport = get_viewport()
 	var direction: Vector2i = _input_direction(event)
 	if _is_escape_key(event) or event.is_action_pressed(&"fire_ranged"):
 		_cancel_targeting()
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 	elif event.is_action_pressed(&"ui_accept"):
 		_confirm_targeting()
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 	elif direction != Vector2i.ZERO:
 		_move_target_cursor(direction)
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 
 
 func _start_targeting(item: Resource, source: StringName) -> void:

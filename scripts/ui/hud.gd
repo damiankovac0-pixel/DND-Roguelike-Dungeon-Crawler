@@ -12,6 +12,7 @@ const XP_FLASH_COLOR: Color = Color(0.55, 0.86, 1.0)
 const LABEL_PULSE_SCALE: Vector2 = Vector2(1.08, 1.08)
 const LABEL_PULSE_SECONDS: float = 0.24
 const BOSS_HP_BAR_CELLS: int = 12
+const BOSS_BANNER_HP_BAR_CELLS: int = 28
 
 # === Private Variables ===
 var _biome_name: String = "The Tower"
@@ -38,6 +39,9 @@ var _xp_tween: Tween
 @onready var sep_boss_label: Label = $Margin/VBox/SepBoss
 @onready var boss_name_label: Label = $Margin/VBox/BossNameLabel
 @onready var boss_hp_label: Label = $Margin/VBox/BossHpLabel
+@onready var boss_banner: PanelContainer = $BossBanner
+@onready var boss_banner_title_label: Label = $BossBanner/Margin/VBox/TitleLabel
+@onready var boss_banner_hp_label: Label = $BossBanner/Margin/VBox/HpLabel
 @onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
@@ -51,6 +55,7 @@ func _ready() -> void:
 	stats_label.bbcode_enabled = true
 	stats_label.fit_content = true
 	stats_label.scroll_active = false
+	hide_boss_health()
 	_update_goal_text()
 
 
@@ -93,10 +98,12 @@ func set_boss_goal_state(display_name: String, active: bool, locked: bool, defea
 func show_boss_health(display_name: String, current_hp: int, max_hp: int) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = true
-	sep_boss_label.visible = true
-	boss_name_label.visible = true
-	boss_hp_label.visible = true
+	sep_boss_label.visible = false
+	boss_name_label.visible = false
+	boss_hp_label.visible = false
 	boss_name_label.text = display_name
+	boss_banner.visible = true
+	boss_banner_title_label.text = display_name.to_upper()
 	_update_boss_hp(current_hp, max_hp)
 	_update_goal_text()
 
@@ -109,23 +116,39 @@ func hide_boss_health() -> void:
 	sep_boss_label.visible = false
 	boss_name_label.visible = false
 	boss_hp_label.visible = false
+	boss_banner.visible = false
+	boss_banner.modulate = Color.WHITE
+	boss_banner.scale = Vector2.ONE
+	boss_banner_hp_label.text = ""
+	boss_banner_title_label.text = ""
 	_last_boss_hp = -1
 	_update_goal_text()
 
 
 # === Private Methods ===
 func _update_boss_hp(current_hp: int, max_hp: int) -> void:
+	boss_hp_label.text = _boss_hp_bar_text(current_hp, max_hp, BOSS_HP_BAR_CELLS)
+	boss_banner_hp_label.text = _boss_hp_bar_text(current_hp, max_hp, BOSS_BANNER_HP_BAR_CELLS)
+	var hp_color: Color = _hp_status_color(current_hp, max_hp)
+	boss_hp_label.add_theme_color_override("font_color", hp_color)
+	boss_banner_hp_label.add_theme_color_override("font_color", hp_color)
+	if _last_boss_hp >= 0 and current_hp != _last_boss_hp:
+		var flash_color: Color = (
+			HP_HEAL_FLASH_COLOR if current_hp > _last_boss_hp else HP_DANGER_COLOR
+		)
+		_boss_hp_tween = _pulse_label(boss_banner_hp_label, _boss_hp_tween, flash_color)
+	_last_boss_hp = current_hp
+
+
+func _boss_hp_bar_text(current_hp: int, max_hp: int, bar_cells: int) -> String:
 	var filled_cells: int = 0
 	if max_hp > 0:
-		filled_cells = clampi(int(round(float(current_hp) / float(max_hp) * BOSS_HP_BAR_CELLS)), 0, BOSS_HP_BAR_CELLS)
-	var empty_cells: int = BOSS_HP_BAR_CELLS - filled_cells
+		filled_cells = clampi(
+			int(round(float(current_hp) / float(max_hp) * bar_cells)), 0, bar_cells
+		)
+	var empty_cells: int = bar_cells - filled_cells
 	var bar: String = "█".repeat(filled_cells) + "░".repeat(empty_cells)
-	boss_hp_label.text = "[%s] %d / %d" % [bar, current_hp, max_hp]
-	boss_hp_label.add_theme_color_override("font_color", _hp_status_color(current_hp, max_hp))
-	if _last_boss_hp >= 0 and current_hp != _last_boss_hp:
-		var flash_color: Color = HP_HEAL_FLASH_COLOR if current_hp > _last_boss_hp else HP_DANGER_COLOR
-		_boss_hp_tween = _pulse_label(boss_hp_label, _boss_hp_tween, flash_color)
-	_last_boss_hp = current_hp
+	return "[%s] %d / %d" % [bar, current_hp, max_hp]
 
 
 func _update_floor(floor_number: int) -> void:

@@ -239,10 +239,7 @@ func _build_dungeon_scrolls_text() -> String:
 			"- [color=#66fff0]Endless Deeps[/color] (depth 26+): infinite post-game descent "
 			+ "drawing from all enemies plus rare Endless-only horrors."
 		),
-		(
-			"- V11 adds biome-specific enemy rosters and render-only floor/wall decorations; "
-			+ "boss names remain biome lore, not fixed boss rooms."
-		),
+		"- V20 turns the five biome capstones into sealed boss rooms at depths " + "5/10/15/20/25.",
 		"",
 		"[color=#8fb3ff]TRAPS[/color]",
 		"Traps are hidden until detected. Moving near one rolls passive detection;",

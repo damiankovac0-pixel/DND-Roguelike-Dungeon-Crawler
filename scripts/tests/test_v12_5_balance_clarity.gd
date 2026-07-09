@@ -34,7 +34,7 @@ func _run() -> void:
 	if not _failed:
 		_check_trap_scaling()
 	if not _failed:
-		await _check_final_floor_capstone()
+		await _check_final_floor_boss_metadata()
 
 	if not _failed:
 		print("V12.5.0 balance clarity checks passed")
@@ -131,7 +131,7 @@ func _check_trap_scaling() -> void:
 	print("  trap scaling: floor 25 damage/DC increases without mutating templates")
 
 
-func _check_final_floor_capstone() -> void:
+func _check_final_floor_boss_metadata() -> void:
 	if _failed:
 		return
 	while _gm.current_floor < FINAL_FLOOR:
@@ -140,28 +140,50 @@ func _check_final_floor_capstone() -> void:
 	if _gm.current_floor != FINAL_FLOOR:
 		_fail("Debug descend reached floor %d, expected %d" % [_gm.current_floor, FINAL_FLOOR])
 		return
-	var near_dragon_count: int = 0
-	var near_guard_count: int = 0
-	for enemy: Node in _game._enemies:
-		if enemy == null or not enemy.is_alive():
-			continue
-		var distance: int = max(
-			abs(enemy.grid_position.x - _game._stairs_position.x),
-			abs(enemy.grid_position.y - _game._stairs_position.y)
-		)
-		if distance > 7:
-			continue
-		if enemy.display_name == "Ancient Dragon":
-			near_dragon_count += 1
-		elif _game.FINAL_CAPSTONE_GUARD_NAMES.has(enemy.display_name):
-			near_guard_count += 1
-	if near_dragon_count < 1:
-		_fail("Floor 25 capstone should place an Ancient Dragon near the stairs")
+	var encounter: Dictionary = _game._active_boss_encounter
+	if encounter.is_empty() or encounter.get("boss_id", &"") != &"nyxara":
+		_fail("Floor 25 should reserve Nyxara boss encounter metadata")
 		return
-	if near_guard_count < 1:
-		_fail("Floor 25 capstone should place at least one guard near the stairs")
+	# Boss should NOT be spawned before gate entry (lazy spawn)
+	if encounter.get("boss", null) != null:
+		_fail("Nyxara should not spawn before boss gate entry")
 		return
-	print("  floor 25 capstone: Ancient Dragon and guard spawn near stairs")
+	# Gate entry cell must exist for lazy-spawn navigation
+	var gate_cell: Vector2i = encounter.get("gate_cell", Vector2i.ZERO)
+	var gate_entry_cell: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	if gate_cell == Vector2i.ZERO:
+		_fail("Floor 25 boss encounter missing gate_cell")
+		return
+	if gate_entry_cell == Vector2i.ZERO:
+		_fail("Floor 25 boss encounter missing boss_gate_entry_cell")
+		return
+	# Enter boss gate to trigger lazy spawn
+	_game._player.set_grid_position(gate_entry_cell)
+	var gate_dir: Vector2i = gate_cell - gate_entry_cell
+	_game._attempt_player_move(gate_dir)
+	await process_frame
+	# After gate entry, boss should be spawned and correctly identified
+	var boss: Node = encounter.get("boss")
+	if boss == null:
+		_fail("Floor 25 should spawn Nyxara after boss gate entry")
+		return
+	if boss.display_name != "Nyxara, the Mirror Witch":
+		_fail("Floor 25 spawned boss is %s, expected Nyxara, the Mirror Witch" % boss.display_name)
+		return
+	var stairs: Vector2i = encounter.get("stairs_cell", Vector2i.ZERO)
+	if _gm.map_data[stairs.y][stairs.x] == _game.DungeonDataScript.TileType.STAIRS_DOWN:
+		_fail("Floor 25 stairs should stay hidden until Nyxara is defeated")
+		return
+	if encounter.get("door_cells", []).is_empty():
+		_fail("Floor 25 boss encounter should include sealing doors")
+		return
+	if not bool(encounter.get("locked", false)):
+		_fail("Gate entry did not lock the boss encounter")
+		return
+	if not bool(encounter.get("entered", false)):
+		_fail("Gate entry did not set entered flag")
+		return
+	print("  floor 25 capstone: Nyxara boss room gated; lazy spawn on gate entry")
 
 
 func _fail(message: String) -> void:

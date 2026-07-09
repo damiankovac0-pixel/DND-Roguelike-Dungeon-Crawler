@@ -34,6 +34,15 @@ func _run() -> void:
 		_check_generated_doors(result, test_seed)
 		if _failed:
 			return
+	for boss_floor: int in [5, 10, 15, 20, 25]:
+		seed(220000 + boss_floor)
+		var boss_generator: RefCounted = DungeonGeneratorScript.new()
+		var boss_result: Dictionary = boss_generator.generate(
+			DungeonDataScript.MAP_WIDTH, DungeonDataScript.MAP_HEIGHT, boss_floor
+		)
+		_check_boss_doors(boss_result, boss_floor)
+		if _failed:
+			return
 	print("door placement check passed")
 	quit(0)
 
@@ -65,6 +74,50 @@ func _check_generated_doors(result: Dictionary, test_seed: int) -> void:
 		if _has_paired_corridor_door(map_data, rooms, door):
 			_fail("seed %d placed paired corridor doors near %s" % [test_seed, door])
 			return
+
+
+func _check_boss_doors(result: Dictionary, boss_floor: int) -> void:
+	var map_data: Array = result["map"]
+	var encounter: Dictionary = result.get("boss_encounter", {})
+	var boss_room: Rect2i = encounter.get("boss_room", Rect2i())
+	if not bool(encounter.get("active", false)):
+		_fail("floor %d did not generate boss door metadata" % boss_floor)
+		return
+	var gate_entry_cell: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	if gate_entry_cell == Vector2i.ZERO:
+		_fail("floor %d has no boss_gate_entry_cell" % boss_floor)
+		return
+	for door: Vector2i in encounter.get("boss_door_cells", []):
+		if map_data[door.y][door.x] != DungeonDataScript.TileType.BOSS_DOOR:
+			_fail("floor %d boss door tile mismatch at %s" % [boss_floor, door])
+			return
+		if _is_room_cell([boss_room], door):
+			_fail("floor %d placed boss door inside boss room at %s" % [boss_floor, door])
+			return
+		if abs(door.x - gate_entry_cell.x) + abs(door.y - gate_entry_cell.y) != 1:
+			_fail(
+				(
+					"floor %d boss gate entry cell %s not adjacent to door %s"
+					% [boss_floor, gate_entry_cell, door]
+				)
+			)
+			return
+	if _is_room_cell([boss_room], gate_entry_cell):
+		_fail(
+			(
+				"floor %d placed boss gate entry cell inside boss room at %s"
+				% [boss_floor, gate_entry_cell]
+			)
+		)
+		return
+	if not _is_floor_or_door(map_data[gate_entry_cell.y][gate_entry_cell.x]):
+		_fail(
+			(
+				"floor %d boss gate entry cell %s tile is not traversable"
+				% [boss_floor, gate_entry_cell]
+			)
+		)
+		return
 
 
 func _collect_doors(map_data: Array) -> Array[Vector2i]:
@@ -126,6 +179,8 @@ func _is_floor_or_door(tile_type: int) -> bool:
 	return (
 		tile_type == DungeonDataScript.TileType.FLOOR
 		or tile_type == DungeonDataScript.TileType.DOOR
+		or tile_type == DungeonDataScript.TileType.BOSS_DOOR
+		or tile_type == DungeonDataScript.TileType.SEALED_BOSS_DOOR
 	)
 
 
@@ -168,7 +223,7 @@ func _has_room_to_corridor_axis(map_data: Array, rooms: Array, door: Vector2i) -
 			continue
 		if map_data[room_cell.y][room_cell.x] != DungeonDataScript.TileType.FLOOR:
 			continue
-		if map_data[corridor_cell.y][corridor_cell.x] != DungeonDataScript.TileType.FLOOR:
+		if not _is_floor_or_door(map_data[corridor_cell.y][corridor_cell.x]):
 			continue
 		return true
 	return false

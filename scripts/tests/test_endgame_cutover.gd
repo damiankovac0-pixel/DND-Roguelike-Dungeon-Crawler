@@ -34,7 +34,7 @@ func _run() -> void:
 	await _descend_to_victory_floor(game)
 	if _failed:
 		return
-	await _check_victory_choice_presented(game)
+	await _check_victory_choice_gated_by_final_boss(game)
 	if _failed:
 		return
 	await _check_endless_descent_after_choice(game)
@@ -72,12 +72,50 @@ func _descend_to_victory_floor(game: Node) -> void:
 		)
 
 
-func _check_victory_choice_presented(game: Node) -> void:
+func _check_victory_choice_gated_by_final_boss(game: Node) -> void:
 	game.extraction_panel.visible = false
 	game._reach_stairs()
 	await process_frame
+	if game.extraction_panel.visible:
+		_fail("victory choice panel appeared before the floor 25 boss died")
+		return
+	# Active boss encounter metadata exists before gate entry
+	var encounter: Dictionary = game._active_boss_encounter
+	if encounter.is_empty():
+		_fail("no active boss encounter on floor 25")
+		return
+	if encounter.get("boss_id", &"") != &"nyxara":
+		_fail("floor 25 boss encounter should be Nyxara, got %s" % encounter.get("boss_id", &""))
+		return
+	# Boss is not yet spawned lazy before gate entry
+	if encounter.get("boss") != null:
+		_fail("boss should not be spawned before gate entry")
+		return
+	# Enter boss gate to trigger lazy spawn
+	var gate_cell: Vector2i = encounter.get("gate_cell", Vector2i.ZERO)
+	var gate_entry_cell: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	if gate_cell == Vector2i.ZERO or gate_entry_cell == Vector2i.ZERO:
+		_fail("boss encounter missing gate cell or gate entry cell")
+		return
+	game._player.set_grid_position(gate_entry_cell)
+	var gate_dir: Vector2i = gate_cell - gate_entry_cell
+	game._attempt_player_move(gate_dir)
+	await process_frame
+	# Lazy-spawned boss should now exist
+	var boss: Node = encounter.get("boss")
+	if boss == null or not boss.is_alive():
+		_fail("Nyxara not spawned after gate entry")
+		return
+	if boss.display_name != "Nyxara, the Mirror Witch":
+		_fail("spawned boss is %s, expected Nyxara, the Mirror Witch" % boss.display_name)
+		return
+	# Kill the boss to unlock victory
+	boss.stats_component.apply_damage(99999)
+	await process_frame
+	game._reach_stairs()
+	await process_frame
 	if not game.extraction_panel.visible:
-		_fail("victory choice panel did not appear on floor 25")
+		_fail("victory choice panel did not appear after floor 25 boss defeat")
 		return
 	if game.leave_button.text != "Leave Victorious":
 		_fail("leave button text is %s, expected Leave Victorious" % game.leave_button.text)
