@@ -12,8 +12,9 @@ intent = &"boss_attack"
 phase_min = 1
 cooldown = 2
 telegraph_turns = 1
-shape = &"line_to_player"
-range = 6
+shape = &"parallax_gaze"
+range = 7
+radius = 1
 width = 1
 damage_dice = 2
 damage_sides = 6
@@ -21,6 +22,10 @@ damage_bonus = 1
 damage_type = &"magic"
 warning_text = "The Observer focuses a burning gaze."
 resolve_text = "The Observer's gaze sears you for %d magic damage."
+telegraph_glyph = "⊙"
+telegraph_color = Color(0.74, 0.92, 1, 1)
+telegraph_fill_color = Color(0.12, 0.36, 0.78, 0.24)
+telegraph_border_color = Color(0.54, 0.84, 1, 0.88)
 
 [sub_resource type="Resource" id="Resource_observer_blink"]
 script = ExtResource("2")
@@ -37,6 +42,10 @@ damage_bonus = 1
 damage_type = &"magic"
 warning_text = "The Observer blinks; pressure ripples outward."
 resolve_text = "The blink pulse crushes you for %d magic damage."
+telegraph_glyph = "◉"
+telegraph_color = Color(0.82, 0.95, 1, 1)
+telegraph_fill_color = Color(0.18, 0.46, 1, 0.18)
+telegraph_border_color = Color(0.72, 0.90, 1, 0.84)
 
 [resource]
 script = ExtResource("1")
@@ -63,8 +72,8 @@ boss_reward_gold = 180
 boss_reward_chest_rarity = 5
 boss_phase_hp_percents = Array[int]([65, 35])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-2, 0), Vector2i(0, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
-boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ╱-╲ ", "| o |", " ╲_╱ "), PackedStringArray(" ╱~╲ ", "| O |", " ╲-╱ ")])
-boss_visual_frame_seconds = 0.32
+boss_visual_frames = Array[PackedStringArray]([PackedStringArray("╭─⊙─╮", "⟨-O-⟩", "╰─◎─╯"), PackedStringArray("╭~◎~╮", "⟨-0-⟩", "╰~⊙~╯"), PackedStringArray("╭───╮", "⟨─O─⟩", "╰───╯")])
+boss_visual_frame_seconds = 0.26
 boss_attacks = Array[Resource]([SubResource("Resource_observer_gaze"), SubResource("Resource_observer_blink")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

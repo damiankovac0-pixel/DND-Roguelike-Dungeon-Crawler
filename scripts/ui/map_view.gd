@@ -65,6 +65,7 @@ var _enemy_intents: Dictionary = {}
 var _boss_room_cells: Dictionary = {}
 var _boss_door_cells: Array[Vector2i] = []
 var _boss_room_locked: bool = false
+var _boss_room_tint_color: Color = Color.TRANSPARENT
 var _boss_visuals: Dictionary = {}
 var _boss_occupied_cells: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
@@ -147,12 +148,15 @@ func set_secret_walls(
 	queue_redraw()
 
 
-func set_boss_room(room_cells: Dictionary, door_cells: Array, locked: bool) -> void:
+func set_boss_room(
+	room_cells: Dictionary, door_cells: Array, locked: bool, tint_color: Color = Color.TRANSPARENT
+) -> void:
 	_boss_room_cells = room_cells.duplicate(true)
 	_boss_door_cells.clear()
 	for door_cell: Vector2i in door_cells:
 		_boss_door_cells.append(door_cell)
 	_boss_room_locked = locked
+	_boss_room_tint_color = tint_color
 	queue_redraw()
 
 
@@ -446,9 +450,11 @@ func _draw() -> void:
 func _draw_boss_room_tint(playfield_rect: Rect2) -> void:
 	if _boss_room_cells.is_empty():
 		return
-	var fill_color: Color = (
-		Color(1.0, 0.18, 0.16, 0.10) if _boss_room_locked else Color(1.0, 0.72, 0.22, 0.06)
-	)
+	var fill_color: Color = _boss_room_tint_color
+	if fill_color.a <= 0.0:
+		fill_color = (
+			Color(1.0, 0.18, 0.16, 0.10) if _boss_room_locked else Color(1.0, 0.72, 0.22, 0.06)
+		)
 	for cell: Vector2i in _boss_room_cells.keys():
 		if not _visible_cells.has(cell) and not _explored_cells.has(cell):
 			continue
@@ -514,8 +520,10 @@ func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Re
 		if cells.is_empty():
 			cells = [anchor_cell]
 		var pulse_alpha: float = sin(progress * PI) * 0.45
-		var glyphs: Array[String] = ["·", "*", "✦", "✹"]
-		var glyph: String = glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()]
+		var glyphs: Array = effect.get("spawn_glyphs", ["·", "*", "✦", "✹"])
+		if glyphs.is_empty():
+			glyphs = ["·", "*", "✦", "✹"]
+		var glyph: String = str(glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()])
 		for raw_cell in cells:
 			if not (raw_cell is Vector2i):
 				continue

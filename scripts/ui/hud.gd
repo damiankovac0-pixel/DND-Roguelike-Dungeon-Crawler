@@ -95,7 +95,9 @@ func set_boss_goal_state(display_name: String, active: bool, locked: bool, defea
 	_update_goal_text()
 
 
-func show_boss_health(display_name: String, current_hp: int, max_hp: int) -> void:
+func show_boss_health(
+	display_name: String, current_hp: int, max_hp: int, accent_color: Color = Color(1.0, 0.72, 0.28)
+) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = true
 	sep_boss_label.visible = false
@@ -104,6 +106,7 @@ func show_boss_health(display_name: String, current_hp: int, max_hp: int) -> voi
 	boss_name_label.text = display_name
 	boss_banner.visible = true
 	boss_banner_title_label.text = display_name.to_upper()
+	boss_banner_title_label.add_theme_color_override("font_color", accent_color)
 	_update_boss_hp(current_hp, max_hp)
 	_update_goal_text()
 
@@ -121,6 +124,7 @@ func hide_boss_health() -> void:
 	boss_banner.scale = Vector2.ONE
 	boss_banner_hp_label.text = ""
 	boss_banner_title_label.text = ""
+	boss_banner_title_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
 	_last_boss_hp = -1
 	_update_goal_text()
 

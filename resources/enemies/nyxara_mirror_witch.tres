@@ -11,7 +11,7 @@ intent = &"boss_attack"
 phase_min = 1
 cooldown = 2
 telegraph_turns = 2
-shape = &"line_to_player"
+shape = &"mirror_ray"
 range = 8
 width = 3
 damage_dice = 3
@@ -20,6 +20,13 @@ damage_bonus = 5
 damage_type = &"magic"
 warning_text = "Nyxara aligns a mirror ray."
 resolve_text = "Nyxara's mirror ray cuts you for %d magic damage."
+effect = &"phase_shift"
+effect_trigger = &"resolve"
+effect_amount = 1
+telegraph_glyph = "◇"
+telegraph_color = Color(1, 0.82, 1, 1)
+telegraph_fill_color = Color(0.42, 0.10, 0.68, 0.28)
+telegraph_border_color = Color(0.96, 0.64, 1, 0.88)
 
 [sub_resource type="Resource" id="Resource_nyxara_fracture"]
 script = ExtResource("2")
@@ -28,14 +35,18 @@ intent = &"boss_attack"
 phase_min = 2
 cooldown = 3
 telegraph_turns = 1
-shape = &"cross"
-range = 8
+shape = &"mirror_reflection"
+radius = 2
 damage_dice = 2
 damage_sides = 8
 damage_bonus = 6
 damage_type = &"magic"
 warning_text = "Nyxara fractures the light into a cross."
 resolve_text = "Nyxara's prism fracture rips you for %d magic damage."
+telegraph_glyph = "◆"
+telegraph_color = Color(1, 0.76, 1, 1)
+telegraph_fill_color = Color(0.50, 0.14, 0.72, 0.30)
+telegraph_border_color = Color(1, 0.58, 1, 0.90)
 
 [sub_resource type="Resource" id="Resource_nyxara_guard"]
 script = ExtResource("2")
@@ -48,6 +59,10 @@ shape = &"summon"
 summon_enemy_path = "res://resources/enemies/mirror_duelist.tres"
 summon_count = 1
 warning_text = "Nyxara beckons a mirror guard."
+telegraph_glyph = "◇"
+telegraph_color = Color(0.94, 0.78, 1, 1)
+telegraph_fill_color = Color(0.28, 0.08, 0.48, 0.24)
+telegraph_border_color = Color(0.84, 0.56, 1, 0.84)
 
 [resource]
 script = ExtResource("1")
@@ -74,8 +89,8 @@ boss_reward_gold = 900
 boss_reward_chest_rarity = 6
 boss_phase_hp_percents = Array[int]([75, 45, 20])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-2, -2), Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
-boss_visual_frames = Array[PackedStringArray]([PackedStringArray("╱╲N╱╲", "|◇ ◇|", "╲╱_╲╱", " ╱_╲ "), PackedStringArray("╱╲N╱╲", "|◆ ◆|", "╲╱_╲╱", " ╲_╱ ")])
-boss_visual_frame_seconds = 0.32
+boss_visual_frames = Array[PackedStringArray]([PackedStringArray("◇╲N╱◇", "╲◆ ◆╱", "╱╲_╱╲", " ◇_◇ "), PackedStringArray("◆╱N╲◆", "╱◇ ◇╲", "╲╱_╲╱", " ◆_◆ "), PackedStringArray("◇╳N╳◇", "╲◆_◆╱", "╱╲ ╱╲", " ◇╳◇ ")])
+boss_visual_frame_seconds = 0.24
 boss_attacks = Array[Resource]([SubResource("Resource_nyxara_ray"), SubResource("Resource_nyxara_fracture"), SubResource("Resource_nyxara_guard")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("3")

@@ -1133,6 +1133,7 @@ func _enter_boss_gate(gate_cell: Vector2i) -> bool:
 					"display_name": boss.display_name,
 					"color": boss.color,
 					"occupied_cells": _boss_states[boss].get("occupied_cells", []),
+					"spawn_glyphs": _boss_spawn_glyphs(boss_id),
 				}
 			)
 		)
@@ -1361,11 +1362,13 @@ func _refresh_boss_presentation() -> void:
 		if _active_boss_encounter.is_empty() or bool(_active_boss_encounter.get("defeated", false)):
 			map_view.call(&"set_boss_room", {}, [], false)
 		else:
+			var locked: bool = bool(_active_boss_encounter.get("locked", false))
 			map_view.call(
 				&"set_boss_room",
 				_active_boss_encounter.get("room_cells", {}),
 				_active_boss_encounter.get("door_cells", []),
-				bool(_active_boss_encounter.get("locked", false))
+				locked,
+				_boss_room_tint_color(_active_boss_encounter.get("boss_id", &""), locked)
 			)
 	if map_view != null and map_view.has_method(&"set_boss_visuals"):
 		if boss_alive and boss_data != null:
@@ -1379,6 +1382,7 @@ func _refresh_boss_presentation() -> void:
 					"color": boss.color,
 					"occupied_cells": state.get("occupied_cells", []),
 					"phase": state.get("phase", 1),
+					"spawn_glyphs": _boss_spawn_glyphs(boss_data.boss_id),
 				}
 			}
 			map_view.call(&"set_boss_visuals", visuals)
@@ -1400,7 +1404,8 @@ func _refresh_boss_presentation() -> void:
 				&"show_boss_health",
 				boss.display_name,
 				boss.stats_component.current_hp,
-				boss.stats_component.max_hp
+				boss.stats_component.max_hp,
+				_boss_accent_color(_active_boss_encounter.get("boss_id", &""))
 			)
 		elif hud.has_method(&"hide_boss_health"):
 			hud.call(&"hide_boss_health")
@@ -3282,8 +3287,20 @@ func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
 			_add_boss_ring_cells(cells, enemy, attack)
 		&"cone":
 			_add_boss_cone_cells(cells, enemy, attack)
+		&"parallax_gaze":
+			_add_boss_parallax_gaze_cells(cells, enemy, attack)
+		&"thorn_patch":
+			_add_boss_thorn_patch_cells(cells, attack)
+		&"eruption_columns":
+			_add_boss_eruption_columns_cells(cells, attack)
+		&"tidal_lane":
+			_add_boss_tidal_lane_cells(cells, enemy, attack)
+		&"mirror_ray":
+			_add_boss_mirror_ray_cells(cells, enemy, attack)
+		&"mirror_reflection":
+			_add_boss_mirror_reflection_cells(cells, enemy, attack)
 		&"summon":
-			pass
+			_add_boss_summon_preview_cells(cells, enemy, attack)
 		_:
 			if not _unknown_boss_attack_shapes.has(shape):
 				_unknown_boss_attack_shapes[shape] = true
@@ -3355,13 +3372,103 @@ func _add_boss_cone_cells(cells: Dictionary, enemy: Node, attack: Resource) -> v
 			_add_boss_attack_cell(cells, center + perpendicular * side)
 
 
+func _add_boss_line_in_direction(
+	cells: Dictionary, enemy: Node, attack: Resource, direction: Vector2i
+) -> void:
+	var perpendicular: Vector2i = _perpendicular(direction)
+	var half_width: int = max(0, int(floor(float(max(1, attack.width)) / 2.0)))
+	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
+	for origin: Vector2i in occupied:
+		if occupied.has(origin + direction):
+			continue
+		for distance: int in range(1, max(1, attack.range) + 1):
+			var center: Vector2i = origin + direction * distance
+			for side: int in range(-half_width, half_width + 1):
+				_add_boss_attack_cell(cells, center + perpendicular * side)
+
+
+func _add_boss_parallax_gaze_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var direction: Vector2i = _dominant_direction_to_player(enemy)
+	var perpendicular: Vector2i = _perpendicular(direction)
+	var lane_radius: int = max(1, attack.radius)
+	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
+	for origin: Vector2i in occupied:
+		if occupied.has(origin + direction):
+			continue
+		for lane: int in range(-lane_radius, lane_radius + 1):
+			for distance: int in range(1, max(1, attack.range) + 1):
+				_add_boss_attack_cell(cells, origin + direction * distance + perpendicular * lane)
+
+
+func _add_boss_thorn_patch_cells(cells: Dictionary, attack: Resource) -> void:
+	var radius: int = max(1, attack.radius)
+	for y_offset: int in range(-radius, radius + 1):
+		for x_offset: int in range(-radius, radius + 1):
+			var distance: int = abs(x_offset) + abs(y_offset)
+			if distance > radius + 1:
+				continue
+			if distance == 0 or x_offset == 0 or y_offset == 0 or abs(x_offset) == abs(y_offset):
+				_add_boss_attack_cell(cells, _player.grid_position + Vector2i(x_offset, y_offset))
+
+
+func _add_boss_eruption_columns_cells(cells: Dictionary, attack: Resource) -> void:
+	var half_width: int = max(1, int(floor(float(max(1, attack.width)) / 2.0)))
+	for lane: int in range(-half_width, half_width + 1):
+		var column_x: int = _player.grid_position.x + lane * 2
+		for y_offset: int in range(-max(1, attack.range), max(1, attack.range) + 1):
+			_add_boss_attack_cell(cells, Vector2i(column_x, _player.grid_position.y + y_offset))
+
+
+func _add_boss_tidal_lane_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var direction: Vector2i = _dominant_direction_to_player(enemy)
+	var perpendicular: Vector2i = _perpendicular(direction)
+	var half_width: int = max(0, int(floor(float(max(1, attack.width)) / 2.0)))
+	for distance: int in range(-max(1, attack.range), max(1, attack.range) + 1):
+		var center: Vector2i = _player.grid_position + direction * distance
+		for side: int in range(-half_width, half_width + 1):
+			_add_boss_attack_cell(cells, center + perpendicular * side)
+
+
+func _add_boss_mirror_ray_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var direction: Vector2i = _dominant_direction_to_player(enemy)
+	_add_boss_line_in_direction(cells, enemy, attack, direction)
+	_add_boss_line_in_direction(cells, enemy, attack, Vector2i(-direction.x, -direction.y))
+
+
+func _add_boss_mirror_reflection_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var mirrored_cell: Vector2i = Vector2i(
+		enemy.grid_position.x * 2 - _player.grid_position.x,
+		enemy.grid_position.y * 2 - _player.grid_position.y
+	)
+	_add_boss_attack_cell(cells, _player.grid_position)
+	_add_boss_attack_cell(cells, mirrored_cell)
+	var diagonals: Array[Vector2i] = [
+		Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)
+	]
+	for direction: Vector2i in diagonals:
+		for distance: int in range(1, max(1, attack.radius) + 1):
+			_add_boss_attack_cell(cells, _player.grid_position + direction * distance)
+			_add_boss_attack_cell(cells, mirrored_cell + direction * distance)
+
+
+func _add_boss_summon_preview_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
+	for _index: int in range(max(1, attack.summon_count)):
+		var summon_cell: Vector2i = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
+		if summon_cell == Vector2i.ZERO:
+			break
+		cells[summon_cell] = true
+		blocked_cells[summon_cell] = true
+
+
 func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
 	if attack == null:
 		return
 	if attack.shape == &"summon":
-		_resolve_boss_summon(enemy, attack)
+		_resolve_boss_summon(enemy, attack, cells)
 		return
-	if cells.has(_player.grid_position):
+	var hit: bool = cells.has(_player.grid_position)
+	if hit:
 		var raw_damage: int = attack.damage_bonus
 		for _die_index: int in range(max(1, attack.damage_dice)):
 			raw_damage += Dice.roll(max(2, attack.damage_sides))
@@ -3388,18 +3495,26 @@ func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> v
 		GameManager.add_log_message(
 			"You evade %s's %s." % [enemy.display_name, attack.id], &"combat_miss"
 		)
+	if _player != null and _player.is_alive():
+		_apply_boss_attack_effect(enemy, attack, hit)
 
 
-func _resolve_boss_summon(enemy: Node, attack: Resource) -> void:
+func _resolve_boss_summon(enemy: Node, attack: Resource, preferred_cells: Dictionary = {}) -> void:
 	var blocked_cells: Dictionary = _current_actor_blocked_cells()
 	var summon_path: String = _boss_summon_path(enemy, attack)
 	var summon_data: Resource = load(summon_path) if not summon_path.is_empty() else null
 	if summon_data == null:
 		GameManager.add_log_message("%s's summons fail to answer." % enemy.display_name, &"warning")
 		return
+	var preferred_list: Array[Vector2i] = []
+	for raw_cell in preferred_cells.keys():
+		if raw_cell is Vector2i:
+			preferred_list.append(raw_cell)
 	var spawned: int = 0
 	for _index: int in range(max(1, attack.summon_count)):
-		var summon_cell: Vector2i = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
+		var summon_cell: Vector2i = _take_preferred_summon_cell(preferred_list, blocked_cells)
+		if summon_cell == Vector2i.ZERO:
+			summon_cell = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
 		if summon_cell == Vector2i.ZERO:
 			break
 		var minion: Node2D = _spawn_enemy_instance(
@@ -3417,6 +3532,134 @@ func _resolve_boss_summon(enemy: Node, attack: Resource) -> void:
 			"%s summons %d ally%s." % [enemy.display_name, spawned, "" if spawned == 1 else "ies"],
 			&"magic"
 		)
+
+
+func _take_preferred_summon_cell(
+	preferred_cells: Array[Vector2i], blocked_cells: Dictionary
+) -> Vector2i:
+	while not preferred_cells.is_empty():
+		var cell: Vector2i = preferred_cells.pop_front()
+		if _is_free_enemy_spawn_cell(cell, blocked_cells):
+			return cell
+	return Vector2i.ZERO
+
+
+func _apply_boss_attack_effect(enemy: Node, attack: Resource, hit: bool) -> void:
+	if attack.effect == &"":
+		return
+	var trigger: StringName = attack.effect_trigger
+	if trigger == &"hit" and not hit:
+		return
+	if trigger == &"evade" and hit:
+		return
+	match attack.effect:
+		&"poison":
+			_apply_boss_poison_effect(attack)
+		&"pull":
+			_try_displace_player_from_boss(enemy, true, max(1, attack.effect_amount))
+		&"push":
+			_try_displace_player_from_boss(enemy, false, max(1, attack.effect_amount))
+		&"phase_shift":
+			_try_phase_shift_boss(enemy)
+
+
+func _apply_boss_poison_effect(attack: Resource) -> void:
+	_poison_turns = max(_poison_turns, max(1, attack.effect_turns))
+	_poison_damage_sides = max(2, attack.effect_amount)
+	GameManager.add_log_message("Virulent spores cling to you.", &"warning")
+
+
+func _try_displace_player_from_boss(enemy: Node, toward_boss: bool, steps: int) -> bool:
+	var direction: Vector2i = _cardinal_step_between(_player.grid_position, enemy.grid_position)
+	if not toward_boss:
+		direction = Vector2i(-direction.x, -direction.y)
+	if direction == Vector2i.ZERO:
+		return false
+	var moved: bool = false
+	for _step: int in range(steps):
+		var target_cell: Vector2i = _player.grid_position + direction
+		if not _can_force_player_to_boss_cell(target_cell):
+			break
+		_player.set_grid_position(target_cell)
+		moved = true
+	if moved:
+		var verb: String = "pulls" if toward_boss else "hurls"
+		GameManager.add_log_message(
+			"%s %s you across the arena." % [enemy.display_name, verb], &"magic"
+		)
+		_play_action_burst(_player.grid_position, &"magic_hit")
+		_refresh_visibility()
+	return moved
+
+
+func _cardinal_step_between(from_cell: Vector2i, to_cell: Vector2i) -> Vector2i:
+	var delta: Vector2i = to_cell - from_cell
+	if delta == Vector2i.ZERO:
+		return Vector2i.ZERO
+	if abs(delta.x) >= abs(delta.y) and delta.x != 0:
+		return Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
+	if delta.y != 0:
+		return Vector2i.DOWN if delta.y > 0 else Vector2i.UP
+	return Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
+
+
+func _can_force_player_to_boss_cell(cell: Vector2i) -> bool:
+	if not _is_cell_in_active_boss_room(cell):
+		return false
+	if not _is_walkable(cell):
+		return false
+	if _is_sealed_boss_door(cell):
+		return false
+	if _get_enemy_at(cell) != null:
+		return false
+	if _is_shopkeeper_at(cell):
+		return false
+	return true
+
+
+func _try_phase_shift_boss(enemy: Node) -> bool:
+	if not _is_boss_enemy(enemy):
+		return false
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
+	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+		blocked_cells.erase(occupied_cell)
+	var mirrored_anchor: Vector2i = Vector2i(
+		_player.grid_position.x * 2 - enemy.grid_position.x,
+		_player.grid_position.y * 2 - enemy.grid_position.y
+	)
+	if _try_place_phase_shifted_boss(enemy, mirrored_anchor, blocked_cells):
+		return true
+	var candidates: Array[Vector2i] = []
+	var room_cells: Dictionary = _active_boss_encounter.get("room_cells", {})
+	for cell: Vector2i in room_cells.keys():
+		if cell == enemy.grid_position:
+			continue
+		if _can_place_boss_at(enemy, cell, blocked_cells):
+			candidates.append(cell)
+	if candidates.is_empty():
+		return false
+	candidates.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool:
+			return (
+				a.distance_squared_to(_player.grid_position)
+				> b.distance_squared_to(_player.grid_position)
+			)
+	)
+	return _try_place_phase_shifted_boss(enemy, candidates[0], blocked_cells)
+
+
+func _try_place_phase_shifted_boss(
+	enemy: Node, anchor_cell: Vector2i, blocked_cells: Dictionary
+) -> bool:
+	if not _can_place_boss_at(enemy, anchor_cell, blocked_cells):
+		return false
+	enemy.set_grid_position(anchor_cell)
+	_refresh_boss_occupied_cells(enemy)
+	GameManager.add_log_message(
+		"%s steps through a broken reflection." % enemy.display_name, &"magic"
+	)
+	_play_action_burst(anchor_cell, &"magic_hit")
+	return true
 
 
 func _boss_summon_path(enemy: Node, attack: Resource) -> String:
@@ -3503,8 +3746,17 @@ func _boss_telegraph_payload_for(enemy: Node, attack: Resource) -> Dictionary:
 			color = Color(0.96, 0.78, 1.0, 1.0)
 			fill_color = Color(0.50, 0.14, 0.72, 0.24)
 			border_color = Color(0.92, 0.62, 1.0, 0.84)
-	if attack != null and attack.shape == &"summon":
-		glyph = "+"
+	if attack != null:
+		if attack.shape == &"summon":
+			glyph = "+"
+		if not attack.telegraph_glyph.is_empty():
+			glyph = attack.telegraph_glyph
+		if attack.telegraph_color.a > 0.0:
+			color = attack.telegraph_color
+		if attack.telegraph_fill_color.a > 0.0:
+			fill_color = attack.telegraph_fill_color
+		if attack.telegraph_border_color.a > 0.0:
+			border_color = attack.telegraph_border_color
 	return {
 		"glyph": glyph,
 		"color": color,
@@ -3560,14 +3812,86 @@ func _show_biome_title(theme: Dictionary) -> void:
 	_biome_overlay_tween.tween_callback(_hide_biome_overlay)
 
 
+func _boss_accent_color(boss_id: StringName) -> Color:
+	match boss_id:
+		&"observer":
+			return Color(0.68, 0.88, 1.0, 1.0)
+		&"seraphine":
+			return Color(0.82, 1.0, 0.42, 1.0)
+		&"vorrak":
+			return Color(1.0, 0.38, 0.12, 1.0)
+		&"kaelros":
+			return Color(0.42, 0.82, 1.0, 1.0)
+		&"nyxara":
+			return Color(0.96, 0.72, 1.0, 1.0)
+	return Color(1.0, 0.34, 0.47, 1.0)
+
+
+func _boss_title_color(boss_id: StringName) -> Color:
+	match boss_id:
+		&"observer":
+			return Color(0.90, 0.96, 1.0, 1.0)
+		&"seraphine":
+			return Color(1.0, 0.72, 0.86, 1.0)
+		&"vorrak":
+			return Color(1.0, 0.72, 0.28, 1.0)
+		&"kaelros":
+			return Color(0.68, 0.94, 1.0, 1.0)
+		&"nyxara":
+			return Color(1.0, 0.82, 1.0, 1.0)
+	return Color(1.0, 0.82, 0.32, 1.0)
+
+
+func _boss_subtitle_color(boss_id: StringName) -> Color:
+	match boss_id:
+		&"observer":
+			return Color(0.72, 0.84, 0.94, 1.0)
+		&"seraphine":
+			return Color(0.80, 0.94, 0.66, 1.0)
+		&"vorrak":
+			return Color(0.94, 0.62, 0.42, 1.0)
+		&"kaelros":
+			return Color(0.62, 0.82, 0.94, 1.0)
+		&"nyxara":
+			return Color(0.84, 0.72, 0.94, 1.0)
+	return Color(0.92, 0.86, 0.74, 1.0)
+
+
+func _boss_overlay_theme(boss_id: StringName) -> Dictionary:
+	var accent_color: Color = _boss_accent_color(boss_id)
+	return {
+		"overlay_bg_color":
+		Color(accent_color.r * 0.055, accent_color.g * 0.040, accent_color.b * 0.065, 0.96),
+	}
+
+
+func _boss_room_tint_color(boss_id: StringName, locked: bool) -> Color:
+	var accent_color: Color = _boss_accent_color(boss_id)
+	var alpha: float = 0.12 if locked else 0.07
+	return Color(accent_color.r, accent_color.g, accent_color.b, alpha)
+
+
+func _boss_spawn_glyphs(boss_id: StringName) -> Array[String]:
+	match boss_id:
+		&"observer":
+			return ["·", "⊙", "◎", "◉"]
+		&"seraphine":
+			return ["v", "^", "✹", "╋"]
+		&"vorrak":
+			return [".", "*", "※", "▴"]
+		&"kaelros":
+			return ["~", "≈", "≋", "♒"]
+		&"nyxara":
+			return ["◇", "◆", "◇", "✦"]
+	return ["·", "*", "✦", "✹"]
+
+
 func _show_boss_title(boss_id: StringName, fallback_name: String) -> void:
 	var story: Dictionary = BOSS_STORY_BY_ID.get(boss_id, {})
-	var accent_color: Color = Color(1.0, 0.34, 0.47)
-	var title_color: Color = Color(1.0, 0.82, 0.32)
-	var subtitle_color: Color = Color(0.92, 0.86, 0.74)
-	var theme: Dictionary = {
-		"overlay_bg_color": Color(0.045, 0.018, 0.030, 0.96),
-	}
+	var accent_color: Color = _boss_accent_color(boss_id)
+	var title_color: Color = _boss_title_color(boss_id)
+	var subtitle_color: Color = _boss_subtitle_color(boss_id)
+	var theme: Dictionary = _boss_overlay_theme(boss_id)
 	_apply_biome_overlay_style(theme, accent_color)
 	biome_kicker_label.text = str(story.get("kicker", "BOSS ENCOUNTER"))
 	biome_kicker_label.add_theme_color_override("font_color", accent_color)
