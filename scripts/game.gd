@@ -183,7 +183,9 @@ var _ranged_recovery_enemies: Dictionary = {}
 var _boss_states: Dictionary = {}
 var _active_boss_encounter: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
+var _boss_hazards: Dictionary = {}
 var _unknown_boss_attack_shapes: Dictionary = {}
+var _unknown_boss_hazard_effects: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
 var _triggered_traps: Dictionary = {}
@@ -848,6 +850,7 @@ func _generate_floor(floor_number: int) -> void:
 	_boss_states.clear()
 	_active_boss_encounter.clear()
 	_boss_telegraphs.clear()
+	_boss_hazards.clear()
 	_unknown_boss_attack_shapes.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
@@ -1029,6 +1032,7 @@ func _boss_resource_for_floor(floor_number: int) -> Resource:
 func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int) -> void:
 	_active_boss_encounter.clear()
 	_boss_telegraphs.clear()
+	_boss_hazards.clear()
 	var boss_metadata: Dictionary = generation_result.get("boss_encounter", {"active": false})
 	if not bool(boss_metadata.get("active", false)):
 		_refresh_boss_presentation()
@@ -1116,7 +1120,7 @@ func _enter_boss_gate(gate_cell: Vector2i) -> bool:
 	_refresh_visibility()
 	var boss: Node2D = _spawn_active_boss()
 	if boss == null:
-		GameManager.add_log_message("The gate collapses; no boss answers.", &"warning")
+		_fail_open_boss_gate_after_spawn_failure()
 		return true
 	_show_boss_title(boss_id, boss.display_name)
 	if (
@@ -1146,6 +1150,27 @@ func _enter_boss_gate(gate_cell: Vector2i) -> bool:
 	return true
 
 
+func _fail_open_boss_gate_after_spawn_failure() -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
+		if _is_inside_map(door_cell):
+			GameManager.map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.OPEN_DOOR
+	var stairs_cell: Vector2i = _active_boss_encounter.get("stairs_cell", _stairs_position)
+	if _is_inside_map(stairs_cell):
+		GameManager.map_data[stairs_cell.y][stairs_cell.x] = DungeonDataScript.TileType.STAIRS_DOWN
+		_stairs_position = stairs_cell
+	_active_boss_encounter["locked"] = false
+	_active_boss_encounter["entered"] = true
+	_active_boss_encounter["defeated"] = true
+	_boss_telegraphs.clear()
+	_boss_hazards.clear()
+	GameManager.add_log_message("The boss gate collapses; the way forward opens.", &"warning")
+	_refresh_boss_presentation()
+	_refresh_visibility()
+	_refresh_map()
+
+
 func _make_boss_state(enemy: Node) -> Dictionary:
 	return {
 		"phase": 1,
@@ -1156,6 +1181,7 @@ func _make_boss_state(enemy: Node) -> Dictionary:
 		"occupied_cells": _calculate_enemy_occupied_cells(enemy),
 		"reward_claimed": false,
 		"nyxara_summon_toggle": false,
+		"attack_cooldowns": {},
 	}
 
 
@@ -1297,6 +1323,7 @@ func _release_boss_encounter() -> void:
 		)
 	_play_action_burst(stairs_cell, &"floor")
 	_boss_telegraphs.clear()
+	_boss_hazards.clear()
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"play_boss_defeat_cue"):
 		sensory_feedback.call(&"play_boss_defeat_cue", _active_boss_encounter.get("boss_id", &""))
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"stop_boss_music"):
@@ -1390,6 +1417,7 @@ func _refresh_boss_presentation() -> void:
 			map_view.call(&"clear_boss_visuals")
 	if map_view != null and map_view.has_method(&"set_boss_telegraphs"):
 		map_view.call(&"set_boss_telegraphs", _build_boss_telegraph_payload() if boss_alive else {})
+	map_view.call(&"set_boss_hazards", _build_boss_hazard_payload() if boss_alive else {})
 	if hud != null:
 		if hud.has_method(&"set_boss_goal_state"):
 			hud.call(
@@ -1400,12 +1428,23 @@ func _refresh_boss_presentation() -> void:
 				bool(_active_boss_encounter.get("defeated", false))
 			)
 		if boss_alive and boss != null and hud.has_method(&"show_boss_health"):
+			var state: Dictionary = _boss_state_for(boss)
+			var phase: int = int(state.get("phase", 1))
+			var room_title: String = ""
+			if boss_data != null:
+				room_title = str(boss_data.boss_room_title)
+			var windup_label: String = ""
+			if state.get("pending_attack", null) != null:
+				windup_label = str(state["pending_attack"].id)
 			hud.call(
 				&"show_boss_health",
 				boss.display_name,
 				boss.stats_component.current_hp,
 				boss.stats_component.max_hp,
-				_boss_accent_color(_active_boss_encounter.get("boss_id", &""))
+				_boss_accent_color(_active_boss_encounter.get("boss_id", &"")),
+				phase,
+				room_title,
+				windup_label
 			)
 		elif hud.has_method(&"hide_boss_health"):
 			hud.call(&"hide_boss_health")
@@ -2864,6 +2903,67 @@ func _apply_poison_tick() -> bool:
 	return true
 
 
+func _apply_boss_hazard_tick() -> bool:
+	if _boss_hazards.is_empty():
+		return true
+	if _boss_hazards.has(_player.grid_position):
+		var hazard: Dictionary = _boss_hazards[_player.grid_position]
+		var source_boss: Node = hazard.get("boss", null)
+		var damage_dice: int = int(hazard.get("damage_dice", 0))
+		var damage_sides: int = max(2, int(hazard.get("damage_sides", 4)))
+		var damage_bonus: int = int(hazard.get("damage_bonus", 0))
+		var damage_type: StringName = hazard.get("damage_type", &"magic")
+		if damage_dice > 0:
+			var raw_damage: int = damage_bonus
+			for _i: int in range(damage_dice):
+				raw_damage += Dice.roll(damage_sides)
+			var damage: int = _player.stats_component.apply_damage(max(1, raw_damage))
+			GameManager.emit_player_damaged()
+			var message: String = str(hazard.get("message", ""))
+			if message.contains("%d"):
+				message = message % damage
+			elif message.is_empty():
+				message = "The boss hazard deals %d %s damage." % [damage, damage_type]
+			GameManager.add_log_message(message, &"warning")
+			if not _player.is_alive():
+				_game_over(false)
+				return false
+		var effect: StringName = hazard.get("effect", &"")
+		if effect != &"":
+			if effect == &"poison":
+				_poison_turns = max(_poison_turns, max(1, int(hazard.get("effect_turns", 3))))
+				_poison_damage_sides = max(2, int(hazard.get("effect_amount", 4)))
+				GameManager.add_log_message("Virulent spores cling to you.", &"warning")
+			elif effect == &"pull":
+				if is_instance_valid(source_boss):
+					_try_displace_player_from_boss(
+						source_boss, true, max(1, int(hazard.get("effect_amount", 1)))
+					)
+			elif effect == &"push":
+				if is_instance_valid(source_boss):
+					_try_displace_player_from_boss(
+						source_boss, false, max(1, int(hazard.get("effect_amount", 1)))
+					)
+			else:
+				if not _unknown_boss_hazard_effects.has(effect):
+					_unknown_boss_hazard_effects[effect] = true
+					GameManager.add_log_message(
+						"Unknown boss hazard effect %s; ignoring it." % effect, &"warning"
+					)
+	var cells_to_erase: Array[Vector2i] = []
+	for cell: Vector2i in _boss_hazards.keys():
+		var hazard: Dictionary = _boss_hazards.get(cell, {})
+		var turns_left: int = int(hazard.get("turns_remaining", 0)) - 1
+		if turns_left <= 0:
+			cells_to_erase.append(cell)
+		else:
+			hazard["turns_remaining"] = turns_left
+			_boss_hazards[cell] = hazard.duplicate(true)
+	for cell: Vector2i in cells_to_erase:
+		_boss_hazards.erase(cell)
+	return true
+
+
 func _tick_stun_action() -> void:
 	if _stun_actions <= 0:
 		return
@@ -2877,6 +2977,8 @@ func _end_player_turn() -> void:
 		_shield_turns -= 1
 	_tick_stun_action()
 	if not _apply_poison_tick():
+		return
+	if not _apply_boss_hazard_tick():
 		return
 	_apply_regen_tick()
 	_advance_dash_charge()
@@ -3114,13 +3216,18 @@ func _create_summoned_enemy_data(summoner_data: Resource) -> Resource:
 
 
 func _count_summoned_minions(enemy: Node) -> int:
-	var count: int = 0
+	if enemy == null or not is_instance_valid(enemy):
+		return 0
 	var summoner_id: int = enemy.get_instance_id()
+	var count: int = 0
 	for candidate in _enemies:
 		if (
 			candidate != null
+			and is_instance_valid(candidate)
+			and candidate.has_meta("summoned_minion")
+			and bool(candidate.get_meta("summoned_minion", false))
+			and int(candidate.get_meta("summoner_id", 0)) == summoner_id
 			and candidate.is_alive()
-			and candidate.get_meta("summoner_id", 0) == summoner_id
 		):
 			count += 1
 	return count
@@ -3180,11 +3287,14 @@ func _process_boss_turn(
 			state["telegraph_cells"] = {}
 			state["telegraph_turns"] = 0
 			_boss_telegraphs.clear()
+		else:
+			_sync_boss_telegraph_turns(enemy, state)
 		_boss_states[enemy] = state
 		_refresh_boss_presentation()
 		_refresh_map()
 		return true
 	var enemy_actor: Enemy = enemy as Enemy
+	_tick_boss_attack_cooldowns(enemy)
 	if enemy_actor.enemy_data.boss_id == &"observer" and distance_to_player > 2.0:
 		if _try_move_boss_toward_player(enemy, blocked_cells):
 			return true
@@ -3239,27 +3349,57 @@ func _update_boss_phase(enemy: Node) -> void:
 			sensory_feedback.call(&"play_boss_phase_cue", enemy_data.boss_id, phase)
 
 
-func _choose_boss_attack(enemy: Node, action_count: int, _distance_to_player: float) -> Resource:
+func _tick_boss_attack_cooldowns(enemy: Node) -> void:
+	var state: Dictionary = _boss_state_for(enemy)
+	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
+	var expired: Array[StringName] = []
+	for raw_attack_id in cooldowns.keys():
+		var attack_id: StringName = raw_attack_id
+		var turns_left: int = int(cooldowns.get(attack_id, 0)) - 1
+		if turns_left <= 0:
+			expired.append(attack_id)
+		else:
+			cooldowns[attack_id] = turns_left
+	for attack_id: StringName in expired:
+		cooldowns.erase(attack_id)
+	state["attack_cooldowns"] = cooldowns
+	_boss_states[enemy] = state
+
+
+func _choose_boss_attack(enemy: Node, _action_count: int, _distance_to_player: float) -> Resource:
 	var enemy_actor: Enemy = enemy as Enemy
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return null
 	var state: Dictionary = _boss_state_for(enemy)
 	var phase: int = int(state.get("phase", 1))
+	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
 	var candidates: Array[Resource] = []
 	for attack: Resource in enemy_actor.enemy_data.boss_attacks:
 		if attack == null:
 			continue
 		if attack.phase_min > phase:
 			continue
-		if action_count % max(1, attack.cooldown) != 0:
+		if int(cooldowns.get(attack.id, 0)) > 0:
+			continue
+		if attack.shape == &"summon" and _boss_summon_slots_available(enemy, attack) <= 0:
 			continue
 		candidates.append(attack)
 	if candidates.is_empty():
 		return null
+	var exact_phase_candidates: Array[Resource] = []
+	for attack: Resource in candidates:
+		if attack.phase_min == phase:
+			exact_phase_candidates.append(attack)
+	if not exact_phase_candidates.is_empty():
+		candidates = exact_phase_candidates
 	var last_attack_id: StringName = state.get("last_attack_id", &"")
+	var preferred: Resource = null
 	for attack: Resource in candidates:
 		if attack.id != last_attack_id:
-			return attack
+			preferred = attack
+			break
+	if preferred != null:
+		return preferred
 	return candidates[0]
 
 
@@ -3452,8 +3592,11 @@ func _add_boss_mirror_reflection_cells(cells: Dictionary, enemy: Node, attack: R
 
 
 func _add_boss_summon_preview_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
+	var slots: int = _boss_summon_slots_available(enemy, attack)
+	if slots <= 0:
+		return
 	var blocked_cells: Dictionary = _current_actor_blocked_cells()
-	for _index: int in range(max(1, attack.summon_count)):
+	for _index: int in range(slots):
 		var summon_cell: Vector2i = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
 		if summon_cell == Vector2i.ZERO:
 			break
@@ -3497,21 +3640,50 @@ func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> v
 		)
 	if _player != null and _player.is_alive():
 		_apply_boss_attack_effect(enemy, attack, hit)
+	if (
+		attack.shape != &"summon"
+		and is_instance_valid(enemy)
+		and enemy.is_alive()
+		and not _active_boss_encounter.is_empty()
+		and not bool(_active_boss_encounter.get("defeated", false))
+	):
+		_queue_boss_hazards(enemy, attack, cells)
+
+
+func _boss_summon_slots_available(enemy: Node, attack: Resource) -> int:
+	var requested: int = max(1, attack.summon_count)
+	if attack.summon_max_active <= 0:
+		return requested
+	var active_minions: int = _count_summoned_minions(enemy)
+	return min(requested, max(0, attack.summon_max_active - active_minions))
 
 
 func _resolve_boss_summon(enemy: Node, attack: Resource, preferred_cells: Dictionary = {}) -> void:
-	var blocked_cells: Dictionary = _current_actor_blocked_cells()
-	var summon_path: String = _boss_summon_path(enemy, attack)
-	var summon_data: Resource = load(summon_path) if not summon_path.is_empty() else null
-	if summon_data == null:
-		GameManager.add_log_message("%s's summons fail to answer." % enemy.display_name, &"warning")
+	var active_minions: int = _count_summoned_minions(enemy)
+	if attack.summon_max_active > 0 and active_minions >= attack.summon_max_active:
+		GameManager.add_log_message(
+			"%s already commands enough summons." % enemy.display_name, &"warning"
+		)
 		return
+	var allowed_spawns: int = max(1, attack.summon_count)
+	if attack.summon_max_active > 0:
+		allowed_spawns = min(allowed_spawns, max(0, attack.summon_max_active - active_minions))
+	var blocked_cells: Dictionary = _current_actor_blocked_cells()
 	var preferred_list: Array[Vector2i] = []
 	for raw_cell in preferred_cells.keys():
 		if raw_cell is Vector2i:
 			preferred_list.append(raw_cell)
 	var spawned: int = 0
-	for _index: int in range(max(1, attack.summon_count)):
+	for _index: int in range(allowed_spawns):
+		var summon_path: String = _boss_summon_path(enemy, attack)
+		if summon_path.is_empty():
+			break
+		var summon_data: Resource = load(summon_path) if not summon_path.is_empty() else null
+		if summon_data == null:
+			GameManager.add_log_message(
+				"%s's summons fail to answer." % enemy.display_name, &"warning"
+			)
+			break
 		var summon_cell: Vector2i = _take_preferred_summon_cell(preferred_list, blocked_cells)
 		if summon_cell == Vector2i.ZERO:
 			summon_cell = _find_boss_room_summon_cell(enemy.grid_position, blocked_cells)
@@ -3561,12 +3733,26 @@ func _apply_boss_attack_effect(enemy: Node, attack: Resource, hit: bool) -> void
 			_try_displace_player_from_boss(enemy, false, max(1, attack.effect_amount))
 		&"phase_shift":
 			_try_phase_shift_boss(enemy)
+		&"stun":
+			_apply_boss_stun_effect(enemy, attack)
 
 
 func _apply_boss_poison_effect(attack: Resource) -> void:
 	_poison_turns = max(_poison_turns, max(1, attack.effect_turns))
 	_poison_damage_sides = max(2, attack.effect_amount)
 	GameManager.add_log_message("Virulent spores cling to you.", &"warning")
+
+
+func _apply_boss_stun_effect(enemy: Node, attack: Resource) -> void:
+	var actions: int = max(1, attack.effect_amount)
+	_stun_actions = max(_stun_actions, actions + 1)
+	GameManager.add_log_message(
+		(
+			"%s pins you in place for %d action%s."
+			% [enemy.display_name, actions, "" if actions == 1 else "s"]
+		),
+		&"warning"
+	)
 
 
 func _try_displace_player_from_boss(enemy: Node, toward_boss: bool, steps: int) -> bool:
@@ -3702,13 +3888,82 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	state["telegraph_turns"] = max(1, attack.telegraph_turns)
 	state["telegraph_cells"] = cells.duplicate(true)
 	state["last_attack_id"] = attack.id
+	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
+	cooldowns[attack.id] = max(1, attack.cooldown)
+	state["attack_cooldowns"] = cooldowns
 	_boss_states[enemy] = state
 	_boss_telegraphs.clear()
 	var payload: Dictionary = _boss_telegraph_payload_for(enemy, attack)
+	var telegraph_turns: int = max(1, attack.telegraph_turns)
+	var enemy_actor: Enemy = enemy as Enemy
+	var boss_id: StringName = &""
+	if enemy_actor != null and enemy_actor.enemy_data != null:
+		boss_id = enemy_actor.enemy_data.boss_id
 	for cell: Vector2i in cells.keys():
 		_boss_telegraphs[cell] = payload.duplicate(true)
 		_boss_telegraphs[cell]["attack_id"] = attack.id
+		_boss_telegraphs[cell]["shape"] = attack.shape
 		_boss_telegraphs[cell]["boss"] = enemy
+		_boss_telegraphs[cell]["boss_id"] = boss_id
+		_boss_telegraphs[cell]["turns_remaining"] = telegraph_turns
+		_boss_telegraphs[cell]["telegraph_turns"] = telegraph_turns
+
+
+func _sync_boss_telegraph_turns(enemy: Node, state: Dictionary) -> void:
+	for cell: Vector2i in _boss_telegraphs.keys():
+		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		if payload.get("boss", null) != enemy:
+			continue
+		payload["turns_remaining"] = max(1, int(state.get("telegraph_turns", 1)))
+		_boss_telegraphs[cell] = payload
+
+
+func _queue_boss_hazards(enemy: Node, attack: Resource, cells: Dictionary) -> void:
+	if attack == null or attack.hazard_turns <= 0:
+		return
+	var payload: Dictionary = _boss_telegraph_payload_for(enemy, attack).duplicate(true)
+	payload["fill_color"] = Color(
+		payload.get("fill_color", Color(1, 1, 1, 1)).r,
+		payload.get("fill_color", Color(1, 1, 1, 1)).g,
+		payload.get("fill_color", Color(1, 1, 1, 1)).b,
+		payload.get("fill_color", Color(1, 1, 1, 1)).a * 0.55
+	)
+	payload["border_color"] = Color(
+		payload.get("border_color", Color(1, 1, 1, 1)).r,
+		payload.get("border_color", Color(1, 1, 1, 1)).g,
+		payload.get("border_color", Color(1, 1, 1, 1)).b,
+		payload.get("border_color", Color(1, 1, 1, 1)).a * 0.70
+	)
+	var glyph: String = attack.hazard_glyph
+	if glyph.is_empty():
+		glyph = attack.telegraph_glyph
+	if glyph.is_empty():
+		glyph = "~"
+	var enemy_actor: Enemy = enemy as Enemy
+	var boss_id: StringName = &""
+	if enemy_actor != null and enemy_actor.enemy_data != null:
+		boss_id = enemy_actor.enemy_data.boss_id
+	for cell: Vector2i in cells.keys():
+		if not _is_cell_in_active_boss_room(cell):
+			continue
+		_boss_hazards[cell] = {
+			"turns_remaining": max(1, attack.hazard_turns),
+			"boss": enemy,
+			"boss_id": boss_id,
+			"source_attack_id": attack.id,
+			"damage_dice": max(0, attack.hazard_damage_dice),
+			"damage_sides": max(2, attack.hazard_damage_sides),
+			"damage_bonus": max(0, attack.hazard_damage_bonus),
+			"damage_type": attack.hazard_damage_type,
+			"effect": attack.hazard_effect,
+			"effect_turns": max(0, attack.effect_turns),
+			"effect_amount": max(0, attack.effect_amount),
+			"glyph": glyph,
+			"color": payload.get("color", Color(1, 1, 1, 1)),
+			"fill_color": payload.get("fill_color", Color(1, 1, 1, 1)),
+			"border_color": payload.get("border_color", Color(1, 1, 1, 1)),
+			"message": attack.hazard_message,
+		}
 
 
 func _boss_telegraph_payload_for(enemy: Node, attack: Resource) -> Dictionary:
@@ -3767,6 +4022,10 @@ func _boss_telegraph_payload_for(enemy: Node, attack: Resource) -> Dictionary:
 
 func _build_boss_telegraph_payload() -> Dictionary:
 	return _boss_telegraphs.duplicate(true)
+
+
+func _build_boss_hazard_payload() -> Dictionary:
+	return _boss_hazards.duplicate(true)
 
 
 # ===== Biome Presentation =====
@@ -4021,6 +4280,7 @@ func _refresh_map() -> void:
 		)
 		if map_view.has_method(&"set_boss_telegraphs"):
 			map_view.call(&"set_boss_telegraphs", _build_boss_telegraph_payload())
+		map_view.call(&"set_boss_hazards", _build_boss_hazard_payload())
 	if map_view != null:
 		map_view.set_traps(_trap_data, _revealed_traps, _triggered_traps)
 		map_view.set_secret_walls(_secret_walls, _revealed_secret_walls, SECRET_WALL_HINT_COLOR)

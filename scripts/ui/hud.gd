@@ -31,6 +31,8 @@ var _hp_tween: Tween
 var _boss_hp_tween: Tween
 var _gold_tween: Tween
 var _xp_tween: Tween
+var _last_boss_phase: int = -1
+var _boss_status_tween: Tween
 
 # === Onready ===
 @onready var name_label: Label = $Margin/VBox/NameLabel
@@ -42,6 +44,7 @@ var _xp_tween: Tween
 @onready var boss_banner: PanelContainer = $BossBanner
 @onready var boss_banner_title_label: Label = $BossBanner/Margin/VBox/TitleLabel
 @onready var boss_banner_hp_label: Label = $BossBanner/Margin/VBox/HpLabel
+@onready var boss_banner_status_label: Label = $BossBanner/Margin/VBox/StatusLabel
 @onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
@@ -96,7 +99,13 @@ func set_boss_goal_state(display_name: String, active: bool, locked: bool, defea
 
 
 func show_boss_health(
-	display_name: String, current_hp: int, max_hp: int, accent_color: Color = Color(1.0, 0.72, 0.28)
+	display_name: String,
+	current_hp: int,
+	max_hp: int,
+	accent_color: Color = Color(1.0, 0.72, 0.28),
+	phase: int = 1,
+	room_title: String = "",
+	windup_label: String = ""
 ) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = true
@@ -108,6 +117,17 @@ func show_boss_health(
 	boss_banner_title_label.text = display_name.to_upper()
 	boss_banner_title_label.add_theme_color_override("font_color", accent_color)
 	_update_boss_hp(current_hp, max_hp)
+	var status_text: String = "PHASE %d" % phase
+	if not room_title.is_empty():
+		status_text += " // %s" % room_title.to_upper()
+	if not windup_label.is_empty():
+		status_text += " // WINDUP: %s" % windup_label.to_upper()
+	boss_banner_status_label.text = status_text
+	if phase != _last_boss_phase:
+		_boss_status_tween = _pulse_label(
+			boss_banner_status_label, _boss_status_tween, accent_color
+		)
+	_last_boss_phase = phase
 	_update_goal_text()
 
 
@@ -125,6 +145,14 @@ func hide_boss_health() -> void:
 	boss_banner_hp_label.text = ""
 	boss_banner_title_label.text = ""
 	boss_banner_title_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
+	boss_banner_status_label.text = ""
+	boss_banner_status_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.74, 1.0))
+	boss_banner_status_label.modulate = Color.WHITE
+	boss_banner_status_label.scale = Vector2.ONE
+	_last_boss_phase = -1
+	if _boss_status_tween != null and _boss_status_tween.is_valid():
+		_boss_status_tween.kill()
+		_boss_status_tween = null
 	_last_boss_hp = -1
 	_update_goal_text()
 

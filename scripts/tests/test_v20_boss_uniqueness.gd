@@ -1,7 +1,8 @@
-## V20.0.0 boss attack data uniqueness and effect contracts.
+## V20.1.0 boss attack data uniqueness and effect contracts.
 ##
 ## Loads all five boss resources and verifies attack data signatures,
-## effect triggers, unique shape visual geometry, and summon preview setup.
+## effect triggers, unique shape visual geometry, V20.1 cooldowns, hazard
+## contracts, summon caps, phase-order identity, and summon preview setup.
 ## One lightweight geometry smoke test instantiates game.tscn to confirm
 ## the new shape methods produce non-empty telegraph cells.
 ##
@@ -42,10 +43,17 @@ const NEW_SHAPES: Array[StringName] = [
 ]
 
 # Boss-specific effect contracts:
-#   poison   → Seraphine spore_burst (effect_trigger = hit)
-#   push     → Vorrak ash_breath     (effect_trigger = hit)
-#   pull     → Kaelros undertow      (effect_trigger = hit)
-#   phase_shift → Nyxara mirror_ray  (effect_trigger = resolve)
+#   stun       → Observer observer_gaze  (effect_trigger = hit)
+#   poison     → Seraphine spore_burst   (effect_trigger = hit)
+#   push       → Vorrak ash_breath       (effect_trigger = hit)
+#   pull       → Kaelros undertow        (effect_trigger = hit)
+#   phase_shift → Nyxara mirror_ray      (effect_trigger = resolve)
+const OBSERVER_GAZE: Dictionary = {
+	"id": &"observer_gaze",
+	"effect": &"stun",
+	"effect_trigger": &"hit",
+	"effect_amount": 1,
+}
 const SERAPHINE_SPORE: Dictionary = {
 	"id": &"spore_burst",
 	"effect": &"poison",
@@ -57,13 +65,13 @@ const VORRAK_BREATH: Dictionary = {
 	"id": &"ash_breath",
 	"effect": &"push",
 	"effect_trigger": &"hit",
-	"effect_amount": 1,
+	"effect_amount": 2,
 }
 const KAELROS_UNDERTOW: Dictionary = {
 	"id": &"undertow",
 	"effect": &"pull",
 	"effect_trigger": &"hit",
-	"effect_amount": 1,
+	"effect_amount": 2,
 }
 const NYXARA_RAY: Dictionary = {
 	"id": &"mirror_ray",
@@ -107,7 +115,19 @@ func _run() -> void:
 	if _failed:
 		return
 
+	_check_hazard_contracts(bosses)
+	if _failed:
+		return
+
 	_check_summon_attacks(bosses)
+	if _failed:
+		return
+
+	_check_cooldown_contracts(bosses)
+	if _failed:
+		return
+
+	_check_phase_order(bosses)
 	if _failed:
 		return
 
@@ -200,8 +220,8 @@ func _check_resource_signatures(bosses: Dictionary) -> void:
 func _check_new_shape_visual_data(bosses: Dictionary) -> void:
 	## Every attack whose shape is one of the six V20-new shapes
 	## must have non-empty telegraph_glyph and non-transparent
-	## telegraph colours.  This is the “non-empty telegraph
-	## geometry” contract — the visual identity of the telegraph.
+	## telegraph colours.  This is the "non-empty telegraph
+	## geometry" contract — the visual identity of the telegraph.
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
 		for attack: Resource in b.boss_attacks:
@@ -232,6 +252,9 @@ func _check_new_shape_visual_data(bosses: Dictionary) -> void:
 
 func _check_effect_contracts(bosses: Dictionary) -> void:
 	## Boss-specific attack effects that fire on hit/resolve.
+	_assert_attack_effect(bosses[&"observer"], OBSERVER_GAZE, "Observer observer_gaze stun on hit")
+	if _failed:
+		return
 	_assert_attack_effect(
 		bosses[&"seraphine"], SERAPHINE_SPORE, "Seraphine spore_burst poison on hit"
 	)
@@ -307,7 +330,8 @@ func _assert_attack_effect(boss: Resource, spec: Dictionary, label: String) -> v
 func _check_summon_attacks(bosses: Dictionary) -> void:
 	## Every summon-type attack has shape="summon", a non-empty
 	## summon_enemy_path, summon_count >= 1, and the path loads
-	## a valid resource.
+	## a valid resource.  V20.1 adds summon_max_active field
+	## validation.
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
 		for attack: Resource in b.boss_attacks:
@@ -321,6 +345,17 @@ func _check_summon_attacks(bosses: Dictionary) -> void:
 				"%s: summon attack missing summon_enemy_path" % tag
 			)
 			_assert(attack.summon_count >= 1, "%s: summon_count should be >= 1" % tag)
+			# V20.1: summon_max_active must exist; when capped, cap >= count
+			_assert("summon_max_active" in attack, "%s: missing summon_max_active field" % tag)
+			_assert(attack.summon_max_active >= 0, "%s: summon_max_active should be >= 0" % tag)
+			if attack.summon_max_active > 0:
+				_assert(
+					attack.summon_max_active >= attack.summon_count,
+					(
+						"%s: summon_max_active %d < summon_count %d"
+						% [tag, attack.summon_max_active, attack.summon_count]
+					)
+				)
 			# The summon path must resolve to a valid resource
 			var summoned: Resource = load(attack.summon_enemy_path)
 			_assert(
@@ -347,6 +382,212 @@ func _check_shape_uniqueness_across_bosses(bosses: Dictionary) -> void:
 			owners.size() == 1,
 			"new shape '%s' used by %s but should be unique to one boss" % [shape, owners]
 		)
+		if _failed:
+			return
+
+
+func _check_hazard_contracts(bosses: Dictionary) -> void:
+	## Every attack with hazard_turns > 0 must have valid hazard
+	## fields.  Also assert specific identity contracts for each
+	## boss's hazard attacks.
+	var hazard_specs: Dictionary = {
+		&"observer":
+		{
+			&"blink_pulse":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 4,
+				"hazard_damage_bonus": 0,
+				"hazard_damage_type": &"magic",
+				"hazard_glyph": "⊙",
+				"hazard_message": "Watched stone burns you for %d magic damage.",
+			},
+		},
+		&"seraphine":
+		{
+			&"spore_burst":
+			{
+				"hazard_turns": 3,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 4,
+				"hazard_damage_bonus": 0,
+				"hazard_damage_type": &"magic",
+				"hazard_effect": &"poison",
+				"hazard_glyph": "✹",
+				"hazard_message": "Virulent spores erupt for %d magic damage.",
+			},
+		},
+		&"vorrak":
+		{
+			&"maw_quake":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 6,
+				"hazard_damage_bonus": 1,
+				"hazard_damage_type": &"fire",
+				"hazard_glyph": "▴",
+				"hazard_message": "Molten cracks sear you for %d fire damage.",
+			},
+		},
+		&"kaelros":
+		{
+			&"undertow":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 4,
+				"hazard_damage_bonus": 1,
+				"hazard_damage_type": &"magic",
+				"hazard_effect": &"pull",
+				"hazard_glyph": "≈",
+				"hazard_message": "The undertow drags through you for %d magic damage.",
+			},
+		},
+		&"nyxara":
+		{
+			&"prism_fracture":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 6,
+				"hazard_damage_bonus": 2,
+				"hazard_damage_type": &"magic",
+				"hazard_glyph": "◆",
+				"hazard_message": "Mirror shards cut you for %d magic damage.",
+			},
+		},
+	}
+	for boss_id: StringName in bosses:
+		var b: Resource = bosses[boss_id]
+		for attack: Resource in b.boss_attacks:
+			if attack.hazard_turns <= 0:
+				continue
+			var tag: String = "%s/%s" % [b.display_name, attack.id]
+
+			# Every hazard attack must have these
+			_assert(
+				not attack.hazard_glyph.is_empty(), "%s: hazard_glyph should be non-empty" % tag
+			)
+			_assert(
+				not attack.hazard_message.is_empty(), "%s: hazard_message should be non-empty" % tag
+			)
+			_assert(attack.hazard_turns >= 1, "%s: hazard_turns should be >= 1" % tag)
+			_assert(attack.hazard_damage_dice > 0, "%s: hazard_damage_dice should be > 0" % tag)
+			_assert(attack.hazard_damage_sides >= 2, "%s: hazard_damage_sides should be >= 2" % tag)
+			_assert(
+				attack.hazard_damage_type != &"", "%s: hazard_damage_type should be non-empty" % tag
+			)
+			_assert(
+				[&"", &"poison", &"pull", &"push"].has(attack.hazard_effect),
+				"%s: hazard_effect '%s' is not in allowed set" % [tag, attack.hazard_effect]
+			)
+			if _failed:
+				return
+
+			# Identity contracts for known hazard attacks
+			var boss_specs: Dictionary = hazard_specs.get(boss_id, {})
+			var attack_spec: Dictionary = boss_specs.get(attack.id, {})
+			if attack_spec.is_empty():
+				_fail("No hazard spec for %s attack %s" % [boss_id, attack.id])
+				return
+			for key: String in attack_spec:
+				var actual = attack.get(key)
+				_assert(
+					actual == attack_spec[key],
+					"%s: hazard %s = %s, expected %s" % [tag, key, actual, attack_spec[key]]
+				)
+			if _failed:
+				return
+
+
+func _check_cooldown_contracts(bosses: Dictionary) -> void:
+	## Exact cooldown values per the V20.1 attack cadence redesign.
+	var cd_specs: Dictionary = {
+		&"observer": {&"observer_gaze": 2, &"blink_pulse": 3},
+		&"seraphine": {&"thorn_lance": 2, &"spore_burst": 3, &"spore_bloom": 4},
+		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3},
+		&"kaelros": {&"undertow": 2, &"drowned_retinue": 4},
+		&"nyxara": {&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 4},
+	}
+	for boss_id: StringName in bosses:
+		var b: Resource = bosses[boss_id]
+		var attack_cds: Dictionary = cd_specs.get(boss_id, {})
+		for attack: Resource in b.boss_attacks:
+			var expected_cd: int = attack_cds.get(attack.id, -1)
+			_assert(
+				expected_cd >= 0,
+				"%s: no cooldown spec for attack '%s'" % [b.display_name, attack.id]
+			)
+			_assert(
+				attack.cooldown == expected_cd,
+				(
+					"%s/%s cooldown = %d, expected %d"
+					% [b.display_name, attack.id, attack.cooldown, expected_cd]
+				)
+			)
+			if _failed:
+				return
+
+
+func _check_phase_order(bosses: Dictionary) -> void:
+	## Phase-unlock identity: distinct mechanics appear at the
+	## intended cadence per V20.1.
+	var phase_specs: Dictionary = {
+		&"observer": {&"blink_pulse": 2},
+		&"seraphine": {&"spore_burst": 2, &"spore_bloom": 3},
+		&"vorrak": {&"maw_quake": 2},
+		&"kaelros": {&"drowned_retinue": 2},
+		&"nyxara": {&"prism_fracture": 2, &"mirror_guard": 3},
+	}
+
+	# Seraphine spore_bloom phase-3 summon must have styled telegraph glyph
+	var ser: Resource = bosses[&"seraphine"]
+	var bloom_checked: bool = false
+	for attack: Resource in ser.boss_attacks:
+		if attack.id == &"spore_bloom":
+			bloom_checked = true
+			_assert(attack.phase_min == 3, "spore_bloom phase_min should be 3")
+			_assert(attack.summon_count == 2, "spore_bloom summon_count should be 2")
+			_assert(attack.summon_max_active == 3, "spore_bloom summon_max_active should be 3")
+			_assert(attack.telegraph_glyph == "✹", "spore_bloom telegraph_glyph should be ✹")
+			_assert(
+				attack.telegraph_color != Color.TRANSPARENT,
+				"spore_bloom telegraph_color should be non-transparent"
+			)
+			_assert(
+				attack.telegraph_fill_color != Color.TRANSPARENT,
+				"spore_bloom telegraph_fill_color should be non-transparent"
+			)
+			_assert(
+				attack.telegraph_border_color != Color.TRANSPARENT,
+				"spore_bloom telegraph_border_color should be non-transparent"
+			)
+			break
+	_assert(bloom_checked, "spore_bloom attack not found on Seraphine")
+	if _failed:
+		return
+
+	# Verify each phase-unlock attack exists with the correct phase_min
+	for boss_id: StringName in phase_specs:
+		var b: Resource = bosses[boss_id]
+		var attack_phases: Dictionary = phase_specs[boss_id]
+		for attack_id: StringName in attack_phases:
+			var expected_phase: int = attack_phases[attack_id]
+			var found: bool = false
+			for attack: Resource in b.boss_attacks:
+				if attack.id == attack_id:
+					found = true
+					_assert(
+						attack.phase_min == expected_phase,
+						(
+							"%s/%s phase_min = %d, expected %d"
+							% [b.display_name, attack.id, attack.phase_min, expected_phase]
+						)
+					)
+					break
+			_assert(found, "%s: phase-order attack '%s' not found" % [b.display_name, attack_id])
 		if _failed:
 			return
 

@@ -30,20 +30,25 @@ telegraph_border_color = Color(0.76, 1, 0.36, 0.84)
 script = ExtResource("2")
 id = &"spore_bloom"
 intent = &"boss_attack"
-phase_min = 2
-cooldown = 3
+phase_min = 3
+cooldown = 4
 telegraph_turns = 1
 shape = &"summon"
 summon_enemy_path = "res://resources/enemies/spore_servant.tres"
-summon_count = 1
+summon_count = 2
+summon_max_active = 3
 warning_text = "Seraphine scatters a spore bloom."
+telegraph_glyph = "✹"
+telegraph_color = Color(0.82, 1.0, 0.46, 1.0)
+telegraph_fill_color = Color(0.18, 0.54, 0.16, 0.24)
+telegraph_border_color = Color(0.90, 0.58, 0.82, 0.86)
 
 [sub_resource type="Resource" id="Resource_seraphine_spores"]
 script = ExtResource("2")
 id = &"spore_burst"
 intent = &"boss_attack"
 phase_min = 2
-cooldown = 4
+cooldown = 3
 telegraph_turns = 1
 shape = &"thorn_patch"
 radius = 2
@@ -61,6 +66,14 @@ telegraph_glyph = "✹"
 telegraph_color = Color(0.76, 1, 0.52, 1)
 telegraph_fill_color = Color(0.22, 0.60, 0.18, 0.26)
 telegraph_border_color = Color(0.90, 0.58, 0.82, 0.86)
+hazard_turns = 3
+hazard_damage_dice = 1
+hazard_damage_sides = 4
+hazard_damage_bonus = 0
+hazard_damage_type = &"magic"
+hazard_effect = &"poison"
+hazard_glyph = "✹"
+hazard_message = "Virulent spores erupt for %d magic damage."
 
 [resource]
 script = ExtResource("1")

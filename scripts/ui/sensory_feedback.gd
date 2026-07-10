@@ -348,16 +348,44 @@ func trigger_cue(cue_name: StringName) -> void:
 		queue_redraw()
 
 
-func play_boss_intro_cue(_boss_id: StringName) -> void:
-	trigger_cue(CUE_BOSS_SPAWN)
+func _boss_cue_color(boss_id: StringName, fallback: Color) -> Color:
+	match boss_id:
+		&"observer":
+			return Color(0.62, 0.84, 1.0, fallback.a)
+		&"seraphine":
+			return Color(0.82, 1.0, 0.42, fallback.a)
+		&"vorrak":
+			return Color(1.0, 0.38, 0.12, fallback.a)
+		&"kaelros":
+			return Color(0.42, 0.82, 1.0, fallback.a)
+		&"nyxara":
+			return Color(0.96, 0.72, 1.0, fallback.a)
+		_:
+			return fallback
 
 
-func play_boss_phase_cue(_boss_id: StringName, _phase: int) -> void:
-	trigger_cue(CUE_BOSS_PHASE)
+func _trigger_boss_cue(cue_name: StringName, boss_id: StringName, phase: int = 1) -> void:
+	if cue_name == &"":
+		return
 
+	if _audio_enabled:
+		_play_cue(cue_name)
 
-func play_boss_defeat_cue(_boss_id: StringName) -> void:
-	trigger_cue(CUE_BOSS_DEFEAT)
+	var visual_config: Variant = CUE_VISUAL.get(cue_name)
+	if visual_config is Dictionary:
+		_visual_color = _boss_cue_color(boss_id, visual_config.get("color", Color.TRANSPARENT))
+		_visual_duration = visual_config.get("duration", 0.25)
+		if cue_name == CUE_BOSS_PHASE:
+			_visual_duration = min(0.75, _visual_duration + 0.08 * float(max(0, phase - 1)))
+		if _reduced_vfx_enabled:
+			_visual_color.a = min(_visual_color.a * REDUCED_VFX_ALPHA_SCALE, REDUCED_VFX_MAX_ALPHA)
+			_visual_duration = max(
+				REDUCED_VFX_MIN_DURATION, _visual_duration * REDUCED_VFX_DURATION_SCALE
+			)
+		_visual_elapsed = 0.0
+		_visual_active = true
+		set_process(true)
+		queue_redraw()
 
 
 ## Returns an array of all registered cue name StringNames.
@@ -376,6 +404,18 @@ func get_cue_stream(cue_name: StringName) -> AudioStreamWAV:
 ## Returns `true` while visual feedback from a triggered cue is still active.
 func has_active_visual_feedback() -> bool:
 	return _visual_active
+
+
+func play_boss_intro_cue(boss_id: StringName) -> void:
+	_trigger_boss_cue(CUE_BOSS_SPAWN, boss_id)
+
+
+func play_boss_phase_cue(boss_id: StringName, phase: int) -> void:
+	_trigger_boss_cue(CUE_BOSS_PHASE, boss_id, phase)
+
+
+func play_boss_defeat_cue(boss_id: StringName) -> void:
+	_trigger_boss_cue(CUE_BOSS_DEFEAT, boss_id)
 
 
 ## Enables or disables all audio playback, optionally announcing via log.

@@ -69,6 +69,7 @@ var _boss_room_tint_color: Color = Color.TRANSPARENT
 var _boss_visuals: Dictionary = {}
 var _boss_occupied_cells: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
+var _boss_hazards: Dictionary = {}
 var _boss_frame_elapsed: float = 0.0
 var _boss_frame_index: int = 0
 var _boss_spawn_effects: Dictionary = {}
@@ -187,6 +188,11 @@ func clear_boss_visuals() -> void:
 
 func set_boss_telegraphs(telegraphs: Dictionary) -> void:
 	_boss_telegraphs = telegraphs.duplicate(true)
+	queue_redraw()
+
+
+func set_boss_hazards(hazards: Dictionary) -> void:
+	_boss_hazards = hazards.duplicate(true)
 	queue_redraw()
 
 
@@ -336,6 +342,7 @@ func _draw() -> void:
 			)
 
 	_draw_boss_room_tint(playfield_rect)
+	_draw_boss_hazards(draw_font, ascent, playfield_rect)
 
 	for target_cell: Vector2i in _target_range_cells.keys():
 		if not _visible_cells.has(target_cell) or not _explored_cells.has(target_cell):
@@ -356,7 +363,7 @@ func _draw() -> void:
 			continue
 		_draw_cell_highlight(area_cell, Color(1.0, 0.30, 0.08, 0.24), Color(1.0, 0.55, 0.18, 0.78))
 		_draw_glyph(draw_font, area_point, "*", Color(1.0, 0.72, 0.28, 0.95), false)
-	_draw_boss_telegraphs(draw_font, ascent, playfield_rect)
+	_draw_boss_telegraph_fills(draw_font, ascent, playfield_rect)
 
 	for item_position: Vector2i in _items.keys():
 		if not _visible_cells.has(item_position):
@@ -434,6 +441,7 @@ func _draw() -> void:
 		)
 		_draw_glyph(draw_font, actor_point, actor.glyph, actor.color)
 	_draw_enemy_intents(draw_font, ascent, playfield_rect)
+	_draw_boss_telegraph_glyphs(draw_font, ascent, playfield_rect)
 
 	if _targeting_active and _visible_cells.has(_target_cursor):
 		var cursor_point: Vector2 = _cell_draw_position(_target_cursor, ascent)
@@ -464,7 +472,35 @@ func _draw_boss_room_tint(playfield_rect: Rect2) -> void:
 		draw_rect(_inset_cell_rect(cell, 1.0), fill_color)
 
 
-func _draw_boss_telegraphs(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for cell: Vector2i in _boss_hazards.keys():
+		if not _visible_cells.has(cell):
+			continue
+		var point: Vector2 = _cell_draw_position(cell, ascent)
+		if not _is_inside_playfield(point, playfield_rect):
+			continue
+		var payload: Dictionary = _boss_hazards.get(cell, {})
+		var glyph: String = str(payload.get("glyph", "~"))
+		var fill_color: Color = payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12))
+		var border_color: Color = payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18))
+		var glyph_color: Color = payload.get("color", Color(0.6, 0.8, 1.0, 1.0))
+		_draw_cell_highlight(cell, fill_color, border_color)
+		_draw_glyph(draw_font, point, glyph, glyph_color, false)
+
+
+func _draw_boss_telegraph_fills(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for cell: Vector2i in _boss_telegraphs.keys():
+		if not _visible_cells.has(cell):
+			continue
+		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		if payload.is_empty():
+			continue
+		var fill_color: Color = payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26))
+		var border_color: Color = payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78))
+		_draw_cell_highlight(cell, fill_color, border_color)
+
+
+func _draw_boss_telegraph_glyphs(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for cell: Vector2i in _boss_telegraphs.keys():
 		if not _visible_cells.has(cell):
 			continue
@@ -472,12 +508,14 @@ func _draw_boss_telegraphs(draw_font: Font, ascent: float, playfield_rect: Rect2
 		if not _is_inside_playfield(point, playfield_rect):
 			continue
 		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		if payload.is_empty():
+			continue
 		var glyph: String = str(payload.get("glyph", "!"))
-		var fill_color: Color = payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26))
-		var border_color: Color = payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78))
 		var glyph_color: Color = payload.get("color", Color(1.0, 0.64, 0.20, 1.0))
-		_draw_cell_highlight(cell, fill_color, border_color)
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
+		var turns_remaining: int = int(payload.get("turns_remaining", 1))
+		var corner_marker: String = str(turns_remaining) if turns_remaining > 1 else "!"
+		_draw_glyph(draw_font, point + Vector2(7, -8), corner_marker, glyph_color, false)
 
 
 func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:

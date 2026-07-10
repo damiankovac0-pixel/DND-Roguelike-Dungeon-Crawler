@@ -34,6 +34,8 @@ func _run() -> void:
 	if not _failed:
 		await _check_gate_entry_and_rewards()
 	if not _failed:
+		await _check_fail_open_no_spawn()
+	if not _failed:
 		print("V20 boss flow checks passed")
 		quit(0)
 
@@ -189,6 +191,113 @@ func _check_boss_defeat_rewards(boss: Node) -> void:
 		_game._player.stats_component.gold == gold_before + boss.enemy_data.boss_reward_gold,
 		"boss gold reward should not include normal enemy gold"
 	)
+
+
+func _check_fail_open_no_spawn() -> void:
+	_game_manager.prepare_character("debug", {}, _game_manager.CLASS_FIGHTER)
+	var fail_game: Node = load("res://scenes/game.tscn").instantiate()
+	root.add_child(fail_game)
+	await process_frame
+	fail_game._generate_floor(BOSS_FLOOR)
+	await process_frame
+	var encounter: Dictionary = fail_game._active_boss_encounter
+	_assert(not encounter.is_empty(), "fail-open: no active encounter on boss floor")
+	if _failed:
+		fail_game.queue_free()
+		await process_frame
+		return
+	var gate_cell: Vector2i = encounter.get("gate_cell", Vector2i.ZERO)
+	var gate_entry_cell: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	_assert(gate_cell != Vector2i.ZERO, "fail-open: no gate cell in encounter")
+	_assert(gate_entry_cell != Vector2i.ZERO, "fail-open: no gate entry cell in encounter")
+	if _failed:
+		fail_game.queue_free()
+		await process_frame
+		return
+	# Remove all enemies
+	for enemy: Node in fail_game._enemies.duplicate():
+		fail_game._enemies.erase(enemy)
+		_game_manager.remove_enemy(enemy)
+		enemy.queue_free()
+	# Position player outside the gate
+	fail_game._player.set_grid_position(gate_entry_cell)
+	# Record state before gate entry
+	var turn_before: int = _game_manager.turn_count
+	var gold_before: int = fail_game._player.stats_component.gold
+	var container_count_before: int = fail_game._container_positions.size()
+	var room_cells: Dictionary = encounter.get("room_cells", {})
+	var boss_room_containers_before: int = 0
+	for cell: Vector2i in fail_game._container_positions:
+		if room_cells.has(cell):
+			boss_room_containers_before += 1
+	# Sabotage boss spawn
+	encounter["boss_data"] = null
+	# Step onto the gate cell
+	var gate_dir: Vector2i = gate_cell - gate_entry_cell
+	fail_game._attempt_player_move(gate_dir)
+	await process_frame
+	# Assert fail-open state
+	_assert(bool(encounter.get("entered", false)), "fail-open should set entered=true")
+	_assert(bool(encounter.get("defeated", false)), "fail-open should set defeated=true")
+	_assert(not bool(encounter.get("locked", true)), "fail-open should set locked=false")
+	if _failed:
+		fail_game.queue_free()
+		await process_frame
+		return
+	# Assert all door tiles changed to OPEN_DOOR
+	for door_cell: Vector2i in encounter.get("door_cells", []):
+		if fail_game._is_inside_map(door_cell):
+			_assert(
+				(
+					_game_manager.map_data[door_cell.y][door_cell.x]
+					== fail_game.DungeonDataScript.TileType.OPEN_DOOR
+				),
+				"fail-open should open boss door at %s" % door_cell
+			)
+	# Assert stairs tile is STAIRS_DOWN
+	var stairs_cell: Vector2i = encounter.get("stairs_cell", fail_game._stairs_position)
+	_assert(
+		(
+			_game_manager.map_data[stairs_cell.y][stairs_cell.x]
+			== fail_game.DungeonDataScript.TileType.STAIRS_DOWN
+		),
+		"fail-open should reveal stairs tile"
+	)
+	# Assert no turn consumed
+	_assert(_game_manager.turn_count == turn_before, "fail-open should not consume a turn")
+	# Assert no gold reward
+	_assert(
+		fail_game._player.stats_component.gold == gold_before, "fail-open should not grant gold"
+	)
+	# Assert no containers added
+	_assert(
+		fail_game._container_positions.size() == container_count_before,
+		"fail-open should not add containers"
+	)
+	var boss_room_containers_after: int = 0
+	for cell: Vector2i in fail_game._container_positions:
+		if room_cells.has(cell):
+			boss_room_containers_after += 1
+	_assert(
+		boss_room_containers_after == boss_room_containers_before,
+		"fail-open should not add boss-room containers"
+	)
+	if _failed:
+		fail_game.queue_free()
+		await process_frame
+		return
+	# _reach_stairs should advance to floor 6 because encounter is marked defeated
+	fail_game._reach_stairs()
+	await process_frame
+	_assert(
+		_game_manager.current_floor == BOSS_FLOOR + 1,
+		(
+			"fail-open _reach_stairs should advance to floor %d, got %d"
+			% [BOSS_FLOOR + 1, _game_manager.current_floor]
+		)
+	)
+	fail_game.queue_free()
+	await process_frame
 
 
 func _assert(condition: bool, message: String) -> void:
