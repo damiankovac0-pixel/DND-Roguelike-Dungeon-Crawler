@@ -22,4 +22,5 @@ ranged_attack_interval = 3
 ranged_damage_sides = 8
 ranged_damage_bonus = 6
 ranged_damage_type = &"magic"
+ranged_projectile_id = &"tidal_bolt"
 ai_preferred_range = 4

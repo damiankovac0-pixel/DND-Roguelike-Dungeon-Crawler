@@ -36,6 +36,9 @@ func _run() -> void:
 	await _check_pause_menu_exposes_reduced_vfx()
 	if _failed:
 		return
+	await _check_game_syncs_map_reduced_vfx()
+	if _failed:
+		return
 	await _reset_reduced_vfx_preference()
 	if _failed:
 		return
@@ -143,6 +146,40 @@ func _check_pause_menu_exposes_reduced_vfx() -> void:
 	game.queue_free()
 	await process_frame
 	print("  pause menu exposes remembered Reduce VFX control")
+
+
+func _check_game_syncs_map_reduced_vfx() -> void:
+	var game_manager: Node = root.get_node_or_null("/root/GameManager")
+	if game_manager == null:
+		_fail("GameManager autoload missing for MapView reduced VFX sync")
+		return
+	game_manager.prepare_character("debug", {})
+	var game_scene: PackedScene = load(GAME_SCENE_PATH)
+	if game_scene == null:
+		_fail("game scene failed to load for MapView reduced VFX sync")
+		return
+	var game: Node = game_scene.instantiate()
+	root.add_child(game)
+	await process_frame
+	game.map_view.set_atmosphere_enabled(false)
+	game.sensory_feedback.set_reduced_vfx_enabled(true, true)
+	game._sync_map_reduced_vfx()
+	if not game.map_view._reduced_vfx_enabled:
+		_fail("Game should sync enabled Reduce VFX state into MapView")
+		game_manager.abandon_run()
+		game.queue_free()
+		return
+	game.sensory_feedback.set_reduced_vfx_enabled(false, true)
+	game._sync_map_reduced_vfx()
+	if game.map_view._reduced_vfx_enabled:
+		_fail("Game should sync disabled Reduce VFX state into MapView")
+		game_manager.abandon_run()
+		game.queue_free()
+		return
+	game_manager.abandon_run()
+	game.queue_free()
+	await process_frame
+	print("  game syncs Reduce VFX state into MapView projectile rendering")
 
 
 func _reset_reduced_vfx_preference() -> void:

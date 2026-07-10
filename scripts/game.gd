@@ -104,6 +104,7 @@ const ResourcePathsScript = preload("res://scripts/resource_paths.gd")
 const CombatSystemScript = preload("res://scripts/systems/combat_system.gd")
 const PathfindingScript = preload("res://scripts/systems/pathfinding.gd")
 const FOVSystemScript = preload("res://scripts/systems/fov_system.gd")
+const ProjectileSystemScript = preload("res://scripts/systems/projectile_system.gd")
 const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const TrapSystem = preload("res://scripts/systems/trap_system.gd")
 const CONTAINER_TYPE_CHEST: StringName = &"chest"
@@ -466,7 +467,20 @@ func _close_pause_menu() -> void:
 
 ## Synchronises the pause-menu audio controls with the current SensoryFeedback
 ## state.  Safe to call when sensory_feedback is null.
+func _sync_map_reduced_vfx() -> void:
+	if map_view == null or not map_view.has_method(&"set_reduced_vfx_enabled"):
+		return
+	var reduced: bool = false
+	if (
+		is_instance_valid(sensory_feedback)
+		and sensory_feedback.has_method(&"is_reduced_vfx_enabled")
+	):
+		reduced = bool(sensory_feedback.call(&"is_reduced_vfx_enabled"))
+	map_view.call(&"set_reduced_vfx_enabled", reduced)
+
+
 func _refresh_audio_controls() -> void:
+	_sync_map_reduced_vfx()
 	if not is_instance_valid(sensory_feedback):
 		return
 	var sf: Object = sensory_feedback
@@ -481,6 +495,7 @@ func _refresh_audio_controls() -> void:
 		var vol_int: int = int(round(vol * 100.0))
 		pause_master_volume_slider.set_value_no_signal(float(vol_int))
 		pause_master_volume_value_label.text = "%d%%" % vol_int
+	_sync_map_reduced_vfx()
 
 
 func _on_audio_enabled_toggled(button_pressed: bool) -> void:
@@ -506,6 +521,7 @@ func _on_reduced_vfx_toggled(button_pressed: bool) -> void:
 		and sensory_feedback.has_method(&"set_reduced_vfx_enabled")
 	):
 		sensory_feedback.call(&"set_reduced_vfx_enabled", button_pressed, true)
+	_sync_map_reduced_vfx()
 
 
 func _on_pause_resume_pressed() -> void:
@@ -851,6 +867,7 @@ func _generate_floor(floor_number: int) -> void:
 	_active_boss_encounter.clear()
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
+	_clear_projectile_trails()
 	_unknown_boss_attack_shapes.clear()
 	_trap_data.clear()
 	_revealed_traps.clear()
@@ -1033,6 +1050,7 @@ func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int
 	_active_boss_encounter.clear()
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
+	_clear_projectile_trails()
 	var boss_metadata: Dictionary = generation_result.get("boss_encounter", {"active": false})
 	if not bool(boss_metadata.get("active", false)):
 		_refresh_boss_presentation()
@@ -1165,6 +1183,7 @@ func _fail_open_boss_gate_after_spawn_failure() -> void:
 	_active_boss_encounter["defeated"] = true
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
+	_clear_projectile_trails()
 	GameManager.add_log_message("The boss gate collapses; the way forward opens.", &"warning")
 	_refresh_boss_presentation()
 	_refresh_visibility()
@@ -1324,6 +1343,7 @@ func _release_boss_encounter() -> void:
 	_play_action_burst(stairs_cell, &"floor")
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
+	_clear_projectile_trails()
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"play_boss_defeat_cue"):
 		sensory_feedback.call(&"play_boss_defeat_cue", _active_boss_encounter.get("boss_id", &""))
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"stop_boss_music"):
@@ -2279,6 +2299,11 @@ func _activate_ranger_volley() -> void:
 	)
 	for i: int in range(min(target_count, visible_enemies.size())):
 		targets.append(visible_enemies[i])
+	var volley_payload: Dictionary = ProjectileSystemScript.payload_from_item(
+		ranged_weapon, &"weapon", &"ranged"
+	)
+	for target: Node2D in targets:
+		_play_projectile_between(_player.grid_position, target.grid_position, volley_payload)
 	for target: Node2D in targets:
 		var dex_mod: int = Dice.modifier(_player.stats_component.dexterity)
 		var raw_damage: int = max(1, Dice.roll(ranged_weapon.damage_sides) + dex_mod)
@@ -2319,6 +2344,11 @@ func _activate_wizard_spark() -> void:
 		)
 		return
 	_wizard_spark_charges -= 1
+	_play_projectile_between(
+		_player.grid_position,
+		nearest_enemy.grid_position,
+		ProjectileSystemScript.payload_for_id(&"arcane_spark", &"magic", ACTION_BURST_MAGIC_COLOR)
+	)
 	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
 	var raw_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 5)
 	var damage: int = _apply_typed_damage(nearest_enemy, raw_damage, &"magic")
@@ -2352,6 +2382,13 @@ func _activate_wizard_frost_nova() -> void:
 	_wizard_frost_nova_charges -= 1
 	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
 	var base_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 4)
+	var nova_cells: Array[Vector2i] = []
+	for target: Node2D in affected_enemies:
+		nova_cells.append(target.grid_position)
+	_play_projectile_cells(
+		nova_cells,
+		ProjectileSystemScript.payload_for_id(&"frost_nova", &"magic", Color(0.62, 0.90, 1.0))
+	)
 	for target: Node2D in affected_enemies:
 		var damage: int = _apply_typed_damage(target, base_damage, &"magic")
 		GameManager.add_log_message(
@@ -2386,6 +2423,13 @@ func _activate_wizard_chain_lightning() -> void:
 	var targets: Array[Node2D] = []
 	for i: int in range(min(target_count, candidates.size())):
 		targets.append(candidates[i])
+	var chain_payload: Dictionary = ProjectileSystemScript.payload_for_id(
+		&"chain_lightning", &"magic", ACTION_BURST_MAGIC_COLOR
+	)
+	var chain_source: Vector2i = _player.grid_position
+	for target: Node2D in targets:
+		_play_projectile_between(chain_source, target.grid_position, chain_payload)
+		chain_source = target.grid_position
 	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
 	var base_damage: int = Dice.roll(6) + max(0, wis_mod) + int(player_level / 2)
 	for target: Node2D in targets:
@@ -2748,6 +2792,44 @@ func _play_action_burst(cell: Vector2i, burst_type: StringName) -> void:
 			color = ACTION_BURST_WARNING_COLOR
 			glyph = "!"
 	map_view.play_cell_burst(cell, color, glyph)
+
+
+func _play_projectile_between(
+	source_cell: Vector2i, target_cell: Vector2i, payload: Dictionary
+) -> void:
+	var cells: Array[Vector2i] = ProjectileSystemScript.line_cells(source_cell, target_cell)
+	_play_projectile_trail(cells, payload)
+
+
+func _play_projectile_cells(cells: Array[Vector2i], payload: Dictionary) -> void:
+	_play_projectile_trail(cells, payload)
+
+
+func _play_projectile_trail(cells: Array[Vector2i], payload: Dictionary) -> void:
+	if map_view == null or not map_view.has_method(&"play_projectile_trail"):
+		return
+	map_view.call(&"play_projectile_trail", cells, payload)
+
+
+func _projectile_area_cells(center: Vector2i, radius: int) -> Array[Vector2i]:
+	var cells: Dictionary = {}
+	for y: int in range(center.y - radius, center.y + radius + 1):
+		for x: int in range(center.x - radius, center.x + radius + 1):
+			var cell: Vector2i = Vector2i(x, y)
+			if not _is_inside_map(cell):
+				continue
+			if not _visible_cells.has(cell) or not _explored_cells.has(cell):
+				continue
+			if center.distance_to(cell) > radius:
+				continue
+			cells[cell] = true
+	return ProjectileSystemScript.array_from_cell_keys(cells)
+
+
+func _clear_projectile_trails() -> void:
+	if map_view == null or not map_view.has_method(&"clear_projectile_trails"):
+		return
+	map_view.call(&"clear_projectile_trails")
 
 
 func _play_container_open_burst(cell: Vector2i, container_data: Dictionary) -> void:
@@ -3131,6 +3213,11 @@ func _resolve_enemy_ranged_attack(enemy: Node) -> void:
 	var damage_type: StringName = enemy_data.ranged_damage_type
 	if damage_type == &"":
 		damage_type = &"piercing"
+	_play_projectile_between(
+		enemy.grid_position,
+		_player.grid_position,
+		ProjectileSystemScript.payload_from_enemy_ranged(enemy_data)
+	)
 	damage = _player.stats_component.apply_damage(damage)
 	var action_text: String = "casts a spell at" if damage_type == &"magic" else "shoots"
 	var message_type: StringName = &"magic" if damage_type == &"magic" else &"combat_hit"
@@ -3148,6 +3235,11 @@ func _resolve_enemy_fireball(enemy: Node) -> void:
 	for _die_index: int in range(max(1, enemy_data.fireball_damage_dice)):
 		raw_damage += Dice.roll(max(2, enemy_data.fireball_damage_sides))
 	var damage: int = max(1, raw_damage)
+	_play_projectile_between(
+		enemy.grid_position,
+		_player.grid_position,
+		ProjectileSystemScript.payload_from_enemy_fireball(enemy_data)
+	)
 	damage = _player.stats_component.apply_damage(damage)
 	GameManager.add_log_message(
 		"%s hurls a fireball at you for %d fire damage." % [enemy.display_name, damage], &"magic"
@@ -3604,12 +3696,26 @@ func _add_boss_summon_preview_cells(cells: Dictionary, enemy: Node, attack: Reso
 		blocked_cells[summon_cell] = true
 
 
+func _play_boss_projectile_resolution(enemy: Node, attack: Resource, cells: Dictionary) -> void:
+	if attack == null or attack.shape == &"summon":
+		return
+	var queued_cells: Array[Vector2i] = ProjectileSystemScript.array_from_cell_keys(cells)
+	if queued_cells.is_empty():
+		return
+	var payload: Dictionary = ProjectileSystemScript.payload_from_boss_attack(attack)
+	if attack.shape == &"single_player":
+		_play_projectile_between(enemy.grid_position, queued_cells[0], payload)
+	else:
+		_play_projectile_cells(queued_cells, payload)
+
+
 func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
 	if attack == null:
 		return
 	if attack.shape == &"summon":
 		_resolve_boss_summon(enemy, attack, cells)
 		return
+	_play_boss_projectile_resolution(enemy, attack, cells)
 	var hit: bool = cells.has(_player.grid_position)
 	if hit:
 		var raw_damage: int = attack.damage_bonus
@@ -3943,6 +4049,7 @@ func _queue_boss_hazards(enemy: Node, attack: Resource, cells: Dictionary) -> vo
 	var boss_id: StringName = &""
 	if enemy_actor != null and enemy_actor.enemy_data != null:
 		boss_id = enemy_actor.enemy_data.boss_id
+	var hazard_vfx_payload: Dictionary = ProjectileSystemScript.payload_from_boss_hazard(attack)
 	for cell: Vector2i in cells.keys():
 		if not _is_cell_in_active_boss_room(cell):
 			continue
@@ -3963,6 +4070,7 @@ func _queue_boss_hazards(enemy: Node, attack: Resource, cells: Dictionary) -> vo
 			"fill_color": payload.get("fill_color", Color(1, 1, 1, 1)),
 			"border_color": payload.get("border_color", Color(1, 1, 1, 1)),
 			"message": attack.hazard_message,
+			"vfx_payload": hazard_vfx_payload.duplicate(true),
 		}
 
 
@@ -4880,6 +4988,19 @@ func _is_valid_target_cell(cell: Vector2i, item: Resource) -> bool:
 
 func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) -> bool:
 	if _revealed_secret_walls.has(cell):
+		if (
+			item.use_effect == ItemDataScript.ItemUse.RANGED_ATTACK
+			or item.use_effect == ItemDataScript.ItemUse.MAGIC_MISSILE
+			or item.use_effect == ItemDataScript.ItemUse.AREA_DAMAGE
+		):
+			var secret_damage_type: StringName = (
+				&"magic" if source == &"consumable" else item.weapon_damage_type
+			)
+			_play_projectile_between(
+				_player.grid_position,
+				cell,
+				ProjectileSystemScript.payload_from_item(item, source, secret_damage_type)
+			)
 		_damage_secret_wall(cell, 1, source)
 		return true
 	match item.use_effect:
@@ -4903,7 +5024,11 @@ func _resolve_magic_missile(item: Resource, cell: Vector2i) -> bool:
 	if missile_targets.is_empty():
 		GameManager.add_log_message("No visible enemy is in missile range.", &"warning")
 		return false
+	var missile_payload: Dictionary = ProjectileSystemScript.payload_from_item(
+		item, &"consumable", &"magic"
+	)
 	for target: Node2D in missile_targets:
+		_play_projectile_between(_player.grid_position, target.grid_position, missile_payload)
 		var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
 		var damage: int = _apply_typed_damage(target, raw_damage, &"magic")
 		GameManager.add_log_message(
@@ -4954,6 +5079,17 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 		attack_total += focus_accuracy
 	var is_critical: bool = roll_result == 20
 	var hit: bool = is_critical or attack_total >= defender.stats_component.get_armor_class()
+	var attack_damage_type: StringName = (
+		&"magic" if is_magic_weapon or source == &"consumable" else &"ranged"
+	)
+	var attack_verb: String = (
+		"blasts" if is_magic_weapon else ("shoots" if source == &"weapon" else "scorches")
+	)
+	_play_projectile_between(
+		_player.grid_position,
+		defender.grid_position,
+		ProjectileSystemScript.payload_from_item(item, source, attack_damage_type)
+	)
 	if hit:
 		var damage_bonus: int = _get_scroll_damage_bonus(item)
 		if source == &"weapon":
@@ -4980,20 +5116,12 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 				),
 				&"magic"
 			)
-		var damage_type: StringName
-		var verb: String
-		if is_magic_weapon:
-			damage_type = &"magic"
-			verb = "blasts"
-		elif source == &"weapon":
-			damage_type = &"ranged"
-			verb = "shoots"
-		else:
-			damage_type = &"magic"
-			verb = "scorches"
-		var damage: int = _apply_typed_damage(defender, raw_damage, damage_type)
+		var damage: int = _apply_typed_damage(defender, raw_damage, attack_damage_type)
 		GameManager.add_log_message(
-			"%s %s %s for %d damage." % [_player.display_name, verb, defender.display_name, damage],
+			(
+				"%s %s %s for %d damage."
+				% [_player.display_name, attack_verb, defender.display_name, damage]
+			),
 			&"combat_hit"
 		)
 		_play_action_burst(
@@ -5001,7 +5129,7 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 			(
 				&"critical"
 				if is_critical
-				else (&"magic_hit" if damage_type == &"magic" else &"ranged_hit")
+				else (&"magic_hit" if attack_damage_type == &"magic" else &"ranged_hit")
 			)
 		)
 		_handle_defender_after_damage(defender)
@@ -5019,42 +5147,53 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 
 
 func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
-	var affected_count: int = 0
+	var affected_enemies: Array[Node2D] = []
 	for enemy in _enemies:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
-			var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
-			var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
-			GameManager.add_log_message(
-				(
-					"%s erupts for %d damage around %s."
-					% [item.display_name, damage, enemy.display_name]
-				),
-				&"magic"
-			)
-			_play_action_burst(enemy.grid_position, &"magic_hit")
-			_handle_defender_after_damage(enemy)
-			affected_count += 1
-	if affected_count <= 0:
+			affected_enemies.append(enemy)
+	if affected_enemies.is_empty():
 		GameManager.add_log_message("No enemies are caught in the blast.", &"warning")
 		return false
+	var area_payload: Dictionary = ProjectileSystemScript.payload_from_item(
+		item, &"consumable", &"fire" if item.projectile_id == &"fireball" else &"magic"
+	)
+	var area_vfx_cells: Array[Vector2i] = _projectile_area_cells(cell, item.target_radius)
+	_play_projectile_between(_player.grid_position, cell, area_payload)
+	_play_projectile_cells(area_vfx_cells, area_payload)
+	for enemy: Node2D in affected_enemies:
+		var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
+		var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
+		GameManager.add_log_message(
+			"%s erupts for %d damage around %s." % [item.display_name, damage, enemy.display_name],
+			&"magic"
+		)
+		_play_action_burst(enemy.grid_position, &"magic_hit")
+		_handle_defender_after_damage(enemy)
 	return true
 
 
 func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
-	var affected_count: int = 0
+	var affected_enemies: Array[Node2D] = []
 	for enemy in _enemies:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
-			_sleeping_enemies[enemy] = item.effect_duration
-			_play_action_burst(enemy.grid_position, &"magic_hit")
-			affected_count += 1
-	if affected_count <= 0:
+			affected_enemies.append(enemy)
+	if affected_enemies.is_empty():
 		GameManager.add_log_message("No enemies are in the sleep radius.", &"warning")
 		return false
-	GameManager.add_log_message("Sleep affects %d enemies." % affected_count, &"magic")
+	var sleep_payload: Dictionary = ProjectileSystemScript.payload_from_item(
+		item, &"consumable", &"magic"
+	)
+	var sleep_vfx_cells: Array[Vector2i] = _projectile_area_cells(cell, item.target_radius)
+	_play_projectile_between(_player.grid_position, cell, sleep_payload)
+	_play_projectile_cells(sleep_vfx_cells, sleep_payload)
+	for target: Node2D in affected_enemies:
+		_sleeping_enemies[target] = item.effect_duration
+		_play_action_burst(target.grid_position, &"magic_hit")
+	GameManager.add_log_message("Sleep affects %d enemies." % affected_enemies.size(), &"magic")
 	return true
 
 

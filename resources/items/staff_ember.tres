@@ -15,6 +15,7 @@ spawn_weight = 7
 min_floor = 3
 is_ranged_weapon = true
 is_staff = true
+projectile_id = &"ember_bolt"
 range = 5
 use_effect = 2
 damage_dice = 1

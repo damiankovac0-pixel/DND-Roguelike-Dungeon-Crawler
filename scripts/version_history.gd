@@ -49,4 +49,5 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V16.5.0[/color] — Sensory polish pass: quieter cue gains, longer rate limits, remembered Reduce VFX pause-menu setting, and reduced mode swaps blaring screen treatment for a faint flash with small corner marks.",
 	"[color=#f1c75b]V20.0.0[/color] — Fixed biome capstone boss rooms at depths 5/10/15/20/25 with sealed gates, multi-cell ASCII boss art, delayed telegraphed attacks, boss HUD rewards, and looping boss music.",
 	"[color=#f1c75b]V20.1.0[/color] — Boss identity pass: stateful attack rotations, persistent arena hazards, phase-aware HUD status, capped summons, clearer telegraph countdowns, boss-specific sensory cues, and safer boss-gate fallback handling.",
+	"[color=#f1c75b]V23.0.0[/color] — Grid-based projectile trails for ranged weapons, Wizard staffs, spell scrolls, enemy shots, fireballs, boss attack resolutions, and boss hazard cues, with item-rarity-sensitive projectile color, alpha, duration, and high-rarity shimmer.",
 ]

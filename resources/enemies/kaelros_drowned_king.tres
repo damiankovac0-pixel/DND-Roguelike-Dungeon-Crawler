@@ -19,6 +19,7 @@ damage_dice = 2
 damage_sides = 8
 damage_bonus = 4
 damage_type = &"magic"
+projectile_id = &"undertow"
 warning_text = "Kaelros commands the undertow."
 resolve_text = "Kaelros' undertow drags you for %d magic damage."
 effect = &"pull"
@@ -35,6 +36,7 @@ hazard_damage_bonus = 1
 hazard_damage_type = &"magic"
 hazard_effect = &"pull"
 hazard_glyph = "≈"
+hazard_vfx_id = &"undertow_hazard"
 hazard_message = "The undertow drags through you for %d magic damage."
 
 [sub_resource type="Resource" id="Resource_kaelros_retinue"]

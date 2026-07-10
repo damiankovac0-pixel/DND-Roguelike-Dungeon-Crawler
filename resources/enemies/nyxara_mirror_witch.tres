@@ -18,6 +18,7 @@ damage_dice = 3
 damage_sides = 6
 damage_bonus = 5
 damage_type = &"magic"
+projectile_id = &"mirror_ray"
 warning_text = "Nyxara aligns a mirror ray."
 resolve_text = "Nyxara's mirror ray cuts you for %d magic damage."
 effect = &"phase_shift"
@@ -41,6 +42,7 @@ damage_dice = 2
 damage_sides = 8
 damage_bonus = 6
 damage_type = &"magic"
+projectile_id = &"prism_fracture"
 warning_text = "Nyxara fractures the light into a cross."
 resolve_text = "Nyxara's prism fracture rips you for %d magic damage."
 telegraph_glyph = "◆"
@@ -53,6 +55,7 @@ hazard_damage_sides = 6
 hazard_damage_bonus = 2
 hazard_damage_type = &"magic"
 hazard_glyph = "◆"
+hazard_vfx_id = &"mirror_shards"
 hazard_message = "Mirror shards cut you for %d magic damage."
 
 [sub_resource type="Resource" id="Resource_nyxara_guard"]

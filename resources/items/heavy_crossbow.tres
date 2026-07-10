@@ -16,6 +16,7 @@ min_floor = 4
 range = 6
 is_ranged_weapon = true
 use_effect = 2
+projectile_id = &"crossbow_bolt"
 damage_dice = 2
 damage_sides = 8
 attack_bonus = 0

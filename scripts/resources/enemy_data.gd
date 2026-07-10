@@ -30,6 +30,7 @@ extends Resource
 @export var ranged_damage_sides: int = 0
 @export var ranged_damage_bonus: int = 0
 @export var ranged_damage_type: StringName = &"piercing"
+@export var ranged_projectile_id: StringName = &""
 @export var ai_preferred_range: int = 0
 @export var summon_interval: int = 0
 @export var summon_count: int = 0
@@ -40,6 +41,7 @@ extends Resource
 @export var fireball_damage_dice: int = 0
 @export var fireball_damage_sides: int = 0
 @export var fireball_damage_bonus: int = 0
+@export var fireball_projectile_id: StringName = &""
 
 @export var is_boss: bool = false
 @export var boss_id: StringName = &""

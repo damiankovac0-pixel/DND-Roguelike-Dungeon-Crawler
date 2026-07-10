@@ -16,6 +16,7 @@ min_floor = 1
 is_ranged_weapon = true
 range = 4
 use_effect = 2
+projectile_id = &"arrow"
 damage_dice = 1
 damage_sides = 6
 attack_bonus = 0

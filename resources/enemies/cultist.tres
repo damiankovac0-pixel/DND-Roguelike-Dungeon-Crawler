@@ -22,4 +22,5 @@ ranged_attack_interval = 3
 ranged_damage_sides = 4
 ranged_damage_bonus = 2
 ranged_damage_type = &"magic"
+ranged_projectile_id = &"shadow_bolt"
 ai_preferred_range = 3

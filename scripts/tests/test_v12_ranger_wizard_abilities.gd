@@ -14,6 +14,7 @@
 extends SceneTree
 
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
+const MapViewScript = preload("res://scripts/ui/map_view.gd")
 
 var _game_script: GDScript
 var _actor_script: GDScript
@@ -146,6 +147,14 @@ func _free_test_node(node: Node) -> void:
 		node.free()
 
 
+func _attach_projectile_map(game: Node) -> Node2D:
+	var map_view: Node2D = MapViewScript.new()
+	root.add_child(map_view)
+	map_view.set_atmosphere_enabled(false)
+	game.map_view = map_view
+	return map_view
+
+
 func _free_game(game: Node) -> void:
 	if game == null or not is_instance_valid(game):
 		return
@@ -154,6 +163,11 @@ func _free_game(game: Node) -> void:
 		var player_node: Node = player_ref as Node
 		if player_node != null:
 			_free_test_node(player_node)
+	var map_view_ref: Variant = game.get("map_view")
+	if map_view_ref != null and is_instance_valid(map_view_ref):
+		var map_view_node: Node = map_view_ref as Node
+		if map_view_node != null and not game.is_ancestor_of(map_view_node):
+			_free_test_node(map_view_node)
 	game.free()
 
 
@@ -374,6 +388,7 @@ func _check_focus_level_20() -> void:
 
 func _check_volley() -> void:
 	var game: Node = _game_script.new()
+	var map_view: Node2D = _attach_projectile_map(game)
 	var player: Node2D = _make_player(Vector2i(5, 5), _player_script, 12)
 	root.add_child(player)
 	await process_frame
@@ -402,6 +417,7 @@ func _check_volley() -> void:
 	bow.display_name = "Test Bow"
 	bow.kind = ItemDataScript.ItemKind.WEAPON
 	bow.is_ranged_weapon = true
+	bow.projectile_id = &"arrow"
 	bow.damage_dice = 1
 	bow.damage_sides = 6
 	bow.damage_bonus = 0
@@ -422,6 +438,17 @@ func _check_volley() -> void:
 	var hp_before2: int = enemy2.stats_component.current_hp
 
 	game._activate_ranger_volley()
+	if map_view._projectile_trails.size() != 2:
+		_fail("Volley should emit one arrow projectile per target")
+		gm.prepare_character("Restore", {}, saved_class)
+		_free_game(game)
+		return
+	for trail: Dictionary in map_view._projectile_trails:
+		if trail.get("profile_id", &"") != &"arrow":
+			_fail("Volley projectile should use the arrow profile")
+			gm.prepare_character("Restore", {}, saved_class)
+			_free_game(game)
+			return
 
 	if game._ranger_volley_charges != 0:
 		_fail("Volley: charge should be 0 after use, got %d" % game._ranger_volley_charges)
@@ -479,6 +506,7 @@ func _check_quickstep() -> void:
 
 func _check_wizard_spark_targeting() -> void:
 	var game: Node = _game_script.new()
+	var map_view: Node2D = _attach_projectile_map(game)
 	var player: Node2D = _make_player(Vector2i(5, 5), _player_script)
 	player.stats_component.wisdom = 16  # mod +3
 	root.add_child(player)
@@ -561,13 +589,21 @@ func _check_wizard_spark_targeting() -> void:
 		_free_game(game)
 		return
 
-	# Charge consumption when target exists
+	# Charge consumption and projectile identity when a target exists
 	game._wizard_spark_charges = 1
 	close_enemy.stats_component.current_hp = 50
-	game._wizard_spark_charges = 1
-	nearest = game._find_nearest_visible_enemy_in_range(6)
-	if nearest != null:
-		game._wizard_spark_charges -= 1
+	game._activate_wizard_spark()
+	if (
+		map_view._projectile_trails.size() != 1
+		or map_view._projectile_trails[0].get("profile_id", &"") != &"arcane_spark"
+	):
+		_fail("Wizard spark should emit one arcane_spark projectile")
+		gm.prepare_character("RestoreTest", {}, saved_class)
+		_free_test_node(player)
+		_free_test_node(close_enemy)
+		_free_test_node(far_enemy)
+		_free_game(game)
+		return
 	if game._wizard_spark_charges != 0:
 		_fail("Wizard spark: charge should be consumed when visible enemy in range")
 		gm.prepare_character("RestoreTest", {}, saved_class)
@@ -729,6 +765,7 @@ func _check_spark_scaling() -> void:
 
 func _check_frost_nova() -> void:
 	var game: Node = _game_script.new()
+	var map_view: Node2D = _attach_projectile_map(game)
 	var gm: Node = root.get_node_or_null("/root/GameManager")
 	if gm == null:
 		_fail("GameManager missing for frost nova")
@@ -773,6 +810,14 @@ func _check_frost_nova() -> void:
 	var hp_before: int = frost_enemy.stats_component.current_hp
 
 	game._activate_wizard_frost_nova()
+	if (
+		map_view._projectile_trails.size() != 1
+		or map_view._projectile_trails[0].get("profile_id", &"") != &"frost_nova"
+	):
+		_fail("Frost Nova should emit one frost_nova projectile")
+		gm.prepare_character("Restore", {}, saved_class)
+		_free_game(game)
+		return
 
 	if game._wizard_frost_nova_charges != 0:
 		_fail("Frost Nova: charge should be 0 after use, got %d" % game._wizard_frost_nova_charges)
@@ -818,6 +863,7 @@ func _check_frost_nova() -> void:
 
 func _check_chain_lightning() -> void:
 	var game: Node = _game_script.new()
+	var map_view: Node2D = _attach_projectile_map(game)
 	var gm: Node = root.get_node_or_null("/root/GameManager")
 	if gm == null:
 		_fail("GameManager missing for chain lightning")
@@ -871,6 +917,17 @@ func _check_chain_lightning() -> void:
 	var hp_before3: int = enemy3.stats_component.current_hp
 
 	game._activate_wizard_chain_lightning()
+	if map_view._projectile_trails.size() != 3:
+		_fail("Chain Lightning should emit one chain_lightning segment per target")
+		gm.prepare_character("Restore", {}, saved_class)
+		_free_game(game)
+		return
+	for trail: Dictionary in map_view._projectile_trails:
+		if trail.get("profile_id", &"") != &"chain_lightning":
+			_fail("Chain Lightning segment should use the chain_lightning profile")
+			gm.prepare_character("Restore", {}, saved_class)
+			_free_game(game)
+			return
 
 	if game._wizard_chain_lightning_charges != 0:
 		_fail(

@@ -15,6 +15,7 @@ spawn_weight = 2
 min_floor = 15
 is_ranged_weapon = true
 is_staff = true
+projectile_id = &"astral_star"
 range = 6
 use_effect = 2
 damage_dice = 2

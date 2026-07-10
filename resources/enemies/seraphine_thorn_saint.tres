@@ -19,6 +19,7 @@ damage_dice = 2
 damage_sides = 6
 damage_bonus = 3
 damage_type = &"ranged"
+projectile_id = &"thorn_lance"
 warning_text = "Seraphine raises a lance of thorns."
 resolve_text = "Seraphine's thorn lance impales you for %d ranged damage."
 telegraph_glyph = "╋"
@@ -56,6 +57,7 @@ damage_dice = 2
 damage_sides = 4
 damage_bonus = 2
 damage_type = &"magic"
+projectile_id = &"spore_burst"
 effect = &"poison"
 effect_trigger = &"hit"
 effect_turns = 3
@@ -73,6 +75,7 @@ hazard_damage_bonus = 0
 hazard_damage_type = &"magic"
 hazard_effect = &"poison"
 hazard_glyph = "✹"
+hazard_vfx_id = &"spore_hazard"
 hazard_message = "Virulent spores erupt for %d magic damage."
 
 [resource]

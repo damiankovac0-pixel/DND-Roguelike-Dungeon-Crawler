@@ -15,6 +15,7 @@ spawn_weight = 1
 min_floor = 19
 is_ranged_weapon = true
 is_staff = true
+projectile_id = &"starfall_star"
 range = 7
 use_effect = 2
 damage_dice = 2

@@ -1358,6 +1358,13 @@ func _test_stale_cleanup_on_boss_death() -> void:
 		"border_color": Color.WHITE,
 		"message": "",
 	}
+	var projectile_cells: Array[Vector2i] = [observer.grid_position, some_cell]
+	game.map_view.play_projectile_trail(
+		projectile_cells, {"profile_id": &"observer_gaze", "duration_seconds": 1.0}
+	)
+	_assert(game.map_view.has_active_projectile_trails(), "boss cleanup test needs an active trail")
+	if _failed:
+		return
 
 	# Kill the boss via normal damage
 	observer.stats_component.apply_damage(99999)
@@ -1366,6 +1373,10 @@ func _test_stale_cleanup_on_boss_death() -> void:
 	_assert(bool(game._active_boss_encounter.get("defeated", false)), "boss should be defeated")
 	_assert(game._boss_telegraphs.is_empty(), "_boss_telegraphs should be cleared after boss death")
 	_assert(game._boss_hazards.is_empty(), "_boss_hazards should be cleared after boss death")
+	_assert(
+		not game.map_view.has_active_projectile_trails(),
+		"boss death/release should clear projectile trails",
+	)
 
 	# After _refresh_map, map_view copies should also be clear
 	game._refresh_map()

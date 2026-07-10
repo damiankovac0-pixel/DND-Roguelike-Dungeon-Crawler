@@ -24,4 +24,5 @@ ranged_attack_interval = 3
 ranged_damage_sides = 4
 ranged_damage_bonus = 2
 ranged_damage_type = &"cold"
+ranged_projectile_id = &"frost_shard"
 ai_preferred_range = 2

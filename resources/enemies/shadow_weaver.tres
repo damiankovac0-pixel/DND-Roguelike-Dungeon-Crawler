@@ -24,6 +24,7 @@ ranged_attack_interval = 3
 ranged_damage_sides = 6
 ranged_damage_bonus = 4
 ranged_damage_type = &"poison"
+ranged_projectile_id = &"shadow_bolt"
 ai_preferred_range = 3
 poison_chance_percent = 20
 poison_turns = 3

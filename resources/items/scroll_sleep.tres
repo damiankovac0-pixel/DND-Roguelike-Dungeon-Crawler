@@ -15,5 +15,6 @@ spawn_weight = 4
 min_floor = 3
 range = 6
 use_effect = 5
+projectile_id = &"sleep_mote"
 effect_duration = 2
 target_radius = 1

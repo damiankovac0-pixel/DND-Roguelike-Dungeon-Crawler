@@ -22,3 +22,4 @@ fireball_interval = 4
 fireball_damage_dice = 2
 fireball_damage_sides = 4
 fireball_damage_bonus = 3
+fireball_projectile_id = &"fireball"

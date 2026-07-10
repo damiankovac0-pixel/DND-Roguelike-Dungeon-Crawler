@@ -21,4 +21,5 @@ ranged_attack_interval = 3
 ranged_damage_sides = 8
 ranged_damage_bonus = 5
 ranged_damage_type = &"piercing"
+ranged_projectile_id = &"harpoon"
 ai_preferred_range = 3

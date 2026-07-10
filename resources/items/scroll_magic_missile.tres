@@ -15,6 +15,7 @@ spawn_weight = 7
 min_floor = 2
 range = 7
 use_effect = 3
+projectile_id = &"magic_missile"
 target_count = 3
 damage_dice = 2
 damage_sides = 4

@@ -7,7 +7,7 @@
 ##   - MapView atmosphere API and cell burst (V13) compatibility
 ##   - Scene integration: game.tscn has UI/SensoryFeedback and pause audio/VFX controls
 ##   - Main menu / library / character creation have AsciiBackdrop Background
-##   - GameManager version 16.5.0
+##   - GameManager current release metadata
 ##   - Library version history includes V16.5, V16, V15, and V14
 ##
 ## Defensive: uses runtime load() with explicit null checks so every missing
@@ -762,29 +762,26 @@ func _check_game_manager_version() -> void:
 		_fail("GameManager instance missing GAME_VERSION property")
 
 	var gm_version: String = gm.GAME_VERSION
-	if gm_version != "16.5.0":
+	if gm_version != "23.0.0":
 		_fail(
 			(
-				(
-					"GameManager.GAME_VERSION expected '16.5.0', got '%s' — "
-					+ "V16.5 version not yet set"
-				)
+				"GameManager.GAME_VERSION expected '23.0.0', got '%s' — V23 release not set"
 				% gm_version
 			)
 		)
 	else:
-		print("  GameManager.GAME_VERSION = 16.5.0")
+		print("  GameManager.GAME_VERSION = 23.0.0")
 
 	var label: String = gm.get_version_label()
-	if not "16.5.0" in label:
+	if not "23.0.0" in label or not "2026-07-10" in label:
 		print(
 			(
 				"  WARNING: GameManager.get_version_label() = '%s' — "
-				+ "may not reference 16.5.0" % label
+				+ "may not reference 23.0.0 / 2026-07-10" % label
 			)
 		)
 	else:
-		print("  GameManager.get_version_label() references 16.5.0")
+		print("  GameManager.get_version_label() references 23.0.0 / 2026-07-10")
 
 
 # ======================================================================

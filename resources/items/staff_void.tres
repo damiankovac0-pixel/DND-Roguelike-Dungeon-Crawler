@@ -15,6 +15,7 @@ spawn_weight = 3
 min_floor = 11
 is_ranged_weapon = true
 is_staff = true
+projectile_id = &"void_bolt"
 range = 6
 use_effect = 2
 damage_dice = 2

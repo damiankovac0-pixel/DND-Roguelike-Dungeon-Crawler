@@ -15,6 +15,7 @@ spawn_weight = 8
 min_floor = 2
 range = 6
 use_effect = 2
+projectile_id = &"fire_bolt"
 damage_dice = 1
 damage_sides = 10
 attack_bonus = 2

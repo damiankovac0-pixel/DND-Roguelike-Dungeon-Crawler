@@ -21,4 +21,5 @@ ranged_attack_interval = 3
 ranged_damage_sides = 8
 ranged_damage_bonus = 4
 ranged_damage_type = &"fire"
+ranged_projectile_id = &"ember_arrow"
 ai_preferred_range = 4

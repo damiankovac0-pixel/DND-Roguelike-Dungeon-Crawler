@@ -22,5 +22,6 @@ attack_bonus = 3
 damage_bonus = 3
 required_class = &"ranger"
 weapon_damage_type = &"ranged"
+projectile_id = &"arrow"
 class_damage_type = &"ranged"
 class_damage_percent_bonus = 12

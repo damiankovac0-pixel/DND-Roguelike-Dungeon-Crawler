@@ -69,6 +69,17 @@ func _check_map_view_boss_visuals() -> void:
 	)
 	map_view.set_boss_telegraphs({Vector2i(1, 0): {"glyph": "!"}})
 	_assert(map_view._targeting_active, "boss telegraphs should not clear targeting state")
+	var projectile_cells: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0)]
+	map_view.play_projectile_trail(
+		projectile_cells, {"profile_id": &"arrow", "duration_seconds": 0.2}
+	)
+	_assert(
+		map_view.has_active_projectile_trails(), "projectile trail should coexist with telegraphs"
+	)
+	_assert(map_view._targeting_active, "projectile playback should not clear targeting state")
+	_assert(
+		not map_view._boss_telegraphs.is_empty(), "projectile playback should not clear telegraphs"
+	)
 	## Hazards: deep-duplicate on set, do not affect _actor_at, preserve existing state
 	var hazard_payload: Dictionary = {
 		Vector2i(1, 0):
@@ -99,6 +110,7 @@ func _check_map_view_boss_visuals() -> void:
 	_assert(map_view.has_active_boss_visuals(), "hazards should not clear boss visuals")
 	map_view._process(0.2)
 	_assert(map_view._boss_frame_index > 0, "boss visual frame should advance")
+	map_view.clear_projectile_trails()
 	map_view.set_targeting(false, Vector2i.ZERO, {}, {})
 	map_view.clear_boss_visuals()
 	_assert(

@@ -11,6 +11,7 @@ extends SceneTree
 
 const ItemDataScript = preload("res://scripts/resources/item_data.gd")
 const ResourcePathsScript = preload("res://scripts/resource_paths.gd")
+const MapViewScript = preload("res://scripts/ui/map_view.gd")
 const APPRENTICE_STAFF_PATH: String = "res://resources/items/apprentice_staff.tres"
 const ASCENDANT_STAFF_PATH: String = "res://resources/items/staff_ascendant.tres"
 const EMBER_STAFF_PATH: String = "res://resources/items/staff_ember.tres"
@@ -300,6 +301,10 @@ func _check_staff_attack_uses_magic_pipeline() -> void:
 	gm.prepare_character("WizardStaff", {}, &"wizard")
 
 	var game: Node = _game_script.new()
+	var map_view: Node2D = MapViewScript.new()
+	root.add_child(map_view)
+	map_view.set_atmosphere_enabled(false)
+	game.map_view = map_view
 	var player: Node2D = _make_player(Vector2i(5, 5), 1)
 	player.stats_component.dexterity = 8
 	player.stats_component.wisdom = 18
@@ -315,6 +320,7 @@ func _check_staff_attack_uses_magic_pipeline() -> void:
 	staff.kind = ItemDataScript.ItemKind.WEAPON
 	staff.is_ranged_weapon = true
 	staff.is_staff = true
+	staff.projectile_id = &"arcane_bolt"
 	staff.weapon_damage_type = &"magic"
 	staff.required_class = &"wizard"
 	staff.use_effect = ItemDataScript.ItemUse.RANGED_ATTACK
@@ -331,11 +337,21 @@ func _check_staff_attack_uses_magic_pipeline() -> void:
 	game._hunter_focus_primed = true
 	seed(11)
 	game._resolve_ranged_attack(staff, defender, &"weapon")
+	if (
+		map_view._projectile_trails.size() != 1
+		or map_view._projectile_trails[0].get("profile_id", &"") != &"arcane_bolt"
+	):
+		_fail("Wizard staff should emit an arcane_bolt projectile")
+		_free_test_node(defender)
+		_free_test_node(map_view)
+		_free_game(game)
+		return
 
 	var damage_done: int = 100 - defender.stats_component.current_hp
 	if damage_done < 10:
 		_fail("Wizard staff should use WIS + magic scaling; got only %d damage" % damage_done)
 		_free_test_node(defender)
+		_free_test_node(map_view)
 		_free_game(game)
 		return
 	if damage_done > 12:
@@ -346,15 +362,18 @@ func _check_staff_attack_uses_magic_pipeline() -> void:
 			)
 		)
 		_free_test_node(defender)
+		_free_test_node(map_view)
 		_free_game(game)
 		return
 	if game._hunter_focus_primed != true:
 		_fail("Wizard staff attack should not consume Hunter's Focus")
 		_free_test_node(defender)
+		_free_test_node(map_view)
 		_free_game(game)
 		return
 
 	_free_test_node(defender)
+	_free_test_node(map_view)
 	_free_game(game)
 	await process_frame
 	print("  wizard staff attacks use WIS magic pipeline without consuming Hunter's Focus")

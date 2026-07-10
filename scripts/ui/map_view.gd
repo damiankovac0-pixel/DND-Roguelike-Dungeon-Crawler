@@ -61,6 +61,8 @@ var _revealed_secret_walls: Dictionary = {}
 var _secret_wall_hint_color: Color = Color(0.72, 0.58, 1.0)
 var _biome_theme: Dictionary = BiomeCatalogScript.theme_for_floor(1)
 var _cell_bursts: Array[Dictionary] = []
+var _projectile_trails: Array[Dictionary] = []
+var _reduced_vfx_enabled: bool = false
 var _enemy_intents: Dictionary = {}
 var _boss_room_cells: Dictionary = {}
 var _boss_door_cells: Array[Vector2i] = []
@@ -220,6 +222,80 @@ func has_active_cell_bursts() -> bool:
 	return not _cell_bursts.is_empty()
 
 
+func set_reduced_vfx_enabled(enabled: bool) -> void:
+	_reduced_vfx_enabled = enabled
+	queue_redraw()
+
+
+func play_projectile_trail(cells: Array[Vector2i], payload: Dictionary = {}) -> void:
+	if cells.is_empty():
+		return
+	var stored_cells: Array[Vector2i] = []
+	for cell: Vector2i in cells:
+		stored_cells.append(cell)
+	if stored_cells.is_empty():
+		return
+	var duration: float = max(0.05, float(payload.get("duration_seconds", 0.22)))
+	if _reduced_vfx_enabled:
+		if stored_cells.size() > 2:
+			var reduced_cells: Array[Vector2i] = []
+			reduced_cells.append(stored_cells.front())
+			reduced_cells.append(stored_cells.back())
+			stored_cells = reduced_cells
+		duration = max(0.08, duration * 0.58)
+	var rarity_color: Color = payload.get("rarity_color", Color(0.847, 0.847, 0.847, 1.0))
+	var trail: Dictionary = {
+		"cells": stored_cells,
+		"age": 0.0,
+		"duration": duration,
+		"profile_id": payload.get("profile_id", &""),
+		"style": payload.get("style", &"bolt"),
+		"glyph": str(payload.get("glyph", "✦")),
+		"trail_glyph": str(payload.get("trail_glyph", "·")),
+		"impact_glyph": str(payload.get("impact_glyph", payload.get("glyph", "✦"))),
+		"color": payload.get("color", Color.WHITE),
+		"trail_color": payload.get("trail_color", Color(1.0, 1.0, 1.0, 0.42)),
+		"impact_color": payload.get("impact_color", payload.get("color", Color.WHITE)),
+		"fill_color": payload.get("fill_color", Color.TRANSPARENT),
+		"border_color": payload.get("border_color", Color.TRANSPARENT),
+		"duration_seconds": duration,
+		"respect_visibility": bool(payload.get("respect_visibility", true)),
+		"rarity": int(payload.get("rarity", 0)),
+		"rarity_name": str(payload.get("rarity_name", "Common")),
+		"rarity_color": rarity_color,
+		"rarity_tint_strength": float(payload.get("rarity_tint_strength", 0.0)),
+		"rarity_duration_scale": float(payload.get("rarity_duration_scale", 1.0)),
+		"rarity_trail_alpha_scale": float(payload.get("rarity_trail_alpha_scale", 1.0)),
+		"rarity_fill_alpha_scale": float(payload.get("rarity_fill_alpha_scale", 1.0)),
+		"rarity_shimmer_enabled": bool(payload.get("rarity_shimmer_enabled", false)),
+		"rarity_accent_color": payload.get("rarity_accent_color", rarity_color),
+		"rarity_shimmer_speed": float(payload.get("rarity_shimmer_speed", 0.0)),
+		"rarity_shimmer_spread": float(payload.get("rarity_shimmer_spread", 0.0)),
+		"rarity_shimmer_intensity": float(payload.get("rarity_shimmer_intensity", 0.0)),
+		"rarity_shimmer_lift": float(payload.get("rarity_shimmer_lift", 0.0)),
+	}
+	if _reduced_vfx_enabled:
+		trail["rarity_shimmer_enabled"] = false
+		trail["color"] = _cap_color_alpha(trail.get("color", Color.WHITE), 0.08)
+		trail["trail_color"] = _cap_color_alpha(trail.get("trail_color", Color.WHITE), 0.08)
+		trail["impact_color"] = _cap_color_alpha(trail.get("impact_color", Color.WHITE), 0.08)
+		trail["fill_color"] = _cap_color_alpha(trail.get("fill_color", Color.TRANSPARENT), 0.08)
+		trail["border_color"] = _cap_color_alpha(trail.get("border_color", Color.TRANSPARENT), 0.08)
+	_projectile_trails.append(trail)
+	_update_processing_state()
+	queue_redraw()
+
+
+func has_active_projectile_trails() -> bool:
+	return not _projectile_trails.is_empty()
+
+
+func clear_projectile_trails() -> void:
+	_projectile_trails.clear()
+	_update_processing_state()
+	queue_redraw()
+
+
 func set_atmosphere_enabled(enabled: bool) -> void:
 	_atmosphere_enabled = enabled
 	_update_processing_state()
@@ -242,6 +318,7 @@ func _update_processing_state() -> void:
 	set_process(
 		(
 			not _cell_bursts.is_empty()
+			or not _projectile_trails.is_empty()
 			or not _boss_visuals.is_empty()
 			or not _boss_spawn_effects.is_empty()
 			or (_atmosphere_enabled and not _atmosphere_profile.is_empty())
@@ -283,6 +360,17 @@ func _process(delta: float) -> void:
 		if float(_cell_bursts[index]["age"]) >= CELL_BURST_DURATION:
 			_cell_bursts.remove_at(index)
 	if not _cell_bursts.is_empty():
+		queue_redraw()
+	var projectile_changed: bool = false
+	for index: int in range(_projectile_trails.size() - 1, -1, -1):
+		_projectile_trails[index]["age"] = float(_projectile_trails[index].get("age", 0.0)) + delta
+		if (
+			float(_projectile_trails[index]["age"])
+			>= float(_projectile_trails[index].get("duration", 0.22))
+		):
+			_projectile_trails.remove_at(index)
+		projectile_changed = true
+	if projectile_changed:
 		queue_redraw()
 	if _atmosphere_enabled and not _atmosphere_profile.is_empty():
 		_atmosphere_draw_time += delta
@@ -364,6 +452,7 @@ func _draw() -> void:
 		_draw_cell_highlight(area_cell, Color(1.0, 0.30, 0.08, 0.24), Color(1.0, 0.55, 0.18, 0.78))
 		_draw_glyph(draw_font, area_point, "*", Color(1.0, 0.72, 0.28, 0.95), false)
 	_draw_boss_telegraph_fills(draw_font, ascent, playfield_rect)
+	_draw_projectile_trails(draw_font, ascent, playfield_rect)
 
 	for item_position: Vector2i in _items.keys():
 		if not _visible_cells.has(item_position):
@@ -484,11 +573,20 @@ func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 		var fill_color: Color = payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12))
 		var border_color: Color = payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18))
 		var glyph_color: Color = payload.get("color", Color(0.6, 0.8, 1.0, 1.0))
+		var vfx_payload: Dictionary = payload.get("vfx_payload", {})
 		_draw_cell_highlight(cell, fill_color, border_color)
+		if not vfx_payload.is_empty():
+			_draw_glyph(
+				draw_font,
+				point,
+				str(vfx_payload.get("trail_glyph", glyph)),
+				_color_with_alpha(vfx_payload.get("trail_color", glyph_color), 0.65),
+				false
+			)
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
 
 
-func _draw_boss_telegraph_fills(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+func _draw_boss_telegraph_fills(_draw_font: Font, _ascent: float, _playfield_rect: Rect2) -> void:
 	for cell: Vector2i in _boss_telegraphs.keys():
 		if not _visible_cells.has(cell):
 			continue
@@ -603,6 +701,61 @@ func _rebuild_boss_occupied_cells() -> void:
 				_boss_occupied_cells[raw_cell] = self
 
 
+func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for trail: Dictionary in _projectile_trails:
+		var cells: Array = trail.get("cells", [])
+		if cells.is_empty():
+			continue
+		var duration: float = max(0.05, float(trail.get("duration", 0.22)))
+		var age: float = float(trail.get("age", 0.0))
+		var progress: float = clampf(age / duration, 0.0, 1.0)
+		var fade: float = 1.0 - progress
+		var respect_visibility: bool = bool(trail.get("respect_visibility", true))
+		var final_index: int = cells.size() - 1
+		for index: int in range(cells.size()):
+			var raw_cell = cells[index]
+			if not (raw_cell is Vector2i):
+				continue
+			var cell: Vector2i = raw_cell
+			if not _explored_cells.has(cell):
+				continue
+			if respect_visibility and not _visible_cells.has(cell):
+				continue
+			var point: Vector2 = _cell_draw_position(cell, ascent)
+			if not _is_inside_playfield(point, playfield_rect):
+				continue
+			var fill_color: Color = trail.get("fill_color", Color.TRANSPARENT)
+			var border_color: Color = trail.get("border_color", Color.TRANSPARENT)
+			_draw_cell_highlight(
+				cell, _color_with_alpha(fill_color, fade), _color_with_alpha(border_color, fade)
+			)
+			var accent: Color = trail.get(
+				"rarity_accent_color", trail.get("rarity_color", Color.WHITE)
+			)
+			if index == final_index:
+				var selected_color: Color = trail.get("color", Color.WHITE)
+				var selected_glyph: String = str(trail.get("glyph", "✦"))
+				if progress > 0.55:
+					selected_color = trail.get("impact_color", selected_color)
+					selected_glyph = str(trail.get("impact_glyph", selected_glyph))
+				_draw_glyph(
+					draw_font,
+					point,
+					selected_glyph,
+					_color_with_alpha(_shimmered_color(selected_color, accent, trail), fade),
+					false
+				)
+			else:
+				var trail_color: Color = trail.get("trail_color", Color.WHITE)
+				_draw_glyph(
+					draw_font,
+					point,
+					str(trail.get("trail_glyph", "·")),
+					_color_with_alpha(_shimmered_color(trail_color, accent, trail), fade),
+					false
+				)
+
+
 func _draw_cell_bursts(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for burst: Dictionary in _cell_bursts:
 		var cell: Vector2i = burst.get("cell", Vector2i.ZERO)
@@ -694,6 +847,30 @@ func _draw_cell_highlight(cell: Vector2i, fill_color: Color, border: Color) -> v
 		draw_rect(cell_rect, fill_color)
 	if border.a > 0.0:
 		draw_rect(cell_rect, border, false, 1.0)
+
+
+func _color_with_alpha(color: Color, alpha_scale: float) -> Color:
+	return Color(color.r, color.g, color.b, clampf(color.a * alpha_scale, 0.0, 1.0))
+
+
+func _cap_color_alpha(color: Color, max_alpha: float) -> Color:
+	return Color(color.r, color.g, color.b, min(color.a, max_alpha))
+
+
+func _shimmered_color(base: Color, accent: Color, trail: Dictionary) -> Color:
+	if not bool(trail.get("rarity_shimmer_enabled", false)):
+		return base
+	var phase: float = (
+		(
+			sin(float(trail.get("age", 0.0)) * TAU * float(trail.get("rarity_shimmer_speed", 0.0)))
+			* 0.5
+		)
+		+ 0.5
+	)
+	var amount: float = clampf(phase * float(trail.get("rarity_shimmer_intensity", 0.0)), 0.0, 1.0)
+	return Color(base.r, base.g, base.b, base.a).lerp(
+		Color(accent.r, accent.g, accent.b, base.a), amount
+	)
 
 
 func _draw_glyph(

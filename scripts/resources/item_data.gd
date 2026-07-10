@@ -87,6 +87,7 @@ const RARITY_COLORS: Array[String] = [
 @export var special_cooldown: int = 0
 @export var required_class: StringName = &""
 @export var is_staff: bool = false
+@export var projectile_id: StringName = &""
 @export var weapon_damage_type: StringName = &"melee"
 @export var class_damage_type: StringName = &""
 @export var class_damage_percent_bonus: int = 0
