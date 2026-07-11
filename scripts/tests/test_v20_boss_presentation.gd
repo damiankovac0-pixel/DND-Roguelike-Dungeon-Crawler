@@ -149,45 +149,87 @@ func _check_hud() -> void:
 	_assert(
 		game.hud.boss_banner_status_label != null, "boss_banner_status_label should be non-null"
 	)
+	game.hud.set_boss_goal_state("The Observer", true, true, false, &"arena_reveal")
+	_assert(
+		game.hud.help_label.text.begins_with("Goal: prepare for The Observer"),
+		"arena reveal should use prepare goal copy"
+	)
+	game.hud.hide_boss_health()
+	_assert(
+		game.hud.help_label.text.begins_with("Goal: prepare for The Observer"),
+		"hiding boss HP should preserve arena lifecycle goal state"
+	)
+	game.hud.set_boss_goal_state("The Observer", true, true, false, &"active")
+	_assert(
+		game.hud.help_label.text.begins_with("Goal: defeat The Observer"),
+		"active boss should use defeat goal copy"
+	)
 	game.hud.show_boss_health("The Observer", 36, 72)
-	_assert(game.hud.boss_banner.visible, "boss banner should be visible")
+	_assert(not game.hud.boss_banner.visible, "boss banner should remain hidden")
+	_assert(game.hud.sep_boss_label.visible, "sidebar boss separator should be visible")
+	_assert(game.hud.boss_name_label.visible, "sidebar boss name should be visible")
+	_assert(game.hud.boss_hp_label.visible, "sidebar boss HP should be visible")
 	_assert(
-		game.hud.boss_banner_hp_label.text == "[██████████████░░░░░░░░░░░░░░] 36 / 72",
-		"boss banner HP label text was %s" % game.hud.boss_banner_hp_label.text
+		game.hud.boss_name_label.text == "THE OBSERVER\nP1",
+		"boss name label text was %s" % game.hud.boss_name_label.text
 	)
 	_assert(
-		game.hud.boss_banner_status_label.text == "PHASE 1",
-		(
-			"status label should show PHASE 1 by default, got %s"
-			% game.hud.boss_banner_status_label.text
-		)
+		game.hud.boss_hp_label.text == "[██████░░░░░░] 36 / 72",
+		"sidebar boss HP label text was %s" % game.hud.boss_hp_label.text
 	)
-	## Sidebar labels remain hidden
-	_assert(not game.hud.boss_hp_label.visible, "sidebar boss HP should stay hidden")
-	_assert(not game.hud.boss_name_label.visible, "sidebar boss name should stay hidden")
-	_assert(not game.hud.sep_boss_label.visible, "sidebar boss separator should stay hidden")
+	_assert(game.hud.boss_banner_hp_label.text == "", "boss banner HP should stay empty")
+	_assert(game.hud.boss_banner_status_label.text == "", "boss banner status should stay empty")
+	game.hud.update_boss_health(18, 72)
+	_assert(
+		game.hud.boss_hp_label.text == "[███░░░░░░░░░] 18 / 72",
+		"sidebar boss HP update text was %s" % game.hud.boss_hp_label.text
+	)
 	game.hud.hide_boss_health()
 	_assert(not game.hud.boss_banner.visible, "boss banner should hide")
+	_assert(not game.hud.sep_boss_label.visible, "sidebar boss separator should hide")
+	_assert(not game.hud.boss_name_label.visible, "sidebar boss name should hide")
+	_assert(not game.hud.boss_hp_label.visible, "sidebar boss HP should hide")
 	## Extended signature: phase, room_title, windup_label
 	game.hud.show_boss_health(
 		"The Observer", 36, 72, Color(1.0, 0.72, 0.28), 2, "The Unblinking Gate", "blink_pulse"
 	)
 	_assert(
-		game.hud.boss_banner_status_label.text.contains("PHASE 2"),
-		"status label should contain PHASE 2, got %s" % game.hud.boss_banner_status_label.text
+		game.hud.boss_name_label.text.contains("P2"),
+		"boss name label should contain P2, got %s" % game.hud.boss_name_label.text
 	)
 	_assert(
-		game.hud.boss_banner_status_label.text.contains("THE UNBLINKING GATE"),
-		"status label should contain room title, got %s" % game.hud.boss_banner_status_label.text
+		game.hud.boss_name_label.text.contains("THE UNBLINKING GATE"),
+		"boss name label should contain room title, got %s" % game.hud.boss_name_label.text
 	)
 	_assert(
-		game.hud.boss_banner_status_label.text.contains("WINDUP: BLINK_PULSE"),
-		"status label should contain windup, got %s" % game.hud.boss_banner_status_label.text
+		game.hud.boss_name_label.text.contains("WINDUP: BLINK_PULSE"),
+		"boss name label should contain windup, got %s" % game.hud.boss_name_label.text
 	)
 	game.hud.hide_boss_health()
+	_assert(game.hud.boss_name_label.text == "", "boss name label should be empty after hide")
+	_assert(game.hud.boss_hp_label.text == "", "boss HP label should be empty after hide")
+	_assert(
+		game.hud.boss_name_label.scale == Vector2.ONE,
+		"boss name label scale should be Vector2.ONE after hide"
+	)
+	_assert(
+		game.hud.boss_name_label.modulate == Color.WHITE,
+		"boss name label modulate should be WHITE after hide"
+	)
+	_assert(
+		game.hud.boss_hp_label.scale == Vector2.ONE,
+		"boss HP label scale should be Vector2.ONE after hide"
+	)
+	_assert(
+		game.hud.boss_hp_label.modulate == Color.WHITE,
+		"boss HP label modulate should be WHITE after hide"
+	)
 	_assert(
 		game.hud.boss_banner_status_label.text == "",
-		"status label should be empty after hide, got %s" % game.hud.boss_banner_status_label.text
+		(
+			"banner status label should be empty after hide, got %s"
+			% game.hud.boss_banner_status_label.text
+		)
 	)
 	_assert(
 		game.hud.boss_banner_status_label.scale == Vector2.ONE,

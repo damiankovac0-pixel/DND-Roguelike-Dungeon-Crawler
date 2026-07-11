@@ -24,7 +24,7 @@ func _run() -> void:
 		_fail("GameManager autoload missing")
 		return
 	_game_manager.prepare_character("debug", {}, _game_manager.CLASS_FIGHTER)
-	_game = load("res://scenes/game.tscn").instantiate()
+	_game = _instantiate_game()
 	root.add_child(_game)
 	await process_frame
 	while _game_manager.current_floor < BOSS_FLOOR:
@@ -35,6 +35,8 @@ func _run() -> void:
 		await _check_gate_entry_and_rewards()
 	if not _failed:
 		await _check_fail_open_no_spawn()
+	if not _failed:
+		await _check_stale_reveal_cancellation()
 	if not _failed:
 		print("V20 boss flow checks passed")
 		quit(0)
@@ -75,16 +77,20 @@ func _check_gate_entry_and_rewards() -> void:
 	if gate_entry_cell == Vector2i.ZERO:
 		_fail("no boss_gate_entry_cell in encounter")
 		return
-	# Remove all enemies to clean the slate before the boss fight
-	_remove_non_boss_enemies(null)
+	# Keep one normal dungeon enemy long enough to prove arena-context suspension.
+	var suspended_enemy: Node = null
+	for candidate: Node in _game._enemies:
+		if candidate != null and candidate.is_alive() and not candidate.enemy_data.is_boss:
+			suspended_enemy = candidate
+			break
 	# Position player outside the gate
 	_game._player.set_grid_position(gate_entry_cell)
-	# Move onto the gate cell, triggering teleport + spawn
+	# Move onto the gate cell, triggering teleport + arena reveal only.
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
 	var turn_before: int = _game_manager.turn_count
 	_game._attempt_player_move(gate_dir)
 	await process_frame
-	# Teleport: player should now be inside the arena
+	# Teleport: player should now be inside the arena.
 	_assert(
 		_game._player.grid_position == entry_cell,
 		"player not teleported to entry cell %s; at %s" % [entry_cell, _game._player.grid_position]
@@ -92,15 +98,64 @@ func _check_gate_entry_and_rewards() -> void:
 	_assert(bool(encounter.get("locked", false)), "gate entry did not lock encounter")
 	_assert(bool(encounter.get("entered", false)), "gate entry did not set entered flag")
 	_assert(
-		_game_manager.turn_count == turn_before + 1, "gate entry should consume exactly one turn"
+		encounter.get("state", &"") == _game.BOSS_ARENA_STATE_REVEAL,
+		"gate entry should enter arena_reveal state"
 	)
-	# Lazy spawn: boss should now exist
-	var boss: Node = encounter.get("boss", null)
-	_assert(boss != null, "boss not spawned after gate entry")
-	_assert(boss.is_alive(), "boss not alive after spawn")
+	_assert(encounter.get("boss", null) == null, "boss should not spawn during arena reveal")
+	_assert(_live_boss_count(_game) == 0, "no live boss should exist during arena reveal")
+	_assert(_game_manager.turn_count == turn_before, "arena reveal should not consume a turn")
+	_assert(not _game.sensory_feedback.is_boss_music_playing(), "boss music started during reveal")
+	_assert(not _game.hud.boss_name_label.visible, "boss health appeared during reveal")
+	_assert(_game._boss_telegraphs.is_empty(), "reveal should not create boss telegraphs")
+	_assert(_game._boss_hazards.is_empty(), "reveal should not create boss hazards")
+	_assert(_game.map_view._projectile_trails.is_empty(), "reveal should not create projectiles")
+	var arena_view: Dictionary = encounter.get("boss_arena_view_cells", {})
+	_assert(not arena_view.is_empty(), "arena reveal should expose arena view metadata")
+	for explored_cell: Vector2i in _game._explored_cells:
+		_assert(
+			arena_view.has(explored_cell),
+			"reveal exploration leaked dungeon cell %s" % explored_cell
+		)
+	if suspended_enemy != null:
+		var suspended_position: Vector2i = suspended_enemy.grid_position
+		var suspended_actions: int = int(_game._enemy_action_counts.get(suspended_enemy, 0))
+		_assert(
+			_game._should_skip_enemy_for_boss_arena(suspended_enemy), "dungeon enemy not suspended"
+		)
+		_game._process_enemy_turns()
+		_assert(
+			suspended_enemy.grid_position == suspended_position,
+			"suspended enemy moved during reveal"
+		)
+		_assert(
+			int(_game._enemy_action_counts.get(suspended_enemy, 0)) == suspended_actions,
+			"suspended enemy consumed an action during reveal"
+		)
+	_remove_non_boss_enemies(null)
 	if _failed:
 		return
-	# Check sealed doors, boss banner, music
+	_assert(_game.complete_boss_arena_reveal(), "boss arena reveal completion failed")
+	await process_frame
+	_assert(
+		encounter.get("state", &"") == _game.BOSS_ARENA_STATE_ACTIVE,
+		"completed boss reveal should enter active state"
+	)
+	_assert(
+		_game_manager.turn_count == turn_before + 1,
+		"boss activation should consume exactly one turn"
+	)
+	# Lazy spawn: boss should now exist.
+	var boss: Node = encounter.get("boss", null)
+	_assert(boss != null, "boss not spawned after arena reveal completion")
+	_assert(boss.is_alive(), "boss not alive after spawn")
+	_assert(_live_boss_count(_game) == 1, "arena reveal completion should spawn exactly one boss")
+	var active_turn: int = _game_manager.turn_count
+	_assert(not _game.complete_boss_arena_reveal(), "repeated reveal completion should be a no-op")
+	_assert(encounter.get("boss", null) == boss, "repeated reveal completion replaced the boss")
+	_assert(_game_manager.turn_count == active_turn, "repeated reveal completion advanced the turn")
+	if _failed:
+		return
+	# Check sealed doors, boss sidebar HUD, music
 	_check_sealed_boss_presentation()
 	if _failed:
 		return
@@ -120,6 +175,19 @@ func _remove_non_boss_enemies(boss: Node) -> void:
 			enemy.queue_free()
 
 
+func _live_boss_count(game: Node) -> int:
+	var count: int = 0
+	for enemy: Node in game._enemies:
+		if (
+			enemy != null
+			and enemy.enemy_data != null
+			and enemy.enemy_data.is_boss
+			and enemy.is_alive()
+		):
+			count += 1
+	return count
+
+
 func _check_sealed_boss_presentation() -> void:
 	for boss_door: Vector2i in _game._active_boss_encounter.get("door_cells", []):
 		if _failed:
@@ -131,7 +199,9 @@ func _check_sealed_boss_presentation() -> void:
 			),
 			"boss door did not seal at %s" % boss_door
 		)
-	_assert(_game.hud.boss_banner.visible, "boss banner did not become visible")
+	_assert(_game.hud.boss_name_label.visible, "boss sidebar name did not become visible")
+	_assert(_game.hud.boss_hp_label.visible, "boss sidebar HP did not become visible")
+	_assert(not _game.hud.boss_banner.visible, "boss banner should stay hidden in sidebar HUD mode")
 	_assert(_game.sensory_feedback.is_boss_music_playing(), "boss music did not start")
 
 
@@ -195,7 +265,7 @@ func _check_boss_defeat_rewards(boss: Node) -> void:
 
 func _check_fail_open_no_spawn() -> void:
 	_game_manager.prepare_character("debug", {}, _game_manager.CLASS_FIGHTER)
-	var fail_game: Node = load("res://scenes/game.tscn").instantiate()
+	var fail_game: Node = _instantiate_game()
 	root.add_child(fail_game)
 	await process_frame
 	fail_game._generate_floor(BOSS_FLOOR)
@@ -232,12 +302,25 @@ func _check_fail_open_no_spawn() -> void:
 			boss_room_containers_before += 1
 	# Sabotage boss spawn
 	encounter["boss_data"] = null
-	# Step onto the gate cell
+	# Step onto the gate cell: fail-open is evaluated only when reveal completion runs.
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
 	fail_game._attempt_player_move(gate_dir)
 	await process_frame
-	# Assert fail-open state
-	_assert(bool(encounter.get("entered", false)), "fail-open should set entered=true")
+	_assert(bool(encounter.get("entered", false)), "fail-open reveal should set entered=true")
+	_assert(bool(encounter.get("locked", false)), "fail-open reveal should set locked=true")
+	_assert(
+		encounter.get("state", &"") == fail_game.BOSS_ARENA_STATE_REVEAL,
+		"fail-open gate entry should enter arena_reveal state"
+	)
+	_assert(encounter.get("boss", null) == null, "fail-open reveal should not spawn a boss")
+	_assert(_live_boss_count(fail_game) == 0, "fail-open reveal should have no live boss")
+	_assert(_game_manager.turn_count == turn_before, "fail-open reveal should not consume a turn")
+	# Complete reveal with sabotaged boss data, asserting fail-open state.
+	_assert(
+		not fail_game.complete_boss_arena_reveal(), "fail-open completion should report failure"
+	)
+	await process_frame
+	_assert(bool(encounter.get("entered", false)), "fail-open should keep entered=true")
 	_assert(bool(encounter.get("defeated", false)), "fail-open should set defeated=true")
 	_assert(not bool(encounter.get("locked", true)), "fail-open should set locked=false")
 	if _failed:
@@ -298,6 +381,46 @@ func _check_fail_open_no_spawn() -> void:
 	)
 	fail_game.queue_free()
 	await process_frame
+
+
+func _check_stale_reveal_cancellation() -> void:
+	_game_manager.prepare_character("debug", {}, _game_manager.CLASS_FIGHTER)
+	var stale_game: Node = _instantiate_game()
+	root.add_child(stale_game)
+	await process_frame
+	stale_game._generate_floor(BOSS_FLOOR)
+	await process_frame
+	var encounter: Dictionary = stale_game._active_boss_encounter
+	var gate_cell: Vector2i = encounter.get("gate_cell", Vector2i.ZERO)
+	var gate_entry: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	stale_game._player.set_grid_position(gate_entry)
+	stale_game._attempt_player_move(gate_cell - gate_entry)
+	await process_frame
+	_assert(
+		encounter.get("state", &"") == stale_game.BOSS_ARENA_STATE_REVEAL,
+		"stale-cancel setup did not enter arena_reveal"
+	)
+	stale_game._generate_floor(BOSS_FLOOR + 1)
+	await process_frame
+	var turn_before_callback: int = _game_manager.turn_count
+	stale_game._on_boss_activation_timeout()
+	await process_frame
+	_assert(not stale_game.complete_boss_arena_reveal(), "old reveal completed after floor change")
+	_assert(
+		_game_manager.turn_count == turn_before_callback, "stale reveal callback advanced the turn"
+	)
+	for enemy: Node in stale_game._enemies:
+		_assert(
+			enemy == null or enemy.enemy_data == null or not enemy.enemy_data.is_boss,
+			"stale reveal callback spawned a boss on a normal floor"
+		)
+	stale_game.queue_free()
+	await process_frame
+
+
+func _instantiate_game() -> Node:
+	var game_scene: PackedScene = load("res://scenes/game.tscn")
+	return game_scene.instantiate()
 
 
 func _assert(condition: bool, message: String) -> void:

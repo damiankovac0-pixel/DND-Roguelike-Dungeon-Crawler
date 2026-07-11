@@ -12,7 +12,6 @@ const XP_FLASH_COLOR: Color = Color(0.55, 0.86, 1.0)
 const LABEL_PULSE_SCALE: Vector2 = Vector2(1.08, 1.08)
 const LABEL_PULSE_SECONDS: float = 0.24
 const BOSS_HP_BAR_CELLS: int = 12
-const BOSS_BANNER_HP_BAR_CELLS: int = 28
 
 # === Private Variables ===
 var _biome_name: String = "The Tower"
@@ -26,6 +25,7 @@ var _boss_display_name: String = ""
 var _boss_floor_active: bool = false
 var _boss_locked: bool = false
 var _boss_defeated: bool = false
+var _boss_encounter_state: StringName = &""
 var _last_boss_hp: int = -1
 var _hp_tween: Tween
 var _boss_hp_tween: Tween
@@ -90,11 +90,18 @@ func set_visible_enemy_intents(enemy_intents: Dictionary) -> void:
 	_update_goal_text()
 
 
-func set_boss_goal_state(display_name: String, active: bool, locked: bool, defeated: bool) -> void:
+func set_boss_goal_state(
+	display_name: String,
+	active: bool,
+	locked: bool,
+	defeated: bool,
+	encounter_state: StringName = &""
+) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = active
 	_boss_locked = locked
 	_boss_defeated = defeated
+	_boss_encounter_state = encounter_state
 	_update_goal_text()
 
 
@@ -109,24 +116,25 @@ func show_boss_health(
 ) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = true
-	sep_boss_label.visible = false
-	boss_name_label.visible = false
-	boss_hp_label.visible = false
-	boss_name_label.text = display_name
-	boss_banner.visible = true
-	boss_banner_title_label.text = display_name.to_upper()
-	boss_banner_title_label.add_theme_color_override("font_color", accent_color)
-	_update_boss_hp(current_hp, max_hp)
-	var status_text: String = "PHASE %d" % phase
+	sep_boss_label.visible = true
+	boss_name_label.visible = true
+	boss_hp_label.visible = true
+	boss_banner.visible = false
+	boss_banner.modulate = Color.WHITE
+	boss_banner.scale = Vector2.ONE
+	boss_name_label.add_theme_color_override("font_color", accent_color)
+	var status_text: String = "P%d" % phase
 	if not room_title.is_empty():
 		status_text += " // %s" % room_title.to_upper()
 	if not windup_label.is_empty():
 		status_text += " // WINDUP: %s" % windup_label.to_upper()
-	boss_banner_status_label.text = status_text
+	boss_name_label.text = "%s\n%s" % [display_name.to_upper(), status_text]
+	boss_banner_title_label.text = ""
+	boss_banner_hp_label.text = ""
+	boss_banner_status_label.text = ""
+	_update_boss_hp(current_hp, max_hp)
 	if phase != _last_boss_phase:
-		_boss_status_tween = _pulse_label(
-			boss_banner_status_label, _boss_status_tween, accent_color
-		)
+		_boss_status_tween = _pulse_label(boss_name_label, _boss_status_tween, accent_color)
 	_last_boss_phase = phase
 	_update_goal_text()
 
@@ -139,6 +147,13 @@ func hide_boss_health() -> void:
 	sep_boss_label.visible = false
 	boss_name_label.visible = false
 	boss_hp_label.visible = false
+	boss_name_label.text = ""
+	boss_name_label.modulate = Color.WHITE
+	boss_name_label.scale = Vector2.ONE
+	boss_name_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
+	boss_hp_label.text = ""
+	boss_hp_label.modulate = Color.WHITE
+	boss_hp_label.scale = Vector2.ONE
 	boss_banner.visible = false
 	boss_banner.modulate = Color.WHITE
 	boss_banner.scale = Vector2.ONE
@@ -153,6 +168,9 @@ func hide_boss_health() -> void:
 	if _boss_status_tween != null and _boss_status_tween.is_valid():
 		_boss_status_tween.kill()
 		_boss_status_tween = null
+	if _boss_hp_tween != null and _boss_hp_tween.is_valid():
+		_boss_hp_tween.kill()
+		_boss_hp_tween = null
 	_last_boss_hp = -1
 	_update_goal_text()
 
@@ -160,15 +178,13 @@ func hide_boss_health() -> void:
 # === Private Methods ===
 func _update_boss_hp(current_hp: int, max_hp: int) -> void:
 	boss_hp_label.text = _boss_hp_bar_text(current_hp, max_hp, BOSS_HP_BAR_CELLS)
-	boss_banner_hp_label.text = _boss_hp_bar_text(current_hp, max_hp, BOSS_BANNER_HP_BAR_CELLS)
 	var hp_color: Color = _hp_status_color(current_hp, max_hp)
 	boss_hp_label.add_theme_color_override("font_color", hp_color)
-	boss_banner_hp_label.add_theme_color_override("font_color", hp_color)
 	if _last_boss_hp >= 0 and current_hp != _last_boss_hp:
 		var flash_color: Color = (
 			HP_HEAL_FLASH_COLOR if current_hp > _last_boss_hp else HP_DANGER_COLOR
 		)
-		_boss_hp_tween = _pulse_label(boss_banner_hp_label, _boss_hp_tween, flash_color)
+		_boss_hp_tween = _pulse_label(boss_hp_label, _boss_hp_tween, flash_color)
 	_last_boss_hp = current_hp
 
 
@@ -242,10 +258,12 @@ func _pulse_label(label: Control, active_tween: Tween, flash_color: Color) -> Tw
 func _update_goal_text() -> void:
 	var goal_text: String = "Goal: find stairs"
 	if _boss_floor_active:
-		if _boss_defeated:
+		if _boss_defeated or _boss_encounter_state == &"defeated":
 			goal_text = "Goal: claim chest or descend"
-		elif _boss_locked:
+		elif _boss_encounter_state == &"active":
 			goal_text = "Goal: defeat %s" % _boss_display_name
+		elif _boss_encounter_state == &"arena_reveal":
+			goal_text = "Goal: prepare for %s" % _boss_display_name
 		else:
 			goal_text = "Goal: enter the boss gate"
 	elif _current_floor >= 25:

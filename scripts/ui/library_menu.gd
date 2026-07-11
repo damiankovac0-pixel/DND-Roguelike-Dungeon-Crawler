@@ -103,15 +103,19 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var viewport: Viewport = get_viewport()
 	if _is_escape_key(event):
 		_on_back_pressed()
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 	elif event.is_action_pressed(&"ui_left"):
 		tabs.current_tab = wrapi(tabs.current_tab - 1, 0, tabs.get_tab_count())
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 	elif event.is_action_pressed(&"ui_right"):
 		tabs.current_tab = wrapi(tabs.current_tab + 1, 0, tabs.get_tab_count())
-		get_viewport().set_input_as_handled()
+		if viewport != null:
+			viewport.set_input_as_handled()
 
 
 # === Private Methods ===

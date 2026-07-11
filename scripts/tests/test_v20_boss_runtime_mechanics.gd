@@ -118,9 +118,9 @@ func _start_game() -> Node:
 
 
 func _enter_boss_on_floor(game: Node, floor_number: int) -> Node:
-	## Generates the given floor, enters the boss gate,
-	## and returns the spawned boss Node.  Removes stray
-	## non-boss enemies before gate entry.
+	## Generates the given floor, enters and completes the boss arena reveal,
+	## and returns the spawned boss Node. Removes stray non-boss enemies
+	## before gate entry.
 	game._generate_floor(floor_number)
 	await process_frame
 	_remove_all_enemies_except(game, null)
@@ -135,8 +135,34 @@ func _enter_boss_on_floor(game: Node, floor_number: int) -> Node:
 		return null
 	game._player.set_grid_position(gate_entry_cell)
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
+	var turn_before: int = _game_manager.turn_count
 	game._attempt_player_move(gate_dir)
 	await process_frame
+	_assert(
+		encounter.get("state", &"") == game.BOSS_ARENA_STATE_REVEAL,
+		"gate entry should leave floor %d in arena_reveal state" % floor_number
+	)
+	_assert(encounter.get("boss", null) == null, "boss should not spawn before reveal completion")
+	_assert(_live_boss_count(game) == 0, "no live boss should exist before reveal completion")
+	_assert(_game_manager.turn_count == turn_before, "arena reveal should not consume a turn")
+	if _failed:
+		return null
+	_assert(
+		game.complete_boss_arena_reveal(),
+		"boss reveal completion failed on floor %d" % floor_number
+	)
+	await process_frame
+	_assert(
+		encounter.get("state", &"") == game.BOSS_ARENA_STATE_ACTIVE,
+		"boss reveal completion should activate floor %d" % floor_number
+	)
+	_assert(
+		_game_manager.turn_count == turn_before + 1,
+		"boss reveal completion should consume one turn"
+	)
+	_assert(_live_boss_count(game) == 1, "boss reveal completion should spawn exactly one boss")
+	if _failed:
+		return null
 	return encounter.get("boss", null)
 
 
@@ -148,6 +174,19 @@ func _remove_all_enemies_except(game: Node, keep: Node = null) -> void:
 			_game_manager.remove_enemy(enemy)
 			if is_instance_valid(enemy):
 				enemy.queue_free()
+
+
+func _live_boss_count(game: Node) -> int:
+	var count: int = 0
+	for enemy: Node in game._enemies:
+		if (
+			enemy != null
+			and enemy.enemy_data != null
+			and enemy.enemy_data.is_boss
+			and enemy.is_alive()
+		):
+			count += 1
+	return count
 
 
 func _attack_by_id(boss_data: Resource, attack_id: StringName) -> Resource:

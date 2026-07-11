@@ -68,6 +68,7 @@ var _boss_room_cells: Dictionary = {}
 var _boss_door_cells: Array[Vector2i] = []
 var _boss_room_locked: bool = false
 var _boss_room_tint_color: Color = Color.TRANSPARENT
+var _boss_room_draw_offset: Vector2 = Vector2.ZERO
 var _boss_visuals: Dictionary = {}
 var _boss_occupied_cells: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
@@ -85,6 +86,7 @@ var _atmosphere_profile: Dictionary = {}
 # === Public Methods ===
 func configure_map(map_data: Array) -> void:
 	_map_data = map_data
+	_update_boss_room_draw_offset()
 	queue_redraw()
 
 
@@ -160,6 +162,7 @@ func set_boss_room(
 		_boss_door_cells.append(door_cell)
 	_boss_room_locked = locked
 	_boss_room_tint_color = tint_color
+	_update_boss_room_draw_offset()
 	queue_redraw()
 
 
@@ -422,12 +425,13 @@ func _draw() -> void:
 				_revealed_secret_walls.has(cell) and _secret_walls.has(cell)
 			)
 			_draw_tile_backing(cell, tile_type, is_visible, is_revealed_secret_wall)
-			_draw_glyph(
-				draw_font,
-				point,
-				_tile_glyph(cell, tile_type, is_revealed_secret_wall),
-				_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
-			)
+			if not _boss_occupied_cells.has(cell):
+				_draw_glyph(
+					draw_font,
+					point,
+					_tile_glyph(cell, tile_type, is_revealed_secret_wall),
+					_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
+				)
 
 	_draw_boss_room_tint(playfield_rect)
 	_draw_boss_hazards(draw_font, ascent, playfield_rect)
@@ -656,9 +660,9 @@ func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Re
 		if cells.is_empty():
 			cells = [anchor_cell]
 		var pulse_alpha: float = sin(progress * PI) * 0.45
-		var glyphs: Array = effect.get("spawn_glyphs", ["·", "*", "✦", "✹"])
+		var glyphs: Array = effect.get("spawn_glyphs", ["·", "◇", "◆", "■"])
 		if glyphs.is_empty():
-			glyphs = ["·", "*", "✦", "✹"]
+			glyphs = ["·", "◇", "◆", "■"]
 		var glyph: String = str(glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()])
 		for raw_cell in cells:
 			if not (raw_cell is Vector2i):
@@ -968,13 +972,41 @@ func _cell_hash(cell: Vector2i, salt: int) -> int:
 
 
 func _inset_cell_rect(cell: Vector2i, inset: float) -> Rect2:
-	var position: Vector2 = margin + Vector2(cell.x * cell_width, cell.y * cell_height)
+	var position: Vector2 = (
+		margin + _boss_room_draw_offset + Vector2(cell.x * cell_width, cell.y * cell_height)
+	)
 	var inset_vector: Vector2 = Vector2(inset, inset)
 	return Rect2(position + inset_vector, Vector2(cell_width, cell_height) - inset_vector * 2.0)
 
 
 func _cell_draw_position(cell: Vector2i, ascent: float) -> Vector2:
-	return margin + Vector2(cell.x * cell_width, cell.y * cell_height + ascent)
+	return (
+		margin
+		+ _boss_room_draw_offset
+		+ Vector2(cell.x * cell_width, cell.y * cell_height + ascent)
+	)
+
+
+func _update_boss_room_draw_offset() -> void:
+	_boss_room_draw_offset = Vector2.ZERO
+	if _boss_room_cells.is_empty() or _map_data.is_empty() or _map_data[0].is_empty():
+		return
+	var room_cells: Array = _boss_room_cells.keys()
+	var min_cell: Vector2i = room_cells[0]
+	var max_cell: Vector2i = min_cell
+	for cell: Vector2i in room_cells:
+		min_cell.x = min(min_cell.x, cell.x)
+		min_cell.y = min(min_cell.y, cell.y)
+		max_cell.x = max(max_cell.x, cell.x)
+		max_cell.y = max(max_cell.y, cell.y)
+	var map_center: Vector2 = Vector2(
+		float(_map_data[0].size()) * cell_width * 0.5, float(_map_data.size()) * cell_height * 0.5
+	)
+	var room_center: Vector2 = Vector2(
+		(float(min_cell.x + max_cell.x) + 1.0) * cell_width * 0.5,
+		(float(min_cell.y + max_cell.y) + 1.0) * cell_height * 0.5
+	)
+	_boss_room_draw_offset = map_center - room_center
 
 
 func _is_inside_playfield(point: Vector2, playfield_rect: Rect2) -> bool:

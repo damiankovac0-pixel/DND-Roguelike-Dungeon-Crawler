@@ -23,6 +23,7 @@ const SECRET_DIRECTIONS: Array[Vector2i] = [
 const BOSS_FLOORS: Array[int] = [5, 10, 15, 20, 25]
 const BOSS_ARENA_SIZE: Vector2i = Vector2i(15, 13)
 const BOSS_ARENA_MARGIN: int = 2
+const BOSS_ARENA_MOAT_WIDTH: int = 1
 
 
 # === Public Methods ===
@@ -49,6 +50,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 	if _is_boss_floor(floor_number):
 		boss_room = _boss_arena_rect(width, height)
 		_carve_room(map_data, boss_room)
+		_enforce_boss_arena_moat(map_data, boss_room)
 		boss_spawn_cell = boss_room.get_center()
 		var boss_entry_cell: Vector2i = Vector2i(boss_room.position.x + 1, boss_spawn_cell.y)
 		boss_stairs_cell = _find_boss_room_reward_cell(boss_room, boss_spawn_cell, Vector2i.RIGHT)
@@ -59,6 +61,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 		if boss_gate_cell != Vector2i.ZERO:
 			boss_door_cells.append(boss_gate_cell)
 		var boss_room_cells: Dictionary = _room_floor_cells(map_data, boss_room)
+		var boss_arena_view_cells: Dictionary = _boss_arena_view_cells(map_data, boss_room)
 		boss_encounter = {
 			"active": true,
 			"boss_floor": floor_number,
@@ -66,6 +69,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 			"boss_arena": boss_room,
 			"boss_room_cells": boss_room_cells,
 			"boss_arena_cells": boss_room_cells,
+			"boss_arena_view_cells": boss_arena_view_cells,
 			"boss_door_cells": boss_door_cells,
 			"boss_gate_cell": boss_gate_cell,
 			"boss_gate_entry_cell": boss_gate_entry_cell,
@@ -73,6 +77,7 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 			"boss_spawn_cell": boss_spawn_cell,
 			"boss_stairs_cell": boss_stairs_cell,
 			"boss_chest_cell": boss_chest_cell,
+			"boss_arena_isolated": true,
 		}
 
 	var stairs_position: Vector2i = boss_stairs_cell
@@ -91,8 +96,6 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 		occupied_spawns[boss_stairs_cell] = true
 		occupied_spawns[boss_chest_cell] = true
 	for room_index: int in range(1, rooms.size()):
-		if bool(boss_encounter.get("active", false)) and room_index == rooms.size() - 1:
-			continue
 		var room_center: Vector2i = rooms[room_index].get_center()
 		if room_center != stairs_position:
 			_add_spawn_if_free(enemy_spawns, occupied_spawns, room_center)
@@ -103,8 +106,6 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 
 	var spawn_room_indices: Array[int] = []
 	for room_index: int in range(1, rooms.size()):
-		if bool(boss_encounter.get("active", false)) and room_index == rooms.size() - 1:
-			continue
 		spawn_room_indices.append(room_index)
 	if not spawn_room_indices.is_empty():
 		var extra_enemy_attempts: int = 2 + int(floor_number * 0.45)
@@ -118,8 +119,6 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 	enemy_spawns.shuffle()
 	var trap_spawns: Array[Vector2i] = []
 	for room_index: int in range(1, rooms.size()):
-		if bool(boss_encounter.get("active", false)) and room_index == rooms.size() - 1:
-			continue
 		var room: Rect2i = rooms[room_index]
 		var room_center: Vector2i = room.get_center()
 		if room_center == stairs_position:
@@ -142,8 +141,11 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 	if floor_number >= 10:
 		enemy_limit = min(enemy_spawns.size(), 12 + int((floor_number - 10) * 0.5))
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
+	var reserved_boss_room: Rect2i = boss_room
+	if bool(boss_encounter.get("active", false)):
+		reserved_boss_room = _boss_arena_moat_rect(boss_room)
 	var secret_data: Dictionary = _generate_secret_room(
-		map_data, rooms, occupied_spawns, floor_number, boss_room
+		map_data, rooms, occupied_spawns, floor_number, reserved_boss_room
 	)
 	return {
 		"map": map_data,
@@ -168,16 +170,20 @@ func _normal_generation_rect(width: int, height: int, floor_number: int) -> Rect
 	if not _is_boss_floor(floor_number):
 		return Rect2i(1, 1, width - 2, height - 2)
 	var arena: Rect2i = _boss_arena_rect(width, height)
-	var normal_width: int = max(MIN_LEAF_SIZE, arena.position.x - BOSS_ARENA_MARGIN)
-	return Rect2i(1, 1, normal_width, height - 2)
+	var max_normal_width: int = arena.position.x - BOSS_ARENA_MOAT_WIDTH - 1
+	return Rect2i(1, 1, max(1, max_normal_width), height - 2)
 
 
 func _boss_arena_rect(width: int, height: int) -> Rect2i:
-	var arena_width: int = min(BOSS_ARENA_SIZE.x, max(MIN_ROOM_SIZE, width - BOSS_ARENA_MARGIN * 2))
+	var min_arena_x: int = 1 + MIN_LEAF_SIZE + BOSS_ARENA_MOAT_WIDTH
+	var max_arena_width: int = max(MIN_ROOM_SIZE, width - min_arena_x - 1)
+	var arena_width: int = min(BOSS_ARENA_SIZE.x, max_arena_width)
 	var arena_height: int = min(
 		BOSS_ARENA_SIZE.y, max(MIN_ROOM_SIZE, height - BOSS_ARENA_MARGIN * 2)
 	)
-	var arena_x: int = max(BOSS_ARENA_MARGIN, width - arena_width - BOSS_ARENA_MARGIN)
+	var max_arena_x: int = max(BOSS_ARENA_MARGIN, width - arena_width - 1)
+	var preferred_arena_x: int = max(BOSS_ARENA_MARGIN, width - arena_width - BOSS_ARENA_MARGIN)
+	var arena_x: int = clampi(preferred_arena_x, min(min_arena_x, max_arena_x), max_arena_x)
 	var arena_y: int = clampi(
 		int(floor(float(height - arena_height) / 2.0)),
 		BOSS_ARENA_MARGIN,
@@ -284,6 +290,44 @@ func _room_floor_cells(map_data: Array, room: Rect2i) -> Dictionary:
 	return cells
 
 
+func _boss_arena_moat_rect(arena: Rect2i) -> Rect2i:
+	if arena.size.x <= 0 or arena.size.y <= 0:
+		return Rect2i()
+	return Rect2i(
+		arena.position - Vector2i(BOSS_ARENA_MOAT_WIDTH, BOSS_ARENA_MOAT_WIDTH),
+		arena.size + Vector2i(BOSS_ARENA_MOAT_WIDTH * 2, BOSS_ARENA_MOAT_WIDTH * 2)
+	)
+
+
+func _boss_arena_view_cells(map_data: Array, arena: Rect2i) -> Dictionary:
+	var cells: Dictionary = {}
+	for y: int in range(
+		arena.position.y - BOSS_ARENA_MOAT_WIDTH, arena.end.y + BOSS_ARENA_MOAT_WIDTH
+	):
+		for x: int in range(
+			arena.position.x - BOSS_ARENA_MOAT_WIDTH, arena.end.x + BOSS_ARENA_MOAT_WIDTH
+		):
+			var cell: Vector2i = Vector2i(x, y)
+			if _is_cell_in_map_bounds(map_data, cell):
+				cells[cell] = true
+	return cells
+
+
+func _enforce_boss_arena_moat(map_data: Array, arena: Rect2i) -> void:
+	for y: int in range(
+		arena.position.y - BOSS_ARENA_MOAT_WIDTH, arena.end.y + BOSS_ARENA_MOAT_WIDTH
+	):
+		for x: int in range(
+			arena.position.x - BOSS_ARENA_MOAT_WIDTH, arena.end.x + BOSS_ARENA_MOAT_WIDTH
+		):
+			var cell: Vector2i = Vector2i(x, y)
+			if not _is_cell_in_map_bounds(map_data, cell):
+				continue
+			if _room_contains_cell(arena, cell):
+				continue
+			map_data[y][x] = DungeonDataScript.TileType.WALL
+
+
 func _room_contains_cell(room: Rect2i, cell: Vector2i) -> bool:
 	return (
 		cell.x >= room.position.x
@@ -321,49 +365,6 @@ func _find_boss_room_reward_cell(
 					a.distance_squared_to(boss_spawn_cell) < b.distance_squared_to(boss_spawn_cell)
 				)
 			return a_axis > b_axis
-	)
-	return candidates[0]
-
-
-func _convert_boss_room_doors(
-	map_data: Array, rooms: Array[Rect2i], boss_room: Rect2i
-) -> Array[Vector2i]:
-	var door_cells: Array[Vector2i] = []
-	for direction: Vector2i in SECRET_DIRECTIONS:
-		for edge_cell: Vector2i in _room_edge_cells(boss_room, direction):
-			var door_cell: Vector2i = edge_cell + direction
-			if not _is_inside_map(map_data, door_cell):
-				continue
-			if map_data[door_cell.y][door_cell.x] == DungeonDataScript.TileType.DOOR:
-				map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.BOSS_DOOR
-				door_cells.append(door_cell)
-	if door_cells.is_empty() and rooms.size() >= 2:
-		var fallback_cell: Vector2i = _find_boss_door_fallback_cell(map_data, rooms, boss_room)
-		if fallback_cell != Vector2i.ZERO:
-			map_data[fallback_cell.y][fallback_cell.x] = DungeonDataScript.TileType.BOSS_DOOR
-			door_cells.append(fallback_cell)
-	return door_cells
-
-
-func _find_boss_door_fallback_cell(
-	map_data: Array, rooms: Array[Rect2i], boss_room: Rect2i
-) -> Vector2i:
-	var previous_center: Vector2i = rooms[rooms.size() - 2].get_center()
-	var candidates: Array[Vector2i] = []
-	for direction: Vector2i in SECRET_DIRECTIONS:
-		for edge_cell: Vector2i in _room_edge_cells(boss_room, direction):
-			var door_cell: Vector2i = edge_cell + direction
-			if not _is_inside_map(map_data, door_cell):
-				continue
-			if _room_contains_cell(boss_room, door_cell):
-				continue
-			if map_data[door_cell.y][door_cell.x] == DungeonDataScript.TileType.FLOOR:
-				candidates.append(door_cell)
-	if candidates.is_empty():
-		return Vector2i.ZERO
-	candidates.sort_custom(
-		func(a: Vector2i, b: Vector2i) -> bool:
-			return a.distance_squared_to(previous_center) < b.distance_squared_to(previous_center)
 	)
 	return candidates[0]
 
@@ -523,6 +524,10 @@ func _add_secret_containers(secret_containers: Array, room: Rect2i, floor_number
 			)
 		)
 		used_cells[clutter_cell] = true
+
+
+func _is_cell_in_map_bounds(map_data: Array, cell: Vector2i) -> bool:
+	return cell.y >= 0 and cell.y < map_data.size() and cell.x >= 0 and cell.x < map_data[0].size()
 
 
 func _is_inside_map(map_data: Array, cell: Vector2i) -> bool:

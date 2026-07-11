@@ -19,14 +19,15 @@ func _init() -> void:
 
 func _run() -> void:
 	for floor_number: int in BOSS_FLOORS:
-		seed(200000 + floor_number)
-		var generator: RefCounted = DungeonGeneratorScript.new()
-		var result: Dictionary = generator.generate(
-			DungeonDataScript.MAP_WIDTH, DungeonDataScript.MAP_HEIGHT, floor_number
-		)
-		_check_boss_floor(result, floor_number)
-		if _failed:
-			return
+		for sample_index: int in range(3):
+			seed(200000 + floor_number * 10 + sample_index)
+			var generator: RefCounted = DungeonGeneratorScript.new()
+			var result: Dictionary = generator.generate(
+				DungeonDataScript.MAP_WIDTH, DungeonDataScript.MAP_HEIGHT, floor_number
+			)
+			_check_boss_floor(result, floor_number)
+			if _failed:
+				return
 	seed(200004)
 	var normal_generator: RefCounted = DungeonGeneratorScript.new()
 	var normal_result: Dictionary = normal_generator.generate(
@@ -44,6 +45,15 @@ func _check_boss_floor(result: Dictionary, floor_number: int) -> void:
 	var boss_room: Rect2i = encounter.get("boss_room", Rect2i())
 	var boss_arena: Rect2i = encounter.get("boss_arena", boss_room)
 	_assert(bool(encounter.get("active", false)), "floor %d inactive boss" % floor_number)
+	_assert(
+		bool(encounter.get("boss_arena_isolated", false)),
+		"floor %d arena not isolated" % floor_number
+	)
+	_assert(not rooms.is_empty(), "floor %d should retain normal dungeon rooms" % floor_number)
+	_assert(
+		encounter.get("boss_room_cells", {}) == encounter.get("boss_arena_cells", {}),
+		"floor %d room/arena cell aliases diverged" % floor_number
+	)
 	if not _failed:
 		_assert(
 			boss_room.size.x > 0 and boss_room.size.y > 0,
@@ -62,9 +72,18 @@ func _check_boss_floor(result: Dictionary, floor_number: int) -> void:
 				)
 			)
 	if not _failed:
+		var final_room: Rect2i = rooms[rooms.size() - 1]
+		var gate_cell: Vector2i = encounter.get("boss_gate_cell", Vector2i.ZERO)
+		_assert(
+			final_room.grow(1).has_point(gate_cell),
+			"floor %d boss gate should border the final normal room" % floor_number
+		)
+	if not _failed:
 		_check_boss_gate_and_stand_cells(result, encounter, floor_number)
 	if not _failed:
 		_check_boss_internal_cells(encounter, floor_number)
+	if not _failed:
+		_check_isolated_arena_topology(result, encounter, floor_number)
 	if not _failed:
 		var stairs_cell: Vector2i = encounter.get("boss_stairs_cell", Vector2i.ZERO)
 		_assert(
@@ -179,30 +198,77 @@ func _check_boss_internal_cells(encounter: Dictionary, floor_number: int) -> voi
 	)
 
 
+func _check_isolated_arena_topology(
+	result: Dictionary, encounter: Dictionary, floor_number: int
+) -> void:
+	var arena_cells: Dictionary = encounter.get("boss_arena_cells", {})
+	var view_cells: Dictionary = encounter.get("boss_arena_view_cells", {})
+	var arena: Rect2i = encounter.get("boss_arena", Rect2i())
+	var expected_view: Dictionary = {}
+	var view_rect: Rect2i = arena.grow(1)
+	var map_data: Array = result["map"]
+	for y: int in range(view_rect.position.y, view_rect.end.y):
+		for x: int in range(view_rect.position.x, view_rect.end.x):
+			if y >= 0 and y < map_data.size() and x >= 0 and x < map_data[y].size():
+				expected_view[Vector2i(x, y)] = true
+	_assert(
+		view_cells.size() == expected_view.size(),
+		(
+			"floor %d arena view size mismatch: got %d expected %d"
+			% [floor_number, view_cells.size(), expected_view.size()]
+		)
+	)
+	for cell: Vector2i in expected_view:
+		_assert(view_cells.has(cell), "floor %d arena view missing %s" % [floor_number, cell])
+	var gate_entry: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
+	var reachable: Dictionary = _flood_fill_floor(map_data, gate_entry)
+	for cell: Vector2i in arena_cells:
+		_assert(
+			view_cells.has(cell), "floor %d arena view excludes interior %s" % [floor_number, cell]
+		)
+		_assert(
+			not reachable.has(cell),
+			"floor %d normal dungeon reaches isolated arena cell %s" % [floor_number, cell]
+		)
+	for cell: Vector2i in view_cells:
+		if arena_cells.has(cell):
+			continue
+		_assert(
+			map_data[cell.y][cell.x] == DungeonDataScript.TileType.WALL,
+			"floor %d arena moat cell %s is not WALL" % [floor_number, cell]
+		)
+
+
 func _check_reserved_room_overlap(
 	result: Dictionary, encounter: Dictionary, floor_number: int
 ) -> void:
-	var arena_cells: Dictionary = encounter.get(
-		"boss_arena_cells", encounter.get("boss_room_cells", {})
+	var reserved_cells: Dictionary = encounter.get(
+		"boss_arena_view_cells",
+		encounter.get("boss_arena_cells", encounter.get("boss_room_cells", {}))
 	)
 	_assert(
-		not arena_cells.is_empty(), "floor %d boss_arena_cells/room_cells are empty" % floor_number
+		not reserved_cells.is_empty(), "floor %d boss arena reservation is empty" % floor_number
 	)
 	for key: String in ["enemy_spawns", "item_spawns", "trap_spawns"]:
 		for cell: Vector2i in result.get(key, []):
 			if _failed:
 				break
 			_assert(
-				not arena_cells.has(cell),
-				"floor %d %s contains arena cell %s" % [floor_number, key, cell]
+				not reserved_cells.has(cell),
+				"floor %d %s contains reserved arena/moat cell %s" % [floor_number, key, cell]
 			)
 	for container: Dictionary in result.get("secret_containers", []):
 		if _failed:
 			break
 		var cell: Vector2i = container.get("cell", Vector2i.ZERO)
 		_assert(
-			not arena_cells.has(cell),
-			"floor %d secret container overlaps arena at %s" % [floor_number, cell]
+			not reserved_cells.has(cell),
+			"floor %d secret container overlaps arena/moat at %s" % [floor_number, cell]
+		)
+	for cell: Vector2i in result.get("secret_walls", {}):
+		_assert(
+			not reserved_cells.has(cell),
+			"floor %d secret wall overlaps arena/moat at %s" % [floor_number, cell]
 		)
 
 

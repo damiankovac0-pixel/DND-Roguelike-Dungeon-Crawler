@@ -624,7 +624,7 @@ func _check_geometry_smoke(bosses: Dictionary) -> void:
 		_game = null
 		return
 
-	# Walk onto the gate to lock the encounter and spawn the boss
+	# Walk onto the gate to lock the encounter and start the arena reveal.
 	var gate_cell: Vector2i = encounter.get("gate_cell", Vector2i.ZERO)
 	var gate_entry: Vector2i = encounter.get("boss_gate_entry_cell", Vector2i.ZERO)
 	if gate_entry == Vector2i.ZERO:
@@ -632,15 +632,39 @@ func _check_geometry_smoke(bosses: Dictionary) -> void:
 		_game.queue_free()
 		_game = null
 		return
-	# Clean up stray enemies, then step onto gate
+	# Clean up stray enemies, then step onto gate.
 	_remove_all_enemies()
 	_game._player.set_grid_position(gate_entry)
+	var turn_before: int = gm.turn_count
 	_game._attempt_player_move(gate_cell - gate_entry)
 	await process_frame
+	_assert(
+		encounter.get("state", &"") == _game.BOSS_ARENA_STATE_REVEAL,
+		"geometry smoke gate entry should enter arena_reveal state"
+	)
+	_assert(
+		encounter.get("boss", null) == null, "geometry smoke boss should not spawn during reveal"
+	)
+	_assert(_live_boss_count(_game) == 0, "geometry smoke should have no live boss during reveal")
+	_assert(gm.turn_count == turn_before, "geometry smoke reveal should not consume a turn")
+	if _failed:
+		_game.queue_free()
+		_game = null
+		return
+	_assert(_game.complete_boss_arena_reveal(), "geometry smoke boss reveal completion failed")
+	await process_frame
+	_assert(
+		encounter.get("state", &"") == _game.BOSS_ARENA_STATE_ACTIVE,
+		"geometry smoke boss reveal completion should activate encounter"
+	)
+	_assert(
+		gm.turn_count == turn_before + 1, "geometry smoke boss activation should consume one turn"
+	)
+	_assert(_live_boss_count(_game) == 1, "geometry smoke should spawn exactly one boss")
 
 	var boss: Node = encounter.get("boss", null)
 	if boss == null or not boss.is_alive():
-		_fail("boss not spawned after gate entry")
+		_fail("boss not spawned after arena reveal completion")
 		_game.queue_free()
 		_game = null
 		return
@@ -669,6 +693,19 @@ func _remove_all_enemies() -> void:
 		if gm != null:
 			gm.remove_enemy(enemy)
 		enemy.queue_free()
+
+
+func _live_boss_count(game: Node) -> int:
+	var count: int = 0
+	for enemy: Node in game._enemies:
+		if (
+			enemy != null
+			and enemy.enemy_data != null
+			and enemy.enemy_data.is_boss
+			and enemy.is_alive()
+		):
+			count += 1
+	return count
 
 
 # ═══════════════════════════════════════════════════════════════════

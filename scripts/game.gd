@@ -33,6 +33,11 @@ const BOSS_FLOORS: Dictionary = {
 	20: &"kaelros",
 	25: &"nyxara",
 }
+const BOSS_ARENA_STATE_WAITING_AT_GATE: StringName = &"waiting_at_gate"
+const BOSS_ARENA_STATE_REVEAL: StringName = &"arena_reveal"
+const BOSS_ARENA_STATE_ACTIVE: StringName = &"active"
+const BOSS_ARENA_STATE_DEFEATED: StringName = &"defeated"
+const BOSS_ARENA_REVEAL_SECONDS: float = 2.10
 const BOSS_RESOURCE_BY_ID: Dictionary = {
 	&"observer": "res://resources/enemies/the_observer.tres",
 	&"seraphine": "res://resources/enemies/seraphine_thorn_saint.tres",
@@ -186,6 +191,7 @@ var _active_boss_encounter: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
 var _boss_hazards: Dictionary = {}
 var _unknown_boss_attack_shapes: Dictionary = {}
+var _boss_activation_timer: Timer
 var _unknown_boss_hazard_effects: Dictionary = {}
 var _trap_data: Dictionary = {}
 var _revealed_traps: Dictionary = {}
@@ -283,6 +289,7 @@ func _ready() -> void:
 	pause_master_volume_slider.value_changed.connect(_on_volume_slider_changed)
 	pause_ambience_enabled_button.toggled.connect(_on_ambience_enabled_toggled)
 	pause_reduced_vfx_button.toggled.connect(_on_reduced_vfx_toggled)
+	_setup_boss_activation_timer()
 	_refresh_audio_controls()
 	_start_or_resume_player()
 	_generate_floor(GameManager.current_floor)
@@ -310,6 +317,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_boss_arena_revealing():
+		return
 	if (
 		not GameManager.is_player_turn
 		or extraction_panel.visible
@@ -834,6 +843,7 @@ func _raise_debug_player_to_level_twenty() -> void:
 
 # ===== Floor Generation & Spawning =====
 func _generate_floor(floor_number: int) -> void:
+	_cancel_boss_activation()
 	for enemy in _enemies:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
@@ -1047,6 +1057,7 @@ func _boss_resource_for_floor(floor_number: int) -> Resource:
 
 
 func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int) -> void:
+	_cancel_boss_activation()
 	_active_boss_encounter.clear()
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
@@ -1070,14 +1081,18 @@ func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int
 	var boss_spawn_cell: Vector2i = boss_metadata.get("boss_spawn_cell", stairs_cell)
 	var boss_entry_cell: Vector2i = boss_metadata.get("boss_entry_cell", boss_spawn_cell)
 	var boss_gate_cell: Vector2i = boss_metadata.get("boss_gate_cell", Vector2i.ZERO)
+	var room_cells: Dictionary = boss_metadata.get("boss_room_cells", {})
 	_active_boss_encounter = {
 		"active": true,
+		"state": BOSS_ARENA_STATE_WAITING_AT_GATE,
 		"boss_id": boss_data.boss_id,
 		"boss_name": boss_data.display_name,
 		"boss": null,
 		"boss_data": boss_data,
 		"room": boss_metadata.get("boss_room", Rect2i()),
-		"room_cells": boss_metadata.get("boss_room_cells", {}),
+		"room_cells": room_cells,
+		"boss_arena_view_cells": boss_metadata.get("boss_arena_view_cells", room_cells),
+		"boss_arena_isolated": bool(boss_metadata.get("boss_arena_isolated", false)),
 		"door_cells": boss_metadata.get("boss_door_cells", []),
 		"gate_cell": boss_gate_cell,
 		"boss_gate_cell": boss_gate_cell,
@@ -1091,6 +1106,7 @@ func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int
 		"stairs_cell": stairs_cell,
 		"chest_cell": boss_metadata.get("boss_chest_cell", stairs_cell),
 		"entered": false,
+		"activation_completed": false,
 	}
 	GameManager.add_log_message("A boss gate waits at the far chamber.", &"boss_gate")
 	_refresh_boss_presentation()
@@ -1135,12 +1151,65 @@ func _enter_boss_gate(gate_cell: Vector2i) -> bool:
 	)
 	_play_action_burst(gate_cell, &"door")
 	_player.set_grid_position(entry_cell)
+	_seal_boss_encounter(false)
+	_active_boss_encounter["state"] = BOSS_ARENA_STATE_REVEAL
+	_active_boss_encounter["entered"] = true
+	_active_boss_encounter["locked"] = true
+	_focus_boss_arena_exploration()
 	_refresh_visibility()
+	_focus_boss_arena_exploration()
+	_show_boss_title(boss_id, str(_active_boss_encounter.get("boss_name", "The Boss")))
+	_schedule_boss_activation()
+	_refresh_boss_presentation()
+	_refresh_map()
+	return true
+
+
+func _setup_boss_activation_timer() -> void:
+	if _boss_activation_timer != null:
+		return
+	_boss_activation_timer = Timer.new()
+	_boss_activation_timer.one_shot = true
+	_boss_activation_timer.autostart = false
+	_boss_activation_timer.wait_time = BOSS_ARENA_REVEAL_SECONDS
+	_boss_activation_timer.timeout.connect(_on_boss_activation_timeout)
+	add_child(_boss_activation_timer)
+
+
+func _schedule_boss_activation() -> void:
+	_setup_boss_activation_timer()
+	_boss_activation_timer.stop()
+	_boss_activation_timer.wait_time = BOSS_ARENA_REVEAL_SECONDS
+	_boss_activation_timer.start()
+
+
+func _cancel_boss_activation() -> void:
+	if _boss_activation_timer != null:
+		_boss_activation_timer.stop()
+
+
+func _on_boss_activation_timeout() -> void:
+	complete_boss_arena_reveal()
+
+
+func complete_boss_arena_reveal() -> bool:
+	if _active_boss_encounter.is_empty():
+		return false
+	if (
+		_active_boss_encounter.get("state", BOSS_ARENA_STATE_WAITING_AT_GATE)
+		!= BOSS_ARENA_STATE_REVEAL
+	):
+		return false
+	if bool(_active_boss_encounter.get("activation_completed", false)):
+		return false
+	_cancel_boss_activation()
 	var boss: Node2D = _spawn_active_boss()
 	if boss == null:
 		_fail_open_boss_gate_after_spawn_failure()
-		return true
-	_show_boss_title(boss_id, boss.display_name)
+		return false
+	_active_boss_encounter["activation_completed"] = true
+	_active_boss_encounter["state"] = BOSS_ARENA_STATE_ACTIVE
+	var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
 	if (
 		map_view != null
 		and map_view.has_method(&"play_boss_spawn_intro")
@@ -1161,15 +1230,47 @@ func _enter_boss_gate(gate_cell: Vector2i) -> bool:
 		)
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"play_boss_intro_cue"):
 		sensory_feedback.call(&"play_boss_intro_cue", boss_id)
-	_seal_boss_encounter()
+	_start_boss_music()
+	_refresh_boss_presentation()
+	_refresh_map()
 	GameManager.advance_turn()
 	GameManager.begin_player_turn()
-	_refresh_map()
 	return true
+
+
+func _is_boss_arena_revealing() -> bool:
+	return (
+		not _active_boss_encounter.is_empty()
+		and (
+			_active_boss_encounter.get("state", BOSS_ARENA_STATE_WAITING_AT_GATE)
+			== BOSS_ARENA_STATE_REVEAL
+		)
+	)
+
+
+func _focus_boss_arena_exploration() -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	var focused_cells: Variant = _active_boss_encounter.get("boss_arena_view_cells", {})
+	if focused_cells is Dictionary and focused_cells.is_empty():
+		focused_cells = _active_boss_encounter.get("room_cells", {})
+	elif focused_cells is Array and focused_cells.is_empty():
+		focused_cells = _active_boss_encounter.get("room_cells", {})
+	_explored_cells.clear()
+	if focused_cells is Dictionary:
+		for cell: Vector2i in focused_cells.keys():
+			_explored_cells[cell] = true
+	elif focused_cells is Array:
+		for cell: Vector2i in focused_cells:
+			_explored_cells[cell] = true
 
 
 func _fail_open_boss_gate_after_spawn_failure() -> void:
 	if _active_boss_encounter.is_empty():
+		return
+	_cancel_boss_activation()
+	if bool(_active_boss_encounter.get("defeated", false)):
+		_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
 		return
 	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
 		if _is_inside_map(door_cell):
@@ -1181,6 +1282,7 @@ func _fail_open_boss_gate_after_spawn_failure() -> void:
 	_active_boss_encounter["locked"] = false
 	_active_boss_encounter["entered"] = true
 	_active_boss_encounter["defeated"] = true
+	_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
 	_boss_telegraphs.clear()
 	_boss_hazards.clear()
 	_clear_projectile_trails()
@@ -1277,7 +1379,7 @@ func _check_boss_room_entry(previous_cell: Vector2i, new_cell: Vector2i) -> void
 	_seal_boss_encounter()
 
 
-func _seal_boss_encounter() -> void:
+func _seal_boss_encounter(start_music: bool = true) -> void:
 	if _active_boss_encounter.is_empty():
 		return
 	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
@@ -1294,27 +1396,40 @@ func _seal_boss_encounter() -> void:
 		),
 		&"boss_gate"
 	)
-	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"start_boss_music"):
-		var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
-		var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
-		var base_stream: AudioStream = boss_data.boss_music_stream if boss_data != null else null
-		var climax_stream: AudioStream = (
-			boss_data.boss_climax_music_stream if boss_data != null else null
-		)
-		sensory_feedback.call(&"start_boss_music", boss_id, base_stream, climax_stream)
+	if start_music:
+		_start_boss_music()
 	_refresh_boss_presentation()
 	_refresh_visibility()
 	_refresh_map()
 
 
+func _start_boss_music() -> void:
+	if not is_instance_valid(sensory_feedback):
+		return
+	if not sensory_feedback.has_method(&"start_boss_music"):
+		return
+	var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
+	var boss_id: StringName = _active_boss_encounter.get("boss_id", &"")
+	var base_stream: AudioStream = boss_data.boss_music_stream if boss_data != null else null
+	var climax_stream: AudioStream = (
+		boss_data.boss_climax_music_stream if boss_data != null else null
+	)
+	sensory_feedback.call(&"start_boss_music", boss_id, base_stream, climax_stream)
+
+
 func _release_boss_encounter() -> void:
 	if _active_boss_encounter.is_empty():
+		return
+	_cancel_boss_activation()
+	if bool(_active_boss_encounter.get("defeated", false)):
+		_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
 		return
 	for door_cell: Vector2i in _active_boss_encounter.get("door_cells", []):
 		if _is_inside_map(door_cell):
 			GameManager.map_data[door_cell.y][door_cell.x] = DungeonDataScript.TileType.OPEN_DOOR
 	_active_boss_encounter["locked"] = false
 	_active_boss_encounter["defeated"] = true
+	_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
 	var stairs_cell: Vector2i = _active_boss_encounter.get("stairs_cell", _stairs_position)
 	GameManager.map_data[stairs_cell.y][stairs_cell.x] = DungeonDataScript.TileType.STAIRS_DOWN
 	_stairs_position = stairs_cell
@@ -1406,7 +1521,10 @@ func _refresh_boss_presentation() -> void:
 			and not bool(_active_boss_encounter.get("defeated", false))
 		)
 	if map_view != null and map_view.has_method(&"set_boss_room"):
-		if _active_boss_encounter.is_empty() or bool(_active_boss_encounter.get("defeated", false)):
+		if (
+			_active_boss_encounter.is_empty()
+			or not bool(_active_boss_encounter.get("entered", false))
+		):
 			map_view.call(&"set_boss_room", {}, [], false)
 		else:
 			var locked: bool = bool(_active_boss_encounter.get("locked", false))
@@ -1445,7 +1563,8 @@ func _refresh_boss_presentation() -> void:
 				_active_boss_encounter.get("boss_name", ""),
 				not _active_boss_encounter.is_empty(),
 				bool(_active_boss_encounter.get("locked", false)),
-				bool(_active_boss_encounter.get("defeated", false))
+				bool(_active_boss_encounter.get("defeated", false)),
+				_active_boss_encounter.get("state", BOSS_ARENA_STATE_WAITING_AT_GATE)
 			)
 		if boss_alive and boss != null and hud.has_method(&"show_boss_health"):
 			var state: Dictionary = _boss_state_for(boss)
@@ -1470,6 +1589,10 @@ func _refresh_boss_presentation() -> void:
 			hud.call(&"hide_boss_health")
 	if (
 		boss_alive
+		and (
+			_active_boss_encounter.get("state", BOSS_ARENA_STATE_WAITING_AT_GATE)
+			== BOSS_ARENA_STATE_ACTIVE
+		)
 		and bool(_active_boss_encounter.get("locked", false))
 		and is_instance_valid(sensory_feedback)
 	):
@@ -3082,7 +3205,7 @@ func _end_player_turn() -> void:
 func _process_enemy_turns() -> void:
 	var blocked_cells: Dictionary = {}
 	for enemy in _enemies:
-		if enemy != null and enemy.is_alive():
+		if enemy != null and enemy.is_alive() and not _should_skip_enemy_for_boss_arena(enemy):
 			for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
 				blocked_cells[occupied_cell] = true
 	if _shopkeeper != null:
@@ -3091,6 +3214,8 @@ func _process_enemy_turns() -> void:
 
 	for enemy in _enemies.duplicate():
 		if enemy == null or not enemy.is_alive():
+			continue
+		if _should_skip_enemy_for_boss_arena(enemy):
 			continue
 		if _is_enemy_sleeping(enemy):
 			continue
@@ -3115,6 +3240,19 @@ func _process_enemy_turns() -> void:
 				enemy.set_grid_position(next_step)
 		for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
 			blocked_cells[occupied_cell] = true
+
+
+func _should_skip_enemy_for_boss_arena(enemy: Node) -> bool:
+	if _active_boss_encounter.is_empty():
+		return false
+	if not bool(_active_boss_encounter.get("entered", false)):
+		return false
+	if _is_boss_enemy(enemy):
+		return false
+	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+		if _is_cell_in_active_boss_room(occupied_cell):
+			return false
+	return true
 
 
 func _advance_enemy_action(enemy: Node) -> int:
@@ -3366,7 +3504,10 @@ func _process_boss_turn(
 ) -> bool:
 	if not _is_boss_enemy(enemy):
 		return false
-	if not bool(_active_boss_encounter.get("entered", false)):
+	if (
+		_active_boss_encounter.get("state", BOSS_ARENA_STATE_WAITING_AT_GATE)
+		!= BOSS_ARENA_STATE_ACTIVE
+	):
 		return true
 	_update_boss_phase(enemy)
 	var state: Dictionary = _boss_state_for(enemy)
@@ -3584,12 +3725,29 @@ func _add_boss_cross_cells(cells: Dictionary, enemy: Node, attack: Resource) -> 
 
 func _add_boss_ring_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
 	var radius: int = max(1, attack.radius)
-	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
-		for y_offset: int in range(-radius, radius + 1):
-			for x_offset: int in range(-radius, radius + 1):
-				if max(abs(x_offset), abs(y_offset)) != radius:
-					continue
-				_add_boss_attack_cell(cells, occupied_cell + Vector2i(x_offset, y_offset))
+	var occupied_cells: Array[Vector2i] = _enemy_occupied_cells(enemy)
+	if occupied_cells.is_empty():
+		return
+	var min_x: int = occupied_cells[0].x
+	var max_x: int = occupied_cells[0].x
+	var min_y: int = occupied_cells[0].y
+	var max_y: int = occupied_cells[0].y
+	for occupied_cell: Vector2i in occupied_cells:
+		min_x = min(min_x, occupied_cell.x)
+		max_x = max(max_x, occupied_cell.x)
+		min_y = min(min_y, occupied_cell.y)
+		max_y = max(max_y, occupied_cell.y)
+	for y: int in range(min_y - radius, max_y + radius + 1):
+		for x: int in range(min_x - radius, max_x + radius + 1):
+			var candidate: Vector2i = Vector2i(x, y)
+			var minimum_distance: int = radius + 1
+			for occupied_cell: Vector2i in occupied_cells:
+				var distance: int = max(
+					abs(candidate.x - occupied_cell.x), abs(candidate.y - occupied_cell.y)
+				)
+				minimum_distance = min(minimum_distance, distance)
+			if minimum_distance == radius:
+				_add_boss_attack_cell(cells, candidate)
 
 
 func _add_boss_cone_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
@@ -4250,7 +4408,7 @@ func _boss_spawn_glyphs(boss_id: StringName) -> Array[String]:
 			return ["~", "≈", "≋", "♒"]
 		&"nyxara":
 			return ["◇", "◆", "◇", "✦"]
-	return ["·", "*", "✦", "✹"]
+	return ["·", "◇", "◆", "■"]
 
 
 func _show_boss_title(boss_id: StringName, fallback_name: String) -> void:
@@ -5900,6 +6058,10 @@ func _roll_enemy_gold_reward(enemy: Node = null) -> int:
 
 
 func _game_over(victory: bool) -> void:
+	_cancel_boss_activation()
+	if not _active_boss_encounter.is_empty():
+		_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
+		_active_boss_encounter["defeated"] = true
 	GameManager.end_run(victory)
 	if victory:
 		get_tree().change_scene_to_file("res://scenes/victory.tscn")

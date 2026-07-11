@@ -5,7 +5,7 @@
 ##   2. Resolving observer_gaze creates projectile trail with attack's projectile_id,
 ##      damages HP when player in queued cell, clears telegraphs.
 ##   3. Re-queueing with fresh cell and moving player before resolve preserves HP
-##      while still creating trail ending at original queued cell.
+##      while still creating a trail across the original queued cells.
 ##   4. Summon-shaped boss attack returns without projectile trails.
 ##   5. Hazard-producing attack stores vfx_payload.profile_id == hazard_vfx_id
 ##      in _boss_hazards, does not damage on creation.
@@ -67,6 +67,11 @@ func _fail(message: String) -> void:
 	quit(1)
 
 
+func _assert(condition: bool, message: String) -> void:
+	if not condition and not _failed:
+		_fail(message)
+
+
 func _start_game() -> Node:
 	_game_manager.prepare_character("debug", {}, _game_manager.CLASS_WIZARD)
 	var game_scene: PackedScene = load("res://scenes/game.tscn")
@@ -96,12 +101,51 @@ func _enter_boss_on_floor(game: Node, floor_number: int) -> Node:
 
 	game._player.set_grid_position(gate_entry_cell)
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
+	var turn_before: int = _game_manager.turn_count
 	game._attempt_player_move(gate_dir)
 	await process_frame
+	_assert(
+		encounter.get("state", &"") == game.BOSS_ARENA_STATE_REVEAL,
+		"gate entry should enter arena_reveal on floor %d" % floor_number
+	)
+	_assert(encounter.get("boss", null) == null, "boss should not spawn before reveal completion")
+	_assert(_live_boss_count(game) == 0, "no live boss should exist before reveal completion")
+	_assert(_game_manager.turn_count == turn_before, "arena reveal should not consume a turn")
+	if _failed:
+		return null
+	_assert(
+		game.complete_boss_arena_reveal(),
+		"boss reveal completion failed on floor %d" % floor_number
+	)
+	await process_frame
+	_assert(
+		encounter.get("state", &"") == game.BOSS_ARENA_STATE_ACTIVE,
+		"boss reveal completion should activate floor %d" % floor_number
+	)
+	_assert(
+		_game_manager.turn_count == turn_before + 1,
+		"boss reveal completion should consume one turn"
+	)
+	_assert(_live_boss_count(game) == 1, "boss reveal completion should spawn exactly one boss")
+	if _failed:
+		return null
 
 	game._refresh_map()
 	await process_frame
 	return encounter.get("boss", null)
+
+
+func _live_boss_count(game: Node) -> int:
+	var count: int = 0
+	for enemy: Node in game._enemies:
+		if (
+			enemy != null
+			and enemy.enemy_data != null
+			and enemy.enemy_data.is_boss
+			and enemy.is_alive()
+		):
+			count += 1
+	return count
 
 
 func _test_queue_does_not_create_trails() -> void:
@@ -151,7 +195,6 @@ func _test_resolve_creates_trail() -> void:
 		_fail("Observer has no observer_gaze attack")
 		return
 
-	# Call _play_boss_projectile_resolution directly to test projectile playback
 	var cells: Dictionary = game._boss_attack_cells(observer, attack)
 	if cells.is_empty():
 		_fail("observer_gaze attack cells should be non-empty")
@@ -159,7 +202,7 @@ func _test_resolve_creates_trail() -> void:
 
 	var telegraphed_cell: Vector2i = cells.keys()[0]
 
-	# Move player to the telegraphed cell so they are hit
+	# Move player to the telegraphed cell so they are hit when the queued attack resolves.
 	game._player.set_grid_position(telegraphed_cell)
 	game._refresh_visibility()
 	game._refresh_map()
@@ -167,9 +210,9 @@ func _test_resolve_creates_trail() -> void:
 
 	var hp_before: int = game._player.stats_component.current_hp
 	var trail_count_before: int = game.map_view._projectile_trails.size()
-
-	# Resolve the attack fully - this should play trail AND damage
-	game._resolve_boss_attack(observer, attack, cells)
+	game._queue_boss_attack(observer, attack, cells)
+	_assert(not game._boss_telegraphs.is_empty(), "queued observer_gaze should expose telegraphs")
+	game._process_boss_turn(observer, 1.0, 99, {})
 
 	var trails: Array = game.map_view._projectile_trails
 	if trails.size() <= trail_count_before:
@@ -182,9 +225,12 @@ func _test_resolve_creates_trail() -> void:
 		_fail('Projectile profile expected &"%s", got &"%s"' % [attack.projectile_id, profile])
 		return
 
-	# Player should take damage (standing on telegraph cell)
+	# Player should take damage (standing on telegraph cell), and telegraphs should clear.
 	if game._player.stats_component.current_hp >= hp_before:
 		_fail("Player on telegraph cell should take damage")
+		return
+	if not game._boss_telegraphs.is_empty():
+		_fail("Resolved queued attack should clear _boss_telegraphs")
 		return
 
 	game.queue_free()
@@ -239,20 +285,29 @@ func _test_move_evade_preserves_queued_cell() -> void:
 	var hp_before: int = game._player.stats_component.current_hp
 	var trail_count_before: int = game.map_view._projectile_trails.size()
 
-	# Resolve boss attack - should still create trail even if player evaded
-	game._resolve_boss_attack(observer, attack, cells)
+	# Resolve queued boss attack - should still create trail ending at the original queued cell.
+	game._queue_boss_attack(observer, attack, cells)
+	game._process_boss_turn(observer, 1.0, 100, {})
 
 	var trails: Array = game.map_view._projectile_trails
 	if trails.size() <= trail_count_before:
 		_fail("Evade: resolve should still create a projectile trail")
 		return
 
-	var last_trail: Dictionary = trails[trails.size() - 1]
-	var profile: StringName = last_trail.get("profile_id", &"")
-	if profile.is_empty():
-		_fail("Evade: trail should have non-empty profile_id")
+	var profile: StringName = attack.projectile_id
+	var expected_cells: Array[Vector2i] = ProjectileSystemScript.array_from_cell_keys(cells)
+	var found_queued_trail: bool = false
+	for trail_index: int in range(trail_count_before, trails.size()):
+		var emitted_trail: Dictionary = trails[trail_index]
+		if emitted_trail.get("profile_id", &"") != attack.projectile_id:
+			continue
+		var stored_cells: Array = emitted_trail.get("cells", [])
+		if stored_cells == expected_cells:
+			found_queued_trail = true
+			break
+	if not found_queued_trail:
+		_fail("Evade: trail should preserve every original queued cell")
 		return
-
 	var player_in_cell: bool = cells.has(game._player.grid_position)
 	if player_in_cell:
 		# If player is actually in the cell, HP may drop; that's fine
