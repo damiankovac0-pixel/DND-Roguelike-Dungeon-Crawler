@@ -13,7 +13,7 @@ grow_vertical = 2
 theme = ExtResource("2")
 script = ExtResource("1")
 title_text = "Dungeon Conquered"
-body_text = "You reached floor 25 and left the dungeon victorious."
+body_text = "You left the dungeon victorious."
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

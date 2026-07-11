@@ -34,10 +34,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+offset_left = 24.0
+offset_top = 16.0
+offset_right = -24.0
+offset_bottom = -16.0
 
 [node name="VBox" type="VBoxContainer" parent="Center"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="Center/VBox"]
 layout_mode = 2
@@ -54,17 +58,17 @@ text = "ASCII tactics, dangerous treasure, and one more floor."
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(340, 38)
+custom_minimum_size = Vector2(300, 38)
 layout_mode = 2
 text = "Enter the Dungeon"
 
 [node name="LibraryButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(340, 38)
+custom_minimum_size = Vector2(300, 38)
 layout_mode = 2
 text = "Library"
 
 [node name="QuitButton" type="Button" parent="Center/VBox"]
-custom_minimum_size = Vector2(340, 38)
+custom_minimum_size = Vector2(300, 38)
 layout_mode = 2
 text = "Quit"
 

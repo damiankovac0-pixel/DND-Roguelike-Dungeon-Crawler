@@ -12,8 +12,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "23.1.0"
-const LAST_UPDATED: String = "2026-07-10"
+const GAME_VERSION: String = "23.2.0"
+const LAST_UPDATED: String = "2026-07-11"
 const CLASS_FIGHTER: StringName = &"fighter"
 const CLASS_RANGER: StringName = &"ranger"
 const CLASS_WIZARD: StringName = &"wizard"
@@ -43,6 +43,7 @@ var pending_ability_scores: Dictionary = {}
 var pending_character_class: StringName = DEFAULT_CHARACTER_CLASS
 var pending_debug_loadout: bool = false
 var character_history: Array = []
+var last_run_summary: Dictionary = {}
 
 
 # === Lifecycle Methods ===
@@ -181,17 +182,12 @@ func reset_run() -> void:
 	player = null
 	map_data.clear()
 	clear_enemies()
+	last_run_summary = {}
 
 
 func abandon_run() -> void:
-	has_active_run = false
-	player = null
-	map_data.clear()
-	clear_enemies()
-	pending_character_name = ""
-	pending_ability_scores.clear()
-	pending_character_class = DEFAULT_CHARACTER_CLASS
-	pending_debug_loadout = false
+	_clear_run_context()
+	last_run_summary = {}
 
 
 func register_player(p: Node2D) -> void:
@@ -256,13 +252,21 @@ func begin_player_turn() -> void:
 
 
 func end_run(victory: bool) -> void:
-	if has_active_run and not pending_debug_loadout:
-		_record_character(victory)
-	has_active_run = false
+	last_run_summary = _build_last_run_summary(victory)
+	if has_active_run and not bool(last_run_summary.get("archived_debug", false)):
+		_record_character(last_run_summary)
+	_clear_run_context()
 	game_over_won.emit(victory)
 
 
+func clear_finished_run_context() -> void:
+	_clear_run_context()
+	last_run_summary = {}
+
+
 # === Private Methods ===
+
+
 func _normalize_character_class(character_class: StringName) -> StringName:
 	match character_class:
 		CLASS_FIGHTER, CLASS_RANGER, CLASS_WIZARD:
@@ -277,7 +281,7 @@ func _resolve_character_class(character_class: StringName) -> StringName:
 	return _normalize_character_class(character_class)
 
 
-func _record_character(victory: bool) -> void:
+func _build_last_run_summary(victory: bool) -> Dictionary:
 	var level: int = 1
 	var character_name: String = (
 		pending_character_name if not pending_character_name.is_empty() else "Nameless"
@@ -289,16 +293,30 @@ func _record_character(victory: bool) -> void:
 		var actor_name: Variant = player.get("display_name")
 		if actor_name is String and not actor_name.is_empty():
 			character_name = actor_name
+	var summary: Dictionary = {
+		"name": character_name,
+		"floor": current_floor,
+		"level": level,
+		"victory": victory,
+		"class": String(pending_character_class),
+		"version": GAME_VERSION,
+		"archived_debug": pending_debug_loadout,
+	}
+	summary.make_read_only()
+	return summary
+
+
+func _record_character(summary: Dictionary) -> void:
 	(
 		character_history
 		. push_front(
 			{
-				"name": character_name,
-				"floor": current_floor,
-				"level": level,
-				"victory": victory,
-				"version": GAME_VERSION,
-				"class": String(pending_character_class),
+				"name": str(summary.get("name", "Nameless")),
+				"floor": int(summary.get("floor", 1)),
+				"level": int(summary.get("level", 1)),
+				"victory": bool(summary.get("victory", false)),
+				"version": str(summary.get("version", GAME_VERSION)),
+				"class": str(summary.get("class", String(DEFAULT_CHARACTER_CLASS))),
 			}
 		)
 	)
@@ -340,8 +358,21 @@ func _migrate_character_history_entry(entry: Dictionary) -> Dictionary:
 	return migrated_entry
 
 
+func _clear_run_context() -> void:
+	has_active_run = false
+	player = null
+	map_data.clear()
+	clear_enemies()
+	pending_character_name = ""
+	pending_ability_scores.clear()
+	pending_character_class = DEFAULT_CHARACTER_CLASS
+	pending_debug_loadout = false
+
+
 func _is_legacy_test_history_entry(entry: Dictionary) -> bool:
 	var character_name: String = str(entry.get("name", "")).strip_edges()
 	if character_name.to_lower() == "debug":
 		return true
+	if entry.has("version") and entry.has("class"):
+		return false
 	return LEGACY_TEST_HISTORY_NAMES.has(character_name)

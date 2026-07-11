@@ -4,9 +4,11 @@
 ##   1. play_projectile_trail creates one active trail with all stored cells.
 ##   2. has_active_projectile_trails() returns true immediately after play.
 ##   3. After duration expires, trail clears and has_active returns false.
-##   4. Reduced VFX mode trims 4-cell trail to 2 cells, disables shimmer, caps alpha.
+##   4. Reduced VFX trims new and active trails to 2 cells, disables shimmer,
+##      caps alpha, and shortens duration.
 ##   5. clear_projectile_trails() removes trails and stops processing when idle.
 ##   6. Boss hazard vfx_payload presentation state is accepted through set_boss_hazards.
+##   7. Actor cell cache tracks alive actors and moved signals.
 ##
 ## Run:
 ##   /usr/local/bin/godot --headless --path . --script \
@@ -16,6 +18,29 @@ extends SceneTree
 const ProjectileSystemScript = preload("res://scripts/systems/projectile_system.gd")
 const MapViewScript = preload("res://scripts/ui/map_view.gd")
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
+
+
+class TestActor:
+	extends RefCounted
+
+	signal moved(new_position: Vector2i)
+
+	var grid_position: Vector2i
+	var _alive: bool = true
+
+	func _init(initial_position: Vector2i) -> void:
+		grid_position = initial_position
+
+	func is_alive() -> bool:
+		return _alive
+
+	func set_alive(alive: bool) -> void:
+		_alive = alive
+
+	func move_to(new_position: Vector2i) -> void:
+		grid_position = new_position
+		moved.emit(new_position)
+
 
 var _failed: bool = false
 
@@ -31,10 +56,16 @@ func _run() -> void:
 	_check_reduced_vfx_trims_cells()
 	if _failed:
 		return
+	await _check_reduced_vfx_reduces_active_trail()
+	if _failed:
+		return
 	_check_clear_projectile_trails()
 	if _failed:
 		return
 	_check_boss_hazard_vfx_payload()
+	if _failed:
+		return
+	await _check_actor_cell_cache_updates()
 	if _failed:
 		return
 
@@ -153,6 +184,9 @@ func _check_reduced_vfx_trims_cells() -> void:
 
 	var cells: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
 	var payload: Dictionary = ProjectileSystemScript.payload_for_id(&"arrow")
+	var original_duration: float = 0.50
+	payload["duration_seconds"] = original_duration
+	payload["rarity_shimmer_enabled"] = true
 
 	map_view.play_projectile_trail(cells, payload)
 	await process_frame
@@ -180,25 +214,115 @@ func _check_reduced_vfx_trims_cells() -> void:
 		map_view.queue_free()
 		return
 
-	# Verify shimmer disabled and alphas capped
+	# Verify shimmer disabled, alphas capped, and duration shortened.
 	if trail.get("rarity_shimmer_enabled", true) != false:
 		_fail("Reduced VFX: shimmer should be disabled")
 		map_view.queue_free()
 		return
-
-	var alpha_fields: Array[String] = [
-		"color", "trail_color", "impact_color", "fill_color", "border_color"
-	]
-	for field: String in alpha_fields:
-		var color: Color = trail.get(field, Color.WHITE)
-		if color.a > 0.081:
-			_fail("Reduced VFX: %s alpha %.4f should be <= 0.08" % [field, color.a])
-			map_view.queue_free()
-			return
+	var reduced_duration: float = float(trail.get("duration", 0.0))
+	if reduced_duration >= original_duration:
+		_fail(
+			(
+				"Reduced VFX: duration %.3f should be shorter than %.3f"
+				% [reduced_duration, original_duration]
+			)
+		)
+		map_view.queue_free()
+		return
+	if not _float_close(float(trail.get("duration_seconds", 0.0)), reduced_duration):
+		_fail("Reduced VFX: duration_seconds should mirror reduced duration")
+		map_view.queue_free()
+		return
+	if not _assert_trail_alpha_cap(trail, "Reduced VFX"):
+		map_view.queue_free()
+		return
 
 	map_view.queue_free()
 	await process_frame
-	print("  reduced VFX: 2-cell trim, shimmer disabled, alpha capped")
+	print("  reduced VFX: new trails trim, shimmer/alpha capped, duration shortened")
+
+
+func _check_reduced_vfx_reduces_active_trail() -> void:
+	var map_view: Node = _make_map_view()
+	await process_frame
+
+	var cells: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
+	var payload: Dictionary = ProjectileSystemScript.payload_for_id(&"arcane_bolt")
+	payload["duration_seconds"] = 0.50
+	payload["rarity_shimmer_enabled"] = true
+
+	map_view.play_projectile_trail(cells, payload)
+	await process_frame
+
+	if not map_view.has_active_projectile_trails():
+		_fail("Reduced VFX toggle: trail should exist before toggle")
+		map_view.queue_free()
+		return
+	var full_trail: Dictionary = map_view._projectile_trails[0]
+	var full_cells: Array = full_trail.get("cells", [])
+	if full_cells.size() != 4:
+		_fail("Reduced VFX toggle: expected 4 full cells before toggle, got %d" % full_cells.size())
+		map_view.queue_free()
+		return
+	if not bool(full_trail.get("rarity_shimmer_enabled", false)):
+		_fail("Reduced VFX toggle: test trail should start with shimmer enabled")
+		map_view.queue_free()
+		return
+	var full_duration: float = float(full_trail.get("duration", 0.0))
+
+	map_view.set_reduced_vfx_enabled(true)
+
+	if not map_view.has_active_projectile_trails():
+		_fail("Reduced VFX toggle: active trail should remain active immediately after toggle")
+		map_view.queue_free()
+		return
+	if not map_view.is_processing():
+		_fail("Reduced VFX toggle: active trail should keep MapView processing")
+		map_view.queue_free()
+		return
+	var reduced_trail: Dictionary = map_view._projectile_trails[0]
+	var reduced_cells: Array = reduced_trail.get("cells", [])
+	if reduced_cells.size() != 2:
+		_fail(
+			"Reduced VFX toggle: active trail should trim to 2 cells, got %d" % reduced_cells.size()
+		)
+		map_view.queue_free()
+		return
+	if reduced_cells[0] != Vector2i(0, 0) or reduced_cells[1] != Vector2i(3, 0):
+		_fail("Reduced VFX toggle: active trail should keep first and last cells")
+		map_view.queue_free()
+		return
+	if reduced_trail.get("rarity_shimmer_enabled", true) != false:
+		_fail("Reduced VFX toggle: active trail shimmer should be disabled immediately")
+		map_view.queue_free()
+		return
+	var reduced_duration: float = float(reduced_trail.get("duration", 0.0))
+	if reduced_duration >= full_duration:
+		_fail(
+			(
+				"Reduced VFX toggle: active trail duration %.3f should be shorter than %.3f"
+				% [reduced_duration, full_duration]
+			)
+		)
+		map_view.queue_free()
+		return
+	if not _assert_trail_alpha_cap(reduced_trail, "Reduced VFX toggle"):
+		map_view.queue_free()
+		return
+
+	map_view._process(reduced_duration + 0.01)
+	if map_view.has_active_projectile_trails():
+		_fail("Reduced VFX toggle: active trail should expire after shortened duration")
+		map_view.queue_free()
+		return
+	if map_view.is_processing():
+		_fail("Reduced VFX toggle: processing should stop after shortened trail expires")
+		map_view.queue_free()
+		return
+
+	map_view.queue_free()
+	await process_frame
+	print("  reduced VFX: active trails immediately trim, cap alpha, and expire sooner")
 
 
 func _check_clear_projectile_trails() -> void:
@@ -294,3 +418,69 @@ func _check_boss_hazard_vfx_payload() -> void:
 	map_view.queue_free()
 	await process_frame
 	print("  boss hazard vfx_payload accepted and deep-duplicated")
+
+
+func _check_actor_cell_cache_updates() -> void:
+	var map_view: Node = _make_map_view()
+	await process_frame
+
+	var actor: TestActor = TestActor.new(Vector2i(1, 0))
+	map_view.set_actors([actor])
+	if map_view._actor_at(Vector2i(1, 0)) != actor:
+		_fail("Actor cache should contain alive actor at initial cell")
+		map_view.queue_free()
+		return
+
+	actor.move_to(Vector2i(2, 0))
+	if map_view._actor_cells.has(Vector2i(1, 0)):
+		_fail("Actor cache should erase the old cell after moved signal")
+		map_view.queue_free()
+		return
+	if map_view._actor_at(Vector2i(1, 0)) != null:
+		_fail("Actor lookup should clear the old cell after moved signal")
+		map_view.queue_free()
+		return
+	if map_view._actor_at(Vector2i(2, 0)) != actor:
+		_fail("Actor cache should move actor to new cell after moved signal")
+		map_view.queue_free()
+		return
+
+	actor.set_alive(false)
+	map_view.set_actors([actor])
+	if map_view._actor_cells.has(Vector2i(2, 0)):
+		_fail("Actor cache should erase dead actors when rebuilt")
+		map_view.queue_free()
+		return
+	if map_view._actor_at(Vector2i(2, 0)) != null:
+		_fail("Actor lookup should omit dead actors when rebuilt")
+		map_view.queue_free()
+		return
+	actor.move_to(Vector2i(3, 0))
+	if map_view._actor_cells.has(Vector2i(3, 0)):
+		_fail("Actor lookup should not repopulate dead actors from moved signal")
+		map_view.queue_free()
+		return
+	if map_view._actor_at(Vector2i(3, 0)) != null:
+		_fail("Actor lookup should not repopulate dead actors from moved signal")
+		map_view.queue_free()
+		return
+
+	map_view.queue_free()
+	await process_frame
+	print("  actor cache: alive, moved, and dead actors update cached cells")
+
+
+func _assert_trail_alpha_cap(trail: Dictionary, prefix: String) -> bool:
+	var alpha_fields: Array[String] = [
+		"color", "trail_color", "impact_color", "fill_color", "border_color"
+	]
+	for field: String in alpha_fields:
+		var color: Color = trail.get(field, Color.WHITE)
+		if color.a > 0.081:
+			_fail("%s: %s alpha %.4f should be <= 0.08" % [prefix, field, color.a])
+			return false
+	return true
+
+
+func _float_close(left: float, right: float) -> bool:
+	return absf(left - right) <= 0.0001

@@ -13,6 +13,7 @@ const ENTRANCE_STAGGER: float = 0.12
 @onready var quit_button: Button = $Center/VBox/QuitButton
 @onready var title_label: Label = $Center/VBox/Title
 @onready var subtitle_label: Label = $Center/VBox/Subtitle
+@onready var background: AsciiBackdrop = $Background
 
 
 # === Lifecycle Methods ===
@@ -20,11 +21,34 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	library_button.pressed.connect(_on_library_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
-	_play_entrance()
+	_apply_motion_preferences()
 	start_button.grab_focus()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel") and is_instance_valid(quit_button):
+		quit_button.grab_focus()
+		get_viewport().set_input_as_handled()
+
+
 # === Private Methods ===
+func _apply_motion_preferences() -> void:
+	var reduced_motion: bool = SensoryFeedback.is_reduced_vfx_preferred()
+	background.motion_enabled = not reduced_motion
+	if reduced_motion:
+		_show_entrance_immediately()
+	else:
+		_play_entrance()
+
+
+func _show_entrance_immediately() -> void:
+	var entrance_nodes: Array[Control] = [
+		title_label, subtitle_label, start_button, library_button, quit_button
+	]
+	for node: Control in entrance_nodes:
+		node.modulate = Color.WHITE
+
+
 func _play_entrance() -> void:
 	## Short staggered fade: enough ceremony for the title screen, no long wait.
 	var entrance_nodes: Array[Control] = [

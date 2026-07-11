@@ -162,7 +162,14 @@ func _check_final_floor_boss_metadata() -> void:
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
 	_game._attempt_player_move(gate_dir)
 	await process_frame
-	# After gate entry, boss should be spawned and correctly identified
+	if encounter.get("boss", null) != null:
+		_fail("Floor 25 boss should remain hidden during the reveal")
+		return
+	if not _game.complete_boss_arena_reveal():
+		_fail("Floor 25 boss reveal did not complete")
+		return
+	await process_frame
+	# After reveal completion, boss should be spawned and correctly identified.
 	var boss: Node = encounter.get("boss")
 	if boss == null:
 		_fail("Floor 25 should spawn Nyxara after boss gate entry")

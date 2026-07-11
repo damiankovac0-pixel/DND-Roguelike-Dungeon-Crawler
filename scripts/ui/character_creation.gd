@@ -32,10 +32,12 @@ var _selected_class_index: int = 0
 @onready var reroll_button: Button = $Center/Panel/Margin/VBox/Buttons/RerollButton
 @onready var begin_button: Button = $Center/Panel/Margin/VBox/Buttons/BeginButton
 @onready var back_button: Button = $Center/Panel/Margin/VBox/Buttons/BackButton
+@onready var background: AsciiBackdrop = $Background
 
 
 # === Lifecycle Methods ===
 func _ready() -> void:
+	_apply_motion_preferences()
 	reroll_button.pressed.connect(_roll_abilities)
 	begin_button.pressed.connect(_begin_run)
 	back_button.pressed.connect(_go_back)
@@ -69,6 +71,12 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel"):
+		_go_back()
+		get_viewport().set_input_as_handled()
+
+
 func _is_backspace_key(key_event: InputEventKey) -> bool:
 	return (
 		key_event.keycode == KEY_BACKSPACE
@@ -79,6 +87,10 @@ func _is_backspace_key(key_event: InputEventKey) -> bool:
 
 
 # === Private Methods ===
+func _apply_motion_preferences() -> void:
+	background.motion_enabled = not SensoryFeedback.is_reduced_vfx_preferred()
+
+
 func _build_assignment_rows() -> void:
 	for index: int in range(STAT_KEYS.size()):
 		var row: HBoxContainer = HBoxContainer.new()

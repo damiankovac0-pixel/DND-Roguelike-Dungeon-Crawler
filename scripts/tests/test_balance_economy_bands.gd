@@ -2,8 +2,8 @@
 ##
 ## Verifies: XP cumulative thresholds via formula, post-20 HP reduction rule,
 ## enemy encounter-limit caps per floor, shop stock sizes, first-reroll costs,
-## rarity multiplier prices, and chest rarity floor caps / reward-floor behavior
-## via direct formula inspection.
+## rarity multiplier prices, floor-1 guaranteed potion,
+## and chest rarity floor caps / reward-floor behavior via direct formula inspection.
 ##
 ## Run with:
 ##   /usr/local/bin/godot --headless --path . --script res://scripts/tests/test_balance_economy_bands.gd
@@ -37,6 +37,10 @@ func _run() -> void:
 	# ---- Shop stock sizes ----
 	if not _failed:
 		_check_shop_stock_formulas()
+
+	# ---- Floor-1 guaranteed potion ----
+	if not _failed:
+		_check_floor_one_guaranteed_potion()
 
 	# ---- Reroll costs ----
 	if not _failed:
@@ -197,6 +201,76 @@ func _check_shop_stock_formulas() -> void:
 			return
 
 	print("  shop stock: 5/5/6/7/8/8 at floors 1/5/6/12/18/24")
+
+
+# ---------------------------------------------------------------------------
+#  Floor-1 guaranteed potion
+# ---------------------------------------------------------------------------
+
+
+func _check_floor_one_guaranteed_potion() -> void:
+	if _failed:
+		return
+
+	var potion_candidates: Array[Resource] = []
+	for path: String in ResourcePathsScript.ITEM_PATHS:
+		var item: Resource = load(path)
+		if item == null:
+			continue
+		if not _can_spawn_item(item, 1):
+			continue
+		if item.kind != ItemDataScript.ItemKind.CONSUMABLE or item.healing_amount <= 0:
+			continue
+		potion_candidates.append(item)
+		if item.min_floor > 1 or (item.max_floor > 0 and item.max_floor < 1):
+			_fail(
+				(
+					"floor 1 healing candidate %s has invalid floor band min=%d max=%d"
+					% [item.display_name, item.min_floor, item.max_floor]
+				)
+			)
+			return
+
+	if potion_candidates.is_empty():
+		_fail("floor 1 has no guaranteed healing potion candidates")
+		return
+
+	var guaranteed_potion: Resource = _choose_floor_one_guaranteed_potion(potion_candidates)
+	if guaranteed_potion == null:
+		_fail("floor 1 guaranteed potion helper returned null")
+		return
+	if guaranteed_potion.display_name != "Health Potion":
+		_fail(
+			(
+				"floor 1 guaranteed potion is %s (min_floor=%d healing=%d), expected Health Potion"
+				% [
+					guaranteed_potion.display_name,
+					guaranteed_potion.min_floor,
+					guaranteed_potion.healing_amount,
+				]
+			)
+		)
+		return
+	if not _can_spawn_item(guaranteed_potion, 1):
+		_fail(
+			(
+				"Health Potion floor band min=%d max=%d is not floor-1 eligible"
+				% [guaranteed_potion.min_floor, guaranteed_potion.max_floor]
+			)
+		)
+		return
+
+	print(
+		(
+			"  floor 1 guaranteed potion: %s (min_floor=%d, healing=%d, candidates=%d)"
+			% [
+				guaranteed_potion.display_name,
+				guaranteed_potion.min_floor,
+				guaranteed_potion.healing_amount,
+				potion_candidates.size(),
+			]
+		)
+	)
 
 
 # ---------------------------------------------------------------------------
@@ -363,6 +437,22 @@ func _check_chest_rarity_caps() -> void:
 
 
 # ====== Inline formula mirrors (no private access needed) ======
+
+
+static func _choose_floor_one_guaranteed_potion(potion_candidates: Array[Resource]) -> Resource:
+	if potion_candidates.is_empty():
+		return null
+	var best_potion: Resource = potion_candidates[0]
+	for potion: Resource in potion_candidates:
+		if potion.healing_amount > best_potion.healing_amount:
+			best_potion = potion
+	return best_potion
+
+
+static func _can_spawn_item(item_data: Resource, floor_number: int) -> bool:
+	if floor_number < item_data.min_floor:
+		return false
+	return item_data.max_floor <= 0 or floor_number <= item_data.max_floor
 
 
 static func _rarity_cap_for_floor(floor_number: int) -> int:

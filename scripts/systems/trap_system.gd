@@ -71,10 +71,11 @@ static func trigger_trap(
 	log_callback: Callable,
 	refresh_callback: Callable,
 	game_over_callback: Callable,
-	special_callback: Callable
-) -> void:
+	special_callback: Callable,
+	actor_blockers: Dictionary = {}
+) -> bool:
 	if not trap_data.has(trap_cell):
-		return
+		return true
 	var trap: Resource = trap_data[trap_cell]
 	triggered_traps[trap_cell] = true
 	var stats: Node = player.stats_component
@@ -91,23 +92,13 @@ static func trigger_trap(
 					"A poison dart hits you for %d damage! The wound stings." % damage, &"damage"
 				)
 		TrapDataScript.TrapEffect.TELEPORT:
-			var safe_cells: Array[Vector2i] = []
-			for tc: Vector2i in trap_data.keys():
-				if tc.distance_to(player.grid_position) > 5:
-					safe_cells.append(tc)
-			if safe_cells.is_empty() and not map_data.is_empty():
-				var map_height: int = map_data.size()
-				var map_width: int = map_data[0].size()
-				for y: int in range(map_height):
-					for x: int in range(map_width):
-						var cell: Vector2i = Vector2i(x, y)
-						if (
-							player.grid_position != cell
-							and DungeonDataScript.is_walkable(map_data[cell.y][cell.x])
-						):
-							safe_cells.append(cell)
+			var safe_cells: Array[Vector2i] = _get_safe_teleport_cells(
+				trap_cell, trap_data, player, enemies, map_data, actor_blockers
+			)
 			if safe_cells.is_empty():
-				log_callback.call("The teleport trap fizzles — destination blocked.", &"neutral")
+				log_callback.call(
+					"The teleport trap fizzles — every destination is blocked.", &"neutral"
+				)
 			else:
 				player.set_grid_position(safe_cells[randi_range(0, safe_cells.size() - 1)])
 				log_callback.call("A shimmering glyph teleports you across the dungeon!", &"magic")
@@ -129,7 +120,55 @@ static func trigger_trap(
 			)
 		TrapDataScript.TrapEffect.STUN, TrapDataScript.TrapEffect.AMBUSH:
 			special_callback.call(trap, trap_cell)
-	if not player.is_alive():
+	var player_survived: bool = player.is_alive()
+	if not player_survived:
 		game_over_callback.call(false)
 	else:
 		refresh_callback.call()
+	return player_survived
+
+
+static func _get_safe_teleport_cells(
+	trap_cell: Vector2i,
+	trap_data: Dictionary,
+	player: Node2D,
+	enemies: Array,
+	map_data: Array,
+	actor_blockers: Dictionary
+) -> Array[Vector2i]:
+	var safe_cells: Array[Vector2i] = []
+	if map_data.is_empty():
+		return safe_cells
+	var map_height: int = map_data.size()
+	var map_width: int = map_data[0].size()
+	var current_cell: Vector2i = player.grid_position
+	for y: int in range(map_height):
+		for x: int in range(map_width):
+			var cell: Vector2i = Vector2i(x, y)
+			if cell == current_cell or cell == trap_cell:
+				continue
+			if trap_data.has(cell):
+				continue
+			if actor_blockers.has(cell):
+				continue
+			if _is_living_enemy_at(cell, enemies):
+				continue
+			if not DungeonDataScript.is_walkable(map_data[cell.y][cell.x]):
+				continue
+			safe_cells.append(cell)
+	return safe_cells
+
+
+static func _is_living_enemy_at(cell: Vector2i, enemies: Array) -> bool:
+	for enemy in enemies:
+		if enemy == null or not enemy.is_alive():
+			continue
+		if enemy.grid_position == cell:
+			return true
+		var enemy_data: Resource = enemy.get("enemy_data") as Resource
+		if enemy_data != null:
+			var footprint_offsets: Array = enemy_data.get("boss_footprint_offsets")
+			for offset: Vector2i in footprint_offsets:
+				if enemy.grid_position + offset == cell:
+					return true
+	return false

@@ -61,7 +61,7 @@ func _check_stun_trap(game: Node, player_position: Vector2i) -> void:
 	await _trigger_stun_trap(game, player_position, trap_cell, stun_trap)
 	if _failed:
 		return
-	await _check_stunned_movement(game, player_position)
+	await _check_stunned_movement(game, trap_cell)
 	if _failed:
 		return
 	await _check_stunned_healing(game)
@@ -75,8 +75,8 @@ func _trigger_stun_trap(
 	game._trap_data[trap_cell] = stun_trap
 	game._attempt_player_move(Vector2i.RIGHT)
 	await process_frame
-	if game._player.grid_position != player_position:
-		_fail("stun trap moved player onto trap")
+	if game._player.grid_position != trap_cell:
+		_fail("stun trap should leave player on entered cell %s" % trap_cell)
 		return
 	if game._stun_actions != 3:
 		_fail("stun actions %d, expected 3 after trap action" % game._stun_actions)

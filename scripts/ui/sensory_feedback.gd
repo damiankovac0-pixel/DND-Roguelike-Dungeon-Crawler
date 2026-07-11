@@ -17,6 +17,9 @@ const DEFAULT_VOLUME: float = 0.42
 const SETTINGS_PATH: String = "user://dungeon_delver_settings.cfg"
 const SETTINGS_SECTION: String = "sensory"
 const SETTING_REDUCED_VFX: String = "reduced_vfx"
+const SETTING_AUDIO_ENABLED: String = "audio_enabled"
+const SETTING_MASTER_VOLUME: String = "master_volume"
+const SETTING_AMBIENCE_ENABLED: String = "ambience_enabled"
 const REDUCED_VFX_ALPHA_SCALE: float = 0.22
 const REDUCED_VFX_MAX_ALPHA: float = 0.045
 const REDUCED_VFX_DURATION_SCALE: float = 0.58
@@ -139,7 +142,7 @@ var _cue_streams: Dictionary = {}  # StringName → AudioStreamWAV
 var _audio_players: Array[AudioStreamPlayer] = []
 var _audio_enabled: bool = true
 var _next_player_index: int = 0
-var _master_volume: float = 0.50
+var _master_volume: float = DEFAULT_VOLUME
 var _ambience_enabled: bool = true
 var _ambience_player: AudioStreamPlayer
 var _ambience_stream: AudioStreamWAV = null
@@ -158,7 +161,14 @@ var _visual_duration: float = 0.0
 var _visual_elapsed: float = 0.0
 var _reduced_vfx_enabled: bool = false
 
+
 # === GameManager Access ===
+static func is_reduced_vfx_preferred() -> bool:
+	var config: ConfigFile = ConfigFile.new()
+	var error: int = config.load(SETTINGS_PATH)
+	if error != OK:
+		return false
+	return bool(config.get_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, false))
 
 
 ## Returns the GameManager autoload node, or null if not available.
@@ -180,6 +190,7 @@ func _ready() -> void:
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_initialize_preference_defaults()
 	_load_preferences()
 
 	# Start with visual processing off (event-gated only).
@@ -201,7 +212,6 @@ func _ready() -> void:
 	_music_player.name = "BossMusicPlayer"
 	_music_player.bus = &"Master"
 	add_child(_music_player)
-	_master_volume = clampf(default_master_volume, 0.0, 1.0)
 	_update_player_volumes()
 
 	# Initialize rate-limiting state.
@@ -212,16 +222,11 @@ func _ready() -> void:
 	# Connect GameManager signals if available.
 	var gm: Node = _game_manager()
 	if gm != null:
-		if not gm.log_message_added.is_connected(_on_log_message):
-			gm.log_message_added.connect(_on_log_message)
-		if not gm.player_damaged.is_connected(_on_player_damaged):
-			gm.player_damaged.connect(_on_player_damaged)
-		if not gm.level_up.is_connected(_on_level_up):
-			gm.level_up.connect(_on_level_up)
-		if not gm.floor_changed.is_connected(_on_floor_changed):
-			gm.floor_changed.connect(_on_floor_changed)
-		if not gm.game_over_won.is_connected(_on_game_over_won):
-			gm.game_over_won.connect(_on_game_over_won)
+		_connect_game_manager_signal(gm, &"log_message_added", _on_log_message)
+		_connect_game_manager_signal(gm, &"player_damaged", _on_player_damaged)
+		_connect_game_manager_signal(gm, &"level_up", _on_level_up)
+		_connect_game_manager_signal(gm, &"floor_changed", _on_floor_changed)
+		_connect_game_manager_signal(gm, &"game_over_won", _on_game_over_won)
 
 
 func _process(delta: float) -> void:
@@ -306,8 +311,14 @@ func _draw() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.keycode == KEY_M and event.pressed and not event.echo:
-		toggle_audio_enabled(true)
+	var key_event: InputEventKey = event as InputEventKey
+	if (
+		key_event != null
+		and key_event.keycode == KEY_M
+		and key_event.pressed
+		and not key_event.echo
+	):
+		toggle_audio_enabled(true, true)
 
 
 # === Public Methods ===
@@ -320,6 +331,17 @@ func cue_for_message_type(message_type: StringName) -> StringName:
 	if cue is StringName:
 		return cue
 	return &""
+
+
+func _connect_game_manager_signal(gm: Node, signal_name: StringName, callback: Callable) -> void:
+	if gm.has_signal(signal_name) and not gm.is_connected(signal_name, callback):
+		gm.connect(signal_name, callback)
+
+
+func _color_or(color_value: Variant, fallback: Color) -> Color:
+	if color_value is Color:
+		return color_value
+	return fallback
 
 
 ## Triggers the named sensory cue — plays audio and activates visual feedback.
@@ -335,8 +357,8 @@ func trigger_cue(cue_name: StringName) -> void:
 	# Visual feedback
 	var visual_config: Variant = CUE_VISUAL.get(cue_name)
 	if visual_config is Dictionary:
-		_visual_color = visual_config.get("color", Color.TRANSPARENT)
-		_visual_duration = visual_config.get("duration", 0.25)
+		_visual_color = _color_or(visual_config.get("color", Color.TRANSPARENT), Color.TRANSPARENT)
+		_visual_duration = float(visual_config.get("duration", 0.25))
 		if _reduced_vfx_enabled:
 			_visual_color.a = min(_visual_color.a * REDUCED_VFX_ALPHA_SCALE, REDUCED_VFX_MAX_ALPHA)
 			_visual_duration = max(
@@ -373,8 +395,10 @@ func _trigger_boss_cue(cue_name: StringName, boss_id: StringName, phase: int = 1
 
 	var visual_config: Variant = CUE_VISUAL.get(cue_name)
 	if visual_config is Dictionary:
-		_visual_color = _boss_cue_color(boss_id, visual_config.get("color", Color.TRANSPARENT))
-		_visual_duration = visual_config.get("duration", 0.25)
+		_visual_color = _boss_cue_color(
+			boss_id, _color_or(visual_config.get("color", Color.TRANSPARENT), Color.TRANSPARENT)
+		)
+		_visual_duration = float(visual_config.get("duration", 0.25))
 		if cue_name == CUE_BOSS_PHASE:
 			_visual_duration = min(0.75, _visual_duration + 0.08 * float(max(0, phase - 1)))
 		if _reduced_vfx_enabled:
@@ -420,8 +444,10 @@ func play_boss_defeat_cue(boss_id: StringName) -> void:
 
 ## Enables or disables all audio playback, optionally announcing via log.
 ## Visual feedback is unaffected.
-func set_audio_enabled(enabled: bool, announce: bool = false) -> void:
+func set_audio_enabled(enabled: bool, announce: bool = false, persist: bool = false) -> void:
 	_audio_enabled = enabled
+	if persist:
+		_save_preferences()
 	_update_player_volumes()
 	_sync_ambience_player()
 	if not _audio_enabled and is_instance_valid(_music_player):
@@ -438,15 +464,17 @@ func is_audio_enabled() -> bool:
 	return _audio_enabled
 
 
-## Toggle audio on/off, optionally announcing via log.
-func toggle_audio_enabled(announce: bool = true) -> void:
-	set_audio_enabled(not _audio_enabled, announce)
+## Toggle audio on/off, optionally announcing and persisting the preference.
+func toggle_audio_enabled(announce: bool = true, persist: bool = false) -> void:
+	set_audio_enabled(not _audio_enabled, announce, persist)
 
 
 ## Sets master volume as a normalized value [0.0, 1.0] and updates all
 ## active audio players immediately.
-func set_master_volume(value: float) -> void:
+func set_master_volume(value: float, persist: bool = false) -> void:
 	_master_volume = clampf(value, 0.0, 1.0)
+	if persist:
+		_save_preferences()
 	_update_player_volumes()
 
 
@@ -464,8 +492,10 @@ func get_effective_volume_db() -> float:
 
 
 ## Enables or disables the looping ambience audio.
-func set_ambience_enabled(enabled: bool) -> void:
+func set_ambience_enabled(enabled: bool, persist: bool = false) -> void:
 	_ambience_enabled = enabled
+	if persist:
+		_save_preferences()
 	_sync_ambience_player()
 
 
@@ -622,11 +652,25 @@ func _draw_reduced_visual(fade: float) -> void:
 	)
 
 
+func _initialize_preference_defaults() -> void:
+	_audio_enabled = true
+	_master_volume = clampf(default_master_volume, 0.0, 1.0)
+	_ambience_enabled = true
+	_reduced_vfx_enabled = false
+
+
 func _load_preferences() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	var error: int = config.load(SETTINGS_PATH)
 	if error != OK:
 		return
+	_audio_enabled = bool(config.get_value(SETTINGS_SECTION, SETTING_AUDIO_ENABLED, _audio_enabled))
+	_master_volume = clampf(
+		float(config.get_value(SETTINGS_SECTION, SETTING_MASTER_VOLUME, _master_volume)), 0.0, 1.0
+	)
+	_ambience_enabled = bool(
+		config.get_value(SETTINGS_SECTION, SETTING_AMBIENCE_ENABLED, _ambience_enabled)
+	)
 	_reduced_vfx_enabled = bool(
 		config.get_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, _reduced_vfx_enabled)
 	)
@@ -635,6 +679,9 @@ func _load_preferences() -> void:
 func _save_preferences() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	config.load(SETTINGS_PATH)
+	config.set_value(SETTINGS_SECTION, SETTING_AUDIO_ENABLED, _audio_enabled)
+	config.set_value(SETTINGS_SECTION, SETTING_MASTER_VOLUME, _master_volume)
+	config.set_value(SETTINGS_SECTION, SETTING_AMBIENCE_ENABLED, _ambience_enabled)
 	config.set_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, _reduced_vfx_enabled)
 	config.save(SETTINGS_PATH)
 
@@ -673,7 +720,7 @@ func _play_cue(cue_name: StringName) -> void:
 	var profile: Variant = CUE_PROFILES.get(cue_name)
 	if profile is not Dictionary:
 		return
-	var min_interval: float = profile.get("min_interval", 0.0)
+	var min_interval: float = float(profile.get("min_interval", 0.0))
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now - _cue_last_play_time.get(cue_name, -INF) < min_interval:
 		return
@@ -688,7 +735,7 @@ func _play_cue(cue_name: StringName) -> void:
 		var player: AudioStreamPlayer = _audio_players[_next_player_index]
 		_next_player_index = (_next_player_index + 1) % pool_size
 		player.stream = stream
-		var gain_db: float = profile.get("gain_db", 0.0)
+		var gain_db: float = float(profile.get("gain_db", 0.0))
 		player.volume_db = get_effective_volume_db() + gain_db
 		player.play()
 

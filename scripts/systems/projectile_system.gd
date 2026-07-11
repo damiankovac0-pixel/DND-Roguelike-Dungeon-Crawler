@@ -762,6 +762,7 @@ static func _base_payload(
 	border_color: Color,
 	duration_seconds: float
 ) -> Dictionary:
+	var common_rarity_vfx: Dictionary = rarity_vfx_for(ItemDataScript.ItemRarity.COMMON)
 	var payload: Dictionary = {
 		"profile_id": profile_id,
 		"style": style,
@@ -776,8 +777,8 @@ static func _base_payload(
 		"duration_seconds": duration_seconds,
 		"respect_visibility": true,
 	}
-	for key: String in rarity_vfx_for(ItemDataScript.ItemRarity.COMMON).keys():
-		payload[key] = rarity_vfx_for(ItemDataScript.ItemRarity.COMMON)[key]
+	for key: String in common_rarity_vfx.keys():
+		payload[key] = common_rarity_vfx[key]
 	return payload
 
 

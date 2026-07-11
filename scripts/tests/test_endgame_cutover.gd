@@ -93,15 +93,21 @@ func _check_victory_choice_gated_by_final_boss(game: Node) -> void:
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
 	game._attempt_player_move(gate_dir)
 	await process_frame
-	# Lazy-spawned boss should now exist
+	if encounter.get("boss") != null:
+		_fail("Nyxara spawned before the arena reveal completed")
+		return
+	if not game.complete_boss_arena_reveal():
+		_fail("Nyxara reveal completion failed after gate entry")
+		return
+	await process_frame
+	# Lazy-spawned boss should now exist after explicit reveal completion.
 	var boss: Node = encounter.get("boss")
 	if boss == null or not boss.is_alive():
-		_fail("Nyxara not spawned after gate entry")
+		_fail("Nyxara not spawned after arena reveal completion")
 		return
 	if boss.display_name != "Nyxara, the Mirror Witch":
 		_fail("spawned boss is %s, expected Nyxara, the Mirror Witch" % boss.display_name)
 		return
-	# Kill the boss to unlock victory
 	boss.stats_component.apply_damage(99999)
 	await process_frame
 	game._reach_stairs()
@@ -186,9 +192,20 @@ func _check_nyxara_fail_open_final_choice() -> void:
 			boss_room_containers_before += 1
 	# Sabotage boss spawn
 	encounter["boss_data"] = null
-	# Step onto the gate cell
+	# Step onto the gate cell; fail-open remains lazy until the reveal completes.
 	var gate_dir: Vector2i = gate_cell - gate_entry_cell
 	nyx_game._attempt_player_move(gate_dir)
+	await process_frame
+	if encounter.get("boss") != null:
+		_fail("Nyxara fail-open should not spawn a boss before reveal completion")
+		nyx_game.queue_free()
+		await process_frame
+		return
+	if nyx_game.complete_boss_arena_reveal():
+		_fail("Nyxara fail-open reveal completion should report failure")
+		nyx_game.queue_free()
+		await process_frame
+		return
 	await process_frame
 	if not bool(encounter.get("defeated", false)):
 		_fail("Nyxara fail-open should set defeated=true")

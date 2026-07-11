@@ -60,7 +60,7 @@ const ITEM_TYPE_LORE: Dictionary = {
 	ItemDataScript.ItemKind.CONSUMABLE:
 	(
 		"Consumed with H. Some act instantly; targeted scrolls open targeting mode "
-		+ "and are only spent on confirmation."
+		+ "and spend only after a visible in-range target or cell is confirmed."
 	),
 	ItemDataScript.ItemKind.WEAPON:
 	(
@@ -126,7 +126,7 @@ func _build_bestiary_text() -> String:
 		"[font_size=24][color=#f1c75b]BESTIARY[/color][/font_size]",
 		"",
 		"Base monster data from enemy resources; Biomes shows where each roster can appear.",
-		"Runtime depth scaling now eases upward: slower HP growth,",
+		"Runtime depth scaling eases upward: slower HP growth,",
 		"AC about every 8 floors, attack about every 7, and damage about every 8 after early floors.",
 		DamageTypeTextScript.DAMAGE_TYPE_SUMMARY,
 		"",
@@ -243,7 +243,7 @@ func _build_dungeon_scrolls_text() -> String:
 			"- [color=#66fff0]Endless Deeps[/color] (depth 26+): infinite post-game descent "
 			+ "drawing from all enemies plus rare Endless-only horrors."
 		),
-		"- V20 turns the five biome capstones into sealed boss rooms at depths " + "5/10/15/20/25.",
+		"- Each biome ends in a sealed boss room on floors 5/10/15/20/25.",
 		"",
 		"[color=#8fb3ff]TRAPS[/color]",
 		"Traps are hidden until detected. Moving near one rolls passive detection;",
@@ -332,8 +332,8 @@ func _build_classes_text() -> String:
 		"each for 80/90/100% damage. Action consumed only with targets.",
 		"1 charge per floor.",
 		"",
-		"[color=#8fb3ff]Quickstep[/color] (Lv12): Sets haste enemy phases to 1,",
-		"or 2 at level 20. Consumes your action. 1 charge per floor.",
+		"[color=#8fb3ff]Quickstep[/color] (Lv12): Skips the next enemy phase,",
+		"or the next 2 enemy phases at level 20. Consumes your action. 1 charge per floor.",
 		"",
 		"Passive — Ranged damage: base 150% scaling to",
 		"160/170/180% at Lv10/15/20.",
@@ -369,7 +369,7 @@ func _build_info_text() -> String:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]INFO[/color][/font_size]",
 		"",
-		GameManager.get_version_label() + ". Exact v11.0.0 mechanics.",
+		GameManager.get_version_label() + ". Current dungeon rules.",
 		"",
 		"[color=#8fb3ff]LEVELS[/color]",
 		"- XP to next level = current level × 100.",
@@ -406,15 +406,19 @@ func _build_info_text() -> String:
 		"- Melee accuracy and melee damage use STR.",
 		"- Ranged weapon accuracy and damage use DEX.",
 		(
+			"- Fire, lightning, and other elemental spell flavor resolves through "
+			+ "magic damage affinity."
+		),
+		(
 			"- Scroll fire/bolt style attacks can miss; they roll with WIS and deal "
 			+ "WIS/depth-scaled magic damage."
 		),
 		"- Magic Missile does not roll to hit and hits up to three visible enemies in range.",
 		(
-			"- Area scrolls target a cell, preview radius, and damage every visible enemy "
-			+ "in the radius."
+			"- Area scrolls target a visible in-range cell, preview radius, and damage "
+			+ "every visible enemy in the radius."
 		),
-		"- Targeted consumables are only spent after a valid confirmed target.",
+		"- Targeted consumables require a visible in-range target or cell; invalid confirmation does not spend the scroll.",
 		"- Potions are not consumed at full HP.",
 		"[color=#8fb3ff]SEARCHING[/color]",
 		"- Space spends a turn searching for traps and listening for weak walls.",

@@ -2,8 +2,8 @@
 ##
 ## Tests all five bosses (Observer through Nyxara) against Fighter/Ranger/Wizard
 ## profiles. Validates attack/hazard pressure, three-class TTK feasibility,
-## chest rarity ladder, Seraphine 2-turn spores, Kaelros one-eel queue,
-## Nyxara one guard.
+## chest rarity ladder, marked boss reward equipment preference,
+## Seraphine 2-turn spores, Kaelros one-eel queue, Nyxara one guard.
 ##
 ## Run: godot --headless --path . --script res://scripts/tests/test_balance_boss_bands.gd
 extends SceneTree
@@ -85,6 +85,9 @@ func _run() -> void:
 
 	# Chest rarity check
 	_check_boss_chest_rarities()
+
+	# Marked boss reward equipment preference
+	_check_boss_reward_preferred_equipment()
 
 	# Boss pressure against each class
 	_check_boss_attack_pressure()
@@ -340,6 +343,207 @@ func _check_boss_chest_rarities() -> void:
 				]
 			)
 		)
+
+
+# ---- Boss reward equipment preference ----
+
+
+func _check_boss_reward_preferred_equipment() -> void:
+	if _failed:
+		return
+
+	var preferred_cases: int = 0
+	var ordinary_preserved_cases: int = 0
+	for cls: StringName in [&"fighter", &"ranger", &"wizard"]:
+		for bid: StringName in _bosses:
+			if _failed:
+				return
+			var boss: Resource = _bosses[bid]
+			var floor_n: int = BOSS_FLOORS[bid]
+			var chest_rarity: int = boss.boss_reward_chest_rarity
+			var reward_floor: int = _reward_floor_for_chest(floor_n, chest_rarity)
+			var ordinary_candidates: Array[Resource] = _chest_reward_candidates(
+				chest_rarity, floor_n
+			)
+			if ordinary_candidates.is_empty():
+				_fail(
+					(
+						"[%s %s] no chest reward candidates at floor %d reward_floor %d"
+						% [cls, bid, floor_n, reward_floor]
+					)
+				)
+				return
+
+			var ordinary_model_candidates: Array[Resource] = _ordinary_chest_reward_candidate_pool(
+				ordinary_candidates
+			)
+			if ordinary_model_candidates.size() != ordinary_candidates.size():
+				_fail(
+					(
+						"[%s %s] ordinary chest candidate count changed from %d to %d"
+						% [
+							cls,
+							bid,
+							ordinary_candidates.size(),
+							ordinary_model_candidates.size(),
+						]
+					)
+				)
+				return
+
+			var ordinary_has_nonpreferred_candidate: bool = false
+			for item: Resource in ordinary_candidates:
+				if not ordinary_model_candidates.has(item):
+					_fail(
+						(
+							"[%s %s] ordinary chest model dropped %s before preference"
+							% [cls, bid, item.display_name]
+						)
+					)
+					return
+				if not _is_class_compatible_equipment(item, cls):
+					ordinary_has_nonpreferred_candidate = true
+			if ordinary_has_nonpreferred_candidate:
+				ordinary_preserved_cases += 1
+
+			var preferred_candidates: Array[Resource] = _class_compatible_equipment_candidates(
+				ordinary_candidates, cls
+			)
+			if preferred_candidates.is_empty():
+				continue
+			preferred_cases += 1
+
+			var marked_pool: Array[Resource] = _marked_boss_reward_candidate_pool(
+				ordinary_candidates, cls
+			)
+			if marked_pool.is_empty():
+				_fail(
+					(
+						"[%s %s] marked boss reward pool empty despite compatible candidates"
+						% [cls, bid]
+					)
+				)
+				return
+			for item: Resource in marked_pool:
+				if not _is_class_compatible_equipment(item, cls):
+					_fail(
+						(
+							"[%s %s] marked boss reward pool includes incompatible %s (required_class=%s)"
+							% [cls, bid, item.display_name, str(item.required_class)]
+						)
+					)
+					return
+
+	if preferred_cases <= 0:
+		_fail("no compatible boss reward equipment candidate cases found")
+		return
+	if ordinary_preserved_cases <= 0:
+		_fail("ordinary chest model had no non-preferred candidates to preserve")
+		return
+
+	print(
+		(
+			"  boss reward equipment preference: %d marked pools compatible; ordinary chest pools unchanged"
+			% preferred_cases
+		)
+	)
+
+
+func _reward_floor_for_chest(floor_number: int, chest_rarity: int) -> int:
+	return floor_number + mini(chest_rarity, 2)
+
+
+func _chest_reward_candidates(chest_rarity: int, floor_number: int) -> Array[Resource]:
+	var reward_floor: int = _reward_floor_for_chest(floor_number, chest_rarity)
+	var maximum_rarity: int = min(chest_rarity, _rarity_cap_for_floor(floor_number))
+	var candidates: Array[Resource] = _get_item_candidates_for_floor(reward_floor)
+	var filtered: Array[Resource] = []
+	var minimum_rarity: int = max(0, chest_rarity - 2)
+	for item_data: Resource in candidates:
+		if item_data.rarity >= minimum_rarity and item_data.rarity <= maximum_rarity:
+			filtered.append(item_data)
+	if filtered.is_empty():
+		for fallback_rarity: int in range(maximum_rarity, -1, -1):
+			for item_data: Resource in candidates:
+				if item_data.rarity == fallback_rarity:
+					filtered.append(item_data)
+			if not filtered.is_empty():
+				break
+	return filtered
+
+
+func _ordinary_chest_reward_candidate_pool(candidates: Array[Resource]) -> Array[Resource]:
+	var ordinary_candidates: Array[Resource] = []
+	for item_data: Resource in candidates:
+		ordinary_candidates.append(item_data)
+	return ordinary_candidates
+
+
+func _marked_boss_reward_candidate_pool(
+	candidates: Array[Resource], cls: StringName
+) -> Array[Resource]:
+	var compatible_equipment: Array[Resource] = _class_compatible_equipment_candidates(
+		candidates, cls
+	)
+	if compatible_equipment.is_empty():
+		return _ordinary_chest_reward_candidate_pool(candidates)
+	return compatible_equipment
+
+
+func _class_compatible_equipment_candidates(
+	candidates: Array[Resource], cls: StringName
+) -> Array[Resource]:
+	var compatible_equipment: Array[Resource] = []
+	for item_data: Resource in candidates:
+		if _is_class_compatible_equipment(item_data, cls):
+			compatible_equipment.append(item_data)
+	return compatible_equipment
+
+
+func _is_class_compatible_equipment(item_data: Resource, cls: StringName) -> bool:
+	return _is_equipment_item(item_data) and not _is_wrong_class_item_for(item_data, cls)
+
+
+func _is_equipment_item(item_data: Resource) -> bool:
+	return (
+		item_data.kind == ItemDataScript.ItemKind.WEAPON
+		or item_data.kind == ItemDataScript.ItemKind.ARMOR
+		or item_data.kind == ItemDataScript.ItemKind.ACCESSORY
+	)
+
+
+func _is_wrong_class_item_for(item_data: Resource, cls: StringName) -> bool:
+	return item_data.required_class != &"" and item_data.required_class != cls
+
+
+func _get_item_candidates_for_floor(floor_number: int) -> Array[Resource]:
+	var candidates: Array[Resource] = []
+	for item_data: Resource in _item_resources:
+		if _can_spawn_item(item_data, floor_number):
+			candidates.append(item_data)
+	return candidates
+
+
+func _can_spawn_item(item_data: Resource, floor_number: int) -> bool:
+	if floor_number < item_data.min_floor:
+		return false
+	return item_data.max_floor <= 0 or floor_number <= item_data.max_floor
+
+
+func _rarity_cap_for_floor(floor_number: int) -> int:
+	if floor_number >= 23:
+		return ItemDataScript.ItemRarity.ASCENDED
+	if floor_number >= 18:
+		return ItemDataScript.ItemRarity.MYTHIC
+	if floor_number >= 13:
+		return ItemDataScript.ItemRarity.LEGENDARY
+	if floor_number >= 8:
+		return ItemDataScript.ItemRarity.EPIC
+	if floor_number >= 4:
+		return ItemDataScript.ItemRarity.RARE
+	if floor_number >= 2:
+		return ItemDataScript.ItemRarity.UNCOMMON
+	return ItemDataScript.ItemRarity.COMMON
 
 
 # ---- Boss attack pressure ----

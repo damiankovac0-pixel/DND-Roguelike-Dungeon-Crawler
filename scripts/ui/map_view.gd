@@ -62,6 +62,8 @@ var _secret_wall_hint_color: Color = Color(0.72, 0.58, 1.0)
 var _biome_theme: Dictionary = BiomeCatalogScript.theme_for_floor(1)
 var _cell_bursts: Array[Dictionary] = []
 var _projectile_trails: Array[Dictionary] = []
+var _actor_cells: Dictionary = {}
+var _actor_move_connections: Dictionary = {}
 var _reduced_vfx_enabled: bool = false
 var _enemy_intents: Dictionary = {}
 var _boss_room_cells: Dictionary = {}
@@ -107,6 +109,8 @@ func set_visibility(visible_cells: Dictionary, explored_cells: Dictionary) -> vo
 
 func set_actors(actors: Array) -> void:
 	_actors = actors
+	_sync_actor_move_connections()
+	_rebuild_actor_cell_cache()
 	queue_redraw()
 
 
@@ -185,6 +189,7 @@ func play_boss_spawn_intro(anchor_cell: Vector2i, visual: Dictionary) -> void:
 func clear_boss_visuals() -> void:
 	_boss_visuals.clear()
 	_boss_occupied_cells.clear()
+	_rebuild_actor_cell_cache()
 	_boss_spawn_effects.clear()
 	_boss_frame_elapsed = 0.0
 	_update_processing_state()
@@ -206,17 +211,16 @@ func has_active_boss_visuals() -> bool:
 
 
 func play_cell_burst(cell: Vector2i, color: Color, glyph: String = "✦") -> void:
-	(
-		_cell_bursts
-		. append(
-			{
-				"cell": cell,
-				"color": color,
-				"glyph": glyph,
-				"age": 0.0,
-			}
-		)
-	)
+	var burst: Dictionary = {
+		"cell": cell,
+		"color": color,
+		"glyph": glyph,
+		"age": 0.0,
+		"duration": CELL_BURST_DURATION,
+	}
+	if _reduced_vfx_enabled:
+		_apply_reduced_vfx_to_burst(burst)
+	_cell_bursts.append(burst)
 	set_process(true)
 	queue_redraw()
 
@@ -226,7 +230,11 @@ func has_active_cell_bursts() -> bool:
 
 
 func set_reduced_vfx_enabled(enabled: bool) -> void:
+	if _reduced_vfx_enabled == enabled:
+		return
 	_reduced_vfx_enabled = enabled
+	if _reduced_vfx_enabled:
+		_apply_reduced_vfx_to_active_effects()
 	queue_redraw()
 
 
@@ -239,14 +247,10 @@ func play_projectile_trail(cells: Array[Vector2i], payload: Dictionary = {}) -> 
 	if stored_cells.is_empty():
 		return
 	var duration: float = max(0.05, float(payload.get("duration_seconds", 0.22)))
-	if _reduced_vfx_enabled:
-		if stored_cells.size() > 2:
-			var reduced_cells: Array[Vector2i] = []
-			reduced_cells.append(stored_cells.front())
-			reduced_cells.append(stored_cells.back())
-			stored_cells = reduced_cells
-		duration = max(0.08, duration * 0.58)
-	var rarity_color: Color = payload.get("rarity_color", Color(0.847, 0.847, 0.847, 1.0))
+	var rarity_color: Color = _color_or(
+		payload.get("rarity_color", Color(0.847, 0.847, 0.847, 1.0)),
+		Color(0.847, 0.847, 0.847, 1.0)
+	)
 	var trail: Dictionary = {
 		"cells": stored_cells,
 		"age": 0.0,
@@ -256,11 +260,16 @@ func play_projectile_trail(cells: Array[Vector2i], payload: Dictionary = {}) -> 
 		"glyph": str(payload.get("glyph", "✦")),
 		"trail_glyph": str(payload.get("trail_glyph", "·")),
 		"impact_glyph": str(payload.get("impact_glyph", payload.get("glyph", "✦"))),
-		"color": payload.get("color", Color.WHITE),
-		"trail_color": payload.get("trail_color", Color(1.0, 1.0, 1.0, 0.42)),
-		"impact_color": payload.get("impact_color", payload.get("color", Color.WHITE)),
-		"fill_color": payload.get("fill_color", Color.TRANSPARENT),
-		"border_color": payload.get("border_color", Color.TRANSPARENT),
+		"color": _color_or(payload.get("color", Color.WHITE), Color.WHITE),
+		"trail_color":
+		_color_or(
+			payload.get("trail_color", Color(1.0, 1.0, 1.0, 0.42)), Color(1.0, 1.0, 1.0, 0.42)
+		),
+		"impact_color":
+		_color_or(payload.get("impact_color", payload.get("color", Color.WHITE)), Color.WHITE),
+		"fill_color": _color_or(payload.get("fill_color", Color.TRANSPARENT), Color.TRANSPARENT),
+		"border_color":
+		_color_or(payload.get("border_color", Color.TRANSPARENT), Color.TRANSPARENT),
 		"duration_seconds": duration,
 		"respect_visibility": bool(payload.get("respect_visibility", true)),
 		"rarity": int(payload.get("rarity", 0)),
@@ -271,19 +280,15 @@ func play_projectile_trail(cells: Array[Vector2i], payload: Dictionary = {}) -> 
 		"rarity_trail_alpha_scale": float(payload.get("rarity_trail_alpha_scale", 1.0)),
 		"rarity_fill_alpha_scale": float(payload.get("rarity_fill_alpha_scale", 1.0)),
 		"rarity_shimmer_enabled": bool(payload.get("rarity_shimmer_enabled", false)),
-		"rarity_accent_color": payload.get("rarity_accent_color", rarity_color),
+		"rarity_accent_color":
+		_color_or(payload.get("rarity_accent_color", rarity_color), rarity_color),
 		"rarity_shimmer_speed": float(payload.get("rarity_shimmer_speed", 0.0)),
 		"rarity_shimmer_spread": float(payload.get("rarity_shimmer_spread", 0.0)),
 		"rarity_shimmer_intensity": float(payload.get("rarity_shimmer_intensity", 0.0)),
 		"rarity_shimmer_lift": float(payload.get("rarity_shimmer_lift", 0.0)),
 	}
 	if _reduced_vfx_enabled:
-		trail["rarity_shimmer_enabled"] = false
-		trail["color"] = _cap_color_alpha(trail.get("color", Color.WHITE), 0.08)
-		trail["trail_color"] = _cap_color_alpha(trail.get("trail_color", Color.WHITE), 0.08)
-		trail["impact_color"] = _cap_color_alpha(trail.get("impact_color", Color.WHITE), 0.08)
-		trail["fill_color"] = _cap_color_alpha(trail.get("fill_color", Color.TRANSPARENT), 0.08)
-		trail["border_color"] = _cap_color_alpha(trail.get("border_color", Color.TRANSPARENT), 0.08)
+		_apply_reduced_vfx_to_trail(trail)
 	_projectile_trails.append(trail)
 	_update_processing_state()
 	queue_redraw()
@@ -349,7 +354,7 @@ func _process(delta: float) -> void:
 			queue_redraw()
 	var spawn_effect_changed: bool = false
 	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
-		var effect: Dictionary = _boss_spawn_effects[anchor_cell]
+		var effect: Dictionary = _dictionary_or(_boss_spawn_effects[anchor_cell])
 		effect["age"] = float(effect.get("age", 0.0)) + delta
 		if float(effect["age"]) >= float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)):
 			_boss_spawn_effects.erase(anchor_cell)
@@ -358,11 +363,16 @@ func _process(delta: float) -> void:
 		spawn_effect_changed = true
 	if spawn_effect_changed:
 		queue_redraw()
+	var burst_changed: bool = false
 	for index: int in range(_cell_bursts.size() - 1, -1, -1):
 		_cell_bursts[index]["age"] = float(_cell_bursts[index].get("age", 0.0)) + delta
-		if float(_cell_bursts[index]["age"]) >= CELL_BURST_DURATION:
+		if (
+			float(_cell_bursts[index]["age"])
+			>= float(_cell_bursts[index].get("duration", CELL_BURST_DURATION))
+		):
 			_cell_bursts.remove_at(index)
-	if not _cell_bursts.is_empty():
+		burst_changed = true
+	if burst_changed:
 		queue_redraw()
 	var projectile_changed: bool = false
 	for index: int in range(_projectile_trails.size() - 1, -1, -1):
@@ -477,17 +487,17 @@ func _draw() -> void:
 			continue
 		if _actor_at(container_position) != null:
 			continue
-		var container_data: Dictionary = _containers[container_position]
+		var container_data: Dictionary = _dictionary_or(_containers[container_position])
 		var container_point: Vector2 = _cell_draw_position(container_position, ascent)
 		if not _is_inside_playfield(container_point, playfield_rect):
 			continue
-		var container_color: Color = container_data.get("color", Color.WHITE)
+		var container_color: Color = _color_or(container_data.get("color", Color.WHITE), Color.WHITE)
 		_draw_cell_highlight(
 			container_position,
 			Color(container_color.r, container_color.g, container_color.b, 0.18),
-			Color(0, 0, 0, 0)
+			Color.TRANSPARENT
 		)
-		_draw_glyph(draw_font, container_point, container_data.get("glyph", "?"), container_color)
+		_draw_glyph(draw_font, container_point, str(container_data.get("glyph", "?")), container_color)
 
 	_draw_cell_bursts(draw_font, ascent, playfield_rect)
 
@@ -572,34 +582,34 @@ func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 		var point: Vector2 = _cell_draw_position(cell, ascent)
 		if not _is_inside_playfield(point, playfield_rect):
 			continue
-		var payload: Dictionary = _boss_hazards.get(cell, {})
+		var payload: Dictionary = _dictionary_or(_boss_hazards.get(cell, {}))
 		var glyph: String = str(payload.get("glyph", "~"))
-		var fill_color: Color = payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12))
-		var border_color: Color = payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18))
-		var glyph_color: Color = payload.get("color", Color(0.6, 0.8, 1.0, 1.0))
-		var vfx_payload: Dictionary = payload.get("vfx_payload", {})
+		var fill_color: Color = _color_or(payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12)), Color(0.0, 0.3, 1.0, 0.12))
+		var border_color: Color = _color_or(payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18)), Color(0.0, 0.5, 1.0, 0.18))
+		var glyph_color: Color = _color_or(payload.get("color", Color(0.6, 0.8, 1.0, 1.0)), Color(0.6, 0.8, 1.0, 1.0))
+		var vfx_payload: Dictionary = _dictionary_or(payload.get("vfx_payload", {}))
 		_draw_cell_highlight(cell, fill_color, border_color)
 		if not vfx_payload.is_empty():
 			_draw_glyph(
 				draw_font,
 				point,
 				str(vfx_payload.get("trail_glyph", glyph)),
-				_color_with_alpha(vfx_payload.get("trail_color", glyph_color), 0.65),
+				_color_with_alpha(_color_or(vfx_payload.get("trail_color", glyph_color), glyph_color), 0.65),
 				false
 			)
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
 
 
-func _draw_boss_telegraph_fills(_draw_font: Font, _ascent: float, _playfield_rect: Rect2) -> void:
+func _draw_boss_telegraph_fills(_draw_font: Font, _ascent: float, playfield_rect: Rect2) -> void:
 	for cell: Vector2i in _boss_telegraphs.keys():
 		if not _visible_cells.has(cell):
 			continue
-		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		var payload: Dictionary = _dictionary_or(_boss_telegraphs.get(cell, {}))
 		if payload.is_empty():
 			continue
-		var fill_color: Color = payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26))
-		var border_color: Color = payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78))
-		_draw_cell_highlight(cell, fill_color, border_color)
+		var fill_color: Color = _color_or(payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26)), Color(1.0, 0.16, 0.10, 0.26))
+		var border_color: Color = _color_or(payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78)), Color(1.0, 0.52, 0.18, 0.78))
+		_draw_clipped_cell_highlight(cell, fill_color, border_color, playfield_rect)
 
 
 func _draw_boss_telegraph_glyphs(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -609,11 +619,11 @@ func _draw_boss_telegraph_glyphs(draw_font: Font, ascent: float, playfield_rect:
 		var point: Vector2 = _cell_draw_position(cell, ascent)
 		if not _is_inside_playfield(point, playfield_rect):
 			continue
-		var payload: Dictionary = _boss_telegraphs.get(cell, {})
+		var payload: Dictionary = _dictionary_or(_boss_telegraphs.get(cell, {}))
 		if payload.is_empty():
 			continue
 		var glyph: String = str(payload.get("glyph", "!"))
-		var glyph_color: Color = payload.get("color", Color(1.0, 0.64, 0.20, 1.0))
+		var glyph_color: Color = _color_or(payload.get("color", Color(1.0, 0.64, 0.20, 1.0)), Color(1.0, 0.64, 0.20, 1.0))
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
 		var turns_remaining: int = int(payload.get("turns_remaining", 1))
 		var corner_marker: String = str(turns_remaining) if turns_remaining > 1 else "!"
@@ -622,15 +632,18 @@ func _draw_boss_telegraph_glyphs(draw_font: Font, ascent: float, playfield_rect:
 
 func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for anchor_cell: Vector2i in _boss_visuals.keys():
-		var visual: Dictionary = _boss_visuals[anchor_cell]
-		var frames: Array = visual.get("frames", [])
+		var visual: Dictionary = _dictionary_or(_boss_visuals[anchor_cell])
+		var frames: Array = _array_or(visual.get("frames", []))
 		if frames.is_empty():
 			continue
-		var frame: PackedStringArray = frames[_boss_frame_index % frames.size()]
+		var frame_value: Variant = frames[_boss_frame_index % frames.size()]
+		if frame_value is not PackedStringArray:
+			continue
+		var frame: PackedStringArray = frame_value
 		var frame_height: int = frame.size()
 		var frame_width: int = _boss_frame_width(frame)
 		var origin: Vector2i = anchor_cell - Vector2i(int(frame_width / 2), int(frame_height / 2))
-		var color: Color = visual.get("color", Color.WHITE)
+		var color: Color = _color_or(visual.get("color", Color.WHITE), Color.WHITE)
 		for y: int in range(frame_height):
 			var row: String = frame[y]
 			for x: int in range(row.length()):
@@ -651,16 +664,16 @@ func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 
 func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
-		var effect: Dictionary = _boss_spawn_effects[anchor_cell]
+		var effect: Dictionary = _dictionary_or(_boss_spawn_effects[anchor_cell])
 		var age: float = float(effect.get("age", 0.0))
 		var duration: float = max(0.05, float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)))
 		var progress: float = clampf(age / duration, 0.0, 1.0)
-		var color: Color = effect.get("color", Color(1.0, 0.72, 0.22, 1.0))
-		var cells: Array = effect.get("occupied_cells", [])
+		var color: Color = _color_or(effect.get("color", Color(1.0, 0.72, 0.22, 1.0)), Color(1.0, 0.72, 0.22, 1.0))
+		var cells: Array = _array_or(effect.get("occupied_cells", []))
 		if cells.is_empty():
 			cells = [anchor_cell]
 		var pulse_alpha: float = sin(progress * PI) * 0.45
-		var glyphs: Array = effect.get("spawn_glyphs", ["·", "◇", "◆", "■"])
+		var glyphs: Array = _array_or(effect.get("spawn_glyphs", ["·", "◇", "◆", "■"]))
 		if glyphs.is_empty():
 			glyphs = ["·", "◇", "◆", "■"]
 		var glyph: String = str(glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()])
@@ -690,7 +703,7 @@ func _boss_frame_width(frame: PackedStringArray) -> int:
 
 func _boss_visual_frame_seconds() -> float:
 	for anchor_cell: Vector2i in _boss_visuals.keys():
-		var visual: Dictionary = _boss_visuals[anchor_cell]
+		var visual: Dictionary = _dictionary_or(_boss_visuals[anchor_cell])
 		return max(0.05, float(visual.get("frame_seconds", 0.32)))
 	return 0.32
 
@@ -698,16 +711,17 @@ func _boss_visual_frame_seconds() -> float:
 func _rebuild_boss_occupied_cells() -> void:
 	_boss_occupied_cells.clear()
 	for anchor_cell: Vector2i in _boss_visuals.keys():
-		var visual: Dictionary = _boss_visuals[anchor_cell]
-		var occupied_cells: Array = visual.get("occupied_cells", [])
+		var visual: Dictionary = _dictionary_or(_boss_visuals[anchor_cell])
+		var occupied_cells: Array = _array_or(visual.get("occupied_cells", []))
 		for raw_cell in occupied_cells:
 			if raw_cell is Vector2i:
 				_boss_occupied_cells[raw_cell] = self
+	_rebuild_actor_cell_cache()
 
 
 func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for trail: Dictionary in _projectile_trails:
-		var cells: Array = trail.get("cells", [])
+		var cells: Array = _array_or(trail.get("cells", []))
 		if cells.is_empty():
 			continue
 		var duration: float = max(0.05, float(trail.get("duration", 0.22)))
@@ -728,19 +742,19 @@ func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rec
 			var point: Vector2 = _cell_draw_position(cell, ascent)
 			if not _is_inside_playfield(point, playfield_rect):
 				continue
-			var fill_color: Color = trail.get("fill_color", Color.TRANSPARENT)
-			var border_color: Color = trail.get("border_color", Color.TRANSPARENT)
+			var fill_color: Color = _color_or(trail.get("fill_color", Color.TRANSPARENT), Color.TRANSPARENT)
+			var border_color: Color = _color_or(trail.get("border_color", Color.TRANSPARENT), Color.TRANSPARENT)
 			_draw_cell_highlight(
 				cell, _color_with_alpha(fill_color, fade), _color_with_alpha(border_color, fade)
 			)
-			var accent: Color = trail.get(
-				"rarity_accent_color", trail.get("rarity_color", Color.WHITE)
+			var accent: Color = _color_or(
+				trail.get("rarity_accent_color", trail.get("rarity_color", Color.WHITE)), Color.WHITE
 			)
 			if index == final_index:
-				var selected_color: Color = trail.get("color", Color.WHITE)
+				var selected_color: Color = _color_or(trail.get("color", Color.WHITE), Color.WHITE)
 				var selected_glyph: String = str(trail.get("glyph", "✦"))
 				if progress > 0.55:
-					selected_color = trail.get("impact_color", selected_color)
+					selected_color = _color_or(trail.get("impact_color", selected_color), selected_color)
 					selected_glyph = str(trail.get("impact_glyph", selected_glyph))
 				_draw_glyph(
 					draw_font,
@@ -750,7 +764,7 @@ func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rec
 					false
 				)
 			else:
-				var trail_color: Color = trail.get("trail_color", Color.WHITE)
+				var trail_color: Color = _color_or(trail.get("trail_color", Color.WHITE), Color.WHITE)
 				_draw_glyph(
 					draw_font,
 					point,
@@ -765,9 +779,10 @@ func _draw_cell_bursts(draw_font: Font, ascent: float, playfield_rect: Rect2) ->
 		var cell: Vector2i = burst.get("cell", Vector2i.ZERO)
 		if not _visible_cells.has(cell) and not _explored_cells.has(cell):
 			continue
-		var progress: float = clampf(float(burst.get("age", 0.0)) / CELL_BURST_DURATION, 0.0, 1.0)
+		var duration: float = max(0.05, float(burst.get("duration", CELL_BURST_DURATION)))
+		var progress: float = clampf(float(burst.get("age", 0.0)) / duration, 0.0, 1.0)
 		var alpha: float = 1.0 - progress
-		var color: Color = burst.get("color", Color.WHITE)
+		var color: Color = _color_or(burst.get("color", Color.WHITE), Color.WHITE)
 		color.a = min(color.a, alpha)
 		var point: Vector2 = (
 			_cell_draw_position(cell, ascent) - Vector2(0, progress * CELL_BURST_LIFT)
@@ -779,7 +794,7 @@ func _draw_cell_bursts(draw_font: Font, ascent: float, playfield_rect: Rect2) ->
 			Color(color.r, color.g, color.b, 0.20 * alpha),
 			Color(color.r, color.g, color.b, 0.65 * alpha)
 		)
-		_draw_glyph(draw_font, point, burst.get("glyph", "✦"), color, false)
+		_draw_glyph(draw_font, point, str(burst.get("glyph", "✦")), color, false)
 
 
 func _draw_enemy_intents(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -829,7 +844,7 @@ func _draw_tile_backing(
 	if not is_visible:
 		color = color.darkened(0.45)
 	if _atmosphere_enabled and not _atmosphere_profile.is_empty():
-		var shimmer_color: Color = _atmosphere_profile.get("shimmer_color", Color(0, 0, 0, 0))
+		var shimmer_color: Color = _color_or(_atmosphere_profile.get("shimmer_color", Color(0, 0, 0, 0)), Color(0, 0, 0, 0))
 		if shimmer_color.a > 0.001:
 			var shimmer_seed: float = _cell_hash(cell, 37) * 0.0001
 			var shimmer_phase: float = sin(_atmosphere_time * 1.8 + shimmer_seed)
@@ -841,8 +856,8 @@ func _draw_tile_backing(
 
 func _tile_background(tile_type: int) -> Color:
 	var colors: Dictionary = _biome_theme.get("tile_background_colors", {})
-	var fallback: Color = TILE_BACKGROUND_COLORS.get(tile_type, background_color)
-	return colors.get(tile_type, fallback)
+	var fallback: Color = _color_or(TILE_BACKGROUND_COLORS.get(tile_type, background_color), background_color)
+	return _color_or(colors.get(tile_type, fallback), fallback)
 
 
 func _draw_cell_highlight(cell: Vector2i, fill_color: Color, border: Color) -> void:
@@ -853,12 +868,101 @@ func _draw_cell_highlight(cell: Vector2i, fill_color: Color, border: Color) -> v
 		draw_rect(cell_rect, border, false, 1.0)
 
 
+func _draw_clipped_cell_highlight(
+	cell: Vector2i, fill_color: Color, border: Color, playfield_rect: Rect2
+) -> void:
+	var cell_rect: Rect2 = _inset_cell_rect(cell, 1.0).intersection(playfield_rect)
+	if cell_rect.size.x <= 0.0 or cell_rect.size.y <= 0.0:
+		return
+	if fill_color.a > 0.0:
+		draw_rect(cell_rect, fill_color)
+	if border.a > 0.0:
+		draw_rect(cell_rect, border, false, 1.0)
+
+
+func _color_or(color_value: Variant, fallback: Color) -> Color:
+	if color_value is Color:
+		return color_value
+	return fallback
+
+
+func _dictionary_or(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return value
+	return {}
+
+
+func _array_or(value: Variant) -> Array:
+	if value is Array:
+		return value
+	return []
+
+
 func _color_with_alpha(color: Color, alpha_scale: float) -> Color:
 	return Color(color.r, color.g, color.b, clampf(color.a * alpha_scale, 0.0, 1.0))
 
 
-func _cap_color_alpha(color: Color, max_alpha: float) -> Color:
+func _cap_color_alpha(
+	color_value: Variant, max_alpha: float, fallback: Color = Color.WHITE
+) -> Color:
+	var color: Color = color_value if color_value is Color else fallback
 	return Color(color.r, color.g, color.b, min(color.a, max_alpha))
+
+
+func _reduced_effect_duration(duration: float) -> float:
+	return max(0.08, duration * 0.58)
+
+
+func _reduced_trail_cells(cells: Array[Vector2i]) -> Array[Vector2i]:
+	if cells.size() <= 2:
+		return cells
+	var reduced_cells: Array[Vector2i] = []
+	reduced_cells.append(cells.front())
+	reduced_cells.append(cells.back())
+	return reduced_cells
+
+
+func _apply_reduced_vfx_to_active_effects() -> void:
+	for index: int in range(_projectile_trails.size()):
+		var trail: Dictionary = _projectile_trails[index]
+		_apply_reduced_vfx_to_trail(trail)
+		_projectile_trails[index] = trail
+	for index: int in range(_cell_bursts.size()):
+		var burst: Dictionary = _cell_bursts[index]
+		_apply_reduced_vfx_to_burst(burst)
+		_cell_bursts[index] = burst
+	_update_processing_state()
+
+
+func _apply_reduced_vfx_to_trail(trail: Dictionary) -> void:
+	var cells: Array[Vector2i] = []
+	for raw_cell in trail.get("cells", []):
+		if raw_cell is Vector2i:
+			cells.append(raw_cell)
+	trail["cells"] = _reduced_trail_cells(cells)
+	var duration: float = _reduced_effect_duration(float(trail.get("duration", 0.22)))
+	trail["duration"] = duration
+	trail["duration_seconds"] = duration
+	trail["age"] = min(float(trail.get("age", 0.0)), duration)
+	trail["rarity_shimmer_enabled"] = false
+	trail["color"] = _cap_color_alpha(trail.get("color", Color.WHITE), 0.08)
+	trail["trail_color"] = _cap_color_alpha(trail.get("trail_color", Color.WHITE), 0.08)
+	trail["impact_color"] = _cap_color_alpha(trail.get("impact_color", Color.WHITE), 0.08)
+	trail["fill_color"] = _cap_color_alpha(
+		trail.get("fill_color", Color.TRANSPARENT), 0.08, Color.TRANSPARENT
+	)
+	trail["border_color"] = _cap_color_alpha(
+		trail.get("border_color", Color.TRANSPARENT), 0.08, Color.TRANSPARENT
+	)
+
+
+func _apply_reduced_vfx_to_burst(burst: Dictionary) -> void:
+	var duration: float = _reduced_effect_duration(
+		float(burst.get("duration", CELL_BURST_DURATION))
+	)
+	burst["duration"] = duration
+	burst["age"] = min(float(burst.get("age", 0.0)), duration)
+	burst["color"] = _cap_color_alpha(burst.get("color", Color.WHITE), 0.08)
 
 
 func _shimmered_color(base: Color, accent: Color, trail: Dictionary) -> Color:
@@ -904,10 +1008,11 @@ func _tile_foreground(
 	cell: Vector2i, tile_type: int, is_visible: bool, is_revealed_secret_wall: bool
 ) -> Color:
 	var colors: Dictionary = _biome_theme.get("tile_foreground_colors", {})
-	var fallback: Color = TILE_FOREGROUND_COLORS.get(
-		tile_type, DungeonDataScript.TILE_COLORS[tile_type]
+	var fallback: Color = _color_or(
+		TILE_FOREGROUND_COLORS.get(tile_type, DungeonDataScript.TILE_COLORS[tile_type]),
+		DungeonDataScript.TILE_COLORS[tile_type]
 	)
-	var color: Color = colors.get(tile_type, fallback)
+	var color: Color = _color_or(colors.get(tile_type, fallback), fallback)
 	if is_revealed_secret_wall:
 		color = _secret_wall_hint_color
 	if not is_visible:
@@ -992,9 +1097,15 @@ func _update_boss_room_draw_offset() -> void:
 	if _boss_room_cells.is_empty() or _map_data.is_empty() or _map_data[0].is_empty():
 		return
 	var room_cells: Array = _boss_room_cells.keys()
-	var min_cell: Vector2i = room_cells[0]
+	var first_cell: Variant = room_cells[0]
+	if not (first_cell is Vector2i):
+		return
+	var min_cell: Vector2i = first_cell
 	var max_cell: Vector2i = min_cell
-	for cell: Vector2i in room_cells:
+	for raw_cell in room_cells:
+		if not (raw_cell is Vector2i):
+			continue
+		var cell: Vector2i = raw_cell
 		min_cell.x = min(min_cell.x, cell.x)
 		min_cell.y = min(min_cell.y, cell.y)
 		max_cell.x = max(max_cell.x, cell.x)
@@ -1015,12 +1126,48 @@ func _is_inside_playfield(point: Vector2, playfield_rect: Rect2) -> bool:
 	return playfield_rect.encloses(glyph_rect)
 
 
-func _actor_at(cell: Vector2i) -> Variant:
-	if _boss_occupied_cells.has(cell):
-		return _boss_occupied_cells[cell]
+func _sync_actor_move_connections() -> void:
+	var active_actors: Dictionary = {}
+	var callback: Callable = Callable(self, "_on_actor_moved")
 	for actor in _actors:
-		if actor != null and actor.grid_position == cell and actor.is_alive():
-			return actor
+		if actor == null or not is_instance_valid(actor) or not actor.has_signal(&"moved"):
+			continue
+		active_actors[actor] = true
+		if not actor.is_connected(&"moved", callback):
+			actor.connect(&"moved", callback)
+		_actor_move_connections[actor] = true
+	for actor in _actor_move_connections.keys():
+		if active_actors.has(actor):
+			continue
+		if actor != null and is_instance_valid(actor) and actor.has_signal(&"moved"):
+			if actor.is_connected(&"moved", callback):
+				actor.disconnect(&"moved", callback)
+		_actor_move_connections.erase(actor)
+
+
+func _on_actor_moved(_new_position: Vector2i) -> void:
+	_rebuild_actor_cell_cache()
+	queue_redraw()
+
+
+func _rebuild_actor_cell_cache() -> void:
+	_actor_cells.clear()
+	for actor in _actors:
+		if actor == null or not actor.is_alive():
+			continue
+		var actor_cell: Vector2i = actor.grid_position
+		if not _actor_cells.has(actor_cell):
+			_actor_cells[actor_cell] = actor
+	for boss_cell: Vector2i in _boss_occupied_cells.keys():
+		_actor_cells[boss_cell] = _boss_occupied_cells[boss_cell]
+
+
+func _actor_at(cell: Vector2i) -> Variant:
+	var actor: Variant = _actor_cells.get(cell)
+	if actor == self:
+		return actor
+	if actor != null and actor.grid_position == cell and actor.is_alive():
+		return actor
 	return null
 
 
@@ -1030,10 +1177,10 @@ func _draw_atmosphere_effects(draw_font: Font, ascent: float, playfield_rect: Re
 
 func _draw_void_edge_wisps(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	var profile: Dictionary = _atmosphere_profile
-	var void_color: Color = profile.get("void_color", Color(0.12, 0.12, 0.18, 0.20))
-	var intensity: float = profile.get("ambient_intensity", 0.12)
-	var speed: float = profile.get("ambient_speed", 0.8)
-	var void_glyph_str: String = profile.get("void_glyph", "·")
+	var void_color: Color = _color_or(profile.get("void_color", Color(0.12, 0.12, 0.18, 0.20)), Color(0.12, 0.12, 0.18, 0.20))
+	var intensity: float = float(profile.get("ambient_intensity", 0.12))
+	var speed: float = float(profile.get("ambient_speed", 0.8))
+	var void_glyph_str: String = str(profile.get("void_glyph", "·"))
 	var wisp_glyphs: Array[String] = ["·", "`", "'", ",", "."]
 
 	for explored_cell: Vector2i in _explored_cells:

@@ -22,7 +22,13 @@ const MAX_ALPHA: float = 0.90
 @export_range(0.0, 1.0) var intensity: float = 1.0:
 	set(value):
 		intensity = clampf(value, 0.0, 1.0)
-@export var motion_enabled: bool = true
+@export var motion_enabled: bool = true:
+	set(value):
+		motion_enabled = value
+		if is_inside_tree():
+			set_process(motion_enabled)
+			if not motion_enabled:
+				queue_redraw()
 @export var font: Font
 @export var font_size: int = 15
 @export var grid_step: Vector2 = Vector2(14, 18)
@@ -41,12 +47,13 @@ var _redraw_accumulator: float = 0.0
 # === Lifecycle Methods ===
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_process(true)
+	set_process(motion_enabled)
+	if not motion_enabled:
+		queue_redraw()
 
 
 func _process(delta: float) -> void:
-	var dt: float = delta if motion_enabled else 0.0
-	_elapsed += dt
+	_elapsed += delta
 	_redraw_accumulator += delta
 	if _redraw_accumulator >= REDRAW_INTERVAL:
 		_redraw_accumulator = 0.0

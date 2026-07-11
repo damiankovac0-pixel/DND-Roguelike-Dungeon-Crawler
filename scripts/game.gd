@@ -260,6 +260,8 @@ func _ready() -> void:
 		get_tree().call_deferred("change_scene_to_file", "res://scenes/main_menu.tscn")
 		return
 	_load_content()
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	pause_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	GameManager.reset_run()
 	turn_manager.enemy_phase_finished.connect(_on_enemy_phase_finished)
 	leave_button.pressed.connect(_on_leave_dungeon)
@@ -311,7 +313,7 @@ func _input(event: InputEvent) -> void:
 		return
 	if pause_panel.visible:
 		_close_pause_menu()
-	elif not _close_open_overlay():
+	elif not get_tree().paused and not _close_open_overlay():
 		_open_pause_menu()
 	get_viewport().set_input_as_handled()
 
@@ -392,6 +394,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					),
 					&"neutral"
 				)
+			if found == 0 and secret_found == 0:
+				GameManager.add_log_message("You find no traps or hollow walls nearby.", &"neutral")
 			_finish_player_action()
 
 
@@ -460,18 +464,22 @@ func _spend_stunned_action() -> void:
 # ===== Pause & Overlay Management =====
 func _open_pause_menu() -> void:
 	_clear_targeting()
+	if biome_overlay.visible:
+		_hide_biome_overlay()
 	pause_panel.visible = true
 	debug_descend_button.visible = GameManager.pending_debug_loadout
 	if GameManager.pending_debug_loadout:
 		pause_hint_label.text = "The dungeon waits. Debug: Shift+> or PageDown descends."
 	else:
 		pause_hint_label.text = "The dungeon waits."
+	get_tree().paused = true
 	_refresh_audio_controls()
 	pause_resume_button.grab_focus()
 
 
 func _close_pause_menu() -> void:
 	pause_panel.visible = false
+	get_tree().paused = false
 
 
 ## Synchronises the pause-menu audio controls with the current SensoryFeedback
@@ -509,19 +517,19 @@ func _refresh_audio_controls() -> void:
 
 func _on_audio_enabled_toggled(button_pressed: bool) -> void:
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_audio_enabled"):
-		sensory_feedback.call(&"set_audio_enabled", button_pressed, false)
+		sensory_feedback.call(&"set_audio_enabled", button_pressed, false, true)
 
 
 func _on_volume_slider_changed(value: float) -> void:
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_master_volume"):
 		var normalized: float = clampf(value / 100.0, 0.0, 1.0)
-		sensory_feedback.call(&"set_master_volume", normalized)
+		sensory_feedback.call(&"set_master_volume", normalized, true)
 		pause_master_volume_value_label.text = "%d%%" % int(round(normalized * 100.0))
 
 
 func _on_ambience_enabled_toggled(button_pressed: bool) -> void:
 	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_ambience_enabled"):
-		sensory_feedback.call(&"set_ambience_enabled", button_pressed)
+		sensory_feedback.call(&"set_ambience_enabled", button_pressed, true)
 
 
 func _on_reduced_vfx_toggled(button_pressed: bool) -> void:
@@ -548,6 +556,7 @@ func _debug_descend_deeper() -> void:
 
 
 func _on_pause_main_menu_pressed() -> void:
+	_close_pause_menu()
 	GameManager.abandon_run()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
@@ -924,10 +933,15 @@ func _generate_floor(floor_number: int) -> void:
 	shop_panel.visible = false
 	pause_panel.visible = false
 	consumable_panel.visible = false
-	GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
+	if floor_number <= 1:
+		GameManager.add_log_message("You enter the dungeon on floor 1.", &"floor")
+	else:
+		GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
 	_show_biome_title_if_needed(floor_number, biome_theme)
 	if _shopkeeper != null:
-		GameManager.add_log_message("A shopkeeper waits near the entrance.", &"loot")
+		GameManager.add_log_message(
+			"A shopkeeper waits near the entrance; bump into them to browse.", &"loot"
+		)
 
 
 func _spawn_enemies(spawn_positions: Array, floor_number: int) -> void:
@@ -1108,7 +1122,9 @@ func _initialize_boss_encounter(generation_result: Dictionary, floor_number: int
 		"entered": false,
 		"activation_completed": false,
 	}
-	GameManager.add_log_message("A boss gate waits at the far chamber.", &"boss_gate")
+	GameManager.add_log_message(
+		"A boss gate bars the far chamber; step into it to enter.", &"boss_gate"
+	)
 	_refresh_boss_presentation()
 
 
@@ -1233,6 +1249,8 @@ func complete_boss_arena_reveal() -> bool:
 	_start_boss_music()
 	_refresh_boss_presentation()
 	_refresh_map()
+	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
+		return false
 	GameManager.advance_turn()
 	GameManager.begin_player_turn()
 	return true
@@ -1444,7 +1462,8 @@ func _release_boss_encounter() -> void:
 	if reward_cell == Vector2i.ZERO:
 		GameManager.add_log_message("No safe space remains for the boss chest.", &"warning")
 	else:
-		_container_positions[reward_cell] = _make_chest_container(chest_rarity)
+		_container_positions[reward_cell] = _make_chest_container(chest_rarity, true)
+		GameManager.add_log_message("A marked boss reward chest materializes nearby.", &"loot")
 		_play_action_burst(reward_cell, &"loot")
 	if gold_reward > 0:
 		_player.stats_component.gold += gold_reward
@@ -1689,14 +1708,19 @@ func _is_container_spawn_blocked(cell: Vector2i) -> bool:
 	return false
 
 
-func _make_chest_container(rarity: int) -> Dictionary:
+func _make_chest_container(rarity: int, boss_reward: bool = false) -> Dictionary:
 	var chest_rarity: int = clampi(
 		rarity, ItemDataScript.ItemRarity.COMMON, ItemDataScript.RARITY_NAMES.size() - 1
 	)
+	var display_name: String = "%s Chest" % ItemDataScript.RARITY_NAMES[chest_rarity]
+	if boss_reward:
+		display_name = "%s Boss Reward Chest" % ItemDataScript.RARITY_NAMES[chest_rarity]
 	return {
 		"type": CONTAINER_TYPE_CHEST,
 		"rarity": chest_rarity,
-		"display_name": "%s Chest" % ItemDataScript.RARITY_NAMES[chest_rarity],
+		"boss_reward": boss_reward,
+		"marked": boss_reward,
+		"display_name": display_name,
 		"glyph": CHEST_GLYPHS[clampi(chest_rarity, 0, CHEST_GLYPHS.size() - 1)],
 		"color": Color.html(ItemDataScript.RARITY_COLORS[chest_rarity]),
 	}
@@ -1759,10 +1783,14 @@ func _attempt_player_move(direction: Vector2i) -> void:
 		_finish_player_action()
 		return
 
+	var previous_cell: Vector2i = _player.grid_position
+	_player.set_grid_position(target)
+	_check_boss_room_entry(previous_cell, target)
 	if _trap_data.has(target) and _triggered_traps.has(target):
 		GameManager.add_log_message("The spent trap mechanism crunches underfoot.", &"neutral")
 	if _trap_data.has(target) and not _triggered_traps.has(target):
-		TrapSystem.trigger_trap(
+		_play_action_burst(target, &"trap")
+		var player_survived: bool = TrapSystem.trigger_trap(
 			target,
 			_trap_data,
 			_triggered_traps,
@@ -1772,9 +1800,11 @@ func _attempt_player_move(direction: Vector2i) -> void:
 			GameManager.add_log_message,
 			_refresh_trap_aftermath,
 			_game_over,
-			_handle_special_trap
+			_handle_special_trap,
+			_current_actor_blocked_cells()
 		)
-		_play_action_burst(target, &"trap")
+		if not player_survived:
+			return
 		_finish_player_action()
 		return
 
@@ -1784,7 +1814,7 @@ func _attempt_player_move(direction: Vector2i) -> void:
 		target = dash_target
 		GameManager.add_log_message("%s carries you two tiles." % DASH_LOG_NAME, &"magic")
 
-	var previous_cell: Vector2i = _player.grid_position
+	previous_cell = _player.grid_position
 	_player.set_grid_position(target)
 	_check_boss_room_entry(previous_cell, target)
 	_collect_item_at(target)
@@ -2201,10 +2231,13 @@ func _make_ranger_ability_entry(ability_id: StringName, player_level: int) -> Di
 				ability_id,
 				"Quickstep",
 				player_level,
-				"Your next %d enemy phases are hasted." % haste_phases,
+				(
+					"Skip the next %d enemy phase%s."
+					% [haste_phases, "" if haste_phases == 1 else "s"]
+				),
 				(
 					(
-						"Move faster than the dungeon: your next %d enemy phase%s is skipped. "
+						"Move faster than the dungeon: the next %d enemy phase%s will be skipped. "
 						+ "Consumes your action."
 					)
 					% [haste_phases, "" if haste_phases == 1 else "s"]
@@ -2447,7 +2480,7 @@ func _activate_ranger_quickstep() -> void:
 	_haste_enemy_phases = max(_haste_enemy_phases, haste_phases)
 	GameManager.add_log_message(
 		(
-			"Quickstep: your next %d enemy phase%s will be skipped."
+			"Quickstep: the next %d enemy phase%s will be skipped."
 			% [haste_phases, "" if haste_phases == 1 else "s"]
 		),
 		&"magic"
@@ -2476,7 +2509,8 @@ func _activate_wizard_spark() -> void:
 	var raw_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 5)
 	var damage: int = _apply_typed_damage(nearest_enemy, raw_damage, &"magic")
 	GameManager.add_log_message(
-		"Arcane Spark hits %s for %d force damage." % [nearest_enemy.display_name, damage], &"magic"
+		"Arcane Spark hits %s for %d force magic damage." % [nearest_enemy.display_name, damage],
+		&"magic"
 	)
 	_handle_defender_after_damage(nearest_enemy)
 	_finish_player_action()
@@ -2515,7 +2549,8 @@ func _activate_wizard_frost_nova() -> void:
 	for target: Node2D in affected_enemies:
 		var damage: int = _apply_typed_damage(target, base_damage, &"magic")
 		GameManager.add_log_message(
-			"Frost Nova hits %s for %d cold damage." % [target.display_name, damage], &"combat_hit"
+			"Frost Nova hits %s for %d cold magic damage." % [target.display_name, damage],
+			&"combat_hit"
 		)
 		_sleeping_enemies[target] = sleep_turns
 		_handle_defender_after_damage(target)
@@ -2558,7 +2593,10 @@ func _activate_wizard_chain_lightning() -> void:
 	for target: Node2D in targets:
 		var damage: int = _apply_typed_damage(target, base_damage, &"magic")
 		GameManager.add_log_message(
-			"Chain Lightning strikes %s for %d lightning damage." % [target.display_name, damage],
+			(
+				"Chain Lightning strikes %s for %d lightning magic damage."
+				% [target.display_name, damage]
+			),
 			&"combat_hit"
 		)
 		_handle_defender_after_damage(target)
@@ -3005,14 +3043,25 @@ func _open_chest_container(container_data: Dictionary) -> void:
 		24 + GameManager.current_floor * 5 + rarity * 28
 	)
 	_player.stats_component.gold += gold
-	GameManager.add_log_message("You open the %s and find %d gold." % [display_name, gold], &"gold")
+	if bool(container_data.get("boss_reward", false)):
+		GameManager.add_log_message(
+			"You open the %s and claim %d gold." % [display_name, gold], &"gold"
+		)
+	else:
+		GameManager.add_log_message(
+			"You open the %s and find %d gold." % [display_name, gold], &"gold"
+		)
 	var item_count: int = 1
 	if rarity >= ItemDataScript.ItemRarity.RARE and randf() < 0.50:
 		item_count += 1
 	if rarity >= ItemDataScript.ItemRarity.MYTHIC and randf() < 0.35:
 		item_count += 1
 	for index: int in range(item_count):
-		var reward: Resource = _choose_chest_reward_item(rarity, GameManager.current_floor)
+		var reward: Resource = _choose_chest_reward_item(
+			rarity,
+			GameManager.current_floor,
+			bool(container_data.get("boss_reward", false)) and index == 0
+		)
 		if reward == null:
 			continue
 		var reward_item: Resource = reward.duplicate(true)
@@ -3022,7 +3071,9 @@ func _open_chest_container(container_data: Dictionary) -> void:
 		)
 
 
-func _choose_chest_reward_item(chest_rarity: int, floor_number: int) -> Resource:
+func _choose_chest_reward_item(
+	chest_rarity: int, floor_number: int, prefer_class_equipment: bool = false
+) -> Resource:
 	var reward_floor: int = floor_number + min(chest_rarity, 2)
 	var maximum_rarity: int = min(chest_rarity, _rarity_cap_for_floor(floor_number))
 	var candidates: Array[Resource] = _get_item_candidates_for_floor(reward_floor)
@@ -3038,9 +3089,34 @@ func _choose_chest_reward_item(chest_rarity: int, floor_number: int) -> Resource
 					filtered.append(item_data)
 			if not filtered.is_empty():
 				break
+	if prefer_class_equipment:
+		var class_reward: Resource = _choose_class_compatible_equipment_reward(
+			filtered, reward_floor
+		)
+		if class_reward != null:
+			return class_reward
 	if filtered.is_empty():
 		return null
 	return _choose_weighted_item(filtered, reward_floor)
+
+
+func _choose_class_compatible_equipment_reward(
+	candidates: Array[Resource], reward_floor: int
+) -> Resource:
+	var compatible_equipment: Array[Resource] = []
+	for item_data: Resource in candidates:
+		if (
+			item_data.kind != ItemDataScript.ItemKind.WEAPON
+			and item_data.kind != ItemDataScript.ItemKind.ARMOR
+			and item_data.kind != ItemDataScript.ItemKind.ACCESSORY
+		):
+			continue
+		if _is_wrong_class_item(item_data):
+			continue
+		compatible_equipment.append(item_data)
+	if compatible_equipment.is_empty():
+		return null
+	return _choose_weighted_item(compatible_equipment, reward_floor)
 
 
 func _find_item_by_display_name(display_name: String) -> Resource:
@@ -3183,6 +3259,8 @@ func _tick_stun_action() -> void:
 
 
 func _end_player_turn() -> void:
+	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
+		return
 	if _shield_turns > 0:
 		_shield_turns -= 1
 	_tick_stun_action()
@@ -3385,7 +3463,8 @@ func _resolve_enemy_fireball(enemy: Node) -> void:
 	)
 	damage = _player.stats_component.apply_damage(damage)
 	GameManager.add_log_message(
-		"%s hurls a fireball at you for %d fire damage." % [enemy.display_name, damage], &"magic"
+		"%s hurls a fireball at you for %d fire magic damage." % [enemy.display_name, damage],
+		&"magic"
 	)
 	_handle_defender_after_damage(_player)
 
@@ -3970,7 +4049,10 @@ func _resolve_boss_summon(enemy: Node, attack: Resource, preferred_cells: Dictio
 		GameManager.add_log_message("%s's summons find no room." % enemy.display_name, &"warning")
 	else:
 		GameManager.add_log_message(
-			"%s summons %d ally%s." % [enemy.display_name, spawned, "" if spawned == 1 else "ies"],
+			(
+				"%s summons %d %s."
+				% [enemy.display_name, spawned, "ally" if spawned == 1 else "allies"]
+			),
 			&"magic"
 		)
 
@@ -4762,6 +4844,8 @@ func _damage_secret_wall(cell: Vector2i, amount: int, source: StringName) -> boo
 
 
 func _refresh_trap_aftermath() -> void:
+	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
+		return
 	GameManager.emit_player_damaged()
 	_try_apply_player_set_proc()
 	_refresh_visibility()
@@ -4931,9 +5015,6 @@ func _use_consumable(item: Resource) -> bool:
 
 
 func _use_targeted_consumable_or_spend_stun(item: Resource) -> void:
-	if _stun_actions > 0:
-		_spend_stunned_action()
-		return
 	_start_targeting(item, &"consumable")
 
 
@@ -4979,12 +5060,15 @@ func _start_targeting(item: Resource, source: StringName) -> void:
 		area_hint = " Radius %d is highlighted." % item.target_radius
 	elif item.use_effect == ItemDataScript.ItemUse.MAGIC_MISSILE:
 		area_hint = " Up to %d targets are highlighted." % _get_magic_missile_target_count(item)
-	GameManager.add_log_message(
-		(
-			"Choose a target for %s.%s WASD moves marker; Enter confirms; F or Esc cancels."
-			% [item.display_name, area_hint]
-		),
-		&"neutral"
+	(
+		GameManager
+		. add_log_message(
+			(
+				"Choose a visible target in range for %s.%s WASD moves marker; Enter confirms; F or Esc cancels."
+				% [item.display_name, area_hint]
+			),
+			&"neutral"
+		)
 	)
 	_refresh_map()
 
@@ -5111,13 +5195,13 @@ func _move_target_cursor(direction: Vector2i) -> void:
 
 
 func _confirm_targeting() -> void:
-	if _stun_actions > 0:
+	if _stun_actions > 0 and _targeting_source != &"consumable":
 		_clear_targeting()
 		_refresh_map()
 		_spend_stunned_action()
 		return
 	if not _is_valid_target_cell(_target_cursor, _targeting_item):
-		GameManager.add_log_message("No valid target there.", &"warning")
+		GameManager.add_log_message("No visible target in range selected.", &"warning")
 		return
 	var resolved: bool = _resolve_targeted_item(_targeting_item, _target_cursor, _targeting_source)
 	if not resolved:
@@ -5329,7 +5413,10 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 		var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
 		var damage: int = _apply_typed_damage(enemy, raw_damage, &"magic")
 		GameManager.add_log_message(
-			"%s erupts for %d damage around %s." % [item.display_name, damage, enemy.display_name],
+			(
+				"%s erupts for %d magic damage around %s."
+				% [item.display_name, damage, enemy.display_name]
+			),
 			&"magic"
 		)
 		_play_action_burst(enemy.grid_position, &"magic_hit")
@@ -5363,7 +5450,13 @@ func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
 	for target: Node2D in affected_enemies:
 		_sleeping_enemies[target] = item.effect_duration
 		_play_action_burst(target.grid_position, &"magic_hit")
-	GameManager.add_log_message("Sleep affects %d enemies." % affected_enemies.size(), &"magic")
+	GameManager.add_log_message(
+		(
+			"Sleep affects %d %s."
+			% [affected_enemies.size(), "enemy" if affected_enemies.size() == 1 else "enemies"]
+		),
+		&"magic"
+	)
 	return true
 
 
@@ -5516,6 +5609,8 @@ func _try_enemy_revive(enemy: Node) -> bool:
 
 
 func _on_enemy_phase_finished() -> void:
+	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
+		return
 	_refresh_visibility()
 	_refresh_map()
 	GameManager.begin_player_turn()
@@ -5931,11 +6026,8 @@ func _get_shop_candidates_for_floor(floor_number: int, effective_floor: int) -> 
 
 
 func _choose_guaranteed_shop_potion(floor_number: int, effective_floor: int) -> Resource:
-	var potion_floor: int = effective_floor if floor_number <= 4 else floor_number
+	var potion_floor: int = floor_number
 	var potion_candidates: Array[Resource] = _get_healing_shop_candidates(potion_floor)
-	if potion_candidates.is_empty() and potion_floor != effective_floor:
-		potion_floor = effective_floor
-		potion_candidates = _get_healing_shop_candidates(potion_floor)
 	if potion_candidates.is_empty():
 		return null
 	if floor_number <= 4:
@@ -6089,6 +6181,7 @@ func _roll_enemy_gold_reward(enemy: Node = null) -> int:
 
 
 func _game_over(victory: bool) -> void:
+	get_tree().paused = false
 	_cancel_boss_activation()
 	if not _active_boss_encounter.is_empty():
 		_active_boss_encounter["state"] = BOSS_ARENA_STATE_DEFEATED
