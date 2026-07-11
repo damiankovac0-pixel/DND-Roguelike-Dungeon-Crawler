@@ -137,9 +137,9 @@ func generate(width: int, height: int, floor_number: int) -> Dictionary:
 				trap_spawns.append(trap_cell)
 	trap_spawns.shuffle()
 	var trap_limit: int = min(trap_spawns.size(), 2 + floor_number)
-	var enemy_limit: int = min(enemy_spawns.size(), 5 + int(floor_number * 0.7))
+	var enemy_limit: int = min(enemy_spawns.size(), 5 + int(floor_number * 0.45))
 	if floor_number >= 10:
-		enemy_limit = min(enemy_spawns.size(), 12 + int((floor_number - 10) * 0.5))
+		enemy_limit = min(enemy_spawns.size(), 9 + int((floor_number - 10) * 0.35))
 	var item_limit: int = min(item_spawns.size(), 2 + int(floor_number / 3))
 	var reserved_boss_room: Rect2i = boss_room
 	if bool(boss_encounter.get("active", false)):

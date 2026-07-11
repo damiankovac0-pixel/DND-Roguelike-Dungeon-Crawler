@@ -112,7 +112,10 @@ func grant_xp(amount: int) -> bool:
 		level += 1
 		last_levels_gained += 1
 		proficiency_bonus = 2 + int((min(level, STAT_LEVEL_CAP) - 1) / 4)
-		max_hp += max(1, 5 + Dice.modifier(constitution))
+		var hp_gain: int = max(1, 5 + Dice.modifier(constitution))
+		if level > STAT_LEVEL_CAP:
+			hp_gain = max(1, int(ceil(hp_gain * 0.35)))
+		max_hp += hp_gain
 		current_hp = max_hp
 		if level <= STAT_LEVEL_CAP and has_available_stat_increase():
 			pending_stat_increases += 1
@@ -120,7 +123,7 @@ func grant_xp(amount: int) -> bool:
 
 
 func xp_for_next_level() -> int:
-	return level * 100
+	return 100 + level * 90 + level * level * 18
 
 
 func get_level_label() -> String:

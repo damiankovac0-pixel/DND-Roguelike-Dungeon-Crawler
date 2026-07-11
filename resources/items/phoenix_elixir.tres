@@ -5,13 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Phoenix Elixir"
-description = "A mythic red-gold draught that floods broken flesh with borrowed dawnfire."
+description = "A mythic red-gold draught that restores 110 HP."
 glyph = "!"
 color = Color(1, 0.32, 0.18, 1)
 kind = 0
 rarity = 5
-base_price = 380
+base_price = 260
 spawn_weight = 1
-min_floor = 15
-healing_amount = 90
+min_floor = 17
+healing_amount = 110
+max_floor = 0
 use_effect = 1

@@ -229,7 +229,8 @@ const THEMES: Array = [
 	},
 ]
 const ATMOSPHERE_KEYS: Dictionary = {
-	1: {
+	1:
+	{
 		"ambient_glyphs": ["·", "`", "."],
 		"ambient_speed": 0.8,
 		"ambient_intensity": 0.12,
@@ -239,7 +240,8 @@ const ATMOSPHERE_KEYS: Dictionary = {
 		"fov_breathe_intensity": 0.06,
 		"fov_breathe_speed": 1.2,
 	},
-	2: {
+	2:
+	{
 		"ambient_glyphs": [",", ";", "."],
 		"ambient_speed": 0.6,
 		"ambient_intensity": 0.15,
@@ -249,7 +251,8 @@ const ATMOSPHERE_KEYS: Dictionary = {
 		"fov_breathe_intensity": 0.08,
 		"fov_breathe_speed": 0.9,
 	},
-	3: {
+	3:
+	{
 		"ambient_glyphs": ["*", ":", "."],
 		"ambient_speed": 0.5,
 		"ambient_intensity": 0.18,
@@ -259,7 +262,8 @@ const ATMOSPHERE_KEYS: Dictionary = {
 		"fov_breathe_intensity": 0.10,
 		"fov_breathe_speed": 1.4,
 	},
-	4: {
+	4:
+	{
 		"ambient_glyphs": ["~", "·", ","],
 		"ambient_speed": 0.7,
 		"ambient_intensity": 0.14,
@@ -269,7 +273,8 @@ const ATMOSPHERE_KEYS: Dictionary = {
 		"fov_breathe_intensity": 0.07,
 		"fov_breathe_speed": 1.0,
 	},
-	5: {
+	5:
+	{
 		"ambient_glyphs": ["·", "◇", "*"],
 		"ambient_speed": 1.0,
 		"ambient_intensity": 0.10,
@@ -279,7 +284,8 @@ const ATMOSPHERE_KEYS: Dictionary = {
 		"fov_breathe_intensity": 0.05,
 		"fov_breathe_speed": 1.5,
 	},
-	6: {
+	6:
+	{
 		"ambient_glyphs": ["·", "*", "◆"],
 		"ambient_speed": 0.9,
 		"ambient_intensity": 0.20,
@@ -313,6 +319,7 @@ const ENEMY_ROSTERS: Dictionary = {
 		"res://resources/enemies/thorn_lasher.tres",
 		"res://resources/enemies/spore_servant.tres",
 		"res://resources/enemies/briar_witch.tres",
+		"res://resources/enemies/frost_guardian.tres",
 	],
 	3:
 	[
@@ -323,6 +330,8 @@ const ENEMY_ROSTERS: Dictionary = {
 		"res://resources/enemies/ash_revenant.tres",
 		"res://resources/enemies/ember_archer.tres",
 		"res://resources/enemies/flame_acolyte.tres",
+		"res://resources/enemies/warleader.tres",
+		"res://resources/enemies/shadow_weaver.tres",
 	],
 	4:
 	[
@@ -330,6 +339,7 @@ const ENEMY_ROSTERS: Dictionary = {
 		"res://resources/enemies/harpooner.tres",
 		"res://resources/enemies/abyssal_eel.tres",
 		"res://resources/enemies/tidecaller.tres",
+		"res://resources/enemies/shadow_weaver.tres",
 	],
 	5:
 	[
@@ -359,9 +369,11 @@ static func theme_for_biome_index(biome_index: int) -> Dictionary:
 	var theme: Dictionary = THEMES[safe_index - 1]
 	return theme.duplicate(true)
 
+
 static func atmosphere_for_biome_index(biome_index: int) -> Dictionary:
 	var safe_index: int = clampi(biome_index, 1, MAX_BIOME_INDEX)
 	return ATMOSPHERE_KEYS.get(safe_index, ATMOSPHERE_KEYS[1]).duplicate(true)
+
 
 static func enemy_path_allowed_for_biome(enemy_path: String, biome_index: int) -> bool:
 	var safe_index: int = clampi(biome_index, 1, MAX_BIOME_INDEX)

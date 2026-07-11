@@ -5,13 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Potion of Haste"
-description = "A bubbling gold liquid. Time flows faster around you while it lasts."
+description = "A bubbling gold liquid. Time flows faster around you, granting an extra action each turn for 2 turns."
 glyph = "!"
 color = Color(1, 0.9, 0.25, 1)
 kind = 0
 rarity = 2
-base_price = 90
-spawn_weight = 4
-min_floor = 3
+base_price = 140
+spawn_weight = 3
+min_floor = 8
 use_effect = 6
-effect_duration = 1
+effect_duration = 2
+max_floor = 0

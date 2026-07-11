@@ -5,14 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Potion of Giant Strength"
-description = "Utility potion. Thickens your hide — grants +3 AC for 8 turns."
+description = "Utility potion. Thickens your hide — grants +2 AC for 6 turns."
 glyph = "!"
 color = Color(0.8, 0.4, 0.1, 1)
 kind = 0
 rarity = 1
-base_price = 75
-spawn_weight = 5
-min_floor = 2
+base_price = 70
+spawn_weight = 4
+min_floor = 4
 use_effect = 4
-armor_bonus = 3
-effect_duration = 8
+armor_bonus = 2
+effect_duration = 6

@@ -5,14 +5,15 @@
 [resource]
 script = ExtResource("1")
 display_name = "Hunting Bow"
-description = "A sturdy starter bow with reliable range. Favored by ranger trainees across the realms."
+description = "A sturdy starter bow with reliable range. Its class-focused design rewards dedicated ranger trainees."
 glyph = "/"
 color = Color(0.72, 0.54, 0.32, 1)
 kind = 1
 rarity = 0
-base_price = 30
+base_price = 32
 spawn_weight = 12
 min_floor = 1
+max_floor = 7
 is_ranged_weapon = true
 range = 5
 use_effect = 2
@@ -24,4 +25,4 @@ required_class = &"ranger"
 weapon_damage_type = &"ranged"
 projectile_id = &"arrow"
 class_damage_type = &"ranged"
-class_damage_percent_bonus = 0
+class_damage_percent_bonus = 5

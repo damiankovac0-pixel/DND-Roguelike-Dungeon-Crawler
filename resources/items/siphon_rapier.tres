@@ -20,5 +20,5 @@ weapon_damage_type = &"melee"
 set_id = &"siphon"
 set_display_name = "Siphon Set"
 set_required_count = 2
-set_proc_chance_percent = 20
-set_proc_heal_percent = 6
+set_proc_chance_percent = 35
+set_proc_heal_percent = 8

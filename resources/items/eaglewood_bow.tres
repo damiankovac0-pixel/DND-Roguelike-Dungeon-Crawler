@@ -5,14 +5,15 @@
 [resource]
 script = ExtResource("1")
 display_name = "Eaglewood Bow"
-description = "A rare ranger bow carved from pale eaglewood. It rewards clean sightlines without pushing ranged damage past late-game relics."
+description = "A rare ranger bow carved from pale eaglewood. It rewards clean sightlines and steady aim."
 glyph = "/"
 color = Color(0.44, 0.75, 0.42, 1)
 kind = 1
 rarity = 2
-base_price = 130
+base_price = 135
 spawn_weight = 4
 min_floor = 8
+max_floor = 17
 is_ranged_weapon = true
 range = 7
 use_effect = 2

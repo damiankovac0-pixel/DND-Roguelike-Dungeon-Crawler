@@ -5,13 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Elixir of Life"
-description = "An epic gold-flecked elixir that restores a huge amount of health."
+description = "An epic gold-flecked elixir that restores 70 HP."
 glyph = "!"
 color = Color(1, 0.72, 0.32, 1)
 kind = 0
 rarity = 3
-base_price = 140
+base_price = 160
 spawn_weight = 3
-min_floor = 6
-healing_amount = 50
+min_floor = 11
+healing_amount = 70
+max_floor = 0
 use_effect = 1

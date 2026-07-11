@@ -14,6 +14,7 @@ base_price = 95
 spawn_weight = 4
 min_floor = 3
 attack_bonus = 1
+damage_bonus = 0
 required_class = &"wizard"
 class_damage_type = &"magic"
 class_damage_percent_bonus = 10

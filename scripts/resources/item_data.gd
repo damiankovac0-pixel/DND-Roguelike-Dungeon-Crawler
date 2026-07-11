@@ -173,15 +173,15 @@ func get_price() -> int:
 		ItemRarity.COMMON:
 			rarity_multiplier = 1.0
 		ItemRarity.UNCOMMON:
-			rarity_multiplier = 1.5
+			rarity_multiplier = 1.4
 		ItemRarity.RARE:
-			rarity_multiplier = 2.5
+			rarity_multiplier = 2.2
 		ItemRarity.EPIC:
-			rarity_multiplier = 4.0
+			rarity_multiplier = 3.4
 		ItemRarity.LEGENDARY:
-			rarity_multiplier = 6.0
+			rarity_multiplier = 5.0
 		ItemRarity.MYTHIC:
-			rarity_multiplier = 8.0
+			rarity_multiplier = 6.8
 		ItemRarity.ASCENDED:
-			rarity_multiplier = 12.0
+			rarity_multiplier = 8.5
 	return max(1, int(ceil(base_price * rarity_multiplier)))

@@ -5,13 +5,15 @@
 [resource]
 script = ExtResource("1")
 display_name = "Tonic of Regeneration"
-description = "A warm herbal tonic that restores 15 HP."
+description = "A warm herbal tonic that grants regeneration, restoring 4 HP per turn for 4 turns."
 glyph = "!"
 color = Color(0.2, 0.7, 0.3, 1)
 kind = 0
 rarity = 1
-base_price = 34
-spawn_weight = 10
+base_price = 44
+spawn_weight = 8
 min_floor = 2
-healing_amount = 15
-use_effect = 1
+max_floor = 10
+healing_amount = 4
+use_effect = 8
+effect_duration = 4

@@ -5,13 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Greater Health Potion"
-description = "A deep crimson draught that restores 18 HP, plus INT modifier and extra INT scaling."
+description = "A deep crimson draught that restores 24 HP."
 glyph = "!"
 color = Color(1, 0.18, 0.18, 1)
 kind = 0
 rarity = 1
-base_price = 30
-spawn_weight = 10
-min_floor = 2
-healing_amount = 18
+base_price = 36
+spawn_weight = 12
+min_floor = 3
+healing_amount = 24
+max_floor = 12
 use_effect = 1

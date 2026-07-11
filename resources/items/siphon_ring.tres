@@ -10,7 +10,7 @@ glyph = "="
 color = Color(0.72, 0.28, 0.58, 1)
 kind = 3
 rarity = 2
-base_price = 100
+base_price = 110
 spawn_weight = 4
 min_floor = 9
 attack_bonus = 1
@@ -18,5 +18,5 @@ damage_bonus = 1
 set_id = &"siphon"
 set_display_name = "Siphon Set"
 set_required_count = 2
-set_proc_chance_percent = 20
-set_proc_heal_percent = 6
+set_proc_chance_percent = 35
+set_proc_heal_percent = 8

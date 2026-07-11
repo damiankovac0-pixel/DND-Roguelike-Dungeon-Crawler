@@ -5,18 +5,19 @@
 [resource]
 script = ExtResource("1")
 display_name = "Training Sword"
-description = "A basic iron blade issued to new fighters. Simple, reliable, and always gets the job done."
+description = "A basic iron blade issued to new fighters. Its class-focused edge rewards dedicated martial training."
 glyph = "/"
 color = Color(0.8, 0.8, 0.85, 1)
 kind = 1
 rarity = 0
-base_price = 25
+base_price = 28
 spawn_weight = 12
 min_floor = 1
+max_floor = 7
 damage_sides = 6
-attack_bonus = 0
-damage_bonus = 1
+attack_bonus = 1
+damage_bonus = 0
 required_class = &"fighter"
 weapon_damage_type = &"melee"
 class_damage_type = &"melee"
-class_damage_percent_bonus = 0
+class_damage_percent_bonus = 3

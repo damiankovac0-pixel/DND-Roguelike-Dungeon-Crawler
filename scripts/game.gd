@@ -12,12 +12,12 @@ const CARDINAL_DIRECTIONS: Array[Vector2i] = [
 const STARTER_WEAPON_FIGHTER: String = "res://resources/items/training_sword.tres"
 const STARTER_WEAPON_RANGER: String = "res://resources/items/hunting_bow.tres"
 const STARTER_WEAPON_WIZARD: String = "res://resources/items/apprentice_staff.tres"
-const SHOP_STOCK_SIZE: int = 6
+const SHOP_STOCK_SIZE: int = 5
 const SHOP_STOCK_MAX_BONUS: int = 3
 const SHOP_EFFECTIVE_FLOOR_BONUS_FACTOR: float = 0.25
 const SHOP_DEPTH_PICK_BONUS_FACTOR: float = 0.25
-const SHOP_REROLL_BASE_COST: int = 15
-const SHOP_REROLL_FLOOR_COST: int = 4
+const SHOP_REROLL_BASE_COST: int = 25
+const SHOP_REROLL_FLOOR_COST: int = 8
 const BUILD_MATCH_WEIGHT_PERCENT: int = 190
 const WRONG_CLASS_WEIGHT_PERCENT: int = 35
 const SET_COMPLETION_WEIGHT_PERCENT: int = 260
@@ -3023,16 +3023,21 @@ func _open_chest_container(container_data: Dictionary) -> void:
 
 
 func _choose_chest_reward_item(chest_rarity: int, floor_number: int) -> Resource:
-	var reward_floor: int = floor_number + chest_rarity * 2
+	var reward_floor: int = floor_number + min(chest_rarity, 2)
+	var maximum_rarity: int = min(chest_rarity, _rarity_cap_for_floor(floor_number))
 	var candidates: Array[Resource] = _get_item_candidates_for_floor(reward_floor)
 	var filtered: Array[Resource] = []
 	var minimum_rarity: int = max(0, chest_rarity - 2)
-	var maximum_rarity: int = chest_rarity
 	for item_data: Resource in candidates:
 		if item_data.rarity >= minimum_rarity and item_data.rarity <= maximum_rarity:
 			filtered.append(item_data)
 	if filtered.is_empty():
-		filtered = candidates
+		for fallback_rarity: int in range(maximum_rarity, -1, -1):
+			for item_data: Resource in candidates:
+				if item_data.rarity == fallback_rarity:
+					filtered.append(item_data)
+			if not filtered.is_empty():
+				break
 	if filtered.is_empty():
 		return null
 	return _choose_weighted_item(filtered, reward_floor)
@@ -5338,6 +5343,13 @@ func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
 		if enemy == null or not enemy.is_alive() or not _visible_cells.has(enemy.grid_position):
 			continue
 		if enemy.grid_position.distance_to(cell) <= item.target_radius:
+			var enemy_actor: Enemy = enemy as Enemy
+			if (
+				enemy_actor != null
+				and enemy_actor.enemy_data != null
+				and enemy_actor.enemy_data.is_boss
+			):
+				continue
 			affected_enemies.append(enemy)
 	if affected_enemies.is_empty():
 		GameManager.add_log_message("No enemies are in the sleep radius.", &"warning")
@@ -5609,20 +5621,23 @@ func _get_shop_reroll_cost() -> int:
 
 # ===== Floor Scaling & Selection =====
 func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
-	var depth_bonus: int = max(0, floor_number - 1)
-	var early_depth: int = min(depth_bonus, 9)
-	var late_depth: int = max(0, depth_bonus - 9)
-	var hp_bonus: int = int(ceil(early_depth * 0.75)) + late_depth
-	var armor_bonus: int = int(depth_bonus / 8)
-	var attack_bonus: int = int(depth_bonus / 7)
-	var damage_bonus: int = int(max(0, depth_bonus - 3) / 8)
+	var depth: int = max(0, floor_number - 1)
+	var early: int = min(depth, 9)
+	var late: int = max(0, depth - 9)
+	var hp_bonus: int = int(ceil(early * 1.0)) + int(ceil(late * 1.25))
+	var armor_bonus: int = min(3, int(depth / 8))
+	var attack_bonus: int = int(depth / 7)
+	var damage_bonus: int = int(max(0, depth - 3) / 7)
 	enemy.stats_component.max_hp += hp_bonus
 	enemy.stats_component.current_hp = enemy.stats_component.max_hp
 	enemy.stats_component.base_armor_class += armor_bonus
 	enemy.stats_component.base_attack_bonus += attack_bonus
 	enemy.stats_component.base_damage_bonus += damage_bonus
-	enemy.stats_component.xp_reward += depth_bonus * 6
-	_scale_enemy_special_attacks(enemy, int(depth_bonus / 6))
+	enemy.stats_component.xp_reward += depth * 3
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor != null and enemy_actor.enemy_data != null and enemy_actor.enemy_data.is_boss:
+		enemy.stats_component.xp_reward += depth * 4
+	_scale_enemy_special_attacks(enemy, min(3, int(depth / 8)))
 
 
 func _scale_enemy_special_attacks(enemy: Node, special_damage_bonus: int) -> void:
@@ -5809,24 +5824,44 @@ func _choose_chest_rarity(floor_number: int) -> int:
 	return ItemDataScript.ItemRarity.COMMON
 
 
+func _rarity_cap_for_floor(floor_number: int) -> int:
+	var rarity_cap: int = ItemDataScript.ItemRarity.COMMON
+	if floor_number >= 23:
+		rarity_cap = ItemDataScript.ItemRarity.ASCENDED
+	elif floor_number >= 18:
+		rarity_cap = ItemDataScript.ItemRarity.MYTHIC
+	elif floor_number >= 13:
+		rarity_cap = ItemDataScript.ItemRarity.LEGENDARY
+	elif floor_number >= 8:
+		rarity_cap = ItemDataScript.ItemRarity.EPIC
+	elif floor_number >= 4:
+		rarity_cap = ItemDataScript.ItemRarity.RARE
+	elif floor_number >= 2:
+		rarity_cap = ItemDataScript.ItemRarity.UNCOMMON
+	return rarity_cap
+
+
 func _chest_rarity_weight_for_floor(rarity: int, floor_number: int) -> int:
+	if rarity > _rarity_cap_for_floor(floor_number):
+		return 0
 	var depth: int = max(0, floor_number - 1)
+	var weight: int = 0
 	match rarity:
 		ItemDataScript.ItemRarity.COMMON:
-			return max(8, 70 - depth * 6)
+			weight = max(8, 70 - depth * 6)
 		ItemDataScript.ItemRarity.UNCOMMON:
-			return 24 + depth * 2
+			weight = 24 + depth * 2
 		ItemDataScript.ItemRarity.RARE:
-			return max(0, depth * 5 - 5)
+			weight = max(0, depth * 5 - 5)
 		ItemDataScript.ItemRarity.EPIC:
-			return max(0, depth * 4 - 14)
+			weight = max(0, depth * 4 - 14)
 		ItemDataScript.ItemRarity.LEGENDARY:
-			return max(0, depth * 3 - 20)
+			weight = max(0, depth * 3 - 20)
 		ItemDataScript.ItemRarity.MYTHIC:
-			return max(0, depth * 3 - 28)
+			weight = max(0, depth * 3 - 28)
 		ItemDataScript.ItemRarity.ASCENDED:
-			return max(0, depth * 2 - 24)
-	return 0
+			weight = max(0, depth * 2 - 34)
+	return weight
 
 
 # ===== Shop Stock Generation =====
@@ -5836,17 +5871,13 @@ func _get_effective_shop_floor(floor_number: int) -> int:
 
 
 func _get_shop_stock_size(floor_number: int) -> int:
-	var safe_floor: int = max(1, floor_number)
-	var floor_bonus: int = clampi(int(safe_floor / 4), 0, SHOP_STOCK_MAX_BONUS)
-	return SHOP_STOCK_SIZE + floor_bonus
+	return 5 + clampi(int(max(1, floor_number) / 6), 0, SHOP_STOCK_MAX_BONUS)
 
 
 func _get_shop_minimum_rarity(floor_number: int) -> int:
-	if floor_number >= 16:
-		return ItemDataScript.ItemRarity.EPIC
-	if floor_number >= 11:
+	if floor_number >= 18:
 		return ItemDataScript.ItemRarity.RARE
-	if floor_number >= 7:
+	if floor_number >= 11:
 		return ItemDataScript.ItemRarity.UNCOMMON
 	return ItemDataScript.ItemRarity.COMMON
 

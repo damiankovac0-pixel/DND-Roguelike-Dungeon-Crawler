@@ -5,14 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Shield"
-description = "Defensive scroll. Raises AC for a few turns."
+description = "Defensive scroll. Raises AC by 3 for 4 turns."
 glyph = "?"
 color = Color(0.45, 0.7, 1, 1)
 kind = 0
 rarity = 1
-base_price = 45
+base_price = 50
 spawn_weight = 9
 min_floor = 1
 use_effect = 4
-effect_duration = 3
+effect_duration = 4
 armor_bonus = 3

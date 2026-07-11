@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Guardian Charm"
-description = "A rare warding charm from the Guardian set. Paired with Guardian Mail, it shaves 10% off incoming damage."
+description = "A rare warding charm from the Guardian set. Paired with Guardian Mail, it shaves 15% off incoming damage."
 glyph = "*"
 color = Color(0.62, 0.72, 0.86, 1)
 kind = 3
@@ -17,4 +17,4 @@ armor_bonus = 1
 set_id = &"guardian"
 set_display_name = "Guardian Set"
 set_required_count = 2
-set_damage_resist_percent = 10
+set_damage_resist_percent = 15

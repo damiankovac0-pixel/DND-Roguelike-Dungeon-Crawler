@@ -5,13 +5,14 @@
 [resource]
 script = ExtResource("1")
 display_name = "Superior Health Potion"
-description = "A bright red tonic that restores 32 HP, plus INT modifier and extra INT scaling."
+description = "A bright red tonic that restores 48 HP."
 glyph = "!"
 color = Color(1, 0.28, 0.28, 1)
 kind = 0
 rarity = 2
-base_price = 75
-spawn_weight = 5
-min_floor = 4
-healing_amount = 32
+base_price = 95
+spawn_weight = 6
+min_floor = 7
+healing_amount = 48
+max_floor = 20
 use_effect = 1

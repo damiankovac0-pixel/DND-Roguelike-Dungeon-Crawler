@@ -5,16 +5,17 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Sleep"
-description = "Targeted scroll. Sleeps enemies in a small radius."
+description = "Targeted scroll. Puts enemies in a small radius to sleep for 1 turn. Does not affect bosses."
 glyph = "?"
 color = Color(0.72, 0.48, 1, 1)
 kind = 0
 rarity = 2
-base_price = 85
-spawn_weight = 4
-min_floor = 3
+base_price = 95
+spawn_weight = 3
+min_floor = 4
 range = 6
 use_effect = 5
 projectile_id = &"sleep_mote"
-effect_duration = 2
+effect_duration = 1
 target_radius = 1
+max_floor = 0

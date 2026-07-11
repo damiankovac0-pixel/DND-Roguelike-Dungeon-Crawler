@@ -5,18 +5,19 @@
 [resource]
 script = ExtResource("1")
 display_name = "Scroll of Magic Missile"
-description = "Targeted scroll: range 7. Hits up to three visible enemies without attack rolls for 2d4+2 force damage each, plus WIS and floor-depth scaling."
+description = "Targeted scroll: range 7. Strikes up to three visible enemies without attack rolls for 1d4+2 force damage each plus WIS and floor-depth scaling."
 glyph = "?"
 color = Color(0.65, 0.85, 1, 1)
 kind = 0
 rarity = 1
-base_price = 55
-spawn_weight = 7
+base_price = 65
+spawn_weight = 6
 min_floor = 2
 range = 7
 use_effect = 3
 projectile_id = &"magic_missile"
 target_count = 3
-damage_dice = 2
+damage_dice = 1
 damage_sides = 4
 damage_bonus = 2
+max_floor = 0

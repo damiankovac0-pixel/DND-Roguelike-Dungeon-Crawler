@@ -5,18 +5,19 @@
 [resource]
 script = ExtResource("1")
 display_name = "Warlord Greatsword"
-description = "A legendary two-handed blade that turns a trained fighter's momentum into brutal finishing arcs. Powerful, but still below ascended relics."
+description = "A legendary two-handed blade that turns a trained fighter's momentum into brutal finishing arcs. It arrives early enough to shape a mid-game build."
 glyph = "/"
 color = Color(1, 0.72, 0.28, 1)
 kind = 1
 rarity = 4
-base_price = 320
-spawn_weight = 2
-min_floor = 18
+base_price = 340
+spawn_weight = 3
+min_floor = 16
+max_floor = 0
 damage_sides = 12
-attack_bonus = 3
-damage_bonus = 5
+attack_bonus = 4
+damage_bonus = 6
 required_class = &"fighter"
 weapon_damage_type = &"melee"
 class_damage_type = &"melee"
-class_damage_percent_bonus = 12
+class_damage_percent_bonus = 10

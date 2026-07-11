@@ -5,14 +5,15 @@
 [resource]
 script = ExtResource("1")
 display_name = "Ember Staff"
-description = "A staff tipped with smoldering coals that crackle with each arcane bolt."
+description = "A staff tipped with smoldering coals that crackle with each arcane bolt. Its raw magic finds purchase without specialized training."
 glyph = "/"
 color = Color(0.85, 0.35, 0.1, 1)
 kind = 1
 rarity = 1
 base_price = 60
 spawn_weight = 7
-min_floor = 3
+min_floor = 4
+max_floor = 10
 is_ranged_weapon = true
 is_staff = true
 projectile_id = &"ember_bolt"
@@ -25,4 +26,4 @@ damage_bonus = 1
 required_class = &"wizard"
 weapon_damage_type = &"magic"
 class_damage_type = &"magic"
-class_damage_percent_bonus = 5
+class_damage_percent_bonus = 0

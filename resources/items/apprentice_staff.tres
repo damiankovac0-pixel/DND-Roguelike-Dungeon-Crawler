@@ -13,6 +13,7 @@ rarity = 0
 base_price = 35
 spawn_weight = 12
 min_floor = 1
+max_floor = 6
 is_ranged_weapon = true
 is_staff = true
 projectile_id = &"arcane_bolt"

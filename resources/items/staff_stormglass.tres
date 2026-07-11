@@ -5,14 +5,15 @@
 [resource]
 script = ExtResource("1")
 display_name = "Stormglass Staff"
-description = "A staff of fused sea-glass that hums with stored lightning, releasing crackling energy on impact."
+description = "A staff of fused sea-glass that hums with stored lightning, releasing crackling energy on impact. Its arcane resonance rewards practiced wizards."
 glyph = "/"
 color = Color(0.45, 0.8, 1, 1)
 kind = 1
 rarity = 2
 base_price = 105
 spawn_weight = 5
-min_floor = 7
+min_floor = 8
+max_floor = 14
 is_ranged_weapon = true
 is_staff = true
 projectile_id = &"stormglass_bolt"
@@ -25,4 +26,4 @@ damage_bonus = 2
 required_class = &"wizard"
 weapon_damage_type = &"magic"
 class_damage_type = &"magic"
-class_damage_percent_bonus = 10
+class_damage_percent_bonus = 4

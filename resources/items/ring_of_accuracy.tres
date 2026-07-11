@@ -10,7 +10,7 @@ glyph = "="
 color = Color(0.52, 0.9, 1, 1)
 kind = 3
 rarity = 1
-base_price = 70
-spawn_weight = 6
-min_floor = 2
+base_price = 80
+spawn_weight = 5
+min_floor = 3
 attack_bonus = 2
