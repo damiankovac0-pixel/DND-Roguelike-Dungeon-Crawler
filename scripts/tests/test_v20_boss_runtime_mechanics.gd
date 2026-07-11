@@ -47,6 +47,12 @@ func _run() -> void:
 	if _failed:
 		return
 
+	# ── V23.1.0: Seraphine spore_burst is escapable (telegraph_turns=2) ──
+	if not _failed:
+		_check_seraphine_escape_contract()
+	if _failed:
+		return
+
 	# ── Section 3: Observer stun ──
 	await _test_observer_stun_hit_evade()
 	if _failed:
@@ -67,35 +73,54 @@ func _run() -> void:
 		return
 
 	# ── Section 5: Vorrak push clamp ──
-	await _test_vorrak_push_clamp()
+	if not _failed:
+		await _test_vorrak_push_clamp()
 	if _failed:
 		return
 
 	# ── Section 6: Kaelros pull/hazard single-tick ──
-	await _test_kaelros_pull_hazard_clamp()
+	if not _failed:
+		await _test_kaelros_pull_hazard_clamp()
 	if _failed:
 		return
 
 	# ── Section 7: Nyxara resolve-trigger phase shift ──
-	await _test_nyxara_phase_shift_on_evade()
+	if not _failed:
+		await _test_nyxara_phase_shift_on_evade()
 	if _failed:
 		return
 
 	# ── Section 8: summon caps ──
-	await _test_summon_caps()
+	if not _failed:
+		await _test_summon_caps()
 	if _failed:
 		return
-	await _test_summon_cap_skipped_by_scheduler()
+	if not _failed:
+		await _test_summon_cap_skipped_by_scheduler()
+	if _failed:
+		return
+
+	# ── V23.1.0: Kaelros drowned_retinue summon_count=1 (one-eel) ──
+	if not _failed:
+		_check_kaelros_one_eel()
+	if _failed:
+		return
+
+	# ── V23.1.0: Nyxara mirror_guard summon_max_active=1 (one-guard) ──
+	if not _failed:
+		_check_nyxara_one_guard()
 	if _failed:
 		return
 
 	# ── Section 9: telegraph countdown ──
-	await _test_kaelros_telegraph_countdown()
+	if not _failed:
+		await _test_kaelros_telegraph_countdown()
 	if _failed:
 		return
 
 	# ── Section 10: stale cleanup after normal boss death ──
-	await _test_stale_cleanup_on_boss_death()
+	if not _failed:
+		await _test_stale_cleanup_on_boss_death()
 	if _failed:
 		return
 
@@ -333,6 +358,85 @@ func _test_choose_attack_no_cooldown_mutation() -> void:
 	game.queue_free()
 
 
+# ---------------------------------------------------------------------------
+#  V23.1.0 — Seraphine spore_burst telegraph_turns = 2 (player can escape)
+# ---------------------------------------------------------------------------
+
+
+func _check_seraphine_escape_contract() -> void:
+	## Seraphine spore_burst telegraph_turns=2 ensures the player can
+	## react before the burst resolves.  hazard_turns=2 means the hazard
+	## persists for two ticks after landing.
+	#
+	# This is a resource-level check: we load the Seraphine enemy template
+	# and inspect the attack definition without spawning a boss encounter.
+	var seraphine_template: Resource = load("res://resources/enemies/seraphine_thorn_saint.tres")
+	if seraphine_template == null:
+		_fail("Seraphine enemy data not found")
+		return
+	var burst: Resource = _attack_by_id(seraphine_template, &"spore_burst")
+	if burst == null:
+		_fail("spore_burst attack not found on Seraphine")
+		return
+	_assert(
+		burst.telegraph_turns == 2,
+		"spore_burst telegraph_turns = %d, expected 2" % burst.telegraph_turns
+	)
+	_assert(
+		burst.hazard_turns == 2, "spore_burst hazard_turns = %d, expected 2" % burst.hazard_turns
+	)
+	# telegraph_turns > 1 means the player can escape by moving to a
+	# non-hazard cell after the telegraph is drawn.  A runtime test would
+	# need a boss encounter + player turn to verify the escape physically,
+	# but the attack contract is captured here.
+	if not _failed:
+		print(
+			(
+				"  seraphine spore_burst: telegraph_turns=%d, hazard_turns=%d"
+				% [burst.telegraph_turns, burst.hazard_turns]
+			)
+		)
+
+
+func _check_kaelros_one_eel() -> void:
+	## Kaelros drowned_retinue summon_count=1 in V23.1.0.
+	## The retinue summons one eel at a time instead of two.
+	var template: Resource = load("res://resources/enemies/kaelros_drowned_king.tres")
+	if template == null:
+		_fail("Kaelros enemy data not found")
+		return
+	var retinue: Resource = _attack_by_id(template, &"drowned_retinue")
+	if retinue == null:
+		_fail("drowned_retinue attack not found on Kaelros")
+		return
+	_assert(
+		retinue.summon_count == 1,
+		"drowned_retinue summon_count = %d, expected 1" % retinue.summon_count
+	)
+	if not _failed:
+		print("  kaelros retinue: summon_count=%d" % retinue.summon_count)
+
+
+func _check_nyxara_one_guard() -> void:
+	## Nyxara mirror_guard summon_max_active=1 in V23.1.0.
+	## Only one guard can be active at a time (no alternation).
+	var template: Resource = load("res://resources/enemies/nyxara_mirror_witch.tres")
+	if template == null:
+		_fail("Nyxara enemy data not found")
+		return
+	var guard: Resource = _attack_by_id(template, &"mirror_guard")
+	if guard == null:
+		_fail("mirror_guard attack not found on Nyxara")
+		return
+	_assert(
+		guard.summon_max_active == 1,
+		"mirror_guard summon_max_active = %d, expected 1" % guard.summon_max_active
+	)
+	if not _failed:
+		print("  nyxara guard: summon_max_active=%d" % guard.summon_max_active)
+
+
+# ---------------------------------------------------------------------------
 # ═══════════════════════════════════════════════════════════════════
 # Section 2 – Seraphine phase selection
 # ═══════════════════════════════════════════════════════════════════
@@ -1044,7 +1148,7 @@ func _test_nyxara_phase_shift_on_evade() -> void:
 func _test_summon_caps() -> void:
 	## Seraphine spore_bloom: max 3 live minions.
 	## Kaelros drowned_retinue: max 2 live minions.
-	## Nyxara mirror_guard: max 2 live minions (alternates duelist/seer).
+	## Nyxara mirror_guard: max 1 live minion (V23.1.0, no alternation).
 	await _test_summon_cap(&"seraphine", 10, &"spore_bloom", 3)
 	if _failed:
 		return
@@ -1115,9 +1219,8 @@ func _test_summon_cap(
 
 
 func _test_nyxara_summon_alternation() -> void:
-	## Nyxara mirror_guard alternates between Mirror Duelist and
-	## Prism Seer.  After two successful summons, both types should
-	## be present, and the toggle resets for the next round.
+	## Nyxara mirror_guard has summon_max_active=1 (V23.1.0).
+	## After one successful summon, subsequent mirror_guard calls are capped.
 	var game: Node = await _start_game()
 	var nyxara: Node = await _enter_boss_on_floor(game, 25)
 	if nyxara == null:
@@ -1127,49 +1230,26 @@ func _test_nyxara_summon_alternation() -> void:
 
 	var attack: Resource = _attack_by_id(nyxara.enemy_data, &"mirror_guard")
 	_assert(attack != null, "mirror_guard attack not found on Nyxara")
-	_assert(attack.summon_max_active == 2, "mirror_guard cap should be 2")
+	_assert(attack.summon_max_active == 1, "mirror_guard cap should be 1 (V23.1.0)")
 	_assert(attack.summon_count == 1, "mirror_guard summon_count should be 1")
 	if _failed:
 		return
 
-	# Clear toggle to known state
-	var state: Dictionary = game._boss_state_for(nyxara)
-	state["nyxara_summon_toggle"] = false
-	game._boss_states[nyxara] = state
-
-	# First summon → should produce Mirror Duelist
+	# First summon -> produces 1 minion
 	game._resolve_boss_summon(nyxara, attack, {})
 	await process_frame
-	state = game._boss_state_for(nyxara)
-	_assert(bool(state.get("nyxara_summon_toggle")), "toggle should be true after first summon")
 	var count1: int = _count_live_summons(game, nyxara)
 	_assert(count1 == 1, "Nyxara should have 1 minion after first summon, got %d" % count1)
 	if _failed:
 		return
 
-	# Second summon → should produce Prism Seer
+	# Second summon -> capped (max_active=1), no new minions
 	game._resolve_boss_summon(nyxara, attack, {})
 	await process_frame
-	state = game._boss_state_for(nyxara)
-	_assert(
-		not bool(state.get("nyxara_summon_toggle")), "toggle should be false after second summon"
-	)
 	var count2: int = _count_live_summons(game, nyxara)
-	_assert(count2 == 2, "Nyxara should have 2 minions after second summon, got %d" % count2)
+	_assert(count2 == 1, "Nyxara should stay at 1 minion after capped summon, got %d" % count2)
 	if _failed:
 		return
-
-	# Third summon → should be capped (no new minions)
-	game._resolve_boss_summon(nyxara, attack, {})
-	await process_frame
-	var count3: int = _count_live_summons(game, nyxara)
-	_assert(count3 == 2, "Nyxara should stay at 2 minions after cap, got %d" % count3)
-	# Toggle stays unchanged because the cap check returns early
-	state = game._boss_state_for(nyxara)
-	_assert(
-		not bool(state.get("nyxara_summon_toggle")),
-		"toggle should be unchanged after capped third summon"
-	)
 
 	game.queue_free()
 
@@ -1200,7 +1280,7 @@ func _test_summon_cap_skipped_by_scheduler() -> void:
 	game._resolve_boss_summon(kaelros, retinue, {})
 	await process_frame
 	var live: int = _count_live_summons(game, kaelros)
-	# We need exactly 2 minions to hit the cap. Retinue spawns 2 at once.
+	# We need exactly 2 minions to hit the cap. Retinue spawns 1 at once (V23.1.0).
 	# If it only spawned 1 due to room constraints, resolve again.
 	if live < 2:
 		game._resolve_boss_summon(kaelros, retinue, {})
@@ -1221,15 +1301,12 @@ func _test_summon_cap_skipped_by_scheduler() -> void:
 	state = game._boss_state_for(kaelros)
 	state["attack_cooldowns"] = {&"undertow": 10}
 	game._boss_states[kaelros] = state
-	chosen = game._choose_boss_attack(kaelros, 1, game._enemy_distance_to_player(kaelros))
-	_assert(
-		chosen == null,
-		(
-			"Should return null when only capped summon available, got %s"
-			% ("" if chosen == null else chosen.id)
-		)
+	var only_summon_choice: Resource = game._choose_boss_attack(
+		kaelros, 1, game._enemy_distance_to_player(kaelros)
 	)
-
+	_assert(
+		only_summon_choice == null, "Scheduler should return null when only capped summon remains"
+	)
 	game.queue_free()
 
 

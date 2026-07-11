@@ -189,6 +189,14 @@ func _check_floor_6_garden(game: Node) -> void:
 		game, "res://resources/enemies/orc.tres", 6, "Orc should spawn at floor 6 (Garden)"
 	)
 
+	# V23.1.0: Frost Guardian added to Garden roster
+	_assert_can_spawn(
+		game,
+		"res://resources/enemies/frost_guardian.tres",
+		6,
+		"Frost Guardian should spawn at floor 6 (Garden) — V23.1.0 roster addition"
+	)
+
 	# Denied — Tower-only enemies (rejected by roster even though min_floor/max_floor would allow some)
 	# Goblin: min=1, max=7 — old floor-only would ALLOW at floor 6; new rejects (Tower roster, not Garden)
 	_assert_cannot_spawn(
@@ -255,6 +263,19 @@ func _check_floor_11_cinder(game: Node) -> void:
 		"Abyss Knight should spawn at floor 11 (Cinder)"
 	)
 
+	# V23.1.0: Warleader and Shadow Weaver added to Cinder roster
+	_assert_can_spawn(
+		game,
+		"res://resources/enemies/warleader.tres",
+		11,
+		"Warleader should spawn at floor 11 (Cinder) — V23.1.0 roster addition"
+	)
+	_assert_can_spawn(
+		game,
+		"res://resources/enemies/shadow_weaver.tres",
+		14,
+		"Shadow Weaver should spawn at floor 14 (Cinder) — V23.1.0 roster addition"
+	)
 	# Denied — Garden enemy that old floor-only would have allowed
 	# Orc: min=3, max=16 — old would ALLOW at floor 11 (min<=11, max>=11); new rejects (Garden roster)
 	_assert_cannot_spawn(
@@ -311,6 +332,13 @@ func _check_floor_16_sunken(game: Node) -> void:
 		"Harpooner should spawn at floor 16 (Sunken)"
 	)
 
+	# V23.1.0: Shadow Weaver added to Sunken roster
+	_assert_can_spawn(
+		game,
+		"res://resources/enemies/shadow_weaver.tres",
+		16,
+		"Shadow Weaver should spawn at floor 16 (Sunken) — V23.1.0 roster addition"
+	)
 	# Denied — Cinder-only enemies that old floor-only would have allowed
 	# Abyss Knight: min=11, max=0 — old would ALLOW at floor 16; new rejects (Cinder roster, not Sunken)
 	_assert_cannot_spawn(

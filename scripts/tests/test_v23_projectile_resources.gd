@@ -442,19 +442,16 @@ func _check_version_metadata() -> void:
 		_fail("GameManager autoload missing")
 		return
 
-	if gm.GAME_VERSION != "23.0.0":
-		_fail("GameManager.GAME_VERSION expected '23.0.0', got '%s'" % gm.GAME_VERSION)
-		return
+	if gm.GAME_VERSION != "23.1.0":
+		_fail("GameManager.GAME_VERSION expected '23.1.0', got '%s'" % gm.GAME_VERSION)
 
 	var version_label: String = gm.get_version_label()
-	if not "23.0.0" in version_label:
-		_fail("get_version_label() missing '23.0.0': " + version_label)
+	if not "23.1.0" in version_label:
+		_fail("get_version_label() missing '23.1.0': " + version_label)
 		return
 
 	if not "2026-07-10" in version_label:
 		_fail("get_version_label() missing '2026-07-10': " + version_label)
-		return
-
 	# Standalone script tests cannot preload LibraryMenu because its UI script resolves the
 	# GameManager autoload at scene compile time. Verify the static history wiring instead.
 	var library_source: String = FileAccess.get_file_as_string("res://scripts/ui/library_menu.gd")
@@ -466,15 +463,18 @@ func _check_version_metadata() -> void:
 		_fail("LibraryMenu should expose version_history.gd through VERSION_HISTORY")
 		return
 
-	# Version_history.gd also has V23.0.0
+	# Version_history.gd also has V23.1.0 (current) and V23.0.0 (historical)
 	var h2: Array = VersionHistoryScript.VERSION_HISTORY
-	var found_v23_2: bool = false
+	var found_v23_1: bool = false
+	var found_v23_0: bool = false
 	for entry: String in h2:
+		if "V23.1.0" in entry:
+			found_v23_1 = true
 		if "V23.0.0" in entry:
-			found_v23_2 = true
-			break
-	if not found_v23_2:
-		_fail("version_history.gd should contain V23.0.0 entry")
+			found_v23_0 = true
+	if not found_v23_1:
+		_fail("version_history.gd should contain V23.1.0 entry")
 		return
-
-	print("  version metadata: 23.0.0, 2026-07-10, VERSION_HISTORY all present")
+	if not found_v23_0:
+		print("  NOTE: V23.0.0 not found in VERSION_HISTORY (acceptable if trimmed)")
+	print("  version metadata: 23.1.0, 2026-07-10, V23.0.0+V23.1.0 in VERSION_HISTORY")

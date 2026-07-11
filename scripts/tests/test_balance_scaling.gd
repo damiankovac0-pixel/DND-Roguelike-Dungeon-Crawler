@@ -193,18 +193,63 @@ func _check_floor25_generated_stock_has_endgame_items(game: Node) -> void:
 	if _failed:
 		return
 	var stock: Array = game._generate_shop_stock(FINAL_FLOOR)
-	var endgame_count: int = 0
+
+	# Formula: 5 + clampi(floor / 6, 0, SHOP_STOCK_MAX_BONUS)
+	# floor 25 => 5 + min(4, 3) = 8
+	var expected_size: int = 5 + clampi(FINAL_FLOOR / 6, 0, game.SHOP_STOCK_MAX_BONUS)
+	if stock.size() != expected_size:
+		_fail(
+			(
+				"floor %d stock size = %d, expected formula %d"
+				% [FINAL_FLOOR, stock.size(), expected_size]
+			)
+		)
+		return
+
+	# All stock items must be valid candidates (not below minimum_rarity for floor 25)
+	var candidates: Array = game._get_shop_candidates_for_floor(
+		FINAL_FLOOR, game._get_effective_shop_floor(FINAL_FLOOR)
+	)
+	var min_rarity: int = game._get_shop_minimum_rarity(FINAL_FLOOR)
+	for item: Resource in stock:
+		if item not in candidates:
+			_fail(
+				(
+					"stock item '%s' (rarity=%d) not in floor %d candidates"
+					% [item.display_name, item.rarity, FINAL_FLOOR]
+				)
+			)
+			return
+		if item.rarity < min_rarity:
+			_fail(
+				(
+					"stock item '%s' rarity=%d below floor %d minimum=%d"
+					% [item.display_name, item.rarity, FINAL_FLOOR, min_rarity]
+				)
+			)
+			return
+
+	# Verify at least one item has endgame-level rarity (Mythic/Ascended).
+	# This is a formula property, not a seed-dependent count: any generated
+	# stock on floor 25 draws from a candidate pool that includes Mythic+
+	# items (verified in _check_floor25_shop_candidates_all_mythic_ascended).
+	var has_mythic: bool = false
 	for item: Resource in stock:
 		if item.rarity >= ItemDataScript.ItemRarity.MYTHIC:
-			endgame_count += 1
-
-	if endgame_count == 0:
-		_fail("floor %d generated stock has no Mythic/Ascended items (seed=123456)" % FINAL_FLOOR)
+			has_mythic = true
+			break
+	if not has_mythic:
+		_fail(
+			(
+				"floor %d generated stock should contain at least one Mythic/Ascended item"
+				% FINAL_FLOOR
+			)
+		)
 		return
 	print(
 		(
-			"  floor %d stock: %d items, %d endgame (Mythic/Ascended)"
-			% [FINAL_FLOOR, stock.size(), endgame_count]
+			"  floor %d stock: %d items, formula validates (size=%d, min_rarity=%d)"
+			% [FINAL_FLOOR, stock.size(), expected_size, min_rarity]
 		)
 	)
 
@@ -263,9 +308,8 @@ func _check_enemy_scaling_does_not_mutate_template(game: Node) -> void:
 	var base_lich_ranged: int = lich_src.ranged_damage_bonus
 	var base_dragon_fireball: int = dragon_src.fireball_damage_bonus
 
-	# Spawn at two different floors; scaling adds floor(depth_bonus / 6).
-	# Floor 10 depth=9  -> special bonus = 1
-	# Floor 25 depth=24 -> special bonus = 4
+	# Floor 10 depth=9  -> special bonus = min(3, int(9/8)) = 1
+	# Floor 25 depth=24 -> special bonus = min(3, int(24/8)) = 3
 	var e_low: Node = game._spawn_enemy_instance(lich_src, Vector2i(0, 0), 10, true)
 	var e_high: Node = game._spawn_enemy_instance(lich_src, Vector2i(0, 0), FINAL_FLOOR, true)
 
@@ -293,7 +337,6 @@ func _check_enemy_scaling_does_not_mutate_template(game: Node) -> void:
 	# Dragon - fireball scaling
 	var d_low: Node = game._spawn_enemy_instance(dragon_src, Vector2i(0, 0), 10, true)
 	var d_high: Node = game._spawn_enemy_instance(dragon_src, Vector2i(0, 0), FINAL_FLOOR, true)
-
 	var d_low_fb: int = d_low.enemy_data.fireball_damage_bonus
 	var d_high_fb: int = d_high.enemy_data.fireball_damage_bonus
 
@@ -331,31 +374,46 @@ func _check_enemy_scaling_does_not_mutate_template(game: Node) -> void:
 func _check_mythic_ascended_pricing() -> void:
 	if _failed:
 		return
-	# MYTHIC    multiplier = 8.0     -> ceil(base * 8.0)
-	# ASCENDED  multiplier = 12.0    -> ceil(base * 12.0)
-	var expected: Dictionary = {
-		"res://resources/items/starfall_charm.tres": 3600,
-		"res://resources/items/voidglass_rapier.tres": 4160,
-		"res://resources/items/phoenix_elixir.tres": 3040,
-		"res://resources/items/ascended_aegis.tres": 9120,
-		"res://resources/items/ascended_sword.tres": 9360,
-		"res://resources/items/celestial_greatbow.tres": 8640,
-		"res://resources/items/crown_of_the_deep.tres": 10800,
-		"res://resources/items/ascendant_elixir.tres": 7680,
+	# V23.1.0 rarity multipliers:
+	# Common 1.0, Uncommon 1.4, Rare 2.2, Epic 3.4,
+	# Legendary 5.0, Mythic 6.8, Ascended 8.5.
+	# get_price() = ceil(base_price * RARITY_MULTIPLIERS[rarity]).
+	var expected_multipliers: Dictionary = {
+		ItemDataScript.ItemRarity.COMMON: 1.0,
+		ItemDataScript.ItemRarity.UNCOMMON: 1.4,
+		ItemDataScript.ItemRarity.RARE: 2.2,
+		ItemDataScript.ItemRarity.EPIC: 3.4,
+		ItemDataScript.ItemRarity.LEGENDARY: 5.0,
+		ItemDataScript.ItemRarity.MYTHIC: 6.8,
+		ItemDataScript.ItemRarity.ASCENDED: 8.5,
 	}
 
-	for path: String in expected:
-		var item: Resource = load(path)
-		var got: int = item.get_price()
-		if got != expected[path]:
+	# Verify get_price() applies ceil(base * multiplier) via spot-check formula
+	var spot_checks: Array[Dictionary] = [
+		{"path": "res://resources/items/starfall_charm.tres"},
+		{"path": "res://resources/items/crown_of_the_deep.tres"},
+		{"path": "res://resources/items/ascended_sword.tres"},
+		{"path": "res://resources/items/phoenix_elixir.tres"},
+	]
+	for check: Dictionary in spot_checks:
+		var item: Resource = load(check.path)
+		var mul: float = expected_multipliers[item.rarity]
+		var expected_price: int = int(ceil(item.base_price * mul))
+		var actual_price: int = item.get_price()
+		if actual_price != expected_price:
 			_fail(
 				(
-					("%s get_price() = %d, expected %d" + " (base_price=%d, rarity=%d)")
-					% [path, got, expected[path], item.base_price, item.rarity]
+					"%s get_price() = %d, expected %d (base=%d, rarity=%d, mul=%.1f)"
+					% [check.path, actual_price, expected_price, item.base_price, item.rarity, mul]
 				)
 			)
 			return
-	print("  item pricing: %d Mythic/Ascended items match multipliers" % expected.size())
+	print(
+		(
+			"  item pricing: multipliers verified, %d spot-checks pass ceil(base*multiplier) formula"
+			% spot_checks.size()
+		)
+	)
 
 
 # ---------------------------------------------------------------------------

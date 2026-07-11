@@ -382,7 +382,8 @@ func _check_focus_level_20() -> void:
 
 
 # ======================================================================
-# 1d. Volley — requires ranged weapon, damages multiple visible enemies
+# 1d. Volley — guard prevents use without ranged weapon; if guard passes,
+#     damages multiple visible enemies with arrow projectiles.
 # ======================================================================
 
 
@@ -401,6 +402,8 @@ func _check_volley() -> void:
 	game._ranger_volley_charges = 1
 	game._enemies = []
 	game._visible_cells = {}
+	# Guard: Volley should not fire without a ranged weapon equipped.
+	# The guard preserves the charge if no ranged weapon is in hand.
 
 	# Test 1: No ranged weapon -> guard triggers, charge preserved
 	game._activate_ranger_volley()

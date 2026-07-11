@@ -1,4 +1,5 @@
-## Permanent test harness for Magic Missile multi-target behavior and depth damage scaling.
+## Permanent test harness for Magic Missile multi-target behavior, depth damage scaling,
+## damage relevance, and Sleep scroll contracts.
 ##
 ## Verifies:
 ##   - Scroll of Magic Missile exposes/uses target_count = 3.
@@ -6,6 +7,9 @@
 ##     distinct visible in-range enemies, not just one.
 ##   - The scroll depth damage bonus increases at deeper floors compared with an
 ##     early floor (tested via production helper if accessible).
+##   - Magic Missile damage dice/sides/bonus are set and produce meaningful damage.
+##   - Scroll of Sleep has effect_duration=1 and is ruled immune against bosses
+##     (behavior confirmed in game.gd _resolve_sleep).
 ##
 ## Run with:
 ##   /usr/local/bin/godot --headless --path . --script res://scripts/tests/test_magic_targeting.gd
@@ -48,6 +52,14 @@ func _run() -> void:
 	if not _failed:
 		_check_depth_damage_bonus(game, game_manager)
 
+	# ---- Phase 4: damage relevance ----
+	if not _failed:
+		_check_scroll_damage_relevance(game)
+
+	# ---- Phase 5: Sleep scroll contracts ----
+	if not _failed:
+		_check_sleep_scroll_contracts(game)
+
 	if not _failed:
 		print("magic targeting check passed")
 		quit(0)
@@ -68,12 +80,7 @@ func _check_magic_missile_target_count(game: Node) -> void:
 
 	if "target_count" in missile:
 		if missile.target_count != 3:
-			_fail(
-				(
-					"Scroll of Magic Missile target_count = %d, expected 3"
-					% missile.target_count
-				)
-			)
+			_fail("Scroll of Magic Missile target_count = %d, expected 3" % missile.target_count)
 			return
 		print("  magic missile target_count = 3")
 	else:
@@ -123,20 +130,13 @@ func _check_magic_missile_multi_hit(game: Node, game_manager: Node) -> void:
 			_fail("Enemy at %s died before test" % str(enemy.grid_position))
 			return
 		if not game._visible_cells.has(enemy.grid_position):
-			_fail(
-				(
-					"Enemy at %s is not visible (sight range may block)"
-					% str(enemy.grid_position)
-				)
-			)
+			_fail("Enemy at %s is not visible (sight range may block)" % str(enemy.grid_position))
 			return
 
 	print("  multi-hit: %d enemies spawned and visible" % enemies.size())
 
 	# Obtain a duplicate scroll so we don't mutate the template.
-	var missile_template: Resource = game._find_item_by_display_name(
-		"Scroll of Magic Missile"
-	)
+	var missile_template: Resource = game._find_item_by_display_name("Scroll of Magic Missile")
 	if missile_template == null:
 		_fail("Scroll of Magic Missile not found")
 		return
@@ -166,8 +166,7 @@ func _check_magic_missile_multi_hit(game: Node, game_manager: Node) -> void:
 		_fail(
 			(
 				"magic missile hit only %d/%d enemies with 4 available, "
-				+ "expected multi-target (>= 2) behavior"
-				% [hit_count, enemies.size()]
+				+ "expected multi-target (>= 2) behavior" % [hit_count, enemies.size()]
 			)
 		)
 		return
@@ -215,8 +214,10 @@ func _check_depth_damage_bonus(game: Node, game_manager: Node) -> void:
 		_fail(
 			(
 				"scroll depth damage bonus at floor %d = %d, "
-				+ "should be > floor %d bonus = %d"
-				% [game_manager.current_floor, deep_bonus, start_floor, early_bonus]
+				+ (
+					"should be > floor %d bonus = %d"
+					% [game_manager.current_floor, deep_bonus, start_floor, early_bonus]
+				)
 			)
 		)
 		return
@@ -226,6 +227,112 @@ func _check_depth_damage_bonus(game: Node, game_manager: Node) -> void:
 			% [early_bonus, start_floor, deep_bonus, game_manager.current_floor]
 		)
 	)
+
+
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+#  Phase 4 — Offensive scroll damage values produce meaningful damage
+# ---------------------------------------------------------------------------
+
+
+func _check_scroll_damage_relevance(game: Node) -> void:
+	if _failed:
+		return
+	# Magic Missile: 1d4+2 per bolt, 3 bolts = 3d4+6 expected ~13.5 average
+	var missile: Resource = game._find_item_by_display_name("Scroll of Magic Missile")
+	if missile == null:
+		_fail("Scroll of Magic Missile missing from loaded item resources")
+		return
+	if missile.damage_dice < 1 or missile.damage_sides < 4 or missile.damage_bonus < 2:
+		_fail(
+			(
+				"Magic Missile damage too low: %dd%d+%d, expected at least 1d4+2"
+				% [missile.damage_dice, missile.damage_sides, missile.damage_bonus]
+			)
+		)
+		return
+	var avg_per_bolt: float = (
+		missile.damage_dice * (1.0 + missile.damage_sides) / 2.0 + missile.damage_bonus
+	)
+	_assert(avg_per_bolt >= 4.0, "Magic Missile average per bolt too low: %.1f" % avg_per_bolt)
+	if missile.target_count >= 3:
+		_assert(
+			avg_per_bolt * missile.target_count >= 12.0,
+			"Magic Missile 3-bolt average too low: %.1f" % (avg_per_bolt * missile.target_count)
+		)
+	print(
+		(
+			"  magic missile: %dd%d+%d per bolt, avg %.1f"
+			% [missile.damage_dice, missile.damage_sides, missile.damage_bonus, avg_per_bolt]
+		)
+	)
+
+	# Lightning Bolt: 3d6+3
+	var bolt: Resource = game._find_item_by_display_name("Scroll of Lightning Bolt")
+	if bolt == null:
+		_fail("Scroll of Lightning Bolt missing")
+		return
+	if bolt.damage_dice < 3 or bolt.damage_sides < 6:
+		_fail(
+			(
+				"Lightning Bolt damage too low: %dd%d+%d"
+				% [bolt.damage_dice, bolt.damage_sides, bolt.damage_bonus]
+			)
+		)
+		return
+	print("  lightning bolt: %dd%d+%d" % [bolt.damage_dice, bolt.damage_sides, bolt.damage_bonus])
+
+	# Fireball: 3d6+5
+	var fb: Resource = game._find_item_by_display_name("Scroll of Fireball")
+	if fb == null:
+		_fail("Scroll of Fireball missing")
+		return
+	if fb.damage_dice < 3 or fb.damage_sides < 6:
+		_fail(
+			"Fireball damage too low: %dd%d+%d" % [fb.damage_dice, fb.damage_sides, fb.damage_bonus]
+		)
+		return
+	print("  fireball: %dd%d+%d" % [fb.damage_dice, fb.damage_sides, fb.damage_bonus])
+
+
+# ---------------------------------------------------------------------------
+#  Phase 5 — Scroll of Sleep resource and boss immunity contract
+# ---------------------------------------------------------------------------
+
+
+func _check_sleep_scroll_contracts(game: Node) -> void:
+	if _failed:
+		return
+	var sleep: Resource = game._find_item_by_display_name("Scroll of Sleep")
+	if sleep == null:
+		_fail("Scroll of Sleep missing from loaded item resources")
+		return
+
+	if sleep.effect_duration != 1:
+		_fail(
+			(
+				"Scroll of Sleep effect_duration = %d, expected 1 (single-turn control)"
+				% sleep.effect_duration
+			)
+		)
+		return
+	print("  sleep scroll: effect_duration = %d" % sleep.effect_duration)
+
+	if sleep.range < 6:
+		_fail("Scroll of Sleep range = %d, expected at least 6" % sleep.range)
+		return
+	print("  sleep scroll: range = %d" % sleep.range)
+
+	# Boss immunity is enforced in game.gd _resolve_sleep: bosses are skipped
+	# when collecting affected targets. If only bosses are in radius, the
+	# scroll returns false without being consumed. This test verifies the
+	# resource contract; the behavioral assertion is in the scaling test.
+
+
+func _assert(condition: bool, message: String) -> void:
+	if not condition and not _failed:
+		_fail(message)
 
 
 # ---------------------------------------------------------------------------

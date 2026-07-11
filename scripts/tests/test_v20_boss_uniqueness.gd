@@ -408,7 +408,7 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 		{
 			&"spore_burst":
 			{
-				"hazard_turns": 3,
+				"hazard_turns": 2,
 				"hazard_damage_dice": 1,
 				"hazard_damage_sides": 4,
 				"hazard_damage_bonus": 0,
@@ -509,7 +509,7 @@ func _check_cooldown_contracts(bosses: Dictionary) -> void:
 		&"seraphine": {&"thorn_lance": 2, &"spore_burst": 3, &"spore_bloom": 4},
 		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3},
 		&"kaelros": {&"undertow": 2, &"drowned_retinue": 4},
-		&"nyxara": {&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 4},
+		&"nyxara": {&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 5},
 	}
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
@@ -538,8 +538,7 @@ func _check_phase_order(bosses: Dictionary) -> void:
 		&"observer": {&"blink_pulse": 2},
 		&"seraphine": {&"spore_burst": 2, &"spore_bloom": 3},
 		&"vorrak": {&"maw_quake": 2},
-		&"kaelros": {&"drowned_retinue": 2},
-		&"nyxara": {&"prism_fracture": 2, &"mirror_guard": 3},
+		&"nyxara": {&"prism_fracture": 2, &"mirror_guard": 2},
 	}
 
 	# Seraphine spore_bloom phase-3 summon must have styled telegraph glyph

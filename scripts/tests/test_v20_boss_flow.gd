@@ -249,11 +249,20 @@ func _check_boss_defeat_rewards(boss: Node) -> void:
 	)
 	var room_cells: Dictionary = _game._active_boss_encounter.get("room_cells", {})
 	var chest_in_boss_room: bool = false
+	var boss_chest_cell: Vector2i
 	for placed_cell: Vector2i in _game._container_positions:
 		if room_cells.has(placed_cell):
 			chest_in_boss_room = true
+			boss_chest_cell = placed_cell
 			break
 	_assert(chest_in_boss_room, "boss defeat did not create a chest inside the boss room")
+	if not _failed:
+		var chest_data: Dictionary = _game._container_positions.get(boss_chest_cell, {})
+		var chest_rarity: int = chest_data.get("rarity", -1)
+		_assert(
+			chest_rarity == 2,
+			"boss chest rarity = %d, expected 2 (RARE) on floor %d" % [chest_rarity, BOSS_FLOOR]
+		)
 	_assert(
 		not _game.sensory_feedback.is_boss_music_playing(), "boss music did not stop after defeat"
 	)

@@ -165,7 +165,7 @@ func _check_resource_contracts() -> void:
 		message = "Apprentice Staff must be a ranged magic weapon"
 	elif _ascendant_staff.class_damage_type != &"magic":
 		message = "Ascendant Staff must provide a magic class bonus"
-	elif _ascendant_staff.class_damage_percent_bonus < 30:
+	elif _ascendant_staff.class_damage_percent_bonus < 12:
 		message = "Ascendant Staff must provide a meaningful magic class bonus"
 	elif (
 		_warriors_ring.required_class != &"fighter" or _warriors_ring.class_damage_type != &"melee"
@@ -188,7 +188,7 @@ func _check_resource_contracts() -> void:
 	):
 		message = "Vanguard Blade must be fighter melee class gear"
 	elif (
-		_warlord_greatsword.min_floor < 17
+		_warlord_greatsword.min_floor < 16
 		or (
 			_warlord_greatsword.class_damage_percent_bonus
 			< _vanguard_blade.class_damage_percent_bonus

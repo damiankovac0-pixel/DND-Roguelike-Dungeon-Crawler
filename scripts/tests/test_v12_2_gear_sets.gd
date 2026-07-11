@@ -109,13 +109,17 @@ func _check_resource_contracts() -> void:
 		message = "ResourcePaths must register gear set resources"
 	elif _guardian_mail.set_id != &"guardian" or _guardian_charm.set_id != &"guardian":
 		message = "Guardian set pieces must share set_id"
-	elif _guardian_mail.set_damage_resist_percent != 10:
-		message = "Guardian set must define 10% damage resistance"
+	elif _guardian_mail.set_damage_resist_percent != 15:
+		message = "Guardian set must define 15% damage resistance"
 	elif _siphon_rapier.set_id != &"siphon" or _siphon_ring.set_id != &"siphon":
 		message = "Siphon set pieces must share set_id"
-	elif _siphon_ring.set_proc_chance_percent != 20 or _siphon_ring.set_proc_heal_percent != 6:
-		message = "Siphon set must define 20% proc / 6% heal"
-
+	elif (
+		_siphon_ring.set_proc_chance_percent != 35
+		or _siphon_ring.set_proc_heal_percent != 8
+		or _siphon_rapier.set_proc_chance_percent != 35
+		or _siphon_rapier.set_proc_heal_percent != 8
+	):
+		message = "Siphon set must define a 35% proc chance and 8% heal"
 	if not message.is_empty():
 		_fail(message)
 	else:
@@ -141,17 +145,17 @@ func _check_guardian_resistance() -> void:
 	inv.equipped_accessory_1 = _guardian_charm
 
 	var applied: int = player.stats_component.apply_damage(20)
-	if applied != 18:
-		_fail("Guardian 10% resistance should reduce 20 damage to 18, got %d" % applied)
+	if applied != 17:
+		_fail("Guardian 15% resistance should reduce 20 damage to 17, got %d" % applied)
 		_free_test_node(player)
 		return
-	if player.stats_component.current_hp != 82:
-		_fail("Guardian resistance HP expected 82, got %d" % player.stats_component.current_hp)
+	if player.stats_component.current_hp != 83:
+		_fail("Guardian resistance HP expected 83, got %d" % player.stats_component.current_hp)
 		_free_test_node(player)
 		return
 
 	_free_test_node(player)
-	print("  Guardian two-piece set reduces incoming damage by 10%")
+	print("  Guardian two-piece set reduces incoming damage by 15%")
 
 
 func _check_single_piece_no_resistance() -> void:
@@ -175,12 +179,12 @@ func _check_siphon_proc_helpers() -> void:
 	inv.equipped_weapon = _siphon_rapier
 	inv.equipped_accessory_1 = _siphon_ring
 
-	if inv._get_set_proc_chance_percent() != 20:
-		_fail("Siphon proc chance expected 20, got %d" % inv._get_set_proc_chance_percent())
+	if inv._get_set_proc_chance_percent() != 35:
+		_fail("Siphon proc chance expected 35, got %d" % inv._get_set_proc_chance_percent())
 		_free_test_node(player)
 		return
-	if inv._get_set_proc_heal_percent() != 6:
-		_fail("Siphon heal percent expected 6, got %d" % inv._get_set_proc_heal_percent())
+	if inv._get_set_proc_heal_percent() != 8:
+		_fail("Siphon heal percent expected 8, got %d" % inv._get_set_proc_heal_percent())
 		_free_test_node(player)
 		return
 	if inv._get_set_proc_display_name() != "Siphon Set":
