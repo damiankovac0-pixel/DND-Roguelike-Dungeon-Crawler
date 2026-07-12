@@ -442,12 +442,12 @@ func _check_version_metadata() -> void:
 		_fail("GameManager autoload missing")
 		return
 
-	if gm.GAME_VERSION != "23.2.0":
-		_fail("GameManager.GAME_VERSION expected '23.2.0', got '%s'" % gm.GAME_VERSION)
+	if gm.GAME_VERSION != "23.2.1":
+		_fail("GameManager.GAME_VERSION expected '23.2.1', got '%s'" % gm.GAME_VERSION)
 
 	var version_label: String = gm.get_version_label()
-	if not "23.2.0" in version_label:
-		_fail("get_version_label() missing '23.2.0': " + version_label)
+	if not "23.2.1" in version_label:
+		_fail("get_version_label() missing '23.2.1': " + version_label)
 		return
 
 	if not "2026-07-11" in version_label:
@@ -463,19 +463,19 @@ func _check_version_metadata() -> void:
 		_fail("LibraryMenu should expose version_history.gd through VERSION_HISTORY")
 		return
 
-	# Version_history.gd keeps the current V23.2.0 and historical V23.1.0 entries.
+	# Version_history.gd keeps the current V23.2.1 and historical V23.2.0 entries.
 	var history: Array = VersionHistoryScript.VERSION_HISTORY
-	var found_v23_2: bool = false
-	var found_v23_1: bool = false
+	var found_v23_2_1: bool = false
+	var found_v23_2_0: bool = false
 	for entry: String in history:
+		if "V23.2.1" in entry:
+			found_v23_2_1 = true
 		if "V23.2.0" in entry:
-			found_v23_2 = true
-		if "V23.1.0" in entry:
-			found_v23_1 = true
-	if not found_v23_2:
-		_fail("version_history.gd should contain V23.2.0 entry")
+			found_v23_2_0 = true
+	if not found_v23_2_1:
+		_fail("version_history.gd should contain V23.2.1 entry")
 		return
-	if not found_v23_1:
-		_fail("version_history.gd should retain V23.1.0 entry")
+	if not found_v23_2_0:
+		_fail("version_history.gd should retain V23.2.0 entry")
 		return
-	print("  version metadata: 23.2.0, 2026-07-11, V23.1.0+V23.2.0 in VERSION_HISTORY")
+	print("  version metadata: 23.2.1, 2026-07-11, V23.2.0+V23.2.1 in VERSION_HISTORY")

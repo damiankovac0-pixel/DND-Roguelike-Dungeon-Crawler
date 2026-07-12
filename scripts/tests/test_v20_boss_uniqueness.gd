@@ -31,10 +31,12 @@ const MIN_AC: int = 14
 const MAX_AC: int = 20
 const MIN_GOLD_REWARD: int = 150
 const MAX_GOLD_REWARD: int = 1000
+const PRINTABLE_ASCII_CHARS: String = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
-# New shapes introduced in V20 that MUST appear in at least one boss attack
+# New shapes introduced in V20 that MUST appear in exactly one boss attack.
+# Observer now uses a narrow standard line for observer_gaze, so parallax_gaze
+# is intentionally excluded from this unique-shape set.
 const NEW_SHAPES: Array[StringName] = [
-	&"parallax_gaze",
 	&"thorn_patch",
 	&"eruption_columns",
 	&"tidal_lane",
@@ -104,6 +106,10 @@ func _run() -> void:
 
 	# ── Phase 2: resource-level checks (no game instance needed) ──
 	_check_resource_signatures(bosses)
+	if _failed:
+		return
+
+	_check_resource_ascii_and_windups(bosses)
 	if _failed:
 		return
 
@@ -217,11 +223,69 @@ func _check_resource_signatures(bosses: Dictionary) -> void:
 			return
 
 
+func _check_resource_ascii_and_windups(bosses: Dictionary) -> void:
+	## Guard against tofu-prone boss presentation and resource data that would
+	## collapse damaging non-summon attacks into one-turn tells.
+	for boss_id: StringName in bosses:
+		var b: Resource = bosses[boss_id]
+		var label: String = b.display_name
+
+		_assert(_is_printable_ascii(b.glyph), "%s: glyph should be printable ASCII" % label)
+		for frame_index: int in range(b.boss_visual_frames.size()):
+			var frame: PackedStringArray = b.boss_visual_frames[frame_index]
+			for line_index: int in range(frame.size()):
+				var line: String = frame[line_index]
+				_assert(
+					_is_printable_ascii(line),
+					(
+						"%s: boss_visual_frames[%d][%d] contains non-printable/non-ASCII glyphs"
+						% [label, frame_index, line_index]
+					)
+				)
+				if _failed:
+					return
+
+		for attack: Resource in b.boss_attacks:
+			var tag: String = "%s/%s" % [label, attack.id]
+			var is_summon: bool = attack.shape == &"summon"
+			var is_damaging: bool = attack.damage_dice > 0 or attack.damage_bonus > 0
+
+			_assert(
+				not attack.telegraph_glyph.is_empty(),
+				"%s: telegraph_glyph should be non-empty" % tag
+			)
+			_assert(
+				_is_printable_ascii(attack.telegraph_glyph),
+				"%s: telegraph_glyph should be printable ASCII" % tag
+			)
+			if is_damaging and not is_summon:
+				_assert(
+					attack.telegraph_turns >= 2,
+					(
+						"%s: damaging non-summon telegraph_turns = %d, expected >= 2"
+						% [tag, attack.telegraph_turns]
+					)
+				)
+				_assert(attack.projectile_id != &"", "%s: projectile_id should be non-empty" % tag)
+			if not attack.hazard_glyph.is_empty():
+				_assert(
+					_is_printable_ascii(attack.hazard_glyph),
+					"%s: hazard_glyph should be printable ASCII" % tag
+				)
+			if attack.hazard_turns > 0:
+				_assert(
+					not attack.hazard_glyph.is_empty(), "%s: hazard_glyph should be non-empty" % tag
+				)
+				_assert(attack.hazard_vfx_id != &"", "%s: hazard_vfx_id should be non-empty" % tag)
+			if _failed:
+				return
+
+
 func _check_new_shape_visual_data(bosses: Dictionary) -> void:
-	## Every attack whose shape is one of the six V20-new shapes
-	## must have non-empty telegraph_glyph and non-transparent
-	## telegraph colours.  This is the "non-empty telegraph
-	## geometry" contract — the visual identity of the telegraph.
+	## Every attack whose shape is one of the five V20-new unique
+	## shapes must have non-empty telegraph_glyph and non-transparent
+	## telegraph colours.  This is the "non-empty telegraph geometry"
+	## contract — the visual identity of the telegraph.
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
 		for attack: Resource in b.boss_attacks:
@@ -400,8 +464,9 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_damage_sides": 4,
 				"hazard_damage_bonus": 0,
 				"hazard_damage_type": &"magic",
-				"hazard_glyph": "⊙",
-				"hazard_message": "Watched stone burns you for %d magic damage.",
+				"hazard_glyph": "o",
+				"hazard_vfx_id": &"blink_pulse_hazard",
+				"hazard_message": "Residual energy sears you for %d magic damage.",
 			},
 		},
 		&"seraphine":
@@ -414,8 +479,9 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_damage_bonus": 0,
 				"hazard_damage_type": &"magic",
 				"hazard_effect": &"poison",
-				"hazard_glyph": "✹",
-				"hazard_message": "Virulent spores erupt for %d magic damage.",
+				"hazard_glyph": ",",
+				"hazard_vfx_id": &"spore_hazard",
+				"hazard_message": "Lingering spores erupt for %d magic damage.",
 			},
 		},
 		&"vorrak":
@@ -427,8 +493,9 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_damage_sides": 6,
 				"hazard_damage_bonus": 1,
 				"hazard_damage_type": &"fire",
-				"hazard_glyph": "▴",
-				"hazard_message": "Molten cracks sear you for %d fire damage.",
+				"hazard_glyph": "^",
+				"hazard_vfx_id": &"molten_cracks",
+				"hazard_message": "Lingering molten cracks sear you for %d fire damage.",
 			},
 		},
 		&"kaelros":
@@ -441,8 +508,9 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_damage_bonus": 1,
 				"hazard_damage_type": &"magic",
 				"hazard_effect": &"pull",
-				"hazard_glyph": "≈",
-				"hazard_message": "The undertow drags through you for %d magic damage.",
+				"hazard_glyph": "~",
+				"hazard_vfx_id": &"undertow_hazard",
+				"hazard_message": "The lingering undertow churns through you for %d magic damage.",
 			},
 		},
 		&"nyxara":
@@ -454,8 +522,9 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_damage_sides": 6,
 				"hazard_damage_bonus": 2,
 				"hazard_damage_type": &"magic",
-				"hazard_glyph": "◆",
-				"hazard_message": "Mirror shards cut you for %d magic damage.",
+				"hazard_glyph": "%",
+				"hazard_vfx_id": &"mirror_shards",
+				"hazard_message": "Lingering mirror shards slice you for %d magic damage.",
 			},
 		},
 	}
@@ -550,7 +619,7 @@ func _check_phase_order(bosses: Dictionary) -> void:
 			_assert(attack.phase_min == 3, "spore_bloom phase_min should be 3")
 			_assert(attack.summon_count == 2, "spore_bloom summon_count should be 2")
 			_assert(attack.summon_max_active == 3, "spore_bloom summon_max_active should be 3")
-			_assert(attack.telegraph_glyph == "✹", "spore_bloom telegraph_glyph should be ✹")
+			_assert(attack.telegraph_glyph == "*", "spore_bloom telegraph_glyph should be *")
 			_assert(
 				attack.telegraph_color != Color.TRANSPARENT,
 				"spore_bloom telegraph_color should be non-transparent"
@@ -668,7 +737,7 @@ func _check_geometry_smoke(bosses: Dictionary) -> void:
 		_game = null
 		return
 
-	# Test the Observer's attacks: parallax_gaze (new) + ring/blink_pulse (built-in)
+	# Test the Observer's attacks: narrow gaze line + ring/blink_pulse.
 	for attack: Resource in boss.enemy_data.boss_attacks:
 		if _failed:
 			break
@@ -710,6 +779,13 @@ func _live_boss_count(game: Node) -> int:
 # ═══════════════════════════════════════════════════════════════════
 # Shared helpers
 # ═══════════════════════════════════════════════════════════════════
+
+
+func _is_printable_ascii(value: String) -> bool:
+	for index: int in range(value.length()):
+		if PRINTABLE_ASCII_CHARS.find(value.substr(index, 1)) == -1:
+			return false
+	return true
 
 
 func _assert(condition: bool, message: String) -> void:

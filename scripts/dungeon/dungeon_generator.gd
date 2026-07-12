@@ -21,7 +21,7 @@ const SECRET_DIRECTIONS: Array[Vector2i] = [
 	Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT
 ]
 const BOSS_FLOORS: Array[int] = [5, 10, 15, 20, 25]
-const BOSS_ARENA_SIZE: Vector2i = Vector2i(15, 13)
+const BOSS_ARENA_SIZE: Vector2i = Vector2i(21, 19)
 const BOSS_ARENA_MARGIN: int = 2
 const BOSS_ARENA_MOAT_WIDTH: int = 1
 
@@ -351,9 +351,15 @@ func _find_boss_room_reward_cell(
 				continue
 			if direction.y != 0 and offset.y * direction.y <= 0:
 				continue
+			# Skip cells within the 5x4 boss footprint (2 cells horizontally of center)
+			if direction.x != 0 and abs(offset.x) <= 2:
+				continue
+			if direction.y != 0 and abs(offset.y) <= 1:
+				continue
 			candidates.append(cell)
 	if candidates.is_empty():
 		return boss_spawn_cell
+	# Pick farthest cell for maximum separation from boss
 	candidates.sort_custom(
 		func(a: Vector2i, b: Vector2i) -> bool:
 			var a_offset: Vector2i = a - boss_spawn_cell
@@ -362,7 +368,7 @@ func _find_boss_room_reward_cell(
 			var b_axis: int = abs(b_offset.x * direction.x + b_offset.y * direction.y)
 			if a_axis == b_axis:
 				return (
-					a.distance_squared_to(boss_spawn_cell) < b.distance_squared_to(boss_spawn_cell)
+					a.distance_squared_to(boss_spawn_cell) > b.distance_squared_to(boss_spawn_cell)
 				)
 			return a_axis > b_axis
 	)

@@ -28,8 +28,8 @@ const TILE_CHARS: Dictionary = {
 	TileType.DOOR: "+",
 	TileType.OPEN_DOOR: "/",
 	TileType.STAIRS_DOWN: ">",
-	TileType.BOSS_DOOR: "▣",
-	TileType.SEALED_BOSS_DOOR: "╬",
+	TileType.BOSS_DOOR: "G",
+	TileType.SEALED_BOSS_DOOR: "X",
 }
 
 const CELL_SIZE: int = 20

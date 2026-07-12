@@ -15,6 +15,12 @@ const CARDINAL_DIRECTIONS: Array[Vector2i] = [
 const TEST_SEEDS: Array[int] = [1001, 1002, 1003, 20240630, 998]
 const MAX_DOOR_RATIO: float = 0.45
 const PAIRED_DOOR_SCAN_DISTANCE: int = 7
+const EXPECTED_DOOR_GLYPHS: Dictionary = {
+	DungeonDataScript.TileType.DOOR: "+",
+	DungeonDataScript.TileType.OPEN_DOOR: "/",
+	DungeonDataScript.TileType.BOSS_DOOR: "G",
+	DungeonDataScript.TileType.SEALED_BOSS_DOOR: "X",
+}
 
 # === Private Variables ===
 var _failed: bool = false
@@ -25,6 +31,9 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_door_glyphs()
+	if _failed:
+		return
 	for test_seed: int in TEST_SEEDS:
 		seed(test_seed)
 		var generator: RefCounted = DungeonGeneratorScript.new()
@@ -45,6 +54,20 @@ func _run() -> void:
 			return
 	print("door placement check passed")
 	quit(0)
+
+
+func _check_door_glyphs() -> void:
+	for tile_type: int in EXPECTED_DOOR_GLYPHS:
+		var expected_glyph: String = EXPECTED_DOOR_GLYPHS[tile_type]
+		var actual_glyph: String = DungeonDataScript.TILE_CHARS.get(tile_type, "")
+		if actual_glyph != expected_glyph:
+			_fail(
+				(
+					"tile type %d glyph is '%s', expected readable door glyph '%s'"
+					% [tile_type, actual_glyph, expected_glyph]
+				)
+			)
+			return
 
 
 func _check_generated_doors(result: Dictionary, test_seed: int) -> void:

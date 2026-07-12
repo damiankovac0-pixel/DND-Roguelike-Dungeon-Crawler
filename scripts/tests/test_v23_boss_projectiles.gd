@@ -212,7 +212,24 @@ func _test_resolve_creates_trail() -> void:
 	var trail_count_before: int = game.map_view._projectile_trails.size()
 	game._queue_boss_attack(observer, attack, cells)
 	_assert(not game._boss_telegraphs.is_empty(), "queued observer_gaze should expose telegraphs")
+	_assert(
+		game._boss_telegraphs.has(telegraphed_cell),
+		"player should stand on a still-threatened observer_gaze telegraph"
+	)
 	game._process_boss_turn(observer, 1.0, 99, {})
+	_assert(
+		game.map_view._projectile_trails.size() == trail_count_before,
+		"first pending observer_gaze turn should not create a projectile trail"
+	)
+	_assert(
+		game._player.stats_component.current_hp == hp_before,
+		"first pending observer_gaze turn should not damage the player"
+	)
+	_assert(
+		not game._boss_telegraphs.is_empty(),
+		"first pending observer_gaze turn should keep telegraphs"
+	)
+	game._process_boss_turn(observer, 1.0, 100, {})
 
 	var trails: Array = game.map_view._projectile_trails
 	if trails.size() <= trail_count_before:
@@ -255,29 +272,6 @@ func _test_move_evade_preserves_queued_cell() -> void:
 		_fail("observer_gaze cells should be non-empty")
 		return
 
-	var queued_cell: Vector2i = cells.keys()[0]
-
-	# Move player to a DIFFERENT room cell to evade
-	var room_cells: Dictionary = game._active_boss_encounter.get("room_cells", {})
-	var safe_cell: Vector2i = Vector2i.ZERO
-	for cell: Vector2i in room_cells.keys():
-		if cell != queued_cell and not cells.has(cell):
-			safe_cell = cell
-			break
-	if safe_cell == Vector2i.ZERO:
-		# Use any walkable cell adjacent to the queued cell
-		for offset in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-			var candidate: Vector2i = queued_cell + offset
-			if game._is_walkable(candidate) and not cells.has(candidate):
-				safe_cell = candidate
-				break
-
-	if safe_cell != Vector2i.ZERO:
-		game._player.set_grid_position(safe_cell)
-	else:
-		# Player already not in the telegraph cell? That's fine, just proceed
-		pass
-
 	game._refresh_visibility()
 	game._refresh_map()
 	await process_frame
@@ -285,9 +279,62 @@ func _test_move_evade_preserves_queued_cell() -> void:
 	var hp_before: int = game._player.stats_component.current_hp
 	var trail_count_before: int = game.map_view._projectile_trails.size()
 
-	# Resolve queued boss attack - should still create trail ending at the original queued cell.
 	game._queue_boss_attack(observer, attack, cells)
+	if game._boss_telegraphs.is_empty():
+		_fail("Evade: queue should expose telegraphs")
+		return
+	var expected_cells: Array[Vector2i] = ProjectileSystemScript.array_from_cell_keys(cells)
+
+	# First pending turn decrements the windup only; the queued cells remain visible.
 	game._process_boss_turn(observer, 1.0, 100, {})
+	if game.map_view._projectile_trails.size() != trail_count_before:
+		_fail("Evade: first pending turn should not create a projectile trail")
+		return
+	if game._player.stats_component.current_hp != hp_before:
+		_fail("Evade: first pending turn should not damage the player")
+		return
+	if game._boss_telegraphs.is_empty():
+		_fail("Evade: first pending turn should keep telegraphs")
+		return
+
+	# Move player to a DIFFERENT room cell before resolve.
+	var room_cells: Dictionary = game._active_boss_encounter.get("room_cells", {})
+	var safe_cell: Vector2i = Vector2i.ZERO
+	for cell: Vector2i in room_cells.keys():
+		if (
+			cell != game._player.grid_position
+			and game._is_walkable(cell)
+			and game._get_enemy_at(cell) == null
+			and not cells.has(cell)
+		):
+			safe_cell = cell
+			break
+	if safe_cell == Vector2i.ZERO:
+		# Use any walkable cell adjacent to a queued cell.
+		for queued_cell: Vector2i in cells.keys():
+			for offset in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var candidate: Vector2i = queued_cell + offset
+				if (
+					candidate != game._player.grid_position
+					and game._is_walkable(candidate)
+					and game._get_enemy_at(candidate) == null
+					and not cells.has(candidate)
+				):
+					safe_cell = candidate
+					break
+			if safe_cell != Vector2i.ZERO:
+				break
+	if safe_cell == Vector2i.ZERO:
+		_fail("Evade: no safe cell outside observer_gaze telegraph")
+		return
+
+	game._player.set_grid_position(safe_cell)
+	game._refresh_visibility()
+	game._refresh_map()
+	await process_frame
+
+	# Resolve queued boss attack - should still create trail ending at the original queued cells.
+	game._process_boss_turn(observer, 1.0, 101, {})
 
 	var trails: Array = game.map_view._projectile_trails
 	if trails.size() <= trail_count_before:
@@ -295,7 +342,6 @@ func _test_move_evade_preserves_queued_cell() -> void:
 		return
 
 	var profile: StringName = attack.projectile_id
-	var expected_cells: Array[Vector2i] = ProjectileSystemScript.array_from_cell_keys(cells)
 	var found_queued_trail: bool = false
 	for trail_index: int in range(trail_count_before, trails.size()):
 		var emitted_trail: Dictionary = trails[trail_index]

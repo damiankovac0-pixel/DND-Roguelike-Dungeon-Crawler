@@ -6,8 +6,8 @@ extends Node2D
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
 const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
 const SECRET_WALL_GLYPH: String = "?"
-const FLOOR_GLYPHS: Array[String] = [".", "·", "'", "`"]
-const WALL_GLYPHS: Array[String] = ["#", "▓", "▒"]
+const FLOOR_GLYPHS: Array[String] = [".", ",", "'", "`"]
+const WALL_GLYPHS: Array[String] = ["#", "%", "&"]
 const GLYPH_SHADOW_OFFSET: Vector2 = Vector2(1, 1)
 const CELL_BURST_DURATION: float = 0.55
 const BOSS_SPAWN_INTRO_SECONDS: float = 0.90
@@ -71,6 +71,8 @@ var _boss_door_cells: Array[Vector2i] = []
 var _boss_room_locked: bool = false
 var _boss_room_tint_color: Color = Color.TRANSPARENT
 var _boss_room_draw_offset: Vector2 = Vector2.ZERO
+var _boss_room_min: Vector2i = Vector2i.ZERO
+var _boss_room_max: Vector2i = Vector2i.ZERO
 var _boss_visuals: Dictionary = {}
 var _boss_occupied_cells: Dictionary = {}
 var _boss_telegraphs: Dictionary = {}
@@ -444,6 +446,7 @@ func _draw() -> void:
 				)
 
 	_draw_boss_room_tint(playfield_rect)
+	_draw_boss_arena_motif(draw_font, ascent, playfield_rect)
 	_draw_boss_hazards(draw_font, ascent, playfield_rect)
 
 	for target_cell: Vector2i in _target_range_cells.keys():
@@ -455,7 +458,7 @@ func _draw() -> void:
 		_draw_cell_highlight(
 			target_cell, Color(0.42, 0.45, 0.2, 0.28), Color(0.78, 0.82, 0.32, 0.72)
 		)
-		_draw_glyph(draw_font, target_point, "·", Color(0.86, 0.90, 0.36, 0.95), false)
+		_draw_glyph(draw_font, target_point, ".", Color(0.86, 0.90, 0.36, 0.95), false)
 
 	for area_cell: Vector2i in _target_area_cells.keys():
 		if not _visible_cells.has(area_cell) or not _explored_cells.has(area_cell):
@@ -491,13 +494,17 @@ func _draw() -> void:
 		var container_point: Vector2 = _cell_draw_position(container_position, ascent)
 		if not _is_inside_playfield(container_point, playfield_rect):
 			continue
-		var container_color: Color = _color_or(container_data.get("color", Color.WHITE), Color.WHITE)
+		var container_color: Color = _color_or(
+			container_data.get("color", Color.WHITE), Color.WHITE
+		)
 		_draw_cell_highlight(
 			container_position,
 			Color(container_color.r, container_color.g, container_color.b, 0.18),
 			Color.TRANSPARENT
 		)
-		_draw_glyph(draw_font, container_point, str(container_data.get("glyph", "?")), container_color)
+		_draw_glyph(
+			draw_font, container_point, str(container_data.get("glyph", "?")), container_color
+		)
 
 	_draw_cell_bursts(draw_font, ascent, playfield_rect)
 
@@ -575,6 +582,37 @@ func _draw_boss_room_tint(playfield_rect: Rect2) -> void:
 		draw_rect(_inset_cell_rect(cell, 1.0), fill_color)
 
 
+func _draw_boss_arena_motif(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	if not _boss_room_locked or _boss_room_cells.is_empty():
+		return
+	if _boss_room_min == Vector2i.ZERO and _boss_room_max == Vector2i.ZERO:
+		return
+	var _arena_salt: int = 97
+	var _arena_mod: int = 11
+	var _arena_glyphs: Array[String] = [".", "+"]
+	var _arena_color: Color = Color(1.0, 0.72, 0.22, 0.14)
+	for y: int in range(_boss_room_min.y, _boss_room_max.y + 1):
+		for x: int in range(_boss_room_min.x, _boss_room_max.x + 1):
+			var cell: Vector2i = Vector2i(x, y)
+			if not _boss_room_cells.has(cell):
+				continue
+			if not _visible_cells.has(cell) and not _explored_cells.has(cell):
+				continue
+			if _cell_hash(cell, _arena_salt) % _arena_mod != 0:
+				continue
+			if y < 0 or y >= _map_data.size() or x < 0 or x >= _map_data[y].size():
+				continue
+			if _map_data[y][x] != DungeonDataScript.TileType.FLOOR:
+				continue
+			var point: Vector2 = _cell_draw_position(cell, ascent)
+			if not _is_inside_playfield(point, playfield_rect):
+				continue
+			var glyph: String = _arena_glyphs[
+				_cell_hash(cell, _arena_salt + 4) % _arena_glyphs.size()
+			]
+			_draw_glyph(draw_font, point, glyph, _arena_color, false)
+
+
 func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for cell: Vector2i in _boss_hazards.keys():
 		if not _visible_cells.has(cell):
@@ -584,9 +622,15 @@ func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 			continue
 		var payload: Dictionary = _dictionary_or(_boss_hazards.get(cell, {}))
 		var glyph: String = str(payload.get("glyph", "~"))
-		var fill_color: Color = _color_or(payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12)), Color(0.0, 0.3, 1.0, 0.12))
-		var border_color: Color = _color_or(payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18)), Color(0.0, 0.5, 1.0, 0.18))
-		var glyph_color: Color = _color_or(payload.get("color", Color(0.6, 0.8, 1.0, 1.0)), Color(0.6, 0.8, 1.0, 1.0))
+		var fill_color: Color = _color_or(
+			payload.get("fill_color", Color(0.0, 0.3, 1.0, 0.12)), Color(0.0, 0.3, 1.0, 0.12)
+		)
+		var border_color: Color = _color_or(
+			payload.get("border_color", Color(0.0, 0.5, 1.0, 0.18)), Color(0.0, 0.5, 1.0, 0.18)
+		)
+		var glyph_color: Color = _color_or(
+			payload.get("color", Color(0.6, 0.8, 1.0, 1.0)), Color(0.6, 0.8, 1.0, 1.0)
+		)
 		var vfx_payload: Dictionary = _dictionary_or(payload.get("vfx_payload", {}))
 		_draw_cell_highlight(cell, fill_color, border_color)
 		if not vfx_payload.is_empty():
@@ -594,7 +638,9 @@ func _draw_boss_hazards(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 				draw_font,
 				point,
 				str(vfx_payload.get("trail_glyph", glyph)),
-				_color_with_alpha(_color_or(vfx_payload.get("trail_color", glyph_color), glyph_color), 0.65),
+				_color_with_alpha(
+					_color_or(vfx_payload.get("trail_color", glyph_color), glyph_color), 0.65
+				),
 				false
 			)
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
@@ -607,8 +653,12 @@ func _draw_boss_telegraph_fills(_draw_font: Font, _ascent: float, playfield_rect
 		var payload: Dictionary = _dictionary_or(_boss_telegraphs.get(cell, {}))
 		if payload.is_empty():
 			continue
-		var fill_color: Color = _color_or(payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26)), Color(1.0, 0.16, 0.10, 0.26))
-		var border_color: Color = _color_or(payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78)), Color(1.0, 0.52, 0.18, 0.78))
+		var fill_color: Color = _color_or(
+			payload.get("fill_color", Color(1.0, 0.16, 0.10, 0.26)), Color(1.0, 0.16, 0.10, 0.26)
+		)
+		var border_color: Color = _color_or(
+			payload.get("border_color", Color(1.0, 0.52, 0.18, 0.78)), Color(1.0, 0.52, 0.18, 0.78)
+		)
 		_draw_clipped_cell_highlight(cell, fill_color, border_color, playfield_rect)
 
 
@@ -623,11 +673,10 @@ func _draw_boss_telegraph_glyphs(draw_font: Font, ascent: float, playfield_rect:
 		if payload.is_empty():
 			continue
 		var glyph: String = str(payload.get("glyph", "!"))
-		var glyph_color: Color = _color_or(payload.get("color", Color(1.0, 0.64, 0.20, 1.0)), Color(1.0, 0.64, 0.20, 1.0))
+		var glyph_color: Color = _color_or(
+			payload.get("color", Color(1.0, 0.64, 0.20, 1.0)), Color(1.0, 0.64, 0.20, 1.0)
+		)
 		_draw_glyph(draw_font, point, glyph, glyph_color, false)
-		var turns_remaining: int = int(payload.get("turns_remaining", 1))
-		var corner_marker: String = str(turns_remaining) if turns_remaining > 1 else "!"
-		_draw_glyph(draw_font, point + Vector2(7, -8), corner_marker, glyph_color, false)
 
 
 func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
@@ -668,14 +717,16 @@ func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Re
 		var age: float = float(effect.get("age", 0.0))
 		var duration: float = max(0.05, float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)))
 		var progress: float = clampf(age / duration, 0.0, 1.0)
-		var color: Color = _color_or(effect.get("color", Color(1.0, 0.72, 0.22, 1.0)), Color(1.0, 0.72, 0.22, 1.0))
+		var color: Color = _color_or(
+			effect.get("color", Color(1.0, 0.72, 0.22, 1.0)), Color(1.0, 0.72, 0.22, 1.0)
+		)
 		var cells: Array = _array_or(effect.get("occupied_cells", []))
 		if cells.is_empty():
 			cells = [anchor_cell]
 		var pulse_alpha: float = sin(progress * PI) * 0.45
-		var glyphs: Array = _array_or(effect.get("spawn_glyphs", ["·", "◇", "◆", "■"]))
+		var glyphs: Array = _array_or(effect.get("spawn_glyphs", [".", "*", "!", "X"]))
 		if glyphs.is_empty():
-			glyphs = ["·", "◇", "◆", "■"]
+			glyphs = [".", "*", "!", "X"]
 		var glyph: String = str(glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()])
 		for raw_cell in cells:
 			if not (raw_cell is Vector2i):
@@ -742,19 +793,26 @@ func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rec
 			var point: Vector2 = _cell_draw_position(cell, ascent)
 			if not _is_inside_playfield(point, playfield_rect):
 				continue
-			var fill_color: Color = _color_or(trail.get("fill_color", Color.TRANSPARENT), Color.TRANSPARENT)
-			var border_color: Color = _color_or(trail.get("border_color", Color.TRANSPARENT), Color.TRANSPARENT)
+			var fill_color: Color = _color_or(
+				trail.get("fill_color", Color.TRANSPARENT), Color.TRANSPARENT
+			)
+			var border_color: Color = _color_or(
+				trail.get("border_color", Color.TRANSPARENT), Color.TRANSPARENT
+			)
 			_draw_cell_highlight(
 				cell, _color_with_alpha(fill_color, fade), _color_with_alpha(border_color, fade)
 			)
 			var accent: Color = _color_or(
-				trail.get("rarity_accent_color", trail.get("rarity_color", Color.WHITE)), Color.WHITE
+				trail.get("rarity_accent_color", trail.get("rarity_color", Color.WHITE)),
+				Color.WHITE
 			)
 			if index == final_index:
 				var selected_color: Color = _color_or(trail.get("color", Color.WHITE), Color.WHITE)
 				var selected_glyph: String = str(trail.get("glyph", "✦"))
 				if progress > 0.55:
-					selected_color = _color_or(trail.get("impact_color", selected_color), selected_color)
+					selected_color = _color_or(
+						trail.get("impact_color", selected_color), selected_color
+					)
 					selected_glyph = str(trail.get("impact_glyph", selected_glyph))
 				_draw_glyph(
 					draw_font,
@@ -764,7 +822,9 @@ func _draw_projectile_trails(draw_font: Font, ascent: float, playfield_rect: Rec
 					false
 				)
 			else:
-				var trail_color: Color = _color_or(trail.get("trail_color", Color.WHITE), Color.WHITE)
+				var trail_color: Color = _color_or(
+					trail.get("trail_color", Color.WHITE), Color.WHITE
+				)
 				_draw_glyph(
 					draw_font,
 					point,
@@ -826,7 +886,7 @@ func _draw_enemy_intents(draw_font: Font, ascent: float, playfield_rect: Rect2) 
 				glyph = "!"
 				color = Color(1.0, 0.12, 0.10)
 			&"boss_windup":
-				glyph = "▲"
+				glyph = "^"
 				color = Color(1.0, 0.62, 0.18)
 			&"aware":
 				glyph = "?"
@@ -844,7 +904,9 @@ func _draw_tile_backing(
 	if not is_visible:
 		color = color.darkened(0.45)
 	if _atmosphere_enabled and not _atmosphere_profile.is_empty():
-		var shimmer_color: Color = _color_or(_atmosphere_profile.get("shimmer_color", Color(0, 0, 0, 0)), Color(0, 0, 0, 0))
+		var shimmer_color: Color = _color_or(
+			_atmosphere_profile.get("shimmer_color", Color(0, 0, 0, 0)), Color(0, 0, 0, 0)
+		)
 		if shimmer_color.a > 0.001:
 			var shimmer_seed: float = _cell_hash(cell, 37) * 0.0001
 			var shimmer_phase: float = sin(_atmosphere_time * 1.8 + shimmer_seed)
@@ -856,7 +918,9 @@ func _draw_tile_backing(
 
 func _tile_background(tile_type: int) -> Color:
 	var colors: Dictionary = _biome_theme.get("tile_background_colors", {})
-	var fallback: Color = _color_or(TILE_BACKGROUND_COLORS.get(tile_type, background_color), background_color)
+	var fallback: Color = _color_or(
+		TILE_BACKGROUND_COLORS.get(tile_type, background_color), background_color
+	)
 	return _color_or(colors.get(tile_type, fallback), fallback)
 
 
@@ -1094,6 +1158,8 @@ func _cell_draw_position(cell: Vector2i, ascent: float) -> Vector2:
 
 func _update_boss_room_draw_offset() -> void:
 	_boss_room_draw_offset = Vector2.ZERO
+	_boss_room_min = Vector2i.ZERO
+	_boss_room_max = Vector2i.ZERO
 	if _boss_room_cells.is_empty() or _map_data.is_empty() or _map_data[0].is_empty():
 		return
 	var room_cells: Array = _boss_room_cells.keys()
@@ -1110,6 +1176,8 @@ func _update_boss_room_draw_offset() -> void:
 		min_cell.y = min(min_cell.y, cell.y)
 		max_cell.x = max(max_cell.x, cell.x)
 		max_cell.y = max(max_cell.y, cell.y)
+	_boss_room_min = min_cell
+	_boss_room_max = max_cell
 	var map_center: Vector2 = Vector2(
 		float(_map_data[0].size()) * cell_width * 0.5, float(_map_data.size()) * cell_height * 0.5
 	)
@@ -1177,11 +1245,13 @@ func _draw_atmosphere_effects(draw_font: Font, ascent: float, playfield_rect: Re
 
 func _draw_void_edge_wisps(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	var profile: Dictionary = _atmosphere_profile
-	var void_color: Color = _color_or(profile.get("void_color", Color(0.12, 0.12, 0.18, 0.20)), Color(0.12, 0.12, 0.18, 0.20))
+	var void_color: Color = _color_or(
+		profile.get("void_color", Color(0.12, 0.12, 0.18, 0.20)), Color(0.12, 0.12, 0.18, 0.20)
+	)
 	var intensity: float = float(profile.get("ambient_intensity", 0.12))
 	var speed: float = float(profile.get("ambient_speed", 0.8))
-	var void_glyph_str: String = str(profile.get("void_glyph", "·"))
-	var wisp_glyphs: Array[String] = ["·", "`", "'", ",", "."]
+	var void_glyph_str: String = str(profile.get("void_glyph", "."))
+	var wisp_glyphs: Array[String] = [".", "`", "'", ",", ":"]
 
 	for explored_cell: Vector2i in _explored_cells:
 		var is_edge: bool = false

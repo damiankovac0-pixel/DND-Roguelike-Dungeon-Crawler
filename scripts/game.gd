@@ -1593,7 +1593,8 @@ func _refresh_boss_presentation() -> void:
 				room_title = str(boss_data.boss_room_title)
 			var windup_label: String = ""
 			if state.get("pending_attack", null) != null:
-				windup_label = str(state["pending_attack"].id)
+				var remaining: int = int(state.get("telegraph_turns", 0))
+				windup_label = "%s (%d)" % [str(state["pending_attack"].id), remaining]
 			hud.call(
 				&"show_boss_health",
 				boss.display_name,
@@ -3313,8 +3314,6 @@ func _process_enemy_turns() -> void:
 			_resolve_attack(enemy, _player)
 			if not _player.is_alive():
 				return
-		elif _is_boss_enemy(enemy):
-			_try_move_boss_toward_player(enemy, blocked_cells)
 		elif distance_to_player <= 8.0:
 			var next_step: Vector2i = PathfindingScript.find_next_step(
 				enemy.grid_position, _player.grid_position, GameManager.map_data, blocked_cells
@@ -3610,27 +3609,24 @@ func _process_boss_turn(
 		_refresh_boss_presentation()
 		_refresh_map()
 		return true
-	var enemy_actor: Enemy = enemy as Enemy
 	_tick_boss_attack_cooldowns(enemy)
-	if enemy_actor.enemy_data.boss_id == &"observer" and distance_to_player > 2.0:
-		if _try_move_boss_toward_player(enemy, blocked_cells):
-			return true
 	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
 	if attack == null:
-		if distance_to_player > 2.0 and _try_move_boss_toward_player(enemy, blocked_cells):
-			return true
 		return true
 	var cells: Dictionary = _boss_attack_cells(enemy, attack)
 	if cells.is_empty() and attack.shape != &"summon":
-		if distance_to_player > 2.0 and _try_move_boss_toward_player(enemy, blocked_cells):
-			return true
 		return true
 	_queue_boss_attack(enemy, attack, cells)
+	var effective_windup: int = _boss_attack_effective_windup(attack)
 	if not attack.warning_text.is_empty():
 		GameManager.add_log_message(attack.warning_text, &"boss_telegraph")
 	else:
 		GameManager.add_log_message(
-			"%s prepares %s." % [enemy.display_name, attack.id], &"boss_telegraph"
+			(
+				"%s prepares %s. Marked cells strike in %d turn(s)."
+				% [enemy.display_name, attack.id, effective_windup]
+			),
+			&"boss_telegraph"
 		)
 	_refresh_boss_presentation()
 	_refresh_map()
@@ -3744,8 +3740,6 @@ func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
 			_add_boss_ring_cells(cells, enemy, attack)
 		&"cone":
 			_add_boss_cone_cells(cells, enemy, attack)
-		&"parallax_gaze":
-			_add_boss_parallax_gaze_cells(cells, enemy, attack)
 		&"thorn_patch":
 			_add_boss_thorn_patch_cells(cells, attack)
 		&"eruption_columns":
@@ -3786,18 +3780,36 @@ func _perpendicular(direction: Vector2i) -> Vector2i:
 	return Vector2i.RIGHT
 
 
+func _leading_edge_origin(
+	occupied: Array[Vector2i], anchor: Vector2i, direction: Vector2i
+) -> Vector2i:
+	## From the frontmost occupied cells (no neighbor in `direction`),
+	## returns the one closest to `anchor` along the perpendicular axis.
+	## For a single-cell boss this is the cell itself.
+	var best: Vector2i = Vector2i.ZERO
+	var best_perp_dist: int = -1
+	for cell: Vector2i in occupied:
+		if occupied.has(cell + direction):
+			continue
+		var perp_offset: int = abs((cell.y - anchor.y) if direction.x != 0 else (cell.x - anchor.x))
+		if best_perp_dist == -1 or perp_offset < best_perp_dist:
+			best = cell
+			best_perp_dist = perp_offset
+	return best
+
+
 func _add_boss_line_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
 	var direction: Vector2i = _dominant_direction_to_player(enemy)
 	var perpendicular: Vector2i = _perpendicular(direction)
 	var half_width: int = max(0, int(floor(float(max(1, attack.width)) / 2.0)))
 	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
-	for origin: Vector2i in occupied:
-		if occupied.has(origin + direction):
-			continue
-		for distance: int in range(1, max(1, attack.range) + 1):
-			var center: Vector2i = origin + direction * distance
-			for side: int in range(-half_width, half_width + 1):
-				_add_boss_attack_cell(cells, center + perpendicular * side)
+	var origin: Vector2i = _leading_edge_origin(occupied, enemy.grid_position, direction)
+	if not occupied.has(origin):
+		return
+	for distance: int in range(1, max(1, attack.range) + 1):
+		var center: Vector2i = origin + direction * distance
+		for side: int in range(-half_width, half_width + 1):
+			_add_boss_attack_cell(cells, center + perpendicular * side)
 
 
 func _add_boss_cross_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
@@ -3852,26 +3864,13 @@ func _add_boss_line_in_direction(
 	var perpendicular: Vector2i = _perpendicular(direction)
 	var half_width: int = max(0, int(floor(float(max(1, attack.width)) / 2.0)))
 	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
-	for origin: Vector2i in occupied:
-		if occupied.has(origin + direction):
-			continue
-		for distance: int in range(1, max(1, attack.range) + 1):
-			var center: Vector2i = origin + direction * distance
-			for side: int in range(-half_width, half_width + 1):
-				_add_boss_attack_cell(cells, center + perpendicular * side)
-
-
-func _add_boss_parallax_gaze_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
-	var direction: Vector2i = _dominant_direction_to_player(enemy)
-	var perpendicular: Vector2i = _perpendicular(direction)
-	var lane_radius: int = max(1, attack.radius)
-	var occupied: Array[Vector2i] = _enemy_occupied_cells(enemy)
-	for origin: Vector2i in occupied:
-		if occupied.has(origin + direction):
-			continue
-		for lane: int in range(-lane_radius, lane_radius + 1):
-			for distance: int in range(1, max(1, attack.range) + 1):
-				_add_boss_attack_cell(cells, origin + direction * distance + perpendicular * lane)
+	var origin: Vector2i = _leading_edge_origin(occupied, enemy.grid_position, direction)
+	if not occupied.has(origin):
+		return
+	for distance: int in range(1, max(1, attack.range) + 1):
+		var center: Vector2i = origin + direction * distance
+		for side: int in range(-half_width, half_width + 1):
+			_add_boss_attack_cell(cells, center + perpendicular * side)
 
 
 func _add_boss_thorn_patch_cells(cells: Dictionary, attack: Resource) -> void:
@@ -4233,10 +4232,68 @@ func _find_boss_room_summon_cell(origin: Vector2i, blocked_cells: Dictionary) ->
 	return Vector2i.ZERO
 
 
+func _boss_attack_effective_windup(attack: Resource) -> int:
+	var is_summon: bool = attack.shape == &"summon"
+	var is_damaging: bool = attack.damage_dice > 0 or attack.damage_bonus > 0
+	if is_summon:
+		return max(1, attack.telegraph_turns)
+	if is_damaging:
+		return max(2, attack.telegraph_turns)
+	return max(1, attack.telegraph_turns)
+
+
+func _ensure_boss_telegraph_escape(cells: Dictionary, player_cell: Vector2i) -> void:
+	## Guarantee at least one cardinal neighbor of the player that is
+	## walkable, in-arena, and unoccupied is NOT in the attack cells.
+	## If every such neighbor is threatened, erase the first
+	## deterministic one so a refuge exists. Never erases player_cell.
+	var safe_candidates: Array[Vector2i] = []
+	var has_safe_escape: bool = false
+	for direction: Vector2i in CARDINAL_DIRECTIONS:
+		var neighbor: Vector2i = player_cell + direction
+		if not _is_valid_boss_escape_cell(neighbor):
+			continue
+		if cells.has(neighbor):
+			safe_candidates.append(neighbor)
+		else:
+			has_safe_escape = true
+	if not has_safe_escape and not safe_candidates.is_empty():
+		cells.erase(safe_candidates[0])
+
+
+func _is_valid_boss_escape_cell(cell: Vector2i) -> bool:
+	## A cell is valid for escape if it is walkable, inside the boss
+	## arena, not a sealed gate, not occupied by any enemy, and not a
+	## persistent blocker.
+	if not _is_cell_in_active_boss_room(cell):
+		return false
+	if not _is_walkable(cell):
+		return false
+	if _is_sealed_boss_door(cell):
+		return false
+	if _get_enemy_at(cell) != null:
+		return false
+	if _secret_walls.has(cell):
+		return false
+	return true
+
+
 func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
 	var state: Dictionary = _boss_state_for(enemy)
+	var is_summon: bool = attack.shape == &"summon"
+	var is_damaging: bool = attack.damage_dice > 0 or attack.damage_bonus > 0
+	var effective_windup: int
+	if is_summon:
+		effective_windup = max(1, attack.telegraph_turns)
+	elif is_damaging:
+		effective_windup = max(2, attack.telegraph_turns)
+	else:
+		effective_windup = max(1, attack.telegraph_turns)
+	if is_damaging and not is_summon:
+		_ensure_boss_telegraph_escape(cells, _player.grid_position)
 	state["pending_attack"] = attack
-	state["telegraph_turns"] = max(1, attack.telegraph_turns)
+	state["telegraph_turns"] = effective_windup
+	state["effective_windup"] = effective_windup
 	state["telegraph_cells"] = cells.duplicate(true)
 	state["last_attack_id"] = attack.id
 	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
@@ -4245,7 +4302,6 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	_boss_states[enemy] = state
 	_boss_telegraphs.clear()
 	var payload: Dictionary = _boss_telegraph_payload_for(enemy, attack)
-	var telegraph_turns: int = max(1, attack.telegraph_turns)
 	var enemy_actor: Enemy = enemy as Enemy
 	var boss_id: StringName = &""
 	if enemy_actor != null and enemy_actor.enemy_data != null:
@@ -4256,8 +4312,8 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 		_boss_telegraphs[cell]["shape"] = attack.shape
 		_boss_telegraphs[cell]["boss"] = enemy
 		_boss_telegraphs[cell]["boss_id"] = boss_id
-		_boss_telegraphs[cell]["turns_remaining"] = telegraph_turns
-		_boss_telegraphs[cell]["telegraph_turns"] = telegraph_turns
+		_boss_telegraphs[cell]["turns_remaining"] = effective_windup
+		_boss_telegraphs[cell]["telegraph_turns"] = effective_windup
 
 
 func _sync_boss_telegraph_turns(enemy: Node, state: Dictionary) -> void:

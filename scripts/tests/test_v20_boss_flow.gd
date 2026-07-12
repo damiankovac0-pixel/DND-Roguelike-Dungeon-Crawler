@@ -218,16 +218,38 @@ func _check_boss_telegraph_damage(boss: Node) -> void:
 		_game._player.stats_component.current_hp == hp_before_queue,
 		"boss telegraph damaged player on queue turn"
 	)
-	# Evade — move player out of telegraph cell
+	# Evade — the first pending boss turn only decrements the windup and keeps the tell.
 	_game._player.set_grid_position(player_pos + Vector2i.RIGHT)
 	_game._process_boss_turn(boss, 1.0, 99, {})
 	_assert(
 		_game._player.stats_component.current_hp == hp_before_queue,
+		"first pending boss turn should not damage before resolve"
+	)
+	_assert(
+		not _game._build_boss_telegraph_payload().is_empty(),
+		"first pending boss turn should keep telegraph payload"
+	)
+	_game._process_boss_turn(boss, 1.0, 100, {})
+	_assert(
+		_game._player.stats_component.current_hp == hp_before_queue,
 		"evading boss telegraph should preserve HP"
 	)
-	# Stand in telegraph on resolve
-	_game._queue_boss_attack(boss, attack, {_game._player.grid_position: true})
-	_game._process_boss_turn(boss, 1.0, 100, {})
+	# Stand in telegraph on resolve.
+	var damage_cell: Vector2i = _game._player.grid_position
+	_game._queue_boss_attack(boss, attack, {damage_cell: true})
+	_assert(
+		_game._boss_telegraphs.has(damage_cell), "damage cell should remain threatened after queue"
+	)
+	_game._process_boss_turn(boss, 1.0, 101, {})
+	_assert(
+		_game._player.stats_component.current_hp == hp_before_queue,
+		"first pending damage turn should not damage before resolve"
+	)
+	_assert(
+		_game._boss_telegraphs.has(damage_cell),
+		"damage telegraph should remain after first pending turn"
+	)
+	_game._process_boss_turn(boss, 1.0, 102, {})
 	_assert(
 		_game._player.stats_component.current_hp < hp_before_queue,
 		"standing in boss telegraph should take damage on resolve"

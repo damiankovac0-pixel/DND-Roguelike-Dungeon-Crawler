@@ -6,6 +6,10 @@
 extends SceneTree
 
 const BOSS_FLOORS: Array[int] = [5, 10, 15, 20, 25]
+const EXPECTED_BOSS_ARENA_SIZE: Vector2i = Vector2i(21, 19)
+const BOSS_FOOTPRINT_SIZE: Vector2i = Vector2i(5, 4)
+const BOSS_FOOTPRINT_OFFSET: Vector2i = Vector2i(-2, -2)
+const MIN_ENTRY_TO_SPAWN_DISTANCE: int = 8
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
 const CARDINAL_DIRS: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 const DungeonGeneratorScript = preload("res://scripts/dungeon/dungeon_generator.gd")
@@ -54,11 +58,13 @@ func _check_boss_floor(result: Dictionary, floor_number: int) -> void:
 		encounter.get("boss_room_cells", {}) == encounter.get("boss_arena_cells", {}),
 		"floor %d room/arena cell aliases diverged" % floor_number
 	)
-	if not _failed:
-		_assert(
-			boss_room.size.x > 0 and boss_room.size.y > 0,
-			"floor %d boss arena is empty" % floor_number
+	_assert(
+		boss_arena.size == EXPECTED_BOSS_ARENA_SIZE,
+		(
+			"floor %d boss arena size is %s, expected %s"
+			% [floor_number, boss_arena.size, EXPECTED_BOSS_ARENA_SIZE]
 		)
+	)
 	if not _failed:
 		for room_index: int in range(rooms.size()):
 			if _failed:
@@ -81,7 +87,7 @@ func _check_boss_floor(result: Dictionary, floor_number: int) -> void:
 	if not _failed:
 		_check_boss_gate_and_stand_cells(result, encounter, floor_number)
 	if not _failed:
-		_check_boss_internal_cells(encounter, floor_number)
+		_check_boss_internal_cells(result, encounter, floor_number)
 	if not _failed:
 		_check_isolated_arena_topology(result, encounter, floor_number)
 	if not _failed:
@@ -172,7 +178,11 @@ func _flood_fill_floor(map_data: Array, start: Vector2i) -> Dictionary:
 	return visited
 
 
-func _check_boss_internal_cells(encounter: Dictionary, floor_number: int) -> void:
+func _check_boss_internal_cells(
+	result: Dictionary, encounter: Dictionary, floor_number: int
+) -> void:
+	var arena: Rect2i = encounter.get("boss_arena", Rect2i())
+	var map_data: Array = result["map"]
 	var arena_cells: Dictionary = encounter.get(
 		"boss_arena_cells", encounter.get("boss_room_cells", {})
 	)
@@ -180,6 +190,31 @@ func _check_boss_internal_cells(encounter: Dictionary, floor_number: int) -> voi
 	var spawn_cell: Vector2i = encounter.get("boss_spawn_cell", Vector2i.ZERO)
 	var stairs_cell: Vector2i = encounter.get("boss_stairs_cell", Vector2i.ZERO)
 	var chest_cell: Vector2i = encounter.get("boss_chest_cell", Vector2i.ZERO)
+	var boss_footprint: Rect2i = Rect2i(spawn_cell + BOSS_FOOTPRINT_OFFSET, BOSS_FOOTPRINT_SIZE)
+	_assert(
+		arena_cells.size() == EXPECTED_BOSS_ARENA_SIZE.x * EXPECTED_BOSS_ARENA_SIZE.y,
+		(
+			"floor %d arena cell count is %d, expected %d"
+			% [
+				floor_number,
+				arena_cells.size(),
+				EXPECTED_BOSS_ARENA_SIZE.x * EXPECTED_BOSS_ARENA_SIZE.y,
+			]
+		)
+	)
+	for y: int in range(arena.position.y, arena.end.y):
+		for x: int in range(arena.position.x, arena.end.x):
+			if _failed:
+				return
+			var arena_cell: Vector2i = Vector2i(x, y)
+			_assert(
+				arena_cells.has(arena_cell),
+				"floor %d arena floor cell %s missing" % [floor_number, arena_cell]
+			)
+			_assert(
+				map_data[arena_cell.y][arena_cell.x] == DungeonDataScript.TileType.FLOOR,
+				"floor %d arena cell %s is not FLOOR" % [floor_number, arena_cell]
+			)
 	_assert(
 		arena_cells.has(entry_cell),
 		"floor %d entry cell %s not in arena" % [floor_number, entry_cell]
@@ -189,12 +224,88 @@ func _check_boss_internal_cells(encounter: Dictionary, floor_number: int) -> voi
 		"floor %d spawn cell %s not in arena" % [floor_number, spawn_cell]
 	)
 	_assert(
+		(
+			abs(entry_cell.x - spawn_cell.x) + abs(entry_cell.y - spawn_cell.y)
+			>= MIN_ENTRY_TO_SPAWN_DISTANCE
+		),
+		"floor %d entry %s too close to spawn %s" % [floor_number, entry_cell, spawn_cell]
+	)
+	_assert(
+		spawn_cell == arena.get_center(),
+		(
+			"floor %d spawn cell %s is not centered at %s"
+			% [floor_number, spawn_cell, arena.get_center()]
+		)
+	)
+	_check_boss_footprint_clearance(arena_cells, boss_footprint, floor_number)
+	_check_boss_reward_cells(
+		arena_cells, entry_cell, spawn_cell, stairs_cell, chest_cell, boss_footprint, floor_number
+	)
+
+
+func _check_boss_footprint_clearance(
+	arena_cells: Dictionary, boss_footprint: Rect2i, floor_number: int
+) -> void:
+	for y: int in range(boss_footprint.position.y, boss_footprint.end.y):
+		for x: int in range(boss_footprint.position.x, boss_footprint.end.x):
+			if _failed:
+				return
+			var footprint_cell: Vector2i = Vector2i(x, y)
+			_assert(
+				arena_cells.has(footprint_cell),
+				"floor %d boss footprint cell %s is outside arena" % [floor_number, footprint_cell]
+			)
+
+
+func _check_boss_reward_cells(
+	arena_cells: Dictionary,
+	entry_cell: Vector2i,
+	spawn_cell: Vector2i,
+	stairs_cell: Vector2i,
+	chest_cell: Vector2i,
+	boss_footprint: Rect2i,
+	floor_number: int
+) -> void:
+	_assert(
 		arena_cells.has(stairs_cell),
 		"floor %d stairs cell %s not in arena" % [floor_number, stairs_cell]
 	)
 	_assert(
 		arena_cells.has(chest_cell),
 		"floor %d chest cell %s not in arena" % [floor_number, chest_cell]
+	)
+	_assert(
+		stairs_cell != chest_cell,
+		"floor %d stairs and chest overlap at %s" % [floor_number, stairs_cell]
+	)
+	_assert(
+		stairs_cell != spawn_cell and chest_cell != spawn_cell,
+		(
+			"floor %d reward overlaps spawn at stairs=%s chest=%s"
+			% [floor_number, stairs_cell, chest_cell]
+		)
+	)
+	_assert(
+		stairs_cell != entry_cell and chest_cell != entry_cell,
+		(
+			"floor %d reward overlaps entry at stairs=%s chest=%s"
+			% [floor_number, stairs_cell, chest_cell]
+		)
+	)
+	_assert(
+		not boss_footprint.has_point(stairs_cell),
+		"floor %d stairs cell %s overlaps boss footprint" % [floor_number, stairs_cell]
+	)
+	_assert(
+		not boss_footprint.has_point(chest_cell),
+		"floor %d chest cell %s overlaps boss footprint" % [floor_number, chest_cell]
+	)
+	_assert(
+		(stairs_cell.x - spawn_cell.x) * (chest_cell.x - spawn_cell.x) < 0,
+		(
+			"floor %d stairs %s and chest %s are not on opposite horizontal sides of spawn %s"
+			% [floor_number, stairs_cell, chest_cell, spawn_cell]
+		)
 	)
 
 

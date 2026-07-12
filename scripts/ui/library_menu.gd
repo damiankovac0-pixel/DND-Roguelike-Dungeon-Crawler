@@ -194,13 +194,15 @@ func _build_dungeon_scrolls_text() -> String:
 		"",
 		"[color=#8fb3ff]MAP SYMBOLS[/color]",
 		"- [color=#f2f2f2]@[/color] You.",
-		"- [color=#777777]. · ' ` , ~ *[/color] Floor variants and biome decorations. Walkable.",
+		"- [color=#777777]. ' ` , ~ * : ;[/color] Floor variants and biome decorations. Walkable.",
 		(
-			"- [color=#777777]# ▓ ▒ ╬ ♣ ▲ ≈ ◇ ◆[/color] Stone, growth, ash, water, "
+			"- [color=#777777]# % & $ ^ ~ * ![/color] Stone, growth, ash, water, "
 			+ "glass, and void wall variants. Block movement and sight."
 		),
 		"- [color=#b87532]+[/color] Closed door. Bump generated room doors to open.",
 		"- [color=#9b7a45]/[/color] Open door. Walkable.",
+		"- [color=#ffb838]G[/color] Boss gate. Seals a boss chamber. Opens when the boss is defeated.",
+		"- [color=#ff3d2e]X[/color] Sealed boss gate. Impassable until room guardians are cleared.",
 		(
 			"- [color=#ffff66]>[/color] Stairs down. Floor 25 offers a final choice: "
 			+ "leave victorious or delve forever."
@@ -215,7 +217,7 @@ func _build_dungeon_scrolls_text() -> String:
 			"- [color=#b894ff]?[/color] Revealed weak wall. Attack, shoot, or blast it "
 			+ "twice to open a secret room."
 		),
-		"- [color=#ff9f6e]^ v ! ◎ ~ *[/color] Revealed traps. Step around them.",
+		"- [color=#ff9f6e]^ v ! O ~ *[/color] Revealed traps. Step around them.",
 		"- [color=#d8d8d8]![/color] Item on the ground.",
 		"",
 		"[color=#8fb3ff]BIOMES[/color]",
