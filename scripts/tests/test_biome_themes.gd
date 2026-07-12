@@ -83,6 +83,8 @@ func _check_game_theme(game: Node, expected_floor: int, expected_name: String) -
 
 func _check_theme_glyphs() -> void:
 	# Every theme must have non-empty floor/wall glyph arrays and decoration chance keys
+	var used_wall_glyphs: Dictionary = {}
+	var passed := true
 	for theme_index: int in range(BiomeCatalogScript.MAX_BIOME_INDEX):
 		var theme: Dictionary = BiomeCatalogScript.THEMES[theme_index]
 		var theme_name: String = theme.get("name", "unknown_%d" % theme_index)
@@ -90,102 +92,230 @@ func _check_theme_glyphs() -> void:
 		var floor_glyphs: Variant = theme.get("floor_glyphs")
 		if not (floor_glyphs is Array) or floor_glyphs.is_empty():
 			_fail("%s theme: floor_glyphs missing or empty" % theme_name)
-			return
+			passed = false
+			break
 
-		var wall_glyphs: Variant = theme.get("wall_glyphs")
-		if not (wall_glyphs is Array) or wall_glyphs.is_empty():
-			_fail("%s theme: wall_glyphs missing or empty" % theme_name)
-			return
+		if not _check_theme_wall_glyphs(theme_name, theme.get("wall_glyphs"), used_wall_glyphs):
+			passed = false
+			break
+		if not _check_decoration_chance(theme, theme_name, "floor_decoration_chance_percent"):
+			passed = false
+			break
+		if not _check_decoration_chance(theme, theme_name, "wall_decoration_chance_percent"):
+			passed = false
+			break
 
-		if not theme.has("floor_decoration_chance_percent"):
-			_fail("%s theme: floor_decoration_chance_percent missing" % theme_name)
-			return
-		if not (theme.get("floor_decoration_chance_percent") is int):
-			_fail("%s theme: floor_decoration_chance_percent not integer" % theme_name)
-			return
-		if theme.get("floor_decoration_chance_percent") < 0:
-			_fail("%s theme: floor_decoration_chance_percent negative" % theme_name)
-			return
+	if passed:
+		print(
+			(
+				(
+					"  theme glyphs: all %d themes have exactly three printable ASCII wall glyphs "
+					+ "(pairwise disjoint), floor glyphs, and decoration chance keys"
+				)
+				% BiomeCatalogScript.MAX_BIOME_INDEX
+			)
+		)
 
-		if not theme.has("wall_decoration_chance_percent"):
-			_fail("%s theme: wall_decoration_chance_percent missing" % theme_name)
-			return
-		if not (theme.get("wall_decoration_chance_percent") is int):
-			_fail("%s theme: wall_decoration_chance_percent not integer" % theme_name)
-			return
-		if theme.get("wall_decoration_chance_percent") < 0:
-			_fail("%s theme: wall_decoration_chance_percent negative" % theme_name)
-			return
 
-	print("  theme glyphs: all %d themes have non-empty floor/wall glyphs and decoration chance keys" % BiomeCatalogScript.MAX_BIOME_INDEX)
+func _check_theme_wall_glyphs(
+	theme_name: String, wall_glyphs: Variant, used_wall_glyphs: Dictionary
+) -> bool:
+	var passed := true
+	if not (wall_glyphs is Array):
+		_fail("%s theme: wall_glyphs missing" % theme_name)
+		passed = false
+	elif wall_glyphs.size() != 3:
+		_fail(
+			"%s wall_glyphs must have exactly 3 glyphs, got %d" % [theme_name, wall_glyphs.size()]
+		)
+		passed = false
+	else:
+		for glyph_value: Variant in wall_glyphs:
+			var glyph: String = str(glyph_value)
+			if glyph.length() != 1:
+				_fail("%s wall_glyphs contains multi-character entry '%s'" % [theme_name, glyph])
+				passed = false
+				break
+			var code: int = glyph.unicode_at(0)
+			if code < 32 or code > 126:
+				_fail(
+					(
+						"%s wall_glyphs contains non-printable glyph '%s' (code %d)"
+						% [theme_name, glyph, code]
+					)
+				)
+				passed = false
+				break
+			if used_wall_glyphs.has(glyph):
+				_fail(
+					(
+						"%s wall_glyphs glyph '%s' reused from %s"
+						% [theme_name, glyph, used_wall_glyphs[glyph]]
+					)
+				)
+				passed = false
+				break
+			used_wall_glyphs[glyph] = theme_name
+	return passed
+
+
+func _check_decoration_chance(theme: Dictionary, theme_name: String, key: String) -> bool:
+	var passed := true
+	if not theme.has(key):
+		_fail("%s theme: %s missing" % [theme_name, key])
+		passed = false
+	elif not (theme.get(key) is int):
+		_fail("%s theme: %s not integer" % [theme_name, key])
+		passed = false
+	elif theme.get(key) < 0:
+		_fail("%s theme: %s negative" % [theme_name, key])
+		passed = false
+	return passed
 
 
 func _check_map_tile_glyphs(game: Node) -> void:
 	var map_view: Node = game.get_node("MapView")
 	if map_view == null:
 		_fail("MapView missing from game scene")
-		return
+	else:
+		var test_cell: Vector2i = Vector2i(5, 3)
+		var wall_cell: Vector2i = Vector2i(5, 3)
+		var passed := true
 
-	var test_cell: Vector2i = Vector2i(5, 3)
-	var wall_cell: Vector2i = Vector2i(5, 3)
+		# 1) With current Endless theme, floor glyph belongs to Endless set
+		var endless_theme: Dictionary = map_view._biome_theme
+		var endless_floor_glyph: String = map_view._tile_glyph(
+			test_cell, DungeonDataScript.TileType.FLOOR, false
+		)
+		var endless_wall_glyph: String = map_view._tile_glyph(
+			wall_cell, DungeonDataScript.TileType.WALL, false
+		)
 
-	# 1) With current Endless theme, floor glyph belongs to Endless set
-	var endless_theme: Dictionary = map_view._biome_theme
-	var endless_floor_glyph: String = map_view._tile_glyph(test_cell, DungeonDataScript.TileType.FLOOR, false)
-	var endless_wall_glyph: String = map_view._tile_glyph(wall_cell, DungeonDataScript.TileType.WALL, false)
+		var endless_floor_set: Array = endless_theme.get("floor_glyphs", [])
+		var endless_floor_dec_set: Array = endless_theme.get("floor_decoration_glyphs", [])
+		passed = _check_tile_glyph_membership(
+			"Endless floor",
+			endless_floor_glyph,
+			"floor_glyphs",
+			endless_floor_set,
+			"floor_decoration_glyphs",
+			endless_floor_dec_set
+		)
 
-	var endless_floor_set: Array = endless_theme.get("floor_glyphs", [])
-	var endless_floor_dec_set: Array = endless_theme.get("floor_decoration_glyphs", [])
-	var endless_wall_set: Array = endless_theme.get("wall_glyphs", [])
-	var endless_wall_dec_set: Array = endless_theme.get("wall_decoration_glyphs", [])
+		if passed:
+			var endless_wall_set: Array = endless_theme.get("wall_glyphs", [])
+			var endless_wall_dec_set: Array = endless_theme.get("wall_decoration_glyphs", [])
+			passed = _check_tile_glyph_membership(
+				"Endless wall",
+				endless_wall_glyph,
+				"wall_glyphs",
+				endless_wall_set,
+				"wall_decoration_glyphs",
+				endless_wall_dec_set
+			)
 
-	var floor_ok: bool = (
-		endless_floor_set.has(endless_floor_glyph)
-		or endless_floor_dec_set.has(endless_floor_glyph)
-	)
-	if not floor_ok:
+		# 2) Switch to Tower theme — glyph for same cell should come from Tower set
+		var tower_theme: Dictionary = {}
+		if passed:
+			tower_theme = BiomeCatalogScript.theme_for_floor(1)
+			map_view.set_biome_theme(tower_theme)
+			var tower_floor_glyph: String = map_view._tile_glyph(
+				test_cell, DungeonDataScript.TileType.FLOOR, false
+			)
+			var tower_floor_set: Array = tower_theme.get("floor_glyphs", [])
+			var tower_floor_dec_set: Array = tower_theme.get("floor_decoration_glyphs", [])
+			passed = _check_tile_glyph_membership(
+				"Tower floor",
+				tower_floor_glyph,
+				"floor_glyphs",
+				tower_floor_set,
+				"floor_decoration_glyphs",
+				tower_floor_dec_set
+			)
+
+		if passed:
+			# 3) Each biome's wall glyph sample belongs to its own set
+			for biome_theme: Dictionary in BiomeCatalogScript.THEMES:
+				map_view.set_biome_theme(biome_theme)
+				if not _check_biome_wall_tile_glyph(map_view, wall_cell, biome_theme):
+					passed = false
+					break
+
+		if passed:
+			# 4) Tower fallback — a theme lacking wall_glyphs returns Tower glyphs at runtime
+			var tower_wall_set: Array = tower_theme.get("wall_glyphs", [])
+			passed = _check_tower_fallback_wall_glyph(map_view, wall_cell, tower_wall_set)
+
+		if passed:
+			print(
+				(
+					"  tile glyph: MapView returns biome-specific wall glyphs for all six biomes; "
+					+ "Tower fallback works at runtime"
+				)
+			)
+
+
+func _check_tile_glyph_membership(
+	label: String,
+	glyph: String,
+	primary_key: String,
+	primary_set: Array,
+	decoration_key: String,
+	decoration_set: Array
+) -> bool:
+	var passed := true
+	if not (primary_set.has(glyph) or decoration_set.has(glyph)):
 		_fail(
 			(
-				"Endless floor glyph '%s' not in floor_glyphs %s or floor_decoration_glyphs %s"
-				% [endless_floor_glyph, str(endless_floor_set), str(endless_floor_dec_set)]
+				"%s glyph '%s' not in %s %s or %s %s"
+				% [
+					label,
+					glyph,
+					primary_key,
+					str(primary_set),
+					decoration_key,
+					str(decoration_set),
+				]
 			)
 		)
-		return
+		passed = false
+	return passed
 
-	var wall_ok: bool = (
-		endless_wall_set.has(endless_wall_glyph)
-		or endless_wall_dec_set.has(endless_wall_glyph)
+
+func _check_biome_wall_tile_glyph(
+	map_view: Node, wall_cell: Vector2i, biome_theme: Dictionary
+) -> bool:
+	var biome_wall_glyph: String = map_view._tile_glyph(
+		wall_cell, DungeonDataScript.TileType.WALL, false
 	)
-	if not wall_ok:
-		_fail(
-			(
-				"Endless wall glyph '%s' not in wall_glyphs %s or wall_decoration_glyphs %s"
-				% [endless_wall_glyph, str(endless_wall_set), str(endless_wall_dec_set)]
-			)
-		)
-		return
-
-	# 2) Switch to Tower theme — glyph for same cell should come from Tower set
-	var tower_theme: Dictionary = BiomeCatalogScript.theme_for_floor(1)
-	map_view.set_biome_theme(tower_theme)
-	var tower_floor_glyph: String = map_view._tile_glyph(test_cell, DungeonDataScript.TileType.FLOOR, false)
-	var tower_floor_set: Array = tower_theme.get("floor_glyphs", [])
-	var tower_floor_dec_set: Array = tower_theme.get("floor_decoration_glyphs", [])
-
-	var tower_floor_ok: bool = (
-		tower_floor_set.has(tower_floor_glyph)
-		or tower_floor_dec_set.has(tower_floor_glyph)
+	var biome_name: String = biome_theme.get("name", "unknown")
+	var biome_wall_set: Array = biome_theme.get("wall_glyphs", [])
+	var biome_wall_dec_set: Array = biome_theme.get("wall_decoration_glyphs", [])
+	return _check_tile_glyph_membership(
+		"%s wall" % biome_name,
+		biome_wall_glyph,
+		"wall_glyphs",
+		biome_wall_set,
+		"wall_decoration_glyphs",
+		biome_wall_dec_set
 	)
-	if not tower_floor_ok:
-		_fail(
-			(
-				"Tower floor glyph '%s' not in floor_glyphs %s or floor_decoration_glyphs %s"
-				% [tower_floor_glyph, str(tower_floor_set), str(tower_floor_dec_set)]
-			)
-		)
-		return
 
-	print("  tile glyph: MapView returns biome-specific glyphs for Endless and Tower themes")
+
+func _check_tower_fallback_wall_glyph(
+	map_view: Node, wall_cell: Vector2i, tower_wall_set: Array
+) -> bool:
+	var fallback_theme: Dictionary = {"name": "Wall-less Test"}
+	map_view.set_biome_theme(fallback_theme)
+	var fallback_glyph: String = map_view._tile_glyph(
+		wall_cell, DungeonDataScript.TileType.WALL, false
+	)
+	var passed := true
+	if not tower_wall_set.has(fallback_glyph):
+		_fail(
+			"fallback wall glyph '%s' not in Tower set %s" % [fallback_glyph, str(tower_wall_set)]
+		)
+		passed = false
+	return passed
 
 
 func _check_equal(actual: Variant, expected: Variant, label: String) -> void:

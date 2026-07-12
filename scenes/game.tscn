@@ -703,7 +703,7 @@ button_pressed = true
 [node name="ReducedVfxButton" type="CheckButton" parent="UI/PausePanel/Margin/VBox"]
 layout_mode = 2
 text = "Reduce VFX"
-tooltip_text = "Greatly lowers screen flashes and keeps only subtle corner marks."
+tooltip_text = "Reduced VFX is enabled by default for calmer play; disable it for full screen effects."
 
 [node name="ResumeButton" type="Button" parent="UI/PausePanel/Margin/VBox"]
 layout_mode = 2

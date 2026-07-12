@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
@@ -60,12 +60,34 @@ hazard_glyph = "^"
 hazard_vfx_id = &"molten_cracks"
 hazard_message = "Lingering molten cracks sear you for %d fire damage."
 
+[sub_resource type="Resource" id="Resource_vorrak_vent"]
+script = ExtResource("2")
+id = &"furnace_vent"
+intent = &"boss_attack"
+phase_min = 3
+cooldown = 4
+telegraph_turns = 2
+shape = &"ring"
+radius = 2
+width = 1
+damage_dice = 4
+damage_sides = 6
+damage_bonus = 4
+damage_type = &"fire"
+projectile_id = &"ash_breath"
+warning_text = "The furnace floor ignites — a ring of blazing vents erupts around Vorrak!"
+resolve_text = "A furnace vent blast catches you for %d fire damage."
+telegraph_glyph = "O"
+telegraph_color = Color(1, 0.7, 0.05, 1)
+telegraph_fill_color = Color(1, 0.35, 0.05, 0.35)
+telegraph_border_color = Color(1, 0.85, 0.15, 0.85)
+
 [resource]
 script = ExtResource("1")
 display_name = "Vorrak, the Ashen Maw"
 glyph = "V"
 color = Color(1, 0.32, 0.12, 1)
-max_hp = 126
+max_hp = 190
 armor_class = 17
 attack_bonus = 9
 damage_sides = 10
@@ -74,9 +96,9 @@ xp_reward = 520
 min_floor = 15
 max_floor = 15
 spawn_weight = 0
-melee_damage_percent = 85
+melee_damage_percent = 100
 ranged_damage_percent = 100
-magic_damage_percent = 110
+magic_damage_percent = 100
 is_boss = true
 boss_id = &"vorrak"
 boss_floor = 15
@@ -87,6 +109,10 @@ boss_phase_hp_percents = Array[int]([70, 40])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
 boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ,^, ", "/#H#\\", "|oOo|", "\\_v_/"), PackedStringArray(" '~' ", "/%h%\\", "|OoO|", "\\_^_/")])
 boss_visual_frame_seconds = 0.38
-boss_attacks = Array[Resource]([SubResource("Resource_vorrak_breath"), SubResource("Resource_vorrak_quake")])
+boss_strategy_hint = "Evade while heat builds; breath adds 1, quake adds 2. Strike hard when the maw overheats."
+boss_guarded_damage_percent = 85
+boss_exposed_damage_percent = 170
+boss_exposed_turns = 2
+boss_attacks = Array[Resource]([SubResource("Resource_vorrak_breath"), SubResource("Resource_vorrak_quake"), SubResource("Resource_vorrak_vent")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

@@ -26,7 +26,7 @@ const BOSS_PATHS: Dictionary = {
 
 # Stat sanity bounds (loose — survive rebalancing)
 const MIN_HP: int = 60
-const MAX_HP: int = 200
+const MAX_HP: int = 300
 const MIN_AC: int = 14
 const MAX_AC: int = 20
 const MIN_GOLD_REWARD: int = 150
@@ -49,7 +49,7 @@ const NEW_SHAPES: Array[StringName] = [
 #   poison     → Seraphine spore_burst   (effect_trigger = hit)
 #   push       → Vorrak ash_breath       (effect_trigger = hit)
 #   pull       → Kaelros undertow        (effect_trigger = hit)
-#   phase_shift → Nyxara mirror_ray      (effect_trigger = resolve)
+#   no effect  → Nyxara mirror_ray      (stationary anchor; no phase_shift)
 const OBSERVER_GAZE: Dictionary = {
 	"id": &"observer_gaze",
 	"effect": &"stun",
@@ -77,9 +77,7 @@ const KAELROS_UNDERTOW: Dictionary = {
 }
 const NYXARA_RAY: Dictionary = {
 	"id": &"mirror_ray",
-	"effect": &"phase_shift",
-	"effect_trigger": &"resolve",
-	"effect_amount": 1,
+	"effect": &"",
 }
 
 var _failed: bool = false
@@ -106,6 +104,10 @@ func _run() -> void:
 
 	# ── Phase 2: resource-level checks (no game instance needed) ──
 	_check_resource_signatures(bosses)
+	if _failed:
+		return
+
+	_check_boss_strategy_fields(bosses)
 	if _failed:
 		return
 
@@ -223,6 +225,40 @@ func _check_resource_signatures(bosses: Dictionary) -> void:
 			return
 
 
+func _check_boss_strategy_fields(bosses: Dictionary) -> void:
+	## Every boss must define shared strategy fields: a non-empty hint,
+	## guarded damage percent in [1, 100], exposed damage percent > 100,
+	## and at least 1 exposed turn.
+	for boss_id: StringName in bosses:
+		var b: Resource = bosses[boss_id]
+		var label: String = b.display_name
+
+		_assert(
+			not b.boss_strategy_hint.is_empty(),
+			"%s: boss_strategy_hint should be non-empty" % label
+		)
+		_assert(
+			b.boss_guarded_damage_percent >= 1 and b.boss_guarded_damage_percent <= 100,
+			(
+				"%s: boss_guarded_damage_percent %d outside [1, 100]"
+				% [label, b.boss_guarded_damage_percent]
+			)
+		)
+		_assert(
+			b.boss_exposed_damage_percent > 100,
+			(
+				"%s: boss_exposed_damage_percent %d should be > 100"
+				% [label, b.boss_exposed_damage_percent]
+			)
+		)
+		_assert(
+			b.boss_exposed_turns >= 1,
+			"%s: boss_exposed_turns %d should be >= 1" % [label, b.boss_exposed_turns]
+		)
+		if _failed:
+			return
+
+
 func _check_resource_ascii_and_windups(bosses: Dictionary) -> void:
 	## Guard against tofu-prone boss presentation and resource data that would
 	## collapse damaging non-summon attacks into one-turn tells.
@@ -330,7 +366,9 @@ func _check_effect_contracts(bosses: Dictionary) -> void:
 	_assert_attack_effect(bosses[&"kaelros"], KAELROS_UNDERTOW, "Kaelros undertow pull on hit")
 	if _failed:
 		return
-	_assert_attack_effect(bosses[&"nyxara"], NYXARA_RAY, "Nyxara mirror_ray phase_shift on resolve")
+	_assert_attack_effect(
+		bosses[&"nyxara"], NYXARA_RAY, "Nyxara mirror_ray stationary empty effect"
+	)
 
 	# Nyxara prism_fracture uses mirror_reflection shape.
 	# Verify the attack exists and carries the right shape.
@@ -349,7 +387,7 @@ func _check_effect_contracts(bosses: Dictionary) -> void:
 			break
 	_assert(found_reflect, "Nyxara missing mirror_reflection attack (prism_fracture)")
 
-	# Also double-check that mirror_ray on Nyxara has the right shape
+	# Also double-check that mirror_ray on Nyxara keeps its stationary identity.
 	if _failed:
 		return
 	var found_ray: bool = false
@@ -360,11 +398,11 @@ func _check_effect_contracts(bosses: Dictionary) -> void:
 				attack.id == &"mirror_ray",
 				"mirror_ray shape attack should be id 'mirror_ray', got %s" % attack.id
 			)
-			_assert(attack.effect == &"phase_shift", "mirror_ray should carry phase_shift effect")
 			_assert(
-				attack.effect_trigger == &"resolve",
-				"mirror_ray phase_shift should trigger on resolve"
+				attack.projectile_id == &"mirror_ray",
+				"mirror_ray projectile_id should be mirror_ray"
 			)
+			_assert(attack.effect == &"", "mirror_ray should not carry phase_shift or any effect")
 			_assert(attack.range >= 1, "mirror_ray range should be >= 1")
 			_assert(attack.width >= 1, "mirror_ray width should be >= 1")
 			break
@@ -512,6 +550,17 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_vfx_id": &"undertow_hazard",
 				"hazard_message": "The lingering undertow churns through you for %d magic damage.",
 			},
+			&"crown_deluge":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 6,
+				"hazard_damage_bonus": 0,
+				"hazard_damage_type": &"magic",
+				"hazard_glyph": "~",
+				"hazard_vfx_id": &"undertow_hazard",
+				"hazard_message": "The deluge's remnants wash over you for %d magic damage.",
+			},
 		},
 		&"nyxara":
 		{
@@ -525,6 +574,17 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 				"hazard_glyph": "%",
 				"hazard_vfx_id": &"mirror_shards",
 				"hazard_message": "Lingering mirror shards slice you for %d magic damage.",
+			},
+			&"hall_of_mirrors":
+			{
+				"hazard_turns": 2,
+				"hazard_damage_dice": 1,
+				"hazard_damage_sides": 8,
+				"hazard_damage_bonus": 2,
+				"hazard_damage_type": &"magic",
+				"hazard_glyph": "%",
+				"hazard_vfx_id": &"mirror_shards",
+				"hazard_message": "Lingering mirror fragments slice you for %d magic damage.",
 			},
 		},
 	}
@@ -574,11 +634,12 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 func _check_cooldown_contracts(bosses: Dictionary) -> void:
 	## Exact cooldown values per the V20.1 attack cadence redesign.
 	var cd_specs: Dictionary = {
-		&"observer": {&"observer_gaze": 2, &"blink_pulse": 3},
+		&"observer": {&"observer_gaze": 2, &"blink_pulse": 3, &"many_eyes": 4},
 		&"seraphine": {&"thorn_lance": 2, &"spore_burst": 3, &"spore_bloom": 4},
-		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3},
-		&"kaelros": {&"undertow": 2, &"drowned_retinue": 4},
-		&"nyxara": {&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 5},
+		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3, &"furnace_vent": 4},
+		&"kaelros": {&"undertow": 2, &"drowned_retinue": 4, &"crown_deluge": 3},
+		&"nyxara":
+		{&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 5, &"hall_of_mirrors": 4},
 	}
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
@@ -617,8 +678,8 @@ func _check_phase_order(bosses: Dictionary) -> void:
 		if attack.id == &"spore_bloom":
 			bloom_checked = true
 			_assert(attack.phase_min == 3, "spore_bloom phase_min should be 3")
-			_assert(attack.summon_count == 2, "spore_bloom summon_count should be 2")
-			_assert(attack.summon_max_active == 3, "spore_bloom summon_max_active should be 3")
+			_assert(attack.summon_count == 1, "spore_bloom summon_count should be 1")
+			_assert(attack.summon_max_active == 2, "spore_bloom summon_max_active should be 2")
 			_assert(attack.telegraph_glyph == "*", "spore_bloom telegraph_glyph should be *")
 			_assert(
 				attack.telegraph_color != Color.TRANSPARENT,

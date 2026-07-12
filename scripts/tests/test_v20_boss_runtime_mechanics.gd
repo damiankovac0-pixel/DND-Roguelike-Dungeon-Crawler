@@ -4,7 +4,7 @@
 ## mutation discipline, Seraphine phase selection, Observer stun
 ## hit/evade, hazard no-immediate-tick/poison/expiry/unknown-effect,
 ## Vorrak push clamp, Kaelros pull/hazard single-tick discipline,
-## Nyxara resolve-trigger phase shift, summon caps, capped-summon
+## Nyxara stationary true-angle rotation, summon caps, capped-summon
 ## avoidance by scheduler, telegraph countdown payload keys and
 ## decrement/clear, and stale cleanup after normal boss death.
 ##
@@ -84,9 +84,9 @@ func _run() -> void:
 	if _failed:
 		return
 
-	# ── Section 7: Nyxara resolve-trigger phase shift ──
+	# ── Section 7: Nyxara stationary true-angle rotation ──
 	if not _failed:
-		await _test_nyxara_phase_shift_on_evade()
+		await _test_nyxara_stationary_true_angle()
 	if _failed:
 		return
 
@@ -1097,32 +1097,35 @@ func _cardinal_step_between(from_cell: Vector2i, to_cell: Vector2i) -> Vector2i:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Section 7 – Nyxara resolve-trigger phase shift
+# Section 7 – Nyxara stationary true-angle rotation
 # ═══════════════════════════════════════════════════════════════════
 
 
-func _test_nyxara_phase_shift_on_evade() -> void:
-	## Nyxara mirror_ray with effect_trigger = resolve phase-shifts
-	## even when the player evades.  Record Nyxara's occupied cells
-	## before the call, then assert at least one changed.
+func _test_nyxara_stationary_true_angle() -> void:
+	## Nyxara mirror_ray no longer phase-shifts (stationary anchor).
+	## Resolving a non-summon attack rotates the true-side index.
 	var game: Node = await _start_game()
 	var nyxara: Node = await _enter_boss_on_floor(game, 25)
 	if nyxara == null:
 		_fail("Nyxara not spawned")
 		return
+	_remove_all_enemies_except(game, nyxara)
+
 	var mirror_ray: Resource = _attack_by_id(nyxara.enemy_data, &"mirror_ray")
 	_assert(mirror_ray != null, "mirror_ray not found")
-	_assert(mirror_ray.effect == &"phase_shift", "mirror_ray should have phase_shift effect")
-	_assert(mirror_ray.effect_trigger == &"resolve", "mirror_ray should trigger on resolve")
+	_assert(
+		mirror_ray.effect != &"phase_shift",
+		"mirror_ray should no longer have phase_shift effect (stationary)"
+	)
+	_assert(mirror_ray.effect == &"", "mirror_ray effect should be empty under stationary contract")
 	if _failed:
 		return
 
+	# Stationary anchor: applying the effect must not move Nyxara
 	var occupied_before: Array[Vector2i] = game._enemy_occupied_cells(nyxara)
 	game._apply_boss_attack_effect(nyxara, mirror_ray, false)
 	var occupied_after: Array[Vector2i] = game._enemy_occupied_cells(nyxara)
 
-	# With all other enemies removed, the boss room has plenty of free cells,
-	# so the phase shift deterministically moves Nyxara.
 	var any_changed: bool = false
 	for cell: Vector2i in occupied_after:
 		if not occupied_before.has(cell):
@@ -1133,9 +1136,34 @@ func _test_nyxara_phase_shift_on_evade() -> void:
 			if not occupied_after.has(cell):
 				any_changed = true
 				break
-	_assert(any_changed, "Phase shift should have moved Nyxara")
+	_assert(not any_changed, "Nyxara should not move under stationary contract")
 	# Player should not be inside the boss
-	_assert(not occupied_after.has(game._player.grid_position), "Phase shift placed boss on player")
+	_assert(
+		not occupied_after.has(game._player.grid_position), "Effect should not place boss on player"
+	)
+
+	# True-side index rotates after each non-summon resolve
+	var state: Dictionary = game._boss_state_for(nyxara)
+	var before_index: int = int(state.get("nyxara_true_side_index", -1))
+	_assert(before_index >= 0, "nyxara_true_side_index should be initialized")
+	if _failed:
+		return
+
+	game._on_boss_strategy_attack_resolved(nyxara, false)
+	state = game._boss_state_for(nyxara)
+	var after_index: int = int(state.get("nyxara_true_side_index", -1))
+	_assert(after_index == (before_index + 1) % 4, "True-side index should advance after resolve")
+	if _failed:
+		return
+
+	# Second rotation confirms forward progress, not stuck at one
+	game._on_boss_strategy_attack_resolved(nyxara, false)
+	state = game._boss_state_for(nyxara)
+	var after_index2: int = int(state.get("nyxara_true_side_index", -1))
+	_assert(
+		after_index2 == (after_index + 1) % 4,
+		"True-side index should advance again after second resolve"
+	)
 
 	game.queue_free()
 
@@ -1146,10 +1174,10 @@ func _test_nyxara_phase_shift_on_evade() -> void:
 
 
 func _test_summon_caps() -> void:
-	## Seraphine spore_bloom: max 3 live minions.
+	## Seraphine spore_bloom: summons one servant per bloom, max 2 live minions.
 	## Kaelros drowned_retinue: max 2 live minions.
 	## Nyxara mirror_guard: max 1 live minion (V23.1.0, no alternation).
-	await _test_summon_cap(&"seraphine", 10, &"spore_bloom", 3)
+	await _test_summon_cap(&"seraphine", 10, &"spore_bloom", 2, 1)
 	if _failed:
 		return
 	await _test_summon_cap(&"kaelros", 20, &"drowned_retinue", 2)
@@ -1160,7 +1188,11 @@ func _test_summon_caps() -> void:
 
 
 func _test_summon_cap(
-	boss_id: StringName, floor_number: int, attack_id: StringName, expected_max: int
+	boss_id: StringName,
+	floor_number: int,
+	attack_id: StringName,
+	expected_max: int,
+	expected_count: int = -1
 ) -> void:
 	## Resolve the given summon attack twice and assert live minions
 	## never exceed expected_max.
@@ -1177,6 +1209,14 @@ func _test_summon_cap(
 		attack.summon_max_active == expected_max,
 		"%s cap should be %d, got %d" % [attack_id, expected_max, attack.summon_max_active]
 	)
+	if expected_count >= 0:
+		_assert(
+			attack.summon_count == expected_count,
+			(
+				"%s summon_count should be %d, got %d"
+				% [attack_id, expected_count, attack.summon_count]
+			)
+		)
 	if _failed:
 		return
 

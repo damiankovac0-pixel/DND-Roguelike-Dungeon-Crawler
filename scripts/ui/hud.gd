@@ -118,7 +118,8 @@ func show_boss_health(
 	accent_color: Color = Color(1.0, 0.72, 0.28),
 	phase: int = 1,
 	room_title: String = "",
-	windup_label: String = ""
+	windup_label: String = "",
+	mechanic_label: String = ""
 ) -> void:
 	_boss_display_name = display_name
 	_boss_floor_active = true
@@ -134,10 +135,9 @@ func show_boss_health(
 		status_text += " // %s" % room_title.to_upper()
 	if not windup_label.is_empty():
 		status_text += " // WINDUP: %s" % windup_label.to_upper()
+	if not mechanic_label.is_empty():
+		status_text += "\n%s" % mechanic_label
 	boss_name_label.text = "%s\n%s" % [display_name.to_upper(), status_text]
-	boss_banner_title_label.text = ""
-	boss_banner_hp_label.text = ""
-	boss_banner_status_label.text = ""
 	_update_boss_hp(current_hp, max_hp)
 	if phase != _last_boss_phase:
 		_boss_status_tween = _pulse_label(boss_name_label, _boss_status_tween, accent_color)

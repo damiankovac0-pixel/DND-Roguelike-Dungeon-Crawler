@@ -56,3 +56,7 @@ extends Resource
 @export var boss_attacks: Array[Resource] = []
 @export var boss_music_stream: AudioStream
 @export var boss_climax_music_stream: AudioStream
+@export var boss_strategy_hint: String = ""
+@export var boss_guarded_damage_percent: int = 100
+@export var boss_exposed_damage_percent: int = 100
+@export var boss_exposed_turns: int = 0

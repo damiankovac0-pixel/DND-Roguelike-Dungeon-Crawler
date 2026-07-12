@@ -39,6 +39,9 @@ func _run() -> void:
 	await _check_game_syncs_map_reduced_vfx()
 	if _failed:
 		return
+	await _check_reduced_vfx_defaults()
+	if _failed:
+		return
 	await _reset_reduced_vfx_preference()
 	if _failed:
 		return
@@ -180,6 +183,72 @@ func _check_game_syncs_map_reduced_vfx() -> void:
 	game.queue_free()
 	await process_frame
 	print("  game syncs Reduce VFX state into MapView projectile rendering")
+
+
+func _check_reduced_vfx_defaults() -> void:
+	var path: String = _sf_script.SETTINGS_PATH
+	var absolute_path: String = ProjectSettings.globalize_path(path)
+	var existed: bool = FileAccess.file_exists(path)
+	var backup: PackedByteArray = PackedByteArray()
+	if existed:
+		backup = FileAccess.get_file_as_bytes(path)
+
+	# Write a valid config without the reduced_vfx key
+	var config: ConfigFile = ConfigFile.new()
+	config.set_value("sensory", "audio_enabled", true)
+	if config.save(path) != OK:
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("failed to prepare missing reduced-VFX config key")
+		return
+
+	# First instance: missing key should default to enabled
+	var first: Control = _sf_script.new()
+	if first == null:
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("SensoryFeedback instance creation failed for default test")
+		return
+	root.add_child(first)
+	await process_frame
+	if not first.is_reduced_vfx_enabled():
+		first.queue_free()
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("missing sensory reduced-vfx key should default to enabled")
+		return
+	first.set_reduced_vfx_enabled(false, true)
+	first.queue_free()
+	await process_frame
+
+	# Second instance: explicit false should persist
+	var second: Control = _sf_script.new()
+	if second == null:
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("SensoryFeedback instance creation failed for false persist test")
+		return
+	root.add_child(second)
+	await process_frame
+	if second.is_reduced_vfx_enabled():
+		second.queue_free()
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("explicit stored reduced-vfx false should remain false on next instance")
+		return
+	second.queue_free()
+	await process_frame
+
+	# Restore original settings file on clean path
+	_restore_settings(path, absolute_path, existed, backup)
+	print("  reduced VFX defaults: missing key defaults on; explicit off persists")
+
+
+func _restore_settings(
+	path: String, absolute_path: String, existed: bool, backup: PackedByteArray
+) -> void:
+	if existed:
+		var restore: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+		if restore != null:
+			restore.store_buffer(backup)
+			restore.close()
+	else:
+		DirAccess.remove_absolute(absolute_path)
 
 
 func _reset_reduced_vfx_preference() -> void:

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
@@ -55,13 +55,42 @@ telegraph_glyph = "+"
 telegraph_color = Color(0.58, 0.92, 1, 1)
 telegraph_fill_color = Color(0.04, 0.28, 0.48, 0.24)
 telegraph_border_color = Color(0.46, 0.78, 1, 0.84)
+[sub_resource type="Resource" id="Resource_kaelros_crown_deluge"]
+script = ExtResource("2")
+id = &"crown_deluge"
+intent = &"boss_attack"
+phase_min = 3
+cooldown = 3
+telegraph_turns = 2
+shape = &"ring"
+radius = 3
+damage_dice = 2
+damage_sides = 10
+damage_bonus = 5
+damage_type = &"magic"
+projectile_id = &"undertow"
+warning_text = "Kaelros' crown flares — a crushing ring of water surges outward!"
+resolve_text = "The crown's deluge pounds you for %d magic damage."
+telegraph_glyph = "~"
+telegraph_color = Color(0.38, 0.82, 1, 1)
+telegraph_fill_color = Color(0.04, 0.28, 0.52, 0.26)
+telegraph_border_color = Color(0.42, 0.84, 1, 0.88)
+hazard_turns = 2
+hazard_damage_dice = 1
+hazard_damage_sides = 6
+hazard_damage_bonus = 0
+hazard_damage_type = &"magic"
+hazard_glyph = "~"
+hazard_vfx_id = &"undertow_hazard"
+hazard_message = "The deluge's remnants wash over you for %d magic damage."
+
 
 [resource]
 script = ExtResource("1")
 display_name = "Kaelros, the Drowned King"
 glyph = "K"
 color = Color(0.32, 0.68, 0.86, 1)
-max_hp = 138
+max_hp = 210
 armor_class = 18
 attack_bonus = 10
 damage_sides = 10
@@ -71,8 +100,8 @@ min_floor = 20
 max_floor = 20
 spawn_weight = 0
 melee_damage_percent = 100
-ranged_damage_percent = 90
-magic_damage_percent = 115
+ranged_damage_percent = 100
+magic_damage_percent = 100
 is_boss = true
 boss_id = &"kaelros"
 boss_floor = 20
@@ -83,6 +112,10 @@ boss_phase_hp_percents = Array[int]([70, 35])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
 boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ,*, ", "/~+~\\", "|~~~|", "\\_~_/"), PackedStringArray(" ,+, ", "/~~~\\", "|~+~|", "\\_~_/")])
 boss_visual_frame_seconds = 0.34
-boss_attacks = Array[Resource]([SubResource("Resource_kaelros_undertow"), SubResource("Resource_kaelros_retinue")])
+boss_strategy_hint = "Drowned retainers guard the crown. Slay the last retainer to break it and open a counterattack."
+boss_guarded_damage_percent = 60
+boss_exposed_damage_percent = 160
+boss_exposed_turns = 2
+boss_attacks = Array[Resource]([SubResource("Resource_kaelros_undertow"), SubResource("Resource_kaelros_retinue"), SubResource("Resource_kaelros_crown_deluge")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

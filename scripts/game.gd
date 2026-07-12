@@ -1249,6 +1249,9 @@ func complete_boss_arena_reveal() -> bool:
 	_start_boss_music()
 	_refresh_boss_presentation()
 	_refresh_map()
+	var boss_data: Resource = _active_boss_encounter.get("boss_data", null)
+	if boss_data != null and not boss_data.boss_strategy_hint.is_empty():
+		GameManager.add_log_message(boss_data.boss_strategy_hint, &"warning")
 	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
 		return false
 	GameManager.advance_turn()
@@ -1311,7 +1314,7 @@ func _fail_open_boss_gate_after_spawn_failure() -> void:
 
 
 func _make_boss_state(enemy: Node) -> Dictionary:
-	return {
+	var state: Dictionary = {
 		"phase": 1,
 		"pending_attack": null,
 		"telegraph_turns": 0,
@@ -1321,13 +1324,267 @@ func _make_boss_state(enemy: Node) -> Dictionary:
 		"reward_claimed": false,
 		"nyxara_summon_toggle": false,
 		"attack_cooldowns": {},
+		"exposure_skip_tick": false,
+		"exposed_turns": 0,
+		"strategy_resource": 0,
+		"strategy_resource_max": 0,
+		"nyxara_true_side_index": 0,
 	}
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor != null and enemy_actor.enemy_data != null:
+		state = _init_boss_strategy_state(state, enemy_actor.enemy_data)
+	return state
+
+
+func _init_boss_strategy_state(state: Dictionary, enemy_data: Resource) -> Dictionary:
+	match enemy_data.boss_id:
+		&"observer":
+			pass  # Observer uses pure exposed_turns; no persistent resource
+		&"seraphine":
+			state["strategy_resource"] = 3
+			state["strategy_resource_max"] = 3
+		&"vorrak":
+			state["strategy_resource"] = 0
+			state["strategy_resource_max"] = 3
+		&"kaelros":
+			state["strategy_resource"] = 0
+			state["strategy_resource_max"] = 2
+		&"nyxara":
+			state["strategy_resource"] = 0
+			state["strategy_resource_max"] = 1
+			state["nyxara_true_side_index"] = 0
+	return state
 
 
 func _boss_state_for(enemy: Node) -> Dictionary:
 	if not _boss_states.has(enemy):
 		_boss_states[enemy] = _make_boss_state(enemy)
 	return _boss_states[enemy]
+
+
+func _boss_strategy_percent(enemy: Node, state: Dictionary, enemy_data: Resource) -> int:
+	## Pure getter: never mutates state. Returns the current strategy damage multiplier.
+	var boss_id: StringName = enemy_data.boss_id
+	# Nyxara mirror guard has strict precedence over everything
+	if boss_id == &"nyxara" and _count_summoned_minions(enemy) > 0:
+		return 60
+	var guarded: int = enemy_data.boss_guarded_damage_percent
+	if boss_id == &"kaelros" and _count_summoned_minions(enemy) <= 0:
+		guarded = 100
+	var exposed: bool = int(state.get("exposed_turns", 0)) > 0
+	if boss_id == &"nyxara":
+		if not exposed and _player_at_nyxara_true_side(enemy):
+			exposed = true
+	if exposed:
+		return enemy_data.boss_exposed_damage_percent
+	return guarded
+
+
+func _player_at_nyxara_true_side(enemy: Node) -> bool:
+	if _player == null:
+		return false
+	var delta: Vector2i = _player.grid_position - enemy.grid_position
+	var state: Dictionary = _boss_state_for(enemy)
+	var true_index: int = int(state.get("nyxara_true_side_index", 0))
+	var direction_index: int
+	if abs(delta.x) >= abs(delta.y):
+		direction_index = 1 if delta.x >= 0 else 3
+	else:
+		direction_index = 2 if delta.y >= 0 else 0
+	return direction_index == true_index
+
+
+func _nyxara_rotate_true_side(state: Dictionary) -> void:
+	state["nyxara_true_side_index"] = (int(state.get("nyxara_true_side_index", 0)) + 1) % 4
+
+
+func _tick_boss_exposure(enemy: Node) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var state: Dictionary = _boss_state_for(enemy)
+	var skip: bool = bool(state.get("exposure_skip_tick", false))
+	if skip:
+		# Exposure was just opened during player action; skip this tick
+		state["exposure_skip_tick"] = false
+		_boss_states[enemy] = state
+		return
+	var exposed_turns: int = int(state.get("exposed_turns", 0))
+	if exposed_turns <= 0:
+		return
+	exposed_turns -= 1
+	state["exposed_turns"] = exposed_turns
+	if exposed_turns <= 0:
+		GameManager.add_log_message("%s's guard reseals." % enemy.display_name, &"warning")
+		var enemy_actor: Enemy = enemy as Enemy
+		if enemy_actor != null and enemy_actor.enemy_data != null:
+			if enemy_actor.enemy_data.boss_id == &"seraphine":
+				state["strategy_resource"] = int(state.get("strategy_resource_max", 3))
+	_boss_states[enemy] = state
+
+
+func _on_boss_strategy_attack_resolved(enemy: Node, hit: bool) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	var state: Dictionary = _boss_state_for(enemy)
+	var boss_id: StringName = enemy_actor.enemy_data.boss_id
+	var exposed_turns: int = enemy_actor.enemy_data.boss_exposed_turns
+	var attack: Resource = state.get("pending_attack", null)
+	match boss_id:
+		&"observer":
+			if not hit and exposed_turns > 0:
+				var current_exposed: int = int(state.get("exposed_turns", 0))
+				if current_exposed <= 0:
+					# Evading a damaging tell opens the eye
+					state["exposed_turns"] = exposed_turns
+					GameManager.add_log_message("%s's eye opens." % enemy.display_name, &"warning")
+		&"vorrak":
+			var heat_increment: int = 1
+			if attack != null:
+				match attack.id:
+					&"ash_breath":
+						heat_increment = 1
+					&"maw_quake":
+						heat_increment = 2
+					&"furnace_vent":
+						heat_increment = 3
+			var heat: int = int(state.get("strategy_resource", 0)) + heat_increment
+			var threshold: int = int(state.get("strategy_resource_max", 3))
+			if heat >= threshold:
+				state["strategy_resource"] = 0
+				var current_exposed: int = int(state.get("exposed_turns", 0))
+				if current_exposed <= 0:
+					state["exposed_turns"] = exposed_turns
+					GameManager.add_log_message("%s overheats!" % enemy.display_name, &"warning")
+			else:
+				state["strategy_resource"] = heat
+		&"nyxara":
+			_nyxara_rotate_true_side(state)
+	_boss_states[enemy] = state
+
+
+func _on_boss_damaged(enemy: Node) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	var state: Dictionary = _boss_state_for(enemy)
+	var boss_id: StringName = enemy_actor.enemy_data.boss_id
+	var exposed_turns: int = enemy_actor.enemy_data.boss_exposed_turns
+	match boss_id:
+		&"seraphine":
+			var briars: int = int(state.get("strategy_resource", 3))
+			if briars > 0:
+				briars -= 1
+				state["strategy_resource"] = briars
+				if briars <= 0 and exposed_turns > 0:
+					state["exposed_turns"] = exposed_turns
+					state["exposure_skip_tick"] = true
+					GameManager.add_log_message(
+						"%s's sanctuary is pruned!" % enemy.display_name, &"warning"
+					)
+				_boss_states[enemy] = state
+		&"nyxara":
+			# Attacking Nyxara from the true angle opens the guard window
+			if _player_at_nyxara_true_side(enemy) and exposed_turns > 0:
+				var current_exposed: int = int(state.get("exposed_turns", 0))
+				if current_exposed <= 0:
+					state["exposed_turns"] = exposed_turns
+					state["exposure_skip_tick"] = true
+					GameManager.add_log_message(
+						"%s's mirror guard cracks." % enemy.display_name, &"warning"
+					)
+					_boss_states[enemy] = state
+
+
+func _on_boss_summon_died(summoner_id: int) -> void:
+	## Called when a summoned minion dies. Finds the live boss summoner.
+	var summoner: Node = instance_from_id(summoner_id) if summoner_id != 0 else null
+	if not is_instance_valid(summoner) or not summoner.is_alive():
+		return
+	if not _is_boss_enemy(summoner):
+		return
+	var enemy_actor: Enemy = summoner as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	var state: Dictionary = _boss_state_for(summoner)
+	var boss_id: StringName = enemy_actor.enemy_data.boss_id
+	var exposed_turns: int = enemy_actor.enemy_data.boss_exposed_turns
+	match boss_id:
+		&"seraphine":
+			var briars: int = int(state.get("strategy_resource", 3))
+			briars = max(0, briars - 2)
+			state["strategy_resource"] = briars
+			if briars <= 0 and exposed_turns > 0:
+				state["exposed_turns"] = exposed_turns
+				state["exposure_skip_tick"] = true
+				GameManager.add_log_message(
+					"%s's sanctuary collapses!" % summoner.display_name, &"warning"
+				)
+			_boss_states[summoner] = state
+		&"kaelros":
+			if _count_summoned_minions(summoner) <= 0 and exposed_turns > 0:
+				state["exposed_turns"] = exposed_turns
+				state["exposure_skip_tick"] = true
+				GameManager.add_log_message(
+					"%s's crown breaks!" % summoner.display_name, &"warning"
+				)
+				_boss_states[summoner] = state
+		&"nyxara":
+			if _count_summoned_minions(summoner) <= 0 and exposed_turns > 0:
+				state["exposed_turns"] = exposed_turns
+				state["exposure_skip_tick"] = true
+				GameManager.add_log_message(
+					"%s's mirror guard shatters!" % summoner.display_name, &"warning"
+				)
+				_boss_states[summoner] = state
+
+
+func _boss_strategy_label(enemy: Node, state: Dictionary, enemy_data: Resource) -> String:
+	var boss_id: StringName = enemy_data.boss_id
+	var exposed_turns: int = int(state.get("exposed_turns", 0))
+	var resource_val: int = int(state.get("strategy_resource", 0))
+	var resource_max: int = int(state.get("strategy_resource_max", 0))
+	var label: String = ""
+	match boss_id:
+		&"observer":
+			if exposed_turns > 0:
+				label = "EYE OPEN %d" % exposed_turns
+			else:
+				label = "EYE WATCHING // EVADE TO EXPOSE"
+		&"seraphine":
+			if exposed_turns > 0:
+				label = "SANCTUARY PRUNED %d" % exposed_turns
+			else:
+				label = "BRIARS %d/%d" % [resource_val, resource_max]
+		&"vorrak":
+			if exposed_turns > 0:
+				label = "OVERHEATED %d" % exposed_turns
+			else:
+				label = "HEAT %d/%d" % [resource_val, resource_max]
+		&"kaelros":
+			if exposed_turns > 0:
+				label = "CROWN BROKEN %d" % exposed_turns
+			else:
+				var retinue: int = _count_summoned_minions(enemy)
+				if retinue > 0:
+					label = "CROWN GUARDED // RETINUE %d" % retinue
+				else:
+					label = "TIDE UNBOUND"
+		&"nyxara":
+			var mirror_guards: int = _count_summoned_minions(enemy)
+			if mirror_guards > 0:
+				label = "MIRROR SEALED // GUARD %d" % mirror_guards
+			elif exposed_turns > 0:
+				label = "MIRROR BROKEN %d" % exposed_turns
+			else:
+				var cardinal_letters: Array[String] = ["N", "E", "S", "W"]
+				var angle_index: int = int(state.get("nyxara_true_side_index", 0))
+				label = "TRUE ANGLE %s" % cardinal_letters[angle_index % 4]
+	return label
 
 
 func _is_boss_enemy(enemy: Node) -> bool:
@@ -1595,6 +1852,11 @@ func _refresh_boss_presentation() -> void:
 			if state.get("pending_attack", null) != null:
 				var remaining: int = int(state.get("telegraph_turns", 0))
 				windup_label = "%s (%d)" % [str(state["pending_attack"].id), remaining]
+			var mechanic_label: String = ""
+			if boss_data != null:
+				var boss_actor: Enemy = boss as Enemy
+				if boss_actor != null and boss_actor.enemy_data != null:
+					mechanic_label = _boss_strategy_label(boss, state, boss_actor.enemy_data)
 			hud.call(
 				&"show_boss_health",
 				boss.display_name,
@@ -1603,7 +1865,8 @@ func _refresh_boss_presentation() -> void:
 				_boss_accent_color(_active_boss_encounter.get("boss_id", &"")),
 				phase,
 				room_title,
-				windup_label
+				windup_label,
+				mechanic_label
 			)
 		elif hud.has_method(&"hide_boss_health"):
 			hud.call(&"hide_boss_health")
@@ -1930,14 +2193,21 @@ func _get_damage_percent(defender: Node, damage_type: StringName) -> int:
 	var enemy_actor: Enemy = defender as Enemy
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return 100
+	var base_percent: int
 	match damage_type:
 		&"melee":
-			return enemy_actor.enemy_data.melee_damage_percent
+			base_percent = enemy_actor.enemy_data.melee_damage_percent
 		&"ranged":
-			return enemy_actor.enemy_data.ranged_damage_percent
+			base_percent = enemy_actor.enemy_data.ranged_damage_percent
 		&"magic":
-			return enemy_actor.enemy_data.magic_damage_percent
-	return 100
+			base_percent = enemy_actor.enemy_data.magic_damage_percent
+		_:
+			return 100
+	if not _is_boss_enemy(defender):
+		return base_percent
+	var state: Dictionary = _boss_state_for(defender)
+	var strategy_percent: int = _boss_strategy_percent(defender, state, enemy_actor.enemy_data)
+	return max(1, int(round(float(base_percent * strategy_percent) / 100.0)))
 
 
 func _apply_typed_damage(defender: Node, raw_damage: int, damage_type: StringName) -> int:
@@ -2018,6 +2288,8 @@ func _handle_defender_after_damage(defender: Node, took_damage: bool = true) -> 
 			_try_apply_player_set_proc()
 		if not _player.is_alive():
 			_game_over(false)
+	elif _is_boss_enemy(defender) and took_damage and defender.is_alive():
+		_on_boss_damaged(defender)
 	elif not defender.is_alive():
 		var xp_reward: int = defender.stats_component.xp_reward
 		_grant_player_xp(xp_reward)
@@ -2403,7 +2675,7 @@ func _activate_fighter_whirlwind() -> void:
 			GameManager.add_log_message(
 				"Whirlwind misses %s." % target.display_name, &"combat_miss"
 			)
-		_handle_defender_after_damage(target)
+		_handle_defender_after_damage(target, outcome["hit"] and int(outcome["damage"]) > 0)
 	_finish_player_action()
 
 
@@ -2892,7 +3164,9 @@ func _apply_fighter_extra_strike(defender: Node) -> void:
 		GameManager.add_log_message(
 			"Extra strike misses %s." % [defender.display_name], &"combat_miss"
 		)
-	_handle_defender_after_damage(defender)
+	_handle_defender_after_damage(
+		defender, extra_outcome["hit"] and int(extra_outcome["damage"]) > 0
+	)
 
 
 # ===== Items & Containers =====
@@ -3593,6 +3867,7 @@ func _process_boss_turn(
 	):
 		return true
 	_update_boss_phase(enemy)
+	_tick_boss_exposure(enemy)
 	var state: Dictionary = _boss_state_for(enemy)
 	var pending_attack: Resource = state.get("pending_attack", null)
 	if pending_attack != null:
@@ -3660,6 +3935,9 @@ func _update_boss_phase(enemy: Node) -> void:
 		):
 			var enemy_data: Resource = enemy_actor.enemy_data
 			sensory_feedback.call(&"play_boss_phase_cue", enemy_data.boss_id, phase)
+		if enemy_actor.enemy_data.boss_id == &"nyxara":
+			_nyxara_rotate_true_side(state)
+			_boss_states[enemy] = state
 
 
 func _tick_boss_attack_cooldowns(enemy: Node) -> void:
@@ -3995,6 +4273,7 @@ func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> v
 		and not bool(_active_boss_encounter.get("defeated", false))
 	):
 		_queue_boss_hazards(enemy, attack, cells)
+	_on_boss_strategy_attack_resolved(enemy, hit)
 
 
 func _boss_summon_slots_available(enemy: Node, attack: Resource) -> int:
@@ -4644,8 +4923,6 @@ func _build_enemy_intents() -> Dictionary:
 				intents[enemy.grid_position] = &"boss_attack"
 			elif _boss_has_windup_intent(enemy, next_action_count, distance_to_player):
 				intents[enemy.grid_position] = &"boss_windup"
-			elif distance_to_player <= 8.0:
-				intents[enemy.grid_position] = &"aware"
 			continue
 		if distance_to_player <= 1.1:
 			intents[enemy.grid_position] = &"melee"
@@ -5628,6 +5905,7 @@ func _on_enemy_died(enemy: Node) -> void:
 		GameManager.add_log_message(
 			"%s crumbles into dust (summoned; no reward)." % enemy.display_name, &"death"
 		)
+		_on_boss_summon_died(int(enemy.get_meta("summoner_id", 0)))
 	else:
 		var gold_reward: int = _roll_enemy_gold_reward(enemy)
 		_player.stats_component.gold += gold_reward
