@@ -12,6 +12,9 @@ const XP_FLASH_COLOR: Color = Color(0.55, 0.86, 1.0)
 const LABEL_PULSE_SCALE: Vector2 = Vector2(1.08, 1.08)
 const LABEL_PULSE_SECONDS: float = 0.24
 const BOSS_HP_BAR_CELLS: int = 12
+const SIDEBAR_BOTTOM_GAP: float = 12.0
+const SIDEBAR_CONTENT_PADDING: float = 18.0
+const SIDEBAR_MIN_HEIGHT: float = 300.0
 
 # === Private Variables ===
 var _biome_name: String = "The Tower"
@@ -48,6 +51,8 @@ var _boss_status_tween: Tween
 @onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
+@onready var sidebar_panel: PanelContainer = $"../SidebarPanel"
+@onready var sidebar_vbox: VBoxContainer = $Margin/VBox
 
 
 # === Lifecycle Methods ===
@@ -55,6 +60,7 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_update_hp)
 	GameManager.xp_changed.connect(_update_xp)
 	GameManager.floor_changed.connect(_update_floor)
+	resized.connect(_queue_sidebar_resize)
 	stats_label.bbcode_enabled = true
 	stats_label.fit_content = true
 	stats_label.scroll_active = false
@@ -282,3 +288,19 @@ func _update_goal_text() -> void:
 		+ "Q class skill  Esc pause/settings\n"
 		+ "M mute"
 	)
+	_queue_sidebar_resize()
+
+
+func _queue_sidebar_resize() -> void:
+	if not is_inside_tree():
+		return
+	call_deferred("_resize_sidebar_panel")
+
+
+func _resize_sidebar_panel() -> void:
+	if not is_instance_valid(sidebar_panel) or not is_instance_valid(sidebar_vbox):
+		return
+	var available_height: float = maxf(0.0, size.y - sidebar_panel.offset_top - SIDEBAR_BOTTOM_GAP)
+	var content_height: float = sidebar_vbox.get_combined_minimum_size().y
+	var target_height: float = maxf(SIDEBAR_MIN_HEIGHT, content_height + SIDEBAR_CONTENT_PADDING)
+	sidebar_panel.offset_bottom = (sidebar_panel.offset_top + minf(target_height, available_height))

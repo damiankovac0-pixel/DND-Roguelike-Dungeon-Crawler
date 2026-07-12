@@ -22,6 +22,8 @@ func _run() -> void:
 	if not _failed:
 		_check_overlay_layering()
 	if not _failed:
+		await _check_compact_hud_panel()
+	if not _failed:
 		await _check_message_log_semantic_colors()
 	if not _failed:
 		_check_map_burst_lifecycle()
@@ -96,6 +98,71 @@ func _check_overlay_layering() -> void:
 		return
 	game.free()
 	print("  overlay layering: pause menu stays above biome introductions")
+
+
+func _check_compact_hud_panel() -> void:
+	var game_manager: Node = root.get_node_or_null("/root/GameManager")
+	if game_manager == null:
+		_fail("GameManager autoload missing")
+		return
+	game_manager.prepare_character("debug", {}, game_manager.CLASS_FIGHTER)
+	var game: Node = load("res://scenes/game.tscn").instantiate()
+	root.add_child(game)
+	await process_frame
+	await process_frame
+	var sidebar_panel: PanelContainer = game.get_node("UI/SidebarPanel")
+	var sidebar_vbox: VBoxContainer = game.get_node("UI/HUD/Margin/VBox")
+	var viewport_height: float = game.get_viewport_rect().size.y
+	var normal_height: float = sidebar_panel.size.y
+	if normal_height >= viewport_height * 0.75:
+		_fail(
+			(
+				"Normal HUD sidebar should hug its content, got %.1f of %.1f px"
+				% [normal_height, viewport_height]
+			)
+		)
+		game.free()
+		game_manager.abandon_run()
+		return
+	var normal_content_height: float = sidebar_vbox.get_combined_minimum_size().y
+	if normal_height > normal_content_height + 24.0:
+		_fail(
+			(
+				"Normal HUD sidebar has excessive empty space: panel=%.1f content=%.1f"
+				% [normal_height, normal_content_height]
+			)
+		)
+		game.free()
+		game_manager.abandon_run()
+		return
+	game.hud.show_boss_health("Test Boss", 80, 100, Color.WHITE, 1, "Test Arena", "lane (2)")
+	await process_frame
+	await process_frame
+	var boss_height: float = sidebar_panel.size.y
+	if boss_height <= normal_height:
+		_fail(
+			(
+				"Boss HUD sidebar should grow for boss details: normal=%.1f boss=%.1f"
+				% [normal_height, boss_height]
+			)
+		)
+		game.free()
+		game_manager.abandon_run()
+		return
+	if boss_height >= viewport_height * 0.75:
+		_fail(
+			(
+				"Boss HUD sidebar should remain compact, got %.1f of %.1f px"
+				% [boss_height, viewport_height]
+			)
+		)
+		game.free()
+		game_manager.abandon_run()
+		return
+	game.free()
+	game_manager.abandon_run()
+	await process_frame
+	print("  HUD layout: sidebar hugs normal and boss content without a full-height empty panel")
 
 
 func _check_message_log_semantic_colors() -> void:

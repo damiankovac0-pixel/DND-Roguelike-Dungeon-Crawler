@@ -177,10 +177,10 @@ func _check_game_manager_version() -> void:
 	if game_manager == null:
 		_fail("GameManager autoload missing")
 		return
-	if game_manager.GAME_VERSION != "23.2.1":
-		_fail("GameManager.GAME_VERSION expected '23.2.1', got '%s'" % game_manager.GAME_VERSION)
+	if game_manager.GAME_VERSION != "23.2.2":
+		_fail("GameManager.GAME_VERSION expected '23.2.2', got '%s'" % game_manager.GAME_VERSION)
 	var version_label: String = game_manager.get_version_label()
-	if not "23.2.1" in version_label:
+	if not "23.2.2" in version_label:
 		_fail("get_version_label() missing version: " + version_label)
 	if not "2026-07-11" in version_label:
 		_fail("get_version_label() missing date: " + version_label)

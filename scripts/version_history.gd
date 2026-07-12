@@ -53,4 +53,5 @@ const VERSION_HISTORY: Array[String] = [
 	"[color=#f1c75b]V23.1.0[/color] — Comprehensive balance pass across floors 1-25: smoother class, equipment, consumable, enemy, boss, shop, chest, XP, and economy progression with deterministic regression coverage.",
 	"[color=#f1c75b]V23.2.0[/color] — Whole-game hardening and polish pass: corrected trap entry and death-turn semantics, boss reveal and endgame state flow, archive preservation, responsive scene layouts, clearer combat and dungeon guidance, persistent accessibility/audio settings, leaner projectile/map rendering, smoother encounter pacing, and expanded deterministic regression coverage.",
 	"[color=#f1c75b]V23.2.1[/color] — Boss arena rework: larger 21x19 ritual spaces, readable ASCII doors and boss art, stationary set-piece bosses, narrow snapshotted attack lanes, guaranteed dodge refuges, two-turn damaging windups, and clearer boss-specific tells.",
+	"[color=#f1c75b]V23.2.2[/color] — Compact HUD hotfix: the right-side status card now hugs its visible normal or boss content instead of stretching into a mostly empty full-height panel, with responsive desktop and narrow-layout coverage.",
 ]
