@@ -5,6 +5,9 @@ extends Node2D
 # === Constants ===
 const DungeonDataScript = preload("res://scripts/dungeon/dungeon_data.gd")
 const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
+const MapPresentationControllerScript: GDScript = preload(
+	"res://scripts/ui/map_presentation/map_presentation_controller.gd"
+)
 const SECRET_WALL_GLYPH: String = "?"
 const FLOOR_GLYPHS: Array[String] = [".", ",", "'", "`"]
 const WALL_GLYPHS: Array[String] = ["#", "H", "I"]
@@ -43,6 +46,7 @@ const TILE_BACKGROUND_COLORS: Dictionary = {
 @export var outer_bg_tint: Color = Color(0.0, 0.02, 0.035)
 @export var background_color: Color = Color(0.025, 0.032, 0.047)
 # === Private Variables ===
+var _presentation_controller: RefCounted = MapPresentationControllerScript.new()
 var _map_data: Array = []
 var _visible_cells: Dictionary = {}
 var _explored_cells: Dictionary = {}
@@ -88,6 +92,18 @@ var _atmosphere_profile: Dictionary = {}
 
 
 # === Public Methods ===
+func set_map_render_mode(mode: Variant) -> void:
+	_presentation_controller.call(&"set_requested_mode", mode)
+
+
+func get_requested_map_render_mode() -> StringName:
+	return StringName(_presentation_controller.call(&"get_requested_mode"))
+
+
+func get_effective_map_render_mode() -> StringName:
+	return StringName(_presentation_controller.call(&"get_effective_mode"))
+
+
 func configure_map(map_data: Array) -> void:
 	_map_data = map_data
 	_update_boss_room_draw_offset()

@@ -291,6 +291,8 @@ func _ready() -> void:
 	pause_master_volume_slider.value_changed.connect(_on_volume_slider_changed)
 	pause_ambience_enabled_button.toggled.connect(_on_ambience_enabled_toggled)
 	pause_reduced_vfx_button.toggled.connect(_on_reduced_vfx_toggled)
+	if sensory_feedback.has_signal(&"map_render_mode_changed"):
+		sensory_feedback.connect(&"map_render_mode_changed", _on_map_render_mode_changed)
 	_setup_boss_activation_timer()
 	_refresh_audio_controls()
 	_start_or_resume_player()
@@ -484,6 +486,15 @@ func _close_pause_menu() -> void:
 
 ## Synchronises the pause-menu audio controls with the current SensoryFeedback
 ## state.  Safe to call when sensory_feedback is null.
+func _sync_map_render_mode() -> void:
+	if map_view == null or not map_view.has_method(&"set_map_render_mode"):
+		return
+	var requested_mode: Variant = &"ascii"
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"get_map_render_mode"):
+		requested_mode = sensory_feedback.call(&"get_map_render_mode")
+	map_view.call(&"set_map_render_mode", requested_mode)
+
+
 func _sync_map_reduced_vfx() -> void:
 	if map_view == null or not map_view.has_method(&"set_reduced_vfx_enabled"):
 		return
@@ -498,6 +509,7 @@ func _sync_map_reduced_vfx() -> void:
 
 func _refresh_audio_controls() -> void:
 	_sync_map_reduced_vfx()
+	_sync_map_render_mode()
 	if not is_instance_valid(sensory_feedback):
 		return
 	var sf: Object = sensory_feedback
@@ -539,6 +551,12 @@ func _on_reduced_vfx_toggled(button_pressed: bool) -> void:
 	):
 		sensory_feedback.call(&"set_reduced_vfx_enabled", button_pressed, true)
 	_sync_map_reduced_vfx()
+
+
+func _on_map_render_mode_changed(mode: StringName) -> void:
+	if map_view == null or not map_view.has_method(&"set_map_render_mode"):
+		return
+	map_view.call(&"set_map_render_mode", mode)
 
 
 func _on_pause_resume_pressed() -> void:

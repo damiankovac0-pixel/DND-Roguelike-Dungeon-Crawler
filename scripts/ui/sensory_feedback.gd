@@ -6,6 +6,9 @@
 class_name SensoryFeedback
 extends Control
 
+# === Signals ===
+signal map_render_mode_changed(mode: StringName)
+
 # === Constants ===
 const SAMPLE_RATE: int = 22050
 const VERSION: String = "16.5.0"
@@ -15,6 +18,11 @@ const MIN_VOLUME_DB: float = -60.0
 const MAX_VOLUME_DB: float = 0.0
 const DEFAULT_VOLUME: float = 0.42
 const SETTINGS_PATH: String = "user://dungeon_delver_settings.cfg"
+const MapRenderModeScript: GDScript = preload(
+	"res://scripts/ui/map_presentation/map_render_mode.gd"
+)
+const GRAPHICS_SETTINGS_SECTION: String = "graphics"
+const SETTING_MAP_RENDER_MODE: String = "map_render_mode"
 const SETTINGS_SECTION: String = "sensory"
 const SETTING_REDUCED_VFX: String = "reduced_vfx"
 const SETTING_AUDIO_ENABLED: String = "audio_enabled"
@@ -160,6 +168,7 @@ var _visual_color: Color = Color.TRANSPARENT
 var _visual_duration: float = 0.0
 var _visual_elapsed: float = 0.0
 var _reduced_vfx_enabled: bool = true
+var _map_render_mode: StringName = MapRenderModeScript.ASCII
 
 
 # === GameManager Access ===
@@ -516,6 +525,24 @@ func is_reduced_vfx_enabled() -> bool:
 	return _reduced_vfx_enabled
 
 
+## Sets the requested map renderer preference.
+##
+## Phase 1 preserves Hybrid and Pixel requests while MapView resolves both to
+## the only available renderer: ASCII.
+func set_map_render_mode(mode: Variant, persist: bool = true) -> void:
+	var normalized_mode: StringName = MapRenderModeScript.normalize(mode)
+	var changed: bool = normalized_mode != _map_render_mode
+	_map_render_mode = normalized_mode
+	if persist:
+		_save_preferences()
+	if changed:
+		map_render_mode_changed.emit(_map_render_mode)
+
+
+func get_map_render_mode() -> StringName:
+	return _map_render_mode
+
+
 ## Toggle reduced event visuals, optionally announcing via log.
 func toggle_reduced_vfx_enabled(announce: bool = true) -> void:
 	set_reduced_vfx_enabled(not _reduced_vfx_enabled)
@@ -657,6 +684,7 @@ func _initialize_preference_defaults() -> void:
 	_master_volume = clampf(default_master_volume, 0.0, 1.0)
 	_ambience_enabled = true
 	_reduced_vfx_enabled = true
+	_map_render_mode = MapRenderModeScript.ASCII
 
 
 func _load_preferences() -> void:
@@ -672,6 +700,11 @@ func _load_preferences() -> void:
 		config.get_value(SETTINGS_SECTION, SETTING_AMBIENCE_ENABLED, _ambience_enabled)
 	)
 	_reduced_vfx_enabled = bool(config.get_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, true))
+	_map_render_mode = MapRenderModeScript.normalize(
+		config.get_value(
+			GRAPHICS_SETTINGS_SECTION, SETTING_MAP_RENDER_MODE, MapRenderModeScript.ASCII
+		)
+	)
 
 
 func _save_preferences() -> void:
@@ -681,6 +714,7 @@ func _save_preferences() -> void:
 	config.set_value(SETTINGS_SECTION, SETTING_MASTER_VOLUME, _master_volume)
 	config.set_value(SETTINGS_SECTION, SETTING_AMBIENCE_ENABLED, _ambience_enabled)
 	config.set_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, _reduced_vfx_enabled)
+	config.set_value(GRAPHICS_SETTINGS_SECTION, SETTING_MAP_RENDER_MODE, String(_map_render_mode))
 	config.save(SETTINGS_PATH)
 
 
