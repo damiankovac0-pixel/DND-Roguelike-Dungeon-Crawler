@@ -8,6 +8,14 @@ const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
 const MapPresentationControllerScript: GDScript = preload(
 	"res://scripts/ui/map_presentation/map_presentation_controller.gd"
 )
+const MapGridLayoutScript: GDScript = preload(
+	"res://scripts/ui/map_presentation/map_grid_layout.gd"
+)
+const MapPresentationStateScript: GDScript = preload(
+	"res://scripts/ui/map_presentation/map_presentation_state.gd"
+)
+const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
+const PIXEL_CELL_SIZE: Vector2i = Vector2i(16, 16)
 const SECRET_WALL_GLYPH: String = "?"
 const FLOOR_GLYPHS: Array[String] = [".", ",", "'", "`"]
 const WALL_GLYPHS: Array[String] = ["#", "H", "I"]
@@ -47,6 +55,9 @@ const TILE_BACKGROUND_COLORS: Dictionary = {
 @export var background_color: Color = Color(0.025, 0.032, 0.047)
 # === Private Variables ===
 var _presentation_controller: RefCounted = MapPresentationControllerScript.new()
+var _presentation_state: RefCounted = MapPresentationStateScript.new()
+var _pixel_layout: RefCounted = MapGridLayoutScript.new()
+var _pixel_renderer: Node2D
 var _map_data: Array = []
 var _visible_cells: Dictionary = {}
 var _explored_cells: Dictionary = {}
@@ -93,7 +104,11 @@ var _atmosphere_profile: Dictionary = {}
 
 # === Public Methods ===
 func set_map_render_mode(mode: Variant) -> void:
+	var previous_effective_mode: StringName = get_effective_map_render_mode()
 	_presentation_controller.call(&"set_requested_mode", mode)
+	if previous_effective_mode != get_effective_map_render_mode():
+		_clear_transient_presentation()
+	queue_redraw()
 
 
 func get_requested_map_render_mode() -> StringName:
@@ -104,9 +119,15 @@ func get_effective_map_render_mode() -> StringName:
 	return StringName(_presentation_controller.call(&"get_effective_mode"))
 
 
+func is_map_render_mode_available(mode: Variant) -> bool:
+	return bool(_presentation_controller.call(&"is_mode_available", mode))
+
+
 func configure_map(map_data: Array) -> void:
 	_map_data = map_data
 	_update_boss_room_draw_offset()
+	_presentation_state.call(&"capture_map", _map_data)
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -115,6 +136,11 @@ func set_biome_theme(theme: Dictionary) -> void:
 	_atmosphere_profile = BiomeCatalogScript.atmosphere_for_biome_index(
 		_biome_theme.get("index", 1)
 	)
+	_presentation_state.set(&"biome_theme", _biome_theme)
+	_presentation_state.set(&"atmosphere_profile", _atmosphere_profile)
+	_presentation_state.call(&"mark_environment_changed")
+	_update_pixel_renderer_style()
+	_commit_presentation_state()
 	_update_processing_state()
 	queue_redraw()
 
@@ -122,6 +148,10 @@ func set_biome_theme(theme: Dictionary) -> void:
 func set_visibility(visible_cells: Dictionary, explored_cells: Dictionary) -> void:
 	_visible_cells = visible_cells
 	_explored_cells = explored_cells
+	_presentation_state.set(&"visible_cells", _visible_cells)
+	_presentation_state.set(&"explored_cells", _explored_cells)
+	_presentation_state.call(&"mark_visibility_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -129,21 +159,32 @@ func set_actors(actors: Array) -> void:
 	_actors = actors
 	_sync_actor_move_connections()
 	_rebuild_actor_cell_cache()
+	_presentation_state.call(&"capture_actors", _actors)
+	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_items(items: Dictionary) -> void:
 	_items = items
+	_presentation_state.set(&"items", _items)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_containers(containers: Dictionary) -> void:
 	_containers = containers
+	_presentation_state.set(&"containers", _containers)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_enemy_intents(enemy_intents: Dictionary) -> void:
 	_enemy_intents = enemy_intents
+	_presentation_state.set(&"enemy_intents", _enemy_intents)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -154,6 +195,12 @@ func set_targeting(
 	_target_cursor = cursor
 	_target_range_cells = range_cells
 	_target_area_cells = area_cells
+	_presentation_state.set(&"targeting_active", _targeting_active)
+	_presentation_state.set(&"target_cursor", _target_cursor)
+	_presentation_state.set(&"target_range_cells", _target_range_cells)
+	_presentation_state.set(&"target_area_cells", _target_area_cells)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -163,6 +210,11 @@ func set_traps(
 	_trap_data = trap_data
 	_revealed_traps = revealed_traps
 	_triggered_traps = triggered_traps
+	_presentation_state.set(&"trap_data", _trap_data)
+	_presentation_state.set(&"revealed_traps", _revealed_traps)
+	_presentation_state.set(&"triggered_traps", _triggered_traps)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -172,6 +224,11 @@ func set_secret_walls(
 	_secret_walls = secret_walls
 	_revealed_secret_walls = revealed_secret_walls
 	_secret_wall_hint_color = hint_color
+	_presentation_state.set(&"secret_walls", _secret_walls)
+	_presentation_state.set(&"revealed_secret_walls", _revealed_secret_walls)
+	_presentation_state.set(&"secret_wall_hint_color", _secret_wall_hint_color)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -185,6 +242,12 @@ func set_boss_room(
 	_boss_room_locked = locked
 	_boss_room_tint_color = tint_color
 	_update_boss_room_draw_offset()
+	_presentation_state.set(&"boss_room_cells", _boss_room_cells)
+	_presentation_state.set(&"boss_door_cells", _boss_door_cells)
+	_presentation_state.set(&"boss_room_locked", _boss_room_locked)
+	_presentation_state.set(&"boss_room_tint_color", _boss_room_tint_color)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -192,6 +255,9 @@ func set_boss_visuals(boss_visuals: Dictionary) -> void:
 	_boss_visuals = boss_visuals.duplicate(true)
 	_rebuild_boss_occupied_cells()
 	_update_processing_state()
+	_presentation_state.set(&"boss_visuals", _boss_visuals)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -211,16 +277,25 @@ func clear_boss_visuals() -> void:
 	_boss_spawn_effects.clear()
 	_boss_frame_elapsed = 0.0
 	_update_processing_state()
+	_presentation_state.set(&"boss_visuals", _boss_visuals)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_boss_telegraphs(telegraphs: Dictionary) -> void:
 	_boss_telegraphs = telegraphs.duplicate(true)
+	_presentation_state.set(&"boss_telegraphs", _boss_telegraphs)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_boss_hazards(hazards: Dictionary) -> void:
 	_boss_hazards = hazards.duplicate(true)
+	_presentation_state.set(&"boss_hazards", _boss_hazards)
+	_presentation_state.call(&"mark_overlay_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -253,6 +328,9 @@ func set_reduced_vfx_enabled(enabled: bool) -> void:
 	_reduced_vfx_enabled = enabled
 	if _reduced_vfx_enabled:
 		_apply_reduced_vfx_to_active_effects()
+	_presentation_state.set(&"reduced_vfx_enabled", _reduced_vfx_enabled)
+	_presentation_state.call(&"mark_environment_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -325,6 +403,9 @@ func clear_projectile_trails() -> void:
 func set_atmosphere_enabled(enabled: bool) -> void:
 	_atmosphere_enabled = enabled
 	_update_processing_state()
+	_presentation_state.set(&"atmosphere_enabled", _atmosphere_enabled)
+	_presentation_state.call(&"mark_environment_changed")
+	_commit_presentation_state()
 	queue_redraw()
 
 
@@ -352,12 +433,108 @@ func _update_processing_state() -> void:
 	)
 
 
+func _commit_presentation_state() -> void:
+	_presentation_controller.call(&"present", _presentation_state)
+
+
+func _initialize_pixel_renderer() -> void:
+	if not ResourceLoader.exists(PIXEL_RENDERER_SCENE_PATH, "PackedScene"):
+		return
+	var scene_resource: Resource = load(PIXEL_RENDERER_SCENE_PATH)
+	if not (scene_resource is PackedScene):
+		return
+	var renderer_node: Node = (scene_resource as PackedScene).instantiate()
+	if not (renderer_node is Node2D):
+		renderer_node.free()
+		return
+	_pixel_renderer = renderer_node as Node2D
+	_pixel_renderer.name = &"PixelMapRenderer"
+	add_child(_pixel_renderer)
+	var playfield_rect: Rect2 = Rect2(Vector2(10, 10), playfield_size)
+	var available_pixels: Vector2 = playfield_rect.end - margin
+	var view_capacity: Vector2i = Vector2i(
+		maxi(1, int(floor(available_pixels.x / float(PIXEL_CELL_SIZE.x)))),
+		maxi(1, int(floor(available_pixels.y / float(PIXEL_CELL_SIZE.y))))
+	)
+	_pixel_layout.call(&"configure", PIXEL_CELL_SIZE, margin, view_capacity)
+	_update_pixel_renderer_style()
+	var initialization_error: Error = _pixel_renderer.call(&"initialize_renderer", _pixel_layout)
+	if initialization_error != OK:
+		_pixel_renderer.queue_free()
+		_pixel_renderer = null
+		return
+	var registered: bool = bool(
+		_presentation_controller.call(
+			&"register_renderer", &"hybrid", _pixel_renderer, _pixel_layout
+		)
+	)
+	if not registered:
+		_pixel_renderer.queue_free()
+		_pixel_renderer = null
+
+
+func _update_pixel_renderer_style() -> void:
+	if not is_instance_valid(_pixel_renderer):
+		return
+	_pixel_renderer.call(
+		&"configure_style",
+		Rect2(Vector2(10, 10), playfield_size),
+		_theme_color("outer_bg_tint", outer_bg_tint),
+		_theme_color("border_color", border_color),
+		_theme_color("border_frame_color", border_frame_color),
+		_theme_color("background_color", background_color)
+	)
+
+
+func _clear_transient_presentation() -> void:
+	_cell_bursts.clear()
+	_projectile_trails.clear()
+	_boss_spawn_effects.clear()
+	_boss_frame_elapsed = 0.0
+	_update_processing_state()
+
+
+func _is_pixel_base_active() -> bool:
+	return (
+		get_effective_map_render_mode() == &"hybrid"
+		and is_instance_valid(_pixel_renderer)
+		and _pixel_renderer.visible
+	)
+
+
+func _active_cell_size() -> Vector2:
+	if _is_pixel_base_active():
+		var layout: RefCounted = _presentation_controller.call(&"get_active_layout")
+		if layout != null:
+			return Vector2(layout.call(&"get_cell_size"))
+	return Vector2(cell_width, cell_height)
+
+
+func _active_draw_offset() -> Vector2:
+	if _is_pixel_base_active():
+		var layout: RefCounted = _presentation_controller.call(&"get_active_layout")
+		if layout != null:
+			return Vector2(layout.call(&"get_view_offset_pixels"))
+	return _boss_room_draw_offset
+
+
+func _is_player_actor(actor: Variant) -> bool:
+	return actor != null and is_instance_valid(actor) and actor.name == &"Player"
+
+
 # === Lifecycle Methods ===
 func _ready() -> void:
 	set_process(false)
 	_atmosphere_profile = BiomeCatalogScript.atmosphere_for_biome_index(
 		_biome_theme.get("index", 1)
 	)
+	_presentation_state.set(&"biome_theme", _biome_theme)
+	_presentation_state.set(&"atmosphere_profile", _atmosphere_profile)
+	_presentation_state.set(&"atmosphere_enabled", _atmosphere_enabled)
+	_presentation_state.set(&"reduced_vfx_enabled", _reduced_vfx_enabled)
+	_presentation_state.call(&"mark_environment_changed")
+	_initialize_pixel_renderer()
+	_commit_presentation_state()
 	_update_processing_state()
 
 
@@ -420,10 +597,12 @@ func _draw() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var playfield_rect: Rect2 = Rect2(Vector2(10, 10), playfield_size)
 
-	draw_rect(Rect2(Vector2.ZERO, viewport_size), _theme_color("outer_bg_tint", outer_bg_tint))
-	draw_rect(playfield_rect.grow(6), _theme_color("border_color", border_color))
-	draw_rect(playfield_rect.grow(2), _theme_color("border_frame_color", border_frame_color))
-	draw_rect(playfield_rect, _theme_color("background_color", background_color))
+	var pixel_base_active: bool = _is_pixel_base_active()
+	if not pixel_base_active:
+		draw_rect(Rect2(Vector2.ZERO, viewport_size), _theme_color("outer_bg_tint", outer_bg_tint))
+		draw_rect(playfield_rect.grow(6), _theme_color("border_color", border_color))
+		draw_rect(playfield_rect.grow(2), _theme_color("border_frame_color", border_frame_color))
+		draw_rect(playfield_rect, _theme_color("background_color", background_color))
 
 	var label_color: Color = _theme_color("label_color", Color(0.6, 0.843137, 0.898039))
 	var biome_name: String = str(_biome_theme.get("name", "The Tower")).to_upper()
@@ -439,27 +618,28 @@ func _draw() -> void:
 		label_color
 	)
 
-	for y: int in range(_map_data.size()):
-		for x: int in range(_map_data[y].size()):
-			var cell: Vector2i = Vector2i(x, y)
-			if not _explored_cells.has(cell):
-				continue
-			var point: Vector2 = _cell_draw_position(cell, ascent)
-			if not _is_inside_playfield(point, playfield_rect):
-				continue
-			var tile_type: int = _map_data[y][x]
-			var is_visible: bool = _visible_cells.has(cell)
-			var is_revealed_secret_wall: bool = (
-				_revealed_secret_walls.has(cell) and _secret_walls.has(cell)
-			)
-			_draw_tile_backing(cell, tile_type, is_visible, is_revealed_secret_wall)
-			if not _boss_occupied_cells.has(cell):
-				_draw_glyph(
-					draw_font,
-					point,
-					_tile_glyph(cell, tile_type, is_revealed_secret_wall),
-					_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
+	if not pixel_base_active:
+		for y: int in range(_map_data.size()):
+			for x: int in range(_map_data[y].size()):
+				var cell: Vector2i = Vector2i(x, y)
+				if not _explored_cells.has(cell):
+					continue
+				var point: Vector2 = _cell_draw_position(cell, ascent)
+				if not _is_inside_playfield(point, playfield_rect):
+					continue
+				var tile_type: int = _map_data[y][x]
+				var is_visible: bool = _visible_cells.has(cell)
+				var is_revealed_secret_wall: bool = (
+					_revealed_secret_walls.has(cell) and _secret_walls.has(cell)
 				)
+				_draw_tile_backing(cell, tile_type, is_visible, is_revealed_secret_wall)
+				if not _boss_occupied_cells.has(cell):
+					_draw_glyph(
+						draw_font,
+						point,
+						_tile_glyph(cell, tile_type, is_revealed_secret_wall),
+						_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
+					)
 
 	_draw_boss_room_tint(playfield_rect)
 	_draw_boss_arena_motif(draw_font, ascent, playfield_rect)
@@ -554,6 +734,8 @@ func _draw() -> void:
 		if actor == null or not actor.is_alive():
 			continue
 		if _boss_visuals.has(actor.grid_position):
+			continue
+		if pixel_base_active and _is_player_actor(actor):
 			continue
 		if not _visible_cells.has(actor.grid_position):
 			continue
@@ -1157,18 +1339,22 @@ func _cell_hash(cell: Vector2i, salt: int) -> int:
 
 
 func _inset_cell_rect(cell: Vector2i, inset: float) -> Rect2:
+	var active_cell_size: Vector2 = _active_cell_size()
 	var position: Vector2 = (
-		margin + _boss_room_draw_offset + Vector2(cell.x * cell_width, cell.y * cell_height)
+		margin
+		+ _active_draw_offset()
+		+ Vector2(cell.x * active_cell_size.x, cell.y * active_cell_size.y)
 	)
 	var inset_vector: Vector2 = Vector2(inset, inset)
-	return Rect2(position + inset_vector, Vector2(cell_width, cell_height) - inset_vector * 2.0)
+	return Rect2(position + inset_vector, active_cell_size - inset_vector * 2.0)
 
 
 func _cell_draw_position(cell: Vector2i, ascent: float) -> Vector2:
+	var active_cell_size: Vector2 = _active_cell_size()
 	return (
 		margin
-		+ _boss_room_draw_offset
-		+ Vector2(cell.x * cell_width, cell.y * cell_height + ascent)
+		+ _active_draw_offset()
+		+ Vector2(cell.x * active_cell_size.x, cell.y * active_cell_size.y + ascent)
 	)
 
 
@@ -1206,7 +1392,7 @@ func _update_boss_room_draw_offset() -> void:
 
 func _is_inside_playfield(point: Vector2, playfield_rect: Rect2) -> bool:
 	var glyph_top_left: Vector2 = point - Vector2(0, font_size)
-	var glyph_rect: Rect2 = Rect2(glyph_top_left, Vector2(cell_width, cell_height))
+	var glyph_rect: Rect2 = Rect2(glyph_top_left, _active_cell_size())
 	return playfield_rect.encloses(glyph_rect)
 
 
@@ -1231,6 +1417,8 @@ func _sync_actor_move_connections() -> void:
 
 func _on_actor_moved(_new_position: Vector2i) -> void:
 	_rebuild_actor_cell_cache()
+	_presentation_state.call(&"capture_actors", _actors)
+	_commit_presentation_state()
 	queue_redraw()
 
 

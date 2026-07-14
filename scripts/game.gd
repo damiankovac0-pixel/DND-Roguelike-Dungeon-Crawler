@@ -26,6 +26,11 @@ const LATE_TRAP_MAX_DC_BONUS: int = 4
 const PAUSE_VOLUME_SLIDER_PATH: String = "MasterVolumeRow/MasterVolumeSlider"
 const PAUSE_VOLUME_VALUE_LABEL_PATH: String = "MasterVolumeRow/MasterVolumeValueLabel"
 const PAUSE_REDUCED_VFX_BUTTON_PATH: String = "ReducedVfxButton"
+const PAUSE_MAP_RENDERER_OPTION_PATH: String = "MapRendererRow/MapRendererOption"
+const MAP_RENDER_MODE_VALUES: Array[StringName] = [&"ascii", &"hybrid", &"pixel"]
+const MAP_RENDER_MODE_LABELS: Array[String] = [
+	"ASCII", "Hybrid (Pixel Terrain)", "Full Pixel Map (Coming Later)"
+]
 const BOSS_FLOORS: Dictionary = {
 	5: &"observer",
 	10: &"seraphine",
@@ -238,6 +243,9 @@ var _hunter_focus_primed: bool = false
 @onready var debug_descend_button: Button = $UI/PausePanel/Margin/VBox/DebugDescendButton
 @onready var sensory_feedback: Control = $UI/SensoryFeedback
 @onready var pause_menu_box: VBoxContainer = $UI/PausePanel/Margin/VBox
+@onready var pause_map_renderer_option: OptionButton = pause_menu_box.get_node(
+	PAUSE_MAP_RENDERER_OPTION_PATH
+)
 @onready var pause_audio_header_label: Label = pause_menu_box.get_node("AudioHeaderLabel")
 @onready var pause_audio_enabled_button: CheckButton = pause_menu_box.get_node("AudioEnabledButton")
 @onready var pause_master_volume_slider: HSlider = pause_menu_box.get_node(PAUSE_VOLUME_SLIDER_PATH)
@@ -286,6 +294,8 @@ func _ready() -> void:
 	class_ability_panel.connect("ability_requested", _on_class_ability_requested)
 	class_ability_panel.visibility_changed.connect(_refresh_overlay_visibility)
 	consumable_panel.visibility_changed.connect(_refresh_overlay_visibility)
+	_initialize_pause_map_renderer_control()
+	pause_map_renderer_option.item_selected.connect(_on_map_renderer_option_selected)
 	# Audio controls
 	pause_audio_enabled_button.toggled.connect(_on_audio_enabled_toggled)
 	pause_master_volume_slider.value_changed.connect(_on_volume_slider_changed)
@@ -484,6 +494,44 @@ func _close_pause_menu() -> void:
 	get_tree().paused = false
 
 
+func _initialize_pause_map_renderer_control() -> void:
+	pause_map_renderer_option.clear()
+	for index: int in range(MAP_RENDER_MODE_VALUES.size()):
+		var mode: StringName = MAP_RENDER_MODE_VALUES[index]
+		pause_map_renderer_option.add_item(MAP_RENDER_MODE_LABELS[index], index)
+		pause_map_renderer_option.set_item_metadata(index, mode)
+		var available: bool = mode == &"ascii"
+		if map_view != null and map_view.has_method(&"is_map_render_mode_available"):
+			available = bool(map_view.call(&"is_map_render_mode_available", mode))
+		pause_map_renderer_option.set_item_disabled(index, not available)
+	_sync_pause_map_renderer_control()
+
+
+func _sync_pause_map_renderer_control() -> void:
+	var effective_mode: StringName = &"ascii"
+	if map_view != null and map_view.has_method(&"get_effective_map_render_mode"):
+		effective_mode = StringName(map_view.call(&"get_effective_map_render_mode"))
+	for index: int in range(pause_map_renderer_option.item_count):
+		var mode: StringName = StringName(pause_map_renderer_option.get_item_metadata(index))
+		var available: bool = mode == &"ascii"
+		if map_view != null and map_view.has_method(&"is_map_render_mode_available"):
+			available = bool(map_view.call(&"is_map_render_mode_available", mode))
+		pause_map_renderer_option.set_item_disabled(index, not available)
+		if mode == effective_mode:
+			pause_map_renderer_option.select(index)
+
+
+func _on_map_renderer_option_selected(index: int) -> void:
+	if index < 0 or index >= pause_map_renderer_option.item_count:
+		return
+	var mode: StringName = StringName(pause_map_renderer_option.get_item_metadata(index))
+	if is_instance_valid(sensory_feedback) and sensory_feedback.has_method(&"set_map_render_mode"):
+		sensory_feedback.call(&"set_map_render_mode", mode, true)
+	else:
+		map_view.call(&"set_map_render_mode", mode)
+	_sync_pause_map_renderer_control()
+
+
 ## Synchronises the pause-menu audio controls with the current SensoryFeedback
 ## state.  Safe to call when sensory_feedback is null.
 func _sync_map_render_mode() -> void:
@@ -510,6 +558,7 @@ func _sync_map_reduced_vfx() -> void:
 func _refresh_audio_controls() -> void:
 	_sync_map_reduced_vfx()
 	_sync_map_render_mode()
+	_sync_pause_map_renderer_control()
 	if not is_instance_valid(sensory_feedback):
 		return
 	var sf: Object = sensory_feedback
@@ -557,6 +606,7 @@ func _on_map_render_mode_changed(mode: StringName) -> void:
 	if map_view == null or not map_view.has_method(&"set_map_render_mode"):
 		return
 	map_view.call(&"set_map_render_mode", mode)
+	_sync_pause_map_renderer_control()
 
 
 func _on_pause_resume_pressed() -> void:

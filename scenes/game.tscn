@@ -657,6 +657,25 @@ theme_override_colors/font_color = Color(0.55, 0.5, 0.65, 1)
 text = "The dungeon waits."
 horizontal_alignment = 1
 
+[node name="GraphicsLabel" type="Label" parent="UI/PausePanel/Margin/VBox"]
+layout_mode = 2
+text = "GRAPHICS"
+horizontal_alignment = 1
+
+[node name="MapRendererRow" type="HBoxContainer" parent="UI/PausePanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="MapRendererLabel" type="Label" parent="UI/PausePanel/Margin/VBox/MapRendererRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Map Style"
+
+[node name="MapRendererOption" type="OptionButton" parent="UI/PausePanel/Margin/VBox/MapRendererRow"]
+custom_minimum_size = Vector2(190, 0)
+layout_mode = 2
+tooltip_text = "Choose ASCII or the pixel-terrain Hybrid prototype."
+
 [node name="AudioHeaderLabel" type="Label" parent="UI/PausePanel/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.56, 0.50, 0.74, 1)
@@ -664,6 +683,7 @@ theme_override_constants/margin_top = 6
 text = "AUDIO"
 
 [node name="AudioEnabledButton" type="CheckButton" parent="UI/PausePanel/Margin/VBox"]
+
 layout_mode = 2
 text = "Sound Enabled"
 button_pressed = true

@@ -152,7 +152,7 @@ func _check_controller_hybrid_request(controller: RefCounted) -> void:
 		_fail("Unavailable Hybrid request must resolve to effective ASCII")
 		return
 	if bool(controller.call(&"is_requested_mode_available")):
-		_fail("Hybrid must remain unavailable during Phase 1")
+		_fail("Hybrid must remain unavailable without a registered backend")
 
 
 func _check_controller_pixel_and_invalid_requests(controller: RefCounted) -> void:
@@ -278,7 +278,7 @@ func _check_map_view_compatibility() -> void:
 		_fail("MapView facade must fall back from Pixel to ASCII during Phase 1")
 		return
 	map_view.free()
-	print("  MapView preserves all legacy calls and resolves future modes to ASCII")
+	print("  MapView preserves legacy calls and safely resolves unavailable backends")
 
 
 func _check_game_mode_sync() -> void:
@@ -334,8 +334,12 @@ func _check_game_initial_mode(game: Node) -> bool:
 	if StringName(map_view.call(&"get_requested_map_render_mode")) != &"hybrid":
 		_fail("Game did not sync stored Hybrid request into MapView")
 		return false
-	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"ascii":
-		_fail("Game must remain on effective ASCII after syncing Hybrid")
+	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"hybrid":
+		_fail("Game should activate the registered Hybrid prototype")
+		return false
+	if not _check_game_graphics_control(game):
+		return false
+	if not _check_game_hybrid_output(map_view):
 		return false
 	return true
 
@@ -348,7 +352,57 @@ func _check_game_runtime_mode(game: Node) -> bool:
 		_fail("Runtime renderer preference signal did not reach MapView")
 		return false
 	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"ascii":
-		_fail("Runtime Pixel request must remain effective ASCII in Phase 1")
+		_fail("Pixel must remain unavailable until its tactical overlays reach parity")
+		return false
+	var option: OptionButton = game.get("pause_map_renderer_option")
+	option.item_selected.emit(1)
+	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"hybrid":
+		_fail("Pause graphics control did not reactivate Hybrid")
+		return false
+	var saved: ConfigFile = ConfigFile.new()
+	if saved.load(_settings_path) != OK:
+		_fail("Pause graphics control did not persist its selection")
+		return false
+	if StringName(saved.get_value("graphics", "map_render_mode", &"ascii")) != &"hybrid":
+		_fail("Pause graphics control persisted the wrong renderer mode")
+		return false
+	return true
+
+
+func _check_game_graphics_control(game: Node) -> bool:
+	var option: OptionButton = game.get("pause_map_renderer_option")
+	if option == null or option.item_count != 3:
+		_fail("Pause menu must expose the three canonical map mode labels")
+		return false
+	if option.selected != 1 or option.is_item_disabled(1):
+		_fail(
+			(
+				"Hybrid graphics option mismatch: selected=%d disabled=%s available=%s"
+				% [
+					option.selected,
+					option.is_item_disabled(1),
+					game.get("map_view").call(&"is_map_render_mode_available", &"hybrid"),
+				]
+			)
+		)
+		return false
+	if not option.is_item_disabled(2):
+		_fail("Unavailable Full Pixel Map option should remain disabled")
+		return false
+	return true
+
+
+func _check_game_hybrid_output(map_view: Node) -> bool:
+	var pixel_renderer: Node = map_view.get_node_or_null("PixelMapRenderer")
+	if pixel_renderer == null or not pixel_renderer.visible:
+		_fail("Hybrid game startup did not expose the pixel backend")
+		return false
+	var debug: Dictionary = pixel_renderer.call(&"get_debug_snapshot")
+	if int(debug.get("ground_cell_count", 0)) <= 0:
+		_fail("Hybrid game startup did not render explored terrain")
+		return false
+	if not bool(debug.get("player_visible", false)):
+		_fail("Hybrid game startup did not render the live player snapshot")
 		return false
 	return true
 
