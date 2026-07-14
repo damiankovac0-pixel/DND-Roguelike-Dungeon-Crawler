@@ -9,6 +9,14 @@ extends Node2D
 const TILE_SOURCE_ID: int = 0
 const FLOOR_TILE_TYPE: int = 0
 const ACTOR_VIEW_SCENE: PackedScene = preload("res://scenes/rendering/pixel_actor_view.tscn")
+const SHAKE_PATTERN: Array[Vector2i] = [
+	Vector2i(-1, 0),
+	Vector2i(1, -1),
+	Vector2i(0, 1),
+	Vector2i(-1, -1),
+	Vector2i(1, 0),
+	Vector2i(0, -1),
+]
 
 # === Exports ===
 @export var catalog: Resource
@@ -30,12 +38,18 @@ var _transient_reset_count: int = 0
 var _actor_views: Dictionary = {}
 var _retired_actor_ids: Dictionary = {}
 var _actor_event_count: int = 0
+var _pending_boss_intro: Dictionary = {}
 var _playfield_rect: Rect2 = Rect2(Vector2(10, 10), Vector2(680, 590))
 var _outer_background_color: Color = Color(0.0, 0.02, 0.035)
 var _border_color: Color = Color(0.047, 0.059, 0.082)
 var _border_frame_color: Color = Color(0.282, 0.259, 0.392)
 var _background_color: Color = Color(0.025, 0.032, 0.047)
 
+var _world_offset: Vector2 = Vector2.ZERO
+var _shake_elapsed: float = 0.0
+var _shake_duration: float = 0.0
+var _shake_strength: float = 0.0
+var _shake_event_count: int = 0
 # === Onready ===
 @onready var ground_layer: TileMapLayer = $GroundLayer
 @onready var structure_layer: TileMapLayer = $StructureLayer
@@ -43,12 +57,26 @@ var _background_color: Color = Color(0.025, 0.032, 0.047)
 @onready var actor_layer: Node2D = $ActorLayer
 @onready var fog_layer: PixelFogLayer = $FogLayer
 @onready var tactical_layer: PixelTacticalLayer = $TacticalLayer
+@onready var lighting_layer: PixelLightingLayer = $LightingLayer
+@onready var effect_pool: PixelEffectPool = $EffectPool
 
 
 # === Lifecycle Methods ===
 func _ready() -> void:
 	visible = false
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	_shake_elapsed += delta
+	if _shake_elapsed >= _shake_duration:
+		_clear_map_shake()
+		return
+	var decay: float = 1.0 - (_shake_elapsed / maxf(_shake_duration, 0.001))
+	var frame_index: int = int(floor(_shake_elapsed * 40.0)) % SHAKE_PATTERN.size()
+	_world_offset = (Vector2(SHAKE_PATTERN[frame_index]) * _shake_strength * decay).round()
+	_update_layer_positions()
 
 
 func _draw() -> void:
@@ -88,12 +116,17 @@ func initialize_renderer(layout: RefCounted) -> Error:
 	fog_layer.configure(_layout)
 	var layer_error: Error = object_layer.configure(_layout, object_catalog)
 	if layer_error == OK:
+		layer_error = lighting_layer.configure(_layout)
+	if layer_error == OK:
 		layer_error = tactical_layer.configure(_layout)
+	if layer_error == OK:
+		layer_error = effect_pool.configure(_layout)
 	if layer_error != OK:
 		return layer_error
 	tactical_layer.set_render_profile(_render_profile)
 	tactical_layer.set_reduced_vfx(_reduced_vfx_enabled)
-	_available = actor_layer != null and ACTOR_VIEW_SCENE != null
+	effect_pool.set_reduced_vfx(_reduced_vfx_enabled)
+	_available = actor_layer != null and ACTOR_VIEW_SCENE != null and effect_pool != null
 	return OK if _available else ERR_FILE_NOT_FOUND
 
 
@@ -102,6 +135,8 @@ func is_renderer_available() -> bool:
 
 
 func set_renderer_active(active: bool) -> void:
+	if not active:
+		_clear_map_shake()
 	process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
 
 
@@ -109,6 +144,8 @@ func set_render_profile(profile: StringName) -> void:
 	_render_profile = profile
 	if is_instance_valid(tactical_layer):
 		tactical_layer.set_render_profile(profile)
+	if profile != &"pixel":
+		_clear_map_shake()
 
 
 func present(state: RefCounted) -> void:
@@ -137,9 +174,12 @@ func present(state: RefCounted) -> void:
 	):
 		var animate_actor_moves: bool = not view_changed and actor_revision != _last_actor_revision
 		_sync_actor_views(animate_actor_moves)
+	_apply_pending_boss_intro()
 	object_layer.present(state, view_changed)
 	fog_layer.present(state, view_changed)
 	tactical_layer.present(state, view_changed)
+	lighting_layer.present(state, view_changed)
+	effect_pool.present(state)
 	if environment_revision != _last_environment_revision:
 		queue_redraw()
 	_last_map_revision = map_revision
@@ -155,6 +195,9 @@ func set_reduced_vfx(enabled: bool) -> void:
 		if view_value is PixelActorView:
 			(view_value as PixelActorView).set_reduced_vfx(enabled)
 	tactical_layer.set_reduced_vfx(enabled)
+	effect_pool.set_reduced_vfx(enabled)
+	if enabled:
+		_clear_map_shake()
 
 
 func reset_transients() -> void:
@@ -167,29 +210,39 @@ func reset_transients() -> void:
 			_remove_actor_view(actor_id)
 
 	tactical_layer.reset_transients()
+	effect_pool.reset_transients()
+	_pending_boss_intro.clear()
+	_clear_map_shake()
 
 
 func shutdown_renderer() -> void:
 	ground_layer.clear()
 	structure_layer.clear()
 	object_layer.clear()
+	lighting_layer.clear()
 	_clear_actor_views()
 	_retired_actor_ids.clear()
+	_pending_boss_intro.clear()
 	tactical_layer.clear()
+	effect_pool.clear()
 	visible = false
 	_state = null
 
 
 func play_event(event: Dictionary) -> void:
-	if event.get("type", &"") != &"actor_animation":
-		tactical_layer.play_event(event)
+	var event_type: StringName = StringName(event.get("type", &""))
+	if event_type == &"actor_animation":
+		_play_actor_event(event)
 		return
-	var view: PixelActorView = _actor_view_for_event(event)
-	if view == null:
-		return
-	var animation: StringName = event.get("animation", &"idle")
-	view.play_cosmetic(animation)
-	_actor_event_count += 1
+	tactical_layer.play_event(event)
+	effect_pool.play_event(event)
+	if event_type == &"boss_spawn_intro":
+		var boss_view: PixelActorView = _actor_view_for_event(event)
+		if boss_view != null:
+			boss_view.play_spawn_intro()
+		else:
+			_pending_boss_intro = event.duplicate(true)
+		_start_map_shake(2.0, 0.32)
 
 
 func get_debug_snapshot() -> Dictionary:
@@ -200,6 +253,8 @@ func get_debug_snapshot() -> Dictionary:
 	var player_debug: Dictionary = _player_debug_snapshot(actor_debug)
 	var object_debug: Dictionary = object_layer.get_debug_snapshot()
 	var tactical_debug: Dictionary = tactical_layer.get_debug_snapshot()
+	var lighting_debug: Dictionary = lighting_layer.get_debug_snapshot()
+	var effect_debug: Dictionary = effect_pool.get_debug_snapshot()
 	return {
 		"available": is_renderer_available(),
 		"profile": _render_profile,
@@ -218,9 +273,15 @@ func get_debug_snapshot() -> Dictionary:
 		"boss_actor_count": _boss_actor_count(actor_debug),
 		"retired_actor_count": _retired_actor_ids.size(),
 		"actor_event_count": _actor_event_count,
+		"pending_boss_intro_count": 0 if _pending_boss_intro.is_empty() else 1,
 		"actor_views": actor_debug,
 		"objects": object_debug,
 		"tactical": tactical_debug,
+		"lighting": lighting_debug,
+		"effects": effect_debug,
+		"shake_active": _shake_duration > 0.0,
+		"shake_offset": _world_offset,
+		"shake_event_count": _shake_event_count,
 		"reduced_vfx": _reduced_vfx_enabled,
 		"transient_reset_count": _transient_reset_count,
 	}
@@ -244,10 +305,18 @@ func _validate_catalogs() -> Error:
 
 
 func _update_layer_positions() -> void:
-	var layer_position: Vector2 = _layout.call(&"get_origin")
-	layer_position += _layout.call(&"get_view_offset_pixels")
-	ground_layer.position = layer_position.round()
-	structure_layer.position = layer_position.round()
+	if _layout == null:
+		return
+	var tile_layer_position: Vector2 = _layout.call(&"get_origin")
+	tile_layer_position += _layout.call(&"get_view_offset_pixels")
+	ground_layer.position = (tile_layer_position + _world_offset).round()
+	structure_layer.position = (tile_layer_position + _world_offset).round()
+	object_layer.position = _world_offset
+	lighting_layer.position = _world_offset
+	actor_layer.position = _world_offset
+	fog_layer.position = _world_offset
+	tactical_layer.position = _world_offset
+	effect_pool.position = _world_offset
 
 
 func _rebuild_tiles() -> void:
@@ -391,18 +460,75 @@ func _vector2i_array(value: Variant) -> Array[Vector2i]:
 	return cells
 
 
+func _play_actor_event(event: Dictionary) -> void:
+	var view: PixelActorView = _actor_view_for_event(event)
+	if view == null:
+		return
+	var animation: StringName = event.get("animation", &"idle")
+	view.play_cosmetic(animation)
+	var actor_debug: Dictionary = view.get_debug_snapshot()
+	var effect_event: Dictionary = event.duplicate(true)
+	effect_event["color"] = actor_debug.get("tint", Color.WHITE)
+	effect_event["kind"] = actor_debug.get("kind", &"enemy")
+	effect_event["is_boss"] = bool(actor_debug.get("is_boss", false))
+	effect_event["occupied_cells"] = actor_debug.get("visible_footprint_cells", [])
+	effect_pool.play_event(effect_event)
+	if animation == &"hurt" and actor_debug.get("kind", &"") == &"player":
+		_start_map_shake(2.0, 0.14)
+	elif animation == &"death" and bool(actor_debug.get("is_boss", false)):
+		_start_map_shake(3.0, 0.42)
+	_actor_event_count += 1
+
+
+func _apply_pending_boss_intro() -> void:
+	if _pending_boss_intro.is_empty():
+		return
+	var boss_view: PixelActorView = _actor_view_for_event(_pending_boss_intro)
+	if boss_view == null:
+		return
+	boss_view.play_spawn_intro()
+	_pending_boss_intro.clear()
+
+
+func _start_map_shake(strength: float, duration: float) -> void:
+	if _render_profile != &"pixel" or _reduced_vfx_enabled:
+		return
+	_shake_strength = maxf(_shake_strength, strength)
+	_shake_duration = maxf(_shake_duration, duration)
+	_shake_elapsed = 0.0
+	_shake_event_count += 1
+	set_process(true)
+
+
+func _clear_map_shake() -> void:
+	_shake_elapsed = 0.0
+	_shake_duration = 0.0
+	_shake_strength = 0.0
+	_world_offset = Vector2.ZERO
+	set_process(false)
+	_update_layer_positions()
+
+
 func _actor_view_for_event(event: Dictionary) -> PixelActorView:
 	var actor_id: int = int(event.get("actor_id", 0))
 	var direct_view: PixelActorView = _actor_views.get(actor_id)
 	if direct_view != null:
 		return direct_view
-	var event_cell: Vector2i = event.get("cell", Vector2i(-9999, -9999))
+	var event_cell_value: Variant = event.get("cell")
+	var payload_value: Variant = event.get("payload")
+	if not (event_cell_value is Vector2i) and payload_value is Dictionary:
+		event_cell_value = payload_value.get("cell")
+	if not (event_cell_value is Vector2i):
+		return null
+	var event_cell: Vector2i = event_cell_value
 	for view_value: Variant in _actor_views.values():
 		if view_value is not PixelActorView:
 			continue
 		var view: PixelActorView = view_value
 		var debug: Dictionary = view.get_debug_snapshot()
 		if debug.get("cell", Vector2i(-9998, -9998)) == event_cell:
+			return view
+		if _vector2i_array(debug.get("footprint_cells", [])).has(event_cell):
 			return view
 	return null
 

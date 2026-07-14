@@ -6,6 +6,8 @@
 texture_filter = 1
 script = ExtResource("1_view")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="VisualRoot"]
 texture_filter = 1
 centered = true
