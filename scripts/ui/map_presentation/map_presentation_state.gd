@@ -5,6 +5,22 @@ extends RefCounted
 ## Fields contain already-computed game cells and semantic presentation data.
 ## Renderers must not use this object to mutate gameplay state.
 
+# === Constants ===
+const ITEM_VISUAL_IDS: Array[StringName] = [
+	&"item/consumable",
+	&"item/weapon",
+	&"item/armor",
+	&"item/accessory",
+]
+const TRAP_VISUAL_IDS: Array[StringName] = [
+	&"trap/damage",
+	&"trap/poison",
+	&"trap/teleport",
+	&"trap/alarm",
+	&"trap/stun",
+	&"trap/ambush",
+]
+
 # === Revision Counters ===
 var revision: int = 0
 var map_revision: int = 0
@@ -79,6 +95,94 @@ func capture_actors(actor_nodes: Array) -> void:
 			focus_cell = snapshot["cell"]
 	_prune_actor_history(active_actor_ids)
 	actor_revision += 1
+	_touch()
+
+
+func capture_items(item_nodes: Dictionary) -> void:
+	items.clear()
+	for cell_value: Variant in item_nodes:
+		if not (cell_value is Vector2i):
+			continue
+		var item_value: Variant = item_nodes[cell_value]
+		if not (item_value is Resource):
+			continue
+		var item: Resource = item_value
+		var kind_index: int = int(item.get("kind"))
+		var visual_id: StringName = &"item/generic"
+		if kind_index >= 0 and kind_index < ITEM_VISUAL_IDS.size():
+			visual_id = ITEM_VISUAL_IDS[kind_index]
+		var color_value: Variant = item.get("color")
+		items[cell_value] = {
+			"visual_id": visual_id,
+			"kind": kind_index,
+			"rarity": int(item.get("rarity")),
+			"color": color_value if color_value is Color else Color.WHITE,
+		}
+	overlay_revision += 1
+	_touch()
+
+
+func capture_containers(container_data: Dictionary) -> void:
+	containers.clear()
+	for cell_value: Variant in container_data:
+		if not (cell_value is Vector2i):
+			continue
+		var payload_value: Variant = container_data[cell_value]
+		if not (payload_value is Dictionary):
+			continue
+		var payload: Dictionary = payload_value
+		var container_type: StringName = StringName(payload.get("type", &""))
+		var visual_id: StringName = &"prop/generic"
+		if container_type == &"chest":
+			visual_id = (
+				&"prop/boss_chest" if bool(payload.get("boss_reward", false)) else &"prop/chest"
+			)
+		elif container_type == &"clutter":
+			visual_id = &"prop/vase" if str(payload.get("glyph", "")) == "v" else &"prop/box"
+		var color_value: Variant = payload.get("color", Color.WHITE)
+		containers[cell_value] = {
+			"visual_id": visual_id,
+			"type": container_type,
+			"rarity": int(payload.get("rarity", 0)),
+			"marked": bool(payload.get("marked", false)),
+			"color": color_value if color_value is Color else Color.WHITE,
+		}
+	overlay_revision += 1
+	_touch()
+
+
+func capture_traps(traps: Dictionary, revealed: Dictionary, triggered: Dictionary) -> void:
+	trap_data.clear()
+	for cell_value: Variant in traps:
+		if not (cell_value is Vector2i):
+			continue
+		var trap_value: Variant = traps[cell_value]
+		if not (trap_value is Resource):
+			continue
+		var trap: Resource = trap_value
+		var effect_index: int = int(trap.get("effect"))
+		var visual_id: StringName = &"trap/generic"
+		if effect_index >= 0 and effect_index < TRAP_VISUAL_IDS.size():
+			visual_id = TRAP_VISUAL_IDS[effect_index]
+		var color_value: Variant = trap.get("color")
+		trap_data[cell_value] = {
+			"visual_id": visual_id,
+			"effect": effect_index,
+			"revealed": revealed.has(cell_value),
+			"triggered": triggered.has(cell_value),
+			"color": color_value if color_value is Color else Color.WHITE,
+		}
+	revealed_traps = revealed.duplicate()
+	triggered_traps = triggered.duplicate()
+	overlay_revision += 1
+	_touch()
+
+
+func capture_secret_walls(walls: Dictionary, revealed: Dictionary, hint_color: Color) -> void:
+	secret_walls = walls.duplicate()
+	revealed_secret_walls = revealed.duplicate()
+	secret_wall_hint_color = hint_color
+	overlay_revision += 1
 	_touch()
 
 

@@ -166,16 +166,14 @@ func set_actors(actors: Array) -> void:
 
 func set_items(items: Dictionary) -> void:
 	_items = items
-	_presentation_state.set(&"items", _items)
-	_presentation_state.call(&"mark_overlay_changed")
+	_presentation_state.call(&"capture_items", _items)
 	_commit_presentation_state()
 	queue_redraw()
 
 
 func set_containers(containers: Dictionary) -> void:
 	_containers = containers
-	_presentation_state.set(&"containers", _containers)
-	_presentation_state.call(&"mark_overlay_changed")
+	_presentation_state.call(&"capture_containers", _containers)
 	_commit_presentation_state()
 	queue_redraw()
 
@@ -210,10 +208,15 @@ func set_traps(
 	_trap_data = trap_data
 	_revealed_traps = revealed_traps
 	_triggered_traps = triggered_traps
-	_presentation_state.set(&"trap_data", _trap_data)
-	_presentation_state.set(&"revealed_traps", _revealed_traps)
-	_presentation_state.set(&"triggered_traps", _triggered_traps)
-	_presentation_state.call(&"mark_overlay_changed")
+	(
+		_presentation_state
+		. call(
+			&"capture_traps",
+			_trap_data,
+			_revealed_traps,
+			_triggered_traps,
+		)
+	)
 	_commit_presentation_state()
 	queue_redraw()
 
@@ -224,10 +227,15 @@ func set_secret_walls(
 	_secret_walls = secret_walls
 	_revealed_secret_walls = revealed_secret_walls
 	_secret_wall_hint_color = hint_color
-	_presentation_state.set(&"secret_walls", _secret_walls)
-	_presentation_state.set(&"revealed_secret_walls", _revealed_secret_walls)
-	_presentation_state.set(&"secret_wall_hint_color", _secret_wall_hint_color)
-	_presentation_state.call(&"mark_overlay_changed")
+	(
+		_presentation_state
+		. call(
+			&"capture_secret_walls",
+			_secret_walls,
+			_revealed_secret_walls,
+			_secret_wall_hint_color,
+		)
+	)
 	_commit_presentation_state()
 	queue_redraw()
 
@@ -265,7 +273,15 @@ func play_boss_spawn_intro(anchor_cell: Vector2i, visual: Dictionary) -> void:
 	var effect: Dictionary = visual.duplicate(true)
 	effect["age"] = 0.0
 	effect["duration"] = BOSS_SPAWN_INTRO_SECONDS
+	effect["cell"] = anchor_cell
 	_boss_spawn_effects[anchor_cell] = effect
+	(
+		_presentation_controller
+		. call(
+			&"play_event",
+			{"type": &"boss_spawn_intro", "payload": effect.duplicate(true)},
+		)
+	)
 	_update_processing_state()
 	queue_redraw()
 
@@ -276,6 +292,7 @@ func clear_boss_visuals() -> void:
 	_rebuild_actor_cell_cache()
 	_boss_spawn_effects.clear()
 	_boss_frame_elapsed = 0.0
+	_presentation_controller.call(&"play_event", {"type": &"clear_boss_spawn_effects"})
 	_update_processing_state()
 	_presentation_state.set(&"boss_visuals", _boss_visuals)
 	_presentation_state.call(&"mark_overlay_changed")
@@ -339,10 +356,18 @@ func play_cell_burst(cell: Vector2i, color: Color, glyph: String = "✦") -> voi
 		"age": 0.0,
 		"duration": CELL_BURST_DURATION,
 	}
+	var renderer_burst: Dictionary = burst.duplicate(true)
 	if _reduced_vfx_enabled:
 		_apply_reduced_vfx_to_burst(burst)
 	_cell_bursts.append(burst)
-	set_process(true)
+	(
+		_presentation_controller
+		. call(
+			&"play_event",
+			{"type": &"cell_burst", "payload": renderer_burst},
+		)
+	)
+	_update_processing_state()
 	queue_redraw()
 
 
@@ -357,6 +382,7 @@ func set_reduced_vfx_enabled(enabled: bool) -> void:
 	if _reduced_vfx_enabled:
 		_apply_reduced_vfx_to_active_effects()
 	_presentation_state.set(&"reduced_vfx_enabled", _reduced_vfx_enabled)
+	_presentation_controller.call(&"set_reduced_vfx", _reduced_vfx_enabled)
 	_presentation_state.call(&"mark_environment_changed")
 	_commit_presentation_state()
 	queue_redraw()
@@ -411,9 +437,17 @@ func play_projectile_trail(cells: Array[Vector2i], payload: Dictionary = {}) -> 
 		"rarity_shimmer_intensity": float(payload.get("rarity_shimmer_intensity", 0.0)),
 		"rarity_shimmer_lift": float(payload.get("rarity_shimmer_lift", 0.0)),
 	}
+	var renderer_trail: Dictionary = trail.duplicate(true)
 	if _reduced_vfx_enabled:
 		_apply_reduced_vfx_to_trail(trail)
 	_projectile_trails.append(trail)
+	(
+		_presentation_controller
+		. call(
+			&"play_event",
+			{"type": &"projectile_trail", "payload": renderer_trail},
+		)
+	)
 	_update_processing_state()
 	queue_redraw()
 
@@ -424,6 +458,7 @@ func has_active_projectile_trails() -> bool:
 
 func clear_projectile_trails() -> void:
 	_projectile_trails.clear()
+	_presentation_controller.call(&"play_event", {"type": &"clear_projectile_trails"})
 	_update_processing_state()
 	queue_redraw()
 
@@ -450,6 +485,9 @@ func get_atmosphere_profile() -> Dictionary:
 
 
 func _update_processing_state() -> void:
+	if _is_pixel_base_active():
+		set_process(false)
+		return
 	set_process(
 		(
 			not _cell_bursts.is_empty()
@@ -491,12 +529,22 @@ func _initialize_pixel_renderer() -> void:
 		_pixel_renderer.queue_free()
 		_pixel_renderer = null
 		return
-	var registered: bool = bool(
+	var hybrid_registered: bool = bool(
 		_presentation_controller.call(
 			&"register_renderer", &"hybrid", _pixel_renderer, _pixel_layout
 		)
 	)
-	if not registered:
+	var pixel_registered: bool = (
+		hybrid_registered
+		and bool(
+			_presentation_controller.call(
+				&"register_renderer", &"pixel", _pixel_renderer, _pixel_layout
+			)
+		)
+	)
+	if not hybrid_registered or not pixel_registered:
+		_presentation_controller.call(&"unregister_renderer", &"hybrid")
+		_presentation_controller.call(&"unregister_renderer", &"pixel")
 		_pixel_renderer.queue_free()
 		_pixel_renderer = null
 
@@ -523,11 +571,16 @@ func _clear_transient_presentation() -> void:
 
 
 func _is_pixel_base_active() -> bool:
+	var effective_mode: StringName = get_effective_map_render_mode()
 	return (
-		get_effective_map_render_mode() == &"hybrid"
+		effective_mode in [&"hybrid", &"pixel"]
 		and is_instance_valid(_pixel_renderer)
 		and _pixel_renderer.visible
 	)
+
+
+func _is_full_pixel_active() -> bool:
+	return get_effective_map_render_mode() == &"pixel" and _is_pixel_base_active()
 
 
 func _active_cell_size() -> Vector2:
@@ -622,6 +675,7 @@ func _draw() -> void:
 	var playfield_rect: Rect2 = Rect2(Vector2(10, 10), playfield_size)
 
 	var pixel_base_active: bool = _is_pixel_base_active()
+	var full_pixel_active: bool = _is_full_pixel_active()
 	if not pixel_base_active:
 		draw_rect(Rect2(Vector2.ZERO, viewport_size), _theme_color("outer_bg_tint", outer_bg_tint))
 		draw_rect(playfield_rect.grow(6), _theme_color("border_color", border_color))
@@ -665,11 +719,16 @@ func _draw() -> void:
 						_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
 					)
 
-	_draw_boss_room_tint(playfield_rect)
-	_draw_boss_arena_motif(draw_font, ascent, playfield_rect)
-	_draw_boss_hazards(draw_font, ascent, playfield_rect)
+	if pixel_base_active and not full_pixel_active:
+		_draw_hybrid_secret_wall_hints(draw_font, ascent, playfield_rect)
+	if not full_pixel_active:
+		_draw_boss_room_tint(playfield_rect)
+		_draw_boss_arena_motif(draw_font, ascent, playfield_rect)
+		_draw_boss_hazards(draw_font, ascent, playfield_rect)
 
 	for target_cell: Vector2i in _target_range_cells.keys():
+		if full_pixel_active:
+			break
 		if not _visible_cells.has(target_cell) or not _explored_cells.has(target_cell):
 			continue
 		var target_point: Vector2 = _cell_draw_position(target_cell, ascent)
@@ -681,6 +740,8 @@ func _draw() -> void:
 		_draw_glyph(draw_font, target_point, ".", Color(0.86, 0.90, 0.36, 0.95), false)
 
 	for area_cell: Vector2i in _target_area_cells.keys():
+		if full_pixel_active:
+			break
 		if not _visible_cells.has(area_cell) or not _explored_cells.has(area_cell):
 			continue
 		var area_point: Vector2 = _cell_draw_position(area_cell, ascent)
@@ -688,10 +749,14 @@ func _draw() -> void:
 			continue
 		_draw_cell_highlight(area_cell, Color(1.0, 0.30, 0.08, 0.24), Color(1.0, 0.55, 0.18, 0.78))
 		_draw_glyph(draw_font, area_point, "*", Color(1.0, 0.72, 0.28, 0.95), false)
-	_draw_boss_telegraph_fills(draw_font, ascent, playfield_rect)
-	_draw_projectile_trails(draw_font, ascent, playfield_rect)
+	if not full_pixel_active:
+		_draw_boss_telegraph_fills(draw_font, ascent, playfield_rect)
+	if not pixel_base_active:
+		_draw_projectile_trails(draw_font, ascent, playfield_rect)
 
 	for item_position: Vector2i in _items.keys():
+		if pixel_base_active:
+			break
 		if not _visible_cells.has(item_position):
 			continue
 		if _actor_at(item_position) != null:
@@ -706,6 +771,8 @@ func _draw() -> void:
 		_draw_glyph(draw_font, item_point, item.glyph, item.color)
 
 	for container_position: Vector2i in _containers.keys():
+		if pixel_base_active:
+			break
 		if not _visible_cells.has(container_position):
 			continue
 		if _actor_at(container_position) != null:
@@ -726,9 +793,12 @@ func _draw() -> void:
 			draw_font, container_point, str(container_data.get("glyph", "?")), container_color
 		)
 
-	_draw_cell_bursts(draw_font, ascent, playfield_rect)
+	if not pixel_base_active:
+		_draw_cell_bursts(draw_font, ascent, playfield_rect)
 
 	for trap_cell: Vector2i in _trap_data.keys():
+		if pixel_base_active:
+			break
 		var is_revealed: bool = _revealed_traps.has(trap_cell)
 		var is_triggered: bool = _triggered_traps.has(trap_cell)
 		if not is_revealed and not is_triggered:
@@ -751,7 +821,8 @@ func _draw() -> void:
 		)
 		_draw_glyph(draw_font, trap_point, trap.glyph, trap_color)
 
-	_draw_boss_spawn_effects(draw_font, ascent, playfield_rect)
+	if not pixel_base_active:
+		_draw_boss_spawn_effects(draw_font, ascent, playfield_rect)
 	if not pixel_base_active:
 		_draw_boss_visuals(draw_font, ascent, playfield_rect)
 
@@ -773,10 +844,11 @@ func _draw() -> void:
 			Color(actor.color.r, actor.color.g, actor.color.b, 0.55)
 		)
 		_draw_glyph(draw_font, actor_point, actor.glyph, actor.color)
-	_draw_enemy_intents(draw_font, ascent, playfield_rect)
-	_draw_boss_telegraph_glyphs(draw_font, ascent, playfield_rect)
+	if not full_pixel_active:
+		_draw_enemy_intents(draw_font, ascent, playfield_rect)
+		_draw_boss_telegraph_glyphs(draw_font, ascent, playfield_rect)
 
-	if _targeting_active and _visible_cells.has(_target_cursor):
+	if not full_pixel_active and _targeting_active and _visible_cells.has(_target_cursor):
 		var cursor_point: Vector2 = _cell_draw_position(_target_cursor, ascent)
 		if _is_inside_playfield(cursor_point, playfield_rect):
 			_draw_cell_highlight(
@@ -784,8 +856,21 @@ func _draw() -> void:
 			)
 			_draw_glyph(draw_font, cursor_point, "X", Color(1.0, 0.9, 0.2, 1.0))
 
-	if _atmosphere_enabled and not _atmosphere_profile.is_empty():
+	if not full_pixel_active and _atmosphere_enabled and not _atmosphere_profile.is_empty():
 		_draw_atmosphere_effects(draw_font, ascent, playfield_rect)
+
+
+func _draw_hybrid_secret_wall_hints(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
+	for cell: Vector2i in _revealed_secret_walls.keys():
+		if not _secret_walls.has(cell) or not _explored_cells.has(cell):
+			continue
+		var point: Vector2 = _cell_draw_position(cell, ascent)
+		if not _is_inside_playfield(point, playfield_rect):
+			continue
+		var color: Color = _secret_wall_hint_color
+		if not _visible_cells.has(cell):
+			color = color.darkened(0.58)
+		_draw_glyph(draw_font, point, SECRET_WALL_GLYPH, color)
 
 
 func _draw_boss_room_tint(playfield_rect: Rect2) -> void:

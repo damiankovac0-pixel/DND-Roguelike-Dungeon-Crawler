@@ -28,9 +28,7 @@ const PAUSE_VOLUME_VALUE_LABEL_PATH: String = "MasterVolumeRow/MasterVolumeValue
 const PAUSE_REDUCED_VFX_BUTTON_PATH: String = "ReducedVfxButton"
 const PAUSE_MAP_RENDERER_OPTION_PATH: String = "MapRendererRow/MapRendererOption"
 const MAP_RENDER_MODE_VALUES: Array[StringName] = [&"ascii", &"hybrid", &"pixel"]
-const MAP_RENDER_MODE_LABELS: Array[String] = [
-	"ASCII", "Hybrid (Pixel Terrain)", "Full Pixel Map (Coming Later)"
-]
+const MAP_RENDER_MODE_LABELS: Array[String] = ["ASCII", "Hybrid (Pixel Terrain)", "Full Pixel Map"]
 const BOSS_FLOORS: Dictionary = {
 	5: &"observer",
 	10: &"seraphine",

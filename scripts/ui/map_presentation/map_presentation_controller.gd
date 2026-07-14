@@ -17,6 +17,7 @@ var _effective_mode: StringName = MapRenderModeScript.ASCII
 var _renderers: Dictionary = {}
 var _layouts: Dictionary = {}
 var _last_state: RefCounted
+var _reduced_vfx_enabled: bool = false
 
 
 # === Public Methods ===
@@ -57,6 +58,7 @@ func register_renderer(mode_value: Variant, renderer: Node, layout: RefCounted) 
 	_renderers[mode] = renderer
 	_layouts[mode] = layout
 	_set_renderer_visible(renderer, false)
+	_set_renderer_reduced_vfx(renderer, _reduced_vfx_enabled)
 	_apply_mode(_requested_mode, true)
 	return true
 
@@ -85,6 +87,20 @@ func play_event(event: Dictionary) -> void:
 		renderer.call(&"play_event", event)
 
 
+func set_reduced_vfx(enabled: bool) -> void:
+	_reduced_vfx_enabled = enabled
+	var configured_renderers: Dictionary = {}
+	for renderer_value: Variant in _renderers.values():
+		if renderer_value is not Node or not is_instance_valid(renderer_value):
+			continue
+		var renderer: Node = renderer_value
+		var renderer_id: int = renderer.get_instance_id()
+		if configured_renderers.has(renderer_id):
+			continue
+		configured_renderers[renderer_id] = true
+		_set_renderer_reduced_vfx(renderer, enabled)
+
+
 func get_last_state() -> RefCounted:
 	return _last_state
 
@@ -102,6 +118,7 @@ func get_debug_summary() -> Dictionary:
 		"effective_mode": _effective_mode,
 		"has_state": _last_state != null,
 		"registered_modes": _renderers.keys(),
+		"reduced_vfx": _reduced_vfx_enabled,
 	}
 
 
@@ -161,6 +178,13 @@ func _reset_renderer_transients(renderer: Node) -> void:
 		renderer.call(&"reset_transients")
 
 
+func _set_renderer_reduced_vfx(renderer: Node, enabled: bool) -> void:
+	if renderer.has_method(&"set_reduced_vfx"):
+		renderer.call(&"set_reduced_vfx", enabled)
+
+
 func _set_renderer_visible(renderer: Node, renderer_visible: bool) -> void:
 	if renderer is CanvasItem:
 		(renderer as CanvasItem).visible = renderer_visible
+	if renderer.has_method(&"set_renderer_active"):
+		renderer.call(&"set_renderer_active", renderer_visible)

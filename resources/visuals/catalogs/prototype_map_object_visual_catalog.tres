@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MapObjectVisualCatalog" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/map_presentation/map_object_visual_catalog.gd" id="1_catalog"]
+[ext_resource type="Texture2D" path="res://assets/sprites/prototype/map_objects.svg" id="2_objects"]
+
+[resource]
+script = ExtResource("1_catalog")
+object_atlas = ExtResource("2_objects")
+prototype = true
+attribution = "Project-authored deterministic Phase 4 prototype"

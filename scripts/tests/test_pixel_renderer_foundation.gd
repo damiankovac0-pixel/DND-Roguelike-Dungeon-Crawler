@@ -365,13 +365,20 @@ func _check_map_view_switching() -> void:
 	map_view.call(&"set_map_render_mode", &"pixel")
 	_expect_equal(
 		map_view.call(&"get_effective_map_render_mode"),
-		&"ascii",
-		"Unavailable Full Pixel mode should fall back to ASCII"
+		&"pixel",
+		"Full Pixel mode should activate after tactical parity"
 	)
+	var pixel_debug: Dictionary = pixel_renderer.call(&"get_debug_snapshot")
+	_expect_equal(pixel_debug.get("profile"), &"pixel", "Pixel renderer profile did not switch")
 	_expect(
-		pixel_renderer != null and not pixel_renderer.visible,
-		"ASCII fallback should hide pixel child"
+		bool(pixel_debug.get("tactical", {}).get("native_tactical", false)),
+		"Full Pixel profile should own tactical overlays",
 	)
+	map_view.call(&"set_map_render_mode", &"ascii")
+	_expect_equal(
+		map_view.call(&"get_effective_map_render_mode"), &"ascii", "ASCII mode should restore"
+	)
+	_expect(pixel_renderer != null and not pixel_renderer.visible, "ASCII should hide pixel child")
 	map_view.queue_free()
 	await process_frame
 	print("  MapView switches by state replay and clears renderer-local transients")

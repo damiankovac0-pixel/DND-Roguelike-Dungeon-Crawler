@@ -174,7 +174,7 @@ func _check_settings_compatibility() -> void:
 	await _check_missing_setting_and_persistence()
 	if _failed:
 		return
-	await _check_stored_hybrid_setting()
+	await _check_stored_pixel_setting()
 	if _failed:
 		return
 	await _check_invalid_stored_setting()
@@ -201,7 +201,7 @@ func _check_missing_setting_and_persistence() -> void:
 		sensory_feedback.queue_free()
 		_fail("Missing graphics setting should default to ASCII")
 		return
-	sensory_feedback.call(&"set_map_render_mode", &"hybrid", true)
+	sensory_feedback.call(&"set_map_render_mode", &"pixel", true)
 	sensory_feedback.queue_free()
 	await process_frame
 	var saved: ConfigFile = ConfigFile.new()
@@ -215,17 +215,17 @@ func _check_missing_setting_and_persistence() -> void:
 	if not (saved_mode is String):
 		_fail("Renderer mode must persist as a plain string")
 		return
-	if saved_mode != "hybrid":
-		_fail("Hybrid request was not stored under graphics/map_render_mode")
+	if saved_mode != "pixel":
+		_fail("Pixel request was not stored under graphics/map_render_mode")
 
 
-func _check_stored_hybrid_setting() -> void:
+func _check_stored_pixel_setting() -> void:
 	var sensory_feedback: Control = await _new_sensory_feedback()
 	if sensory_feedback == null:
 		return
-	if StringName(sensory_feedback.call(&"get_map_render_mode")) != &"hybrid":
+	if StringName(sensory_feedback.call(&"get_map_render_mode")) != &"pixel":
 		sensory_feedback.queue_free()
-		_fail("Stored Hybrid request should load on a new settings owner")
+		_fail("Stored Pixel request should load on a new settings owner")
 		return
 	sensory_feedback.queue_free()
 	await process_frame
@@ -270,15 +270,15 @@ func _check_map_view_compatibility() -> void:
 		return
 	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"ascii":
 		map_view.free()
-		_fail("MapView facade must keep rendering ASCII during Phase 1")
+		_fail("MapView without a registered backend must render ASCII")
 		return
 	map_view.call(&"set_map_render_mode", &"pixel")
 	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"ascii":
 		map_view.free()
-		_fail("MapView facade must fall back from Pixel to ASCII during Phase 1")
+		_fail("Uninitialized MapView must fall back from Pixel to ASCII")
 		return
 	map_view.free()
-	print("  MapView preserves legacy calls and safely resolves unavailable backends")
+	print("  MapView preserves legacy calls and falls back before backend registration")
 
 
 func _check_game_mode_sync() -> void:
@@ -351,8 +351,7 @@ func _check_game_runtime_mode(game: Node) -> bool:
 	if StringName(map_view.call(&"get_requested_map_render_mode")) != &"pixel":
 		_fail("Runtime renderer preference signal did not reach MapView")
 		return false
-	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"ascii":
-		_fail("Pixel must remain unavailable until its tactical overlays reach parity")
+	if not _check_full_pixel_runtime(game, map_view):
 		return false
 	var option: OptionButton = game.get("pause_map_renderer_option")
 	option.item_selected.emit(1)
@@ -365,6 +364,28 @@ func _check_game_runtime_mode(game: Node) -> bool:
 		return false
 	if StringName(saved.get_value("graphics", "map_render_mode", &"ascii")) != &"hybrid":
 		_fail("Pause graphics control persisted the wrong renderer mode")
+		return false
+	return true
+
+
+func _check_full_pixel_runtime(game: Node, map_view: Node) -> bool:
+	if StringName(map_view.call(&"get_effective_map_render_mode")) != &"pixel":
+		_fail("Full Pixel should activate after object and tactical parity")
+		return false
+	var pixel_renderer: Node = map_view.get_node_or_null("PixelMapRenderer")
+	if pixel_renderer == null:
+		_fail("Full Pixel request did not expose its renderer")
+		return false
+	var pixel_debug: Dictionary = pixel_renderer.call(&"get_debug_snapshot")
+	if pixel_debug.get("profile") != &"pixel":
+		_fail("Runtime Full Pixel request did not switch renderer profiles")
+		return false
+	if not bool(pixel_debug.get("tactical", {}).get("native_tactical", false)):
+		_fail("Full Pixel request did not activate native tactical overlays")
+		return false
+	var option: OptionButton = game.get("pause_map_renderer_option")
+	if option == null or option.selected != 2 or option.is_item_disabled(2):
+		_fail("Pause graphics control did not select available Full Pixel mode")
 		return false
 	return true
 
@@ -386,8 +407,11 @@ func _check_game_graphics_control(game: Node) -> bool:
 			)
 		)
 		return false
-	if not option.is_item_disabled(2):
-		_fail("Unavailable Full Pixel Map option should remain disabled")
+	if option.is_item_disabled(2):
+		_fail("Full Pixel Map option should be enabled after tactical parity")
+		return false
+	if option.get_item_text(2) != "Full Pixel Map":
+		_fail("Full Pixel Map option still carries a prototype warning label")
 		return false
 	return true
 

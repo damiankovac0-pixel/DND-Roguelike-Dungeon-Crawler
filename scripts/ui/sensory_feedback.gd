@@ -527,8 +527,8 @@ func is_reduced_vfx_enabled() -> bool:
 
 ## Sets the requested map renderer preference.
 ##
-## Phase 1 preserves Hybrid and Pixel requests while MapView resolves both to
-## the only available renderer: ASCII.
+## Stores the canonical preference; MapView resolves runtime availability and
+## falls back to ASCII if the selected backend cannot initialize.
 func set_map_render_mode(mode: Variant, persist: bool = true) -> void:
 	var normalized_mode: StringName = MapRenderModeScript.normalize(mode)
 	var changed: bool = normalized_mode != _map_render_mode

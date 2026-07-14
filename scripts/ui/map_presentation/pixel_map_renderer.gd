@@ -1,9 +1,9 @@
 class_name PixelMapRenderer
 extends Node2D
-## Minimal 16x16 pixel-map backend for terrain, fog, and the player.
+## Pixel-map backend for terrain, objects, actors, fog, and tactical effects.
 ##
-## Gameplay remains authoritative elsewhere. This renderer consumes only a
-## MapPresentationState and a renderer-local MapGridLayout.
+## Gameplay remains authoritative elsewhere. This renderer consumes only
+## semantic MapPresentationState snapshots and renderer-local visual events.
 
 # === Constants ===
 const TILE_SOURCE_ID: int = 0
@@ -13,6 +13,7 @@ const ACTOR_VIEW_SCENE: PackedScene = preload("res://scenes/rendering/pixel_acto
 # === Exports ===
 @export var catalog: Resource
 @export var actor_catalog: Resource
+@export var object_catalog: Resource
 
 # === Private Variables ===
 var _layout: RefCounted
@@ -38,8 +39,10 @@ var _background_color: Color = Color(0.025, 0.032, 0.047)
 # === Onready ===
 @onready var ground_layer: TileMapLayer = $GroundLayer
 @onready var structure_layer: TileMapLayer = $StructureLayer
+@onready var object_layer: PixelObjectLayer = $ObjectLayer
 @onready var actor_layer: Node2D = $ActorLayer
 @onready var fog_layer: PixelFogLayer = $FogLayer
+@onready var tactical_layer: PixelTacticalLayer = $TacticalLayer
 
 
 # === Lifecycle Methods ===
@@ -74,24 +77,22 @@ func configure_style(
 
 func initialize_renderer(layout: RefCounted) -> Error:
 	_layout = layout
-	if catalog == null or not catalog.has_method(&"validate"):
-		return ERR_FILE_NOT_FOUND
-	var map_catalog_error: String = str(catalog.call(&"validate"))
-	if not map_catalog_error.is_empty():
-		push_warning(map_catalog_error)
-		return ERR_FILE_NOT_FOUND
-	if actor_catalog == null or not actor_catalog.has_method(&"validate"):
-		return ERR_FILE_NOT_FOUND
-	var actor_catalog_error: String = str(actor_catalog.call(&"validate"))
-	if not actor_catalog_error.is_empty():
-		push_warning(actor_catalog_error)
-		return ERR_FILE_NOT_FOUND
+	var catalog_error: Error = _validate_catalogs()
+	if catalog_error != OK:
+		return catalog_error
 	var tile_set_value: Variant = catalog.call(&"create_tile_set")
 	if not (tile_set_value is TileSet):
 		return ERR_CANT_CREATE
 	ground_layer.tile_set = tile_set_value
 	structure_layer.tile_set = tile_set_value
 	fog_layer.configure(_layout)
+	var layer_error: Error = object_layer.configure(_layout, object_catalog)
+	if layer_error == OK:
+		layer_error = tactical_layer.configure(_layout)
+	if layer_error != OK:
+		return layer_error
+	tactical_layer.set_render_profile(_render_profile)
+	tactical_layer.set_reduced_vfx(_reduced_vfx_enabled)
 	_available = actor_layer != null and ACTOR_VIEW_SCENE != null
 	return OK if _available else ERR_FILE_NOT_FOUND
 
@@ -100,8 +101,14 @@ func is_renderer_available() -> bool:
 	return _available and _layout != null and is_instance_valid(ground_layer)
 
 
+func set_renderer_active(active: bool) -> void:
+	process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
+
+
 func set_render_profile(profile: StringName) -> void:
 	_render_profile = profile
+	if is_instance_valid(tactical_layer):
+		tactical_layer.set_render_profile(profile)
 
 
 func present(state: RefCounted) -> void:
@@ -130,7 +137,9 @@ func present(state: RefCounted) -> void:
 	):
 		var animate_actor_moves: bool = not view_changed and actor_revision != _last_actor_revision
 		_sync_actor_views(animate_actor_moves)
+	object_layer.present(state, view_changed)
 	fog_layer.present(state, view_changed)
+	tactical_layer.present(state, view_changed)
 	if environment_revision != _last_environment_revision:
 		queue_redraw()
 	_last_map_revision = map_revision
@@ -145,6 +154,7 @@ func set_reduced_vfx(enabled: bool) -> void:
 	for view_value: Variant in _actor_views.values():
 		if view_value is PixelActorView:
 			(view_value as PixelActorView).set_reduced_vfx(enabled)
+	tactical_layer.set_reduced_vfx(enabled)
 
 
 func reset_transients() -> void:
@@ -156,18 +166,23 @@ func reset_transients() -> void:
 			_retired_actor_ids[actor_id] = true
 			_remove_actor_view(actor_id)
 
+	tactical_layer.reset_transients()
+
 
 func shutdown_renderer() -> void:
 	ground_layer.clear()
 	structure_layer.clear()
+	object_layer.clear()
 	_clear_actor_views()
 	_retired_actor_ids.clear()
+	tactical_layer.clear()
 	visible = false
 	_state = null
 
 
 func play_event(event: Dictionary) -> void:
 	if event.get("type", &"") != &"actor_animation":
+		tactical_layer.play_event(event)
 		return
 	var view: PixelActorView = _actor_view_for_event(event)
 	if view == null:
@@ -183,6 +198,8 @@ func get_debug_snapshot() -> Dictionary:
 	)
 	var actor_debug: Dictionary = _actor_debug_snapshots()
 	var player_debug: Dictionary = _player_debug_snapshot(actor_debug)
+	var object_debug: Dictionary = object_layer.get_debug_snapshot()
+	var tactical_debug: Dictionary = tactical_layer.get_debug_snapshot()
 	return {
 		"available": is_renderer_available(),
 		"profile": _render_profile,
@@ -202,12 +219,30 @@ func get_debug_snapshot() -> Dictionary:
 		"retired_actor_count": _retired_actor_ids.size(),
 		"actor_event_count": _actor_event_count,
 		"actor_views": actor_debug,
+		"objects": object_debug,
+		"tactical": tactical_debug,
 		"reduced_vfx": _reduced_vfx_enabled,
 		"transient_reset_count": _transient_reset_count,
 	}
 
 
 # === Private Methods ===
+func _validate_catalogs() -> Error:
+	if catalog == null or not catalog.has_method(&"validate"):
+		return ERR_FILE_NOT_FOUND
+	var map_catalog_error: String = str(catalog.call(&"validate"))
+	if not map_catalog_error.is_empty():
+		push_warning(map_catalog_error)
+		return ERR_FILE_NOT_FOUND
+	if actor_catalog == null or not actor_catalog.has_method(&"validate"):
+		return ERR_FILE_NOT_FOUND
+	var actor_catalog_error: String = str(actor_catalog.call(&"validate"))
+	if not actor_catalog_error.is_empty():
+		push_warning(actor_catalog_error)
+		return ERR_FILE_NOT_FOUND
+	return OK
+
+
 func _update_layer_positions() -> void:
 	var layer_position: Vector2 = _layout.call(&"get_origin")
 	layer_position += _layout.call(&"get_view_offset_pixels")
