@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "catalog_version": 1,
+  "generated_attribution_path": "assets/visual_asset_attribution.json",
+  "aseprite": {
+    "data_format": "json-array",
+    "sheet_type": "rows",
+    "minimum_version": "1.3.0"
+  },
+  "licenses": {
+    "project_authored": {
+      "name": "Project-authored Dungeon Delver visual asset",
+      "spdx": "LicenseRef-Project-Authored",
+      "copyright_notice": "Copyright retained by the Dungeon Delver repository owner and contributors.",
+      "source_url": "https://github.com/damiankovac0-pixel/DND-Roguelike-Dungeon-Crawler",
+      "license_url": "",
+      "redistribution": "No third-party visual-asset licence applies; repository rights remain with the owner and contributors."
+    }
+  },
+  "assets": [
+    {
+      "id": "terrain/core",
+      "category": "terrain",
+      "source_path": "assets/sprites/prototype/dungeon_tiles.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/sprites/prototype/dungeon_tiles.svg",
+      "expected_size": [112, 16],
+      "frame_size": [16, 16],
+      "grid": [7, 1],
+      "semantic_ids": [
+        "floor",
+        "wall",
+        "door/closed",
+        "door/open",
+        "stairs/down",
+        "door/boss",
+        "door/boss_sealed"
+      ],
+      "animations": {},
+      "prototype": true,
+      "license_id": "project_authored",
+      "attribution": "Project-authored deterministic Phase 2 terrain prototype."
+    },
+    {
+      "id": "actor/core",
+      "category": "actor",
+      "source_path": "assets/sprites/prototype/actor_animations.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/sprites/prototype/actor_animations.svg",
+      "expected_size": [192, 64],
+      "frame_size": [16, 16],
+      "grid": [12, 4],
+      "semantic_ids": [
+        "actor/player",
+        "actor/enemy",
+        "actor/shopkeeper",
+        "actor/summon"
+      ],
+      "row_ids": [
+        "player",
+        "enemy",
+        "shopkeeper",
+        "summon"
+      ],
+      "animations": {
+        "idle": 2,
+        "move": 2,
+        "attack": 2,
+        "cast": 2,
+        "hurt": 2,
+        "death": 2
+      },
+      "prototype": true,
+      "license_id": "project_authored",
+      "attribution": "Project-authored deterministic Phase 3 actor prototype."
+    },
+    {
+      "id": "boss/core",
+      "category": "boss",
+      "source_path": "assets/sprites/prototype/boss_animations.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/sprites/prototype/boss_animations.svg",
+      "expected_size": [960, 320],
+      "frame_size": [80, 64],
+      "grid": [12, 5],
+      "semantic_ids": [
+        "boss/observer",
+        "boss/seraphine",
+        "boss/vorrak",
+        "boss/kaelros",
+        "boss/nyxara"
+      ],
+      "row_ids": [
+        "observer",
+        "seraphine",
+        "vorrak",
+        "kaelros",
+        "nyxara"
+      ],
+      "animations": {
+        "idle": 2,
+        "move": 2,
+        "attack": 2,
+        "cast": 2,
+        "hurt": 2,
+        "death": 2
+      },
+      "prototype": true,
+      "license_id": "project_authored",
+      "attribution": "Project-authored deterministic Phase 3 boss prototype."
+    },
+    {
+      "id": "object/core",
+      "category": "object",
+      "source_path": "assets/sprites/prototype/map_objects.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/sprites/prototype/map_objects.svg",
+      "expected_size": [256, 16],
+      "frame_size": [16, 16],
+      "grid": [16, 1],
+      "semantic_ids": [
+        "item/consumable",
+        "item/weapon",
+        "item/armor",
+        "item/accessory",
+        "item/generic",
+        "prop/chest",
+        "prop/boss_chest",
+        "prop/vase",
+        "prop/box",
+        "trap/damage",
+        "trap/poison",
+        "trap/teleport",
+        "trap/alarm",
+        "trap/stun",
+        "trap/ambush",
+        "prop/generic"
+      ],
+      "animations": {},
+      "prototype": true,
+      "license_id": "project_authored",
+      "attribution": "Project-authored deterministic Phase 4 object prototype."
+    },
+    {
+      "id": "effect/particle",
+      "category": "effect",
+      "source_path": "assets/sprites/prototype/effect_particle.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/sprites/prototype/effect_particle.svg",
+      "expected_size": [3, 3],
+      "frame_size": [3, 3],
+      "grid": [1, 1],
+      "semantic_ids": [
+        "effect/particle"
+      ],
+      "animations": {},
+      "prototype": true,
+      "license_id": "project_authored",
+      "attribution": "Project-authored deterministic Phase 5 particle texture."
+    }
+  ],
+  "catalogs": [
+    {
+      "id": "map",
+      "path": "resources/visuals/catalogs/prototype_map_visual_catalog.tres",
+      "script_class": "MapVisualCatalog",
+      "script_path": "scripts/ui/map_presentation/map_visual_catalog.gd",
+      "textures": [
+        {
+          "property": "tile_atlas",
+          "asset_id": "terrain/core",
+          "resource_id": "2_tiles"
+        }
+      ],
+      "prototype": true,
+      "attribution": "Project-authored deterministic Phase 2 prototype"
+    },
+    {
+      "id": "actors",
+      "path": "resources/visuals/catalogs/prototype_actor_visual_catalog.tres",
+      "script_class": "ActorVisualCatalog",
+      "script_path": "scripts/ui/map_presentation/actor_visual_catalog.gd",
+      "textures": [
+        {
+          "property": "actor_sheet",
+          "asset_id": "actor/core",
+          "resource_id": "2_actors"
+        },
+        {
+          "property": "boss_sheet",
+          "asset_id": "boss/core",
+          "resource_id": "3_bosses"
+        }
+      ],
+      "prototype": true,
+      "attribution": "Project-authored deterministic Phase 3 prototype"
+    },
+    {
+      "id": "objects",
+      "path": "resources/visuals/catalogs/prototype_map_object_visual_catalog.tres",
+      "script_class": "MapObjectVisualCatalog",
+      "script_path": "scripts/ui/map_presentation/map_object_visual_catalog.gd",
+      "textures": [
+        {
+          "property": "object_atlas",
+          "asset_id": "object/core",
+          "resource_id": "2_objects"
+        }
+      ],
+      "prototype": true,
+      "attribution": "Project-authored deterministic Phase 4 prototype"
+    }
+  ]
+}

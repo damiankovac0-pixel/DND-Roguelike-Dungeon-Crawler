@@ -1,0 +1,45 @@
+name: Visual asset pipeline
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/visual-assets.yml"
+      - "assets/sprites/**"
+      - "assets/visual_asset_attribution.json"
+      - "assets/visual_assets.json"
+      - "resources/visuals/catalogs/**"
+      - "scripts/ui/map_presentation/*visual_catalog.gd"
+      - "tools/pixel_assets.py"
+      - "tools/tests/test_pixel_assets.py"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/visual-assets.yml"
+      - "assets/sprites/**"
+      - "assets/visual_asset_attribution.json"
+      - "assets/visual_assets.json"
+      - "resources/visuals/catalogs/**"
+      - "scripts/ui/map_presentation/*visual_catalog.gd"
+      - "tools/pixel_assets.py"
+      - "tools/tests/test_pixel_assets.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate generated visual assets
+        run: python3 tools/pixel_assets.py check
+      - name: Test Aseprite export contracts
+        run: python3 -m unittest discover -s tools/tests -p 'test_*.py'

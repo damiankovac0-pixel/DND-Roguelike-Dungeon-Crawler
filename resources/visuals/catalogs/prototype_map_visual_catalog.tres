@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1_catalog")
+catalog_version = 1
 tile_atlas = ExtResource("2_tiles")
 prototype = true
 attribution = "Project-authored deterministic Phase 2 prototype"

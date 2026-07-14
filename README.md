@@ -151,6 +151,17 @@ Useful focused tests include:
 /usr/local/bin/godot --headless --path . --script res://scripts/tests/test_v16_5_sensory_settings.gd
 ```
 
+## Pixel visual assets
+
+Pixel renderer resources are declared explicitly in `assets/visual_assets.json`. Validate or regenerate the deterministic Godot catalogues with:
+
+```sh
+python3 tools/pixel_assets.py check
+python3 tools/pixel_assets.py generate
+```
+
+Aseprite source conventions, export commands, generated-file rules, and licensing requirements are documented in [`docs/pixel_asset_pipeline.md`](docs/pixel_asset_pipeline.md).
+
 ## Web export
 
 The repo includes a Web export preset.
@@ -181,6 +192,8 @@ resources/
 
 scenes/           Godot .tscn scenes
 assets/audio/     Audio assets, including boss battle tracks
+assets/sprites/   Explicit prototype and generated pixel-map textures
+assets/*.json     Visual source manifest and generated attribution
 fonts/            Terminus and JetBrainsMono font resources
 ```
 

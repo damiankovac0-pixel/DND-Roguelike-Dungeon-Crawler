@@ -30,6 +30,7 @@ const ATLAS_COORDS: Dictionary = {
 }
 
 # === Exports ===
+@export var catalog_version: int = 1
 @export var object_atlas: Texture2D
 @export var prototype: bool = true
 @export var attribution: String = "Project-authored deterministic Phase 4 prototype"
@@ -37,10 +38,14 @@ const ATLAS_COORDS: Dictionary = {
 
 # === Public Methods ===
 func validate() -> String:
+	if catalog_version != 1:
+		return "Unsupported map object visual catalogue version"
 	if object_atlas == null:
 		return "Pixel object atlas is missing"
 	if Vector2i(object_atlas.get_size()) != ATLAS_SIZE:
 		return "Pixel object atlas must be exactly 256x16"
+	if attribution.strip_edges().is_empty():
+		return "Pixel object atlas attribution is missing"
 	return ""
 
 

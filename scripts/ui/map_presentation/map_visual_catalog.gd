@@ -1,13 +1,14 @@
 class_name MapVisualCatalog
 extends Resource
-## Explicit resources and atlas mapping for the Phase 2 pixel-map prototype.
+## Explicit resources and atlas mapping for pixel-map terrain.
 ##
-## Runtime lookup is entirely catalogue-based; no directory enumeration or
-## filename construction is used.
+## Runtime lookup is catalogue-based; no directory enumeration or filename
+## construction is used.
 
 # === Constants ===
 const DungeonDataScript: GDScript = preload("res://scripts/dungeon/dungeon_data.gd")
 const TILE_SIZE: Vector2i = Vector2i(16, 16)
+const ATLAS_SIZE: Vector2i = Vector2i(112, 16)
 const TILE_SOURCE_ID: int = 0
 const TILE_ATLAS_COORDS: Dictionary = {
 	DungeonDataScript.TileType.FLOOR: Vector2i(0, 0),
@@ -20,6 +21,7 @@ const TILE_ATLAS_COORDS: Dictionary = {
 }
 
 # === Exports ===
+@export var catalog_version: int = 1
 @export var tile_atlas: Texture2D
 @export var prototype: bool = true
 @export var attribution: String = "Project-authored deterministic Phase 2 prototype"
@@ -27,8 +29,14 @@ const TILE_ATLAS_COORDS: Dictionary = {
 
 # === Public Methods ===
 func validate() -> String:
+	if catalog_version != 1:
+		return "Unsupported map visual catalogue version"
 	if tile_atlas == null:
-		return "Prototype tile atlas is missing"
+		return "Pixel tile atlas is missing"
+	if Vector2i(tile_atlas.get_size()) != ATLAS_SIZE:
+		return "Pixel tile atlas must be exactly 112x16"
+	if attribution.strip_edges().is_empty():
+		return "Pixel tile atlas attribution is missing"
 	return ""
 
 

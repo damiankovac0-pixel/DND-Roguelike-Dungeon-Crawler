@@ -1,6 +1,6 @@
 class_name ActorVisualCatalog
 extends Resource
-## Explicit sprite-sheet mapping for animated Phase 3 actor and boss views.
+## Explicit sprite-sheet mapping for animated actor and boss views.
 ##
 ## Every visual ID resolves through fixed catalogue data. Runtime directory
 ## enumeration and filename construction are intentionally prohibited.
@@ -45,6 +45,7 @@ const LOOPING_ANIMATIONS: Dictionary = {
 }
 
 # === Exports ===
+@export var catalog_version: int = 1
 @export var actor_sheet: Texture2D
 @export var boss_sheet: Texture2D
 @export var prototype: bool = true
@@ -56,15 +57,20 @@ var _frames_by_visual_id: Dictionary = {}
 
 # === Public Methods ===
 func validate() -> String:
-	if actor_sheet == null:
-		return "Prototype actor animation sheet is missing"
-	if boss_sheet == null:
-		return "Prototype boss animation sheet is missing"
-	if actor_sheet.get_size() != Vector2(ACTOR_SHEET_SIZE):
-		return "Prototype actor animation sheet has the wrong dimensions"
-	if boss_sheet.get_size() != Vector2(BOSS_SHEET_SIZE):
-		return "Prototype boss animation sheet has the wrong dimensions"
-	return ""
+	var validation_error: String = ""
+	if catalog_version != 1:
+		validation_error = "Unsupported actor visual catalogue version"
+	elif actor_sheet == null:
+		validation_error = "Pixel actor animation sheet is missing"
+	elif boss_sheet == null:
+		validation_error = "Pixel boss animation sheet is missing"
+	elif actor_sheet.get_size() != Vector2(ACTOR_SHEET_SIZE):
+		validation_error = "Pixel actor animation sheet has the wrong dimensions"
+	elif boss_sheet.get_size() != Vector2(BOSS_SHEET_SIZE):
+		validation_error = "Pixel boss animation sheet has the wrong dimensions"
+	elif attribution.strip_edges().is_empty():
+		validation_error = "Pixel actor catalogue attribution is missing"
+	return validation_error
 
 
 func sprite_frames_for(snapshot: Dictionary) -> SpriteFrames:
