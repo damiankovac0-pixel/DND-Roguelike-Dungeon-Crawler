@@ -303,6 +303,34 @@ func has_active_boss_visuals() -> bool:
 	return not _boss_visuals.is_empty()
 
 
+func play_actor_event(actor: Variant, animation: StringName, payload: Dictionary = {}) -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	var cell_value: Variant = actor.get("grid_position")
+	if not (cell_value is Vector2i):
+		return
+	var event: Dictionary = payload.duplicate(true)
+	event["type"] = &"actor_animation"
+	event["actor_id"] = actor.get_instance_id()
+	event["cell"] = cell_value
+	event["animation"] = animation
+	_presentation_controller.call(&"play_event", event)
+
+
+func play_actor_event_at_cell(
+	cell: Vector2i, animation: StringName, payload: Dictionary = {}
+) -> void:
+	for actor: Variant in _actors:
+		if actor == null or not is_instance_valid(actor):
+			continue
+		if actor.has_method(&"is_alive") and not bool(actor.call(&"is_alive")):
+			continue
+		if actor.get("grid_position") != cell:
+			continue
+		play_actor_event(actor, animation, payload)
+		return
+
+
 func play_cell_burst(cell: Vector2i, color: Color, glyph: String = "✦") -> void:
 	var burst: Dictionary = {
 		"cell": cell,
@@ -518,10 +546,6 @@ func _active_draw_offset() -> Vector2:
 	return _boss_room_draw_offset
 
 
-func _is_player_actor(actor: Variant) -> bool:
-	return actor != null and is_instance_valid(actor) and actor.name == &"Player"
-
-
 # === Lifecycle Methods ===
 func _ready() -> void:
 	set_process(false)
@@ -728,14 +752,15 @@ func _draw() -> void:
 		_draw_glyph(draw_font, trap_point, trap.glyph, trap_color)
 
 	_draw_boss_spawn_effects(draw_font, ascent, playfield_rect)
-	_draw_boss_visuals(draw_font, ascent, playfield_rect)
+	if not pixel_base_active:
+		_draw_boss_visuals(draw_font, ascent, playfield_rect)
 
 	for actor in _actors:
+		if pixel_base_active:
+			continue
 		if actor == null or not actor.is_alive():
 			continue
 		if _boss_visuals.has(actor.grid_position):
-			continue
-		if pixel_base_active and _is_player_actor(actor):
 			continue
 		if not _visible_cells.has(actor.grid_position):
 			continue

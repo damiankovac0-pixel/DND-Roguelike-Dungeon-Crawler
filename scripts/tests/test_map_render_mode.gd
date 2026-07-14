@@ -404,6 +404,30 @@ func _check_game_hybrid_output(map_view: Node) -> bool:
 	if not bool(debug.get("player_visible", false)):
 		_fail("Hybrid game startup did not render the live player snapshot")
 		return false
+	if not _check_live_actor_views(pixel_renderer, debug):
+		return false
+	return true
+
+
+func _check_live_actor_views(pixel_renderer: Node, debug: Dictionary) -> bool:
+	var state: RefCounted = pixel_renderer.get("_state")
+	if state == null:
+		_fail("Hybrid game startup did not retain presentation state")
+		return false
+	var expected_actor_count: int = 0
+	var kinds: Dictionary = {}
+	for snapshot_value: Variant in state.get("actors"):
+		if snapshot_value is not Dictionary or not bool(snapshot_value.get("alive", false)):
+			continue
+		expected_actor_count += 1
+		kinds[snapshot_value.get("kind", &"")] = true
+	if int(debug.get("actor_count", 0)) != expected_actor_count:
+		_fail("Hybrid actor view count diverged from live authoritative snapshots")
+		return false
+	for required_kind: StringName in [&"player", &"shopkeeper", &"enemy"]:
+		if not kinds.has(required_kind):
+			_fail("Hybrid game startup missed actor kind: %s" % required_kind)
+			return false
 	return true
 
 

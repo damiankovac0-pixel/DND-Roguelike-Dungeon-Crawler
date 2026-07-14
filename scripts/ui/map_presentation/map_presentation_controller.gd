@@ -79,6 +79,12 @@ func present(state: RefCounted) -> void:
 		renderer.call(&"present", state)
 
 
+func play_event(event: Dictionary) -> void:
+	var renderer: Node = _renderer_for_mode(_effective_mode)
+	if renderer != null and renderer.has_method(&"play_event"):
+		renderer.call(&"play_event", event)
+
+
 func get_last_state() -> RefCounted:
 	return _last_state
 

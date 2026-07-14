@@ -51,6 +51,10 @@ var boss_visuals: Dictionary = {}
 var boss_telegraphs: Dictionary = {}
 var boss_hazards: Dictionary = {}
 
+# === Private Variables ===
+var _actor_cells_by_id: Dictionary = {}
+var _actor_facing_by_id: Dictionary = {}
+
 
 # === Public Methods ===
 func capture_map(map: Array) -> void:
@@ -63,29 +67,17 @@ func capture_map(map: Array) -> void:
 func capture_actors(actor_nodes: Array) -> void:
 	actors.clear()
 	focus_cell = Vector2i.ZERO
+	var active_actor_ids: Dictionary = {}
 	for actor: Variant in actor_nodes:
-		if actor == null or not is_instance_valid(actor):
+		var snapshot: Dictionary = _snapshot_actor(actor)
+		if snapshot.is_empty():
 			continue
-		var cell_value: Variant = actor.get("grid_position")
-		if not (cell_value is Vector2i):
-			continue
-		var alive: bool = true
-		if actor.has_method(&"is_alive"):
-			alive = bool(actor.call(&"is_alive"))
-		var actor_name: StringName = actor.name if actor is Node else &""
-		var color_value: Variant = actor.get("color")
-		var snapshot: Dictionary = {
-			"id": actor.get_instance_id(),
-			"name": actor_name,
-			"is_player": actor_name == &"Player",
-			"cell": cell_value,
-			"alive": alive,
-			"glyph": str(actor.get("glyph")),
-			"color": color_value if color_value is Color else Color.WHITE,
-		}
+		var actor_id: int = int(snapshot["id"])
+		active_actor_ids[actor_id] = true
 		actors.append(snapshot)
 		if bool(snapshot["is_player"]):
-			focus_cell = cell_value
+			focus_cell = snapshot["cell"]
+	_prune_actor_history(active_actor_ids)
 	actor_revision += 1
 	_touch()
 
@@ -127,5 +119,92 @@ func get_debug_summary() -> Dictionary:
 
 
 # === Private Methods ===
+func _snapshot_actor(actor: Variant) -> Dictionary:
+	if actor == null or not is_instance_valid(actor):
+		return {}
+	var cell_value: Variant = actor.get("grid_position")
+	if not (cell_value is Vector2i):
+		return {}
+	var actor_id: int = actor.get_instance_id()
+	var alive: bool = true
+	if actor.has_method(&"is_alive"):
+		alive = bool(actor.call(&"is_alive"))
+	var actor_name: StringName = actor.name if actor is Node else &""
+	var display_name: String = str(actor_name)
+	if actor.has_method(&"setup_actor"):
+		display_name = str(actor.get("display_name"))
+	var enemy_data: Resource
+	if actor.has_method(&"initialize_from_data"):
+		enemy_data = actor.get("enemy_data")
+	var is_player: bool = actor_name == &"Player"
+	var is_boss: bool = enemy_data != null and bool(enemy_data.get("is_boss"))
+	var is_summon: bool = actor.has_meta(&"summoned_minion")
+	var kind: StringName = _actor_kind(is_player, is_boss, is_summon, actor_name)
+	var boss_id: StringName = StringName(enemy_data.get("boss_id")) if is_boss else StringName()
+	var color_value: Variant = actor.get("color")
+	return {
+		"id": actor_id,
+		"name": actor_name,
+		"display_name": display_name,
+		"kind": kind,
+		"visual_id": _visual_id_for(kind, boss_id),
+		"is_player": is_player,
+		"is_boss": is_boss,
+		"is_summon": is_summon,
+		"boss_id": boss_id,
+		"cell": cell_value,
+		"occupied_cells": [cell_value],
+		"facing": _update_actor_facing(actor_id, cell_value),
+		"alive": alive,
+		"glyph": str(actor.get("glyph")),
+		"color": color_value if color_value is Color else Color.WHITE,
+	}
+
+
+func _actor_kind(
+	is_player: bool, is_boss: bool, is_summon: bool, actor_name: StringName
+) -> StringName:
+	if is_player:
+		return &"player"
+	if is_boss:
+		return &"boss"
+	if actor_name == &"Shopkeeper":
+		return &"shopkeeper"
+	if is_summon:
+		return &"summon"
+	return &"enemy"
+
+
+func _visual_id_for(kind: StringName, boss_id: StringName) -> StringName:
+	if kind == &"boss":
+		return StringName("boss/%s" % boss_id)
+	return StringName("actor/%s" % kind)
+
+
+func _update_actor_facing(actor_id: int, cell: Vector2i) -> StringName:
+	var facing: StringName = _actor_facing_by_id.get(actor_id, &"down")
+	var previous_cell: Vector2i = _actor_cells_by_id.get(actor_id, cell)
+	var delta: Vector2i = cell - previous_cell
+	if delta.x < 0:
+		facing = &"left"
+	elif delta.x > 0:
+		facing = &"right"
+	elif delta.y < 0:
+		facing = &"up"
+	elif delta.y > 0:
+		facing = &"down"
+	_actor_cells_by_id[actor_id] = cell
+	_actor_facing_by_id[actor_id] = facing
+	return facing
+
+
+func _prune_actor_history(active_actor_ids: Dictionary) -> void:
+	for actor_id: Variant in _actor_cells_by_id.keys():
+		if active_actor_ids.has(actor_id):
+			continue
+		_actor_cells_by_id.erase(actor_id)
+		_actor_facing_by_id.erase(actor_id)
+
+
 func _touch() -> void:
 	revision += 1

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320" shape-rendering="crispEdges">
+  <defs>
+    <g id="observer-a">
+      <rect x="16" y="18" width="48" height="28" fill="#8fa4b8"/>
+      <rect x="10" y="24" width="60" height="16" fill="#dce8f0"/>
+      <rect x="22" y="14" width="36" height="36" fill="#ffffff"/>
+      <rect x="29" y="21" width="22" height="22" fill="#17202b"/>
+      <rect x="35" y="27" width="10" height="10" fill="#ffffff"/>
+      <rect x="38" y="30" width="4" height="4" fill="#17202b"/>
+      <rect x="6" y="29" width="8" height="6" fill="#ffffff"/><rect x="66" y="29" width="8" height="6" fill="#ffffff"/>
+    </g>
+    <g id="observer-b"><use href="#observer-a"/><rect x="32" y="24" width="16" height="16" fill="#ffffff"/><rect x="37" y="29" width="6" height="6" fill="#17202b"/></g>
+    <g id="observer-attack"><use href="#observer-a"/><rect x="0" y="30" width="80" height="4" fill="#ffffff"/><rect x="36" y="0" width="8" height="64" fill="#ffffff"/></g>
+    <g id="observer-cast"><use href="#observer-b"/><rect x="4" y="6" width="6" height="6" fill="#ffffff"/><rect x="70" y="8" width="5" height="5" fill="#ffffff"/><rect x="8" y="52" width="4" height="4" fill="#ffffff"/><rect x="66" y="50" width="7" height="7" fill="#ffffff"/></g>
+    <g id="observer-hurt"><rect x="18" y="20" width="44" height="26" fill="#8fa4b8"/><rect x="24" y="16" width="34" height="34" fill="#ffffff"/><rect x="34" y="26" width="14" height="14" fill="#17202b"/><rect x="4" y="8" width="8" height="8" fill="#ffffff"/><rect x="68" y="48" width="6" height="6" fill="#ffffff"/></g>
+    <g id="observer-death"><rect x="8" y="44" width="64" height="8" fill="#8fa4b8"/><rect x="18" y="40" width="44" height="5" fill="#ffffff"/><rect x="28" y="36" width="6" height="4" fill="#ffffff"/><rect x="48" y="35" width="5" height="5" fill="#ffffff"/></g>
+
+    <g id="seraphine-a">
+      <rect x="35" y="5" width="10" height="54" fill="#dce8f0"/><rect x="10" y="27" width="60" height="10" fill="#dce8f0"/>
+      <rect x="25" y="17" width="30" height="30" fill="#8fa4b8"/><rect x="32" y="24" width="16" height="16" fill="#ffffff"/>
+      <rect x="7" y="20" width="8" height="8" fill="#ffffff"/><rect x="65" y="36" width="8" height="8" fill="#ffffff"/>
+      <rect x="20" y="7" width="7" height="7" fill="#ffffff"/><rect x="54" y="50" width="7" height="7" fill="#ffffff"/>
+    </g>
+    <g id="seraphine-b"><use href="#seraphine-a"/><rect x="29" y="21" width="22" height="22" fill="#ffffff"/><rect x="36" y="28" width="8" height="8" fill="#17202b"/></g>
+    <g id="seraphine-attack"><use href="#seraphine-a"/><rect x="0" y="29" width="80" height="6" fill="#ffffff"/><rect x="68" y="23" width="12" height="18" fill="#ffffff"/></g>
+    <g id="seraphine-cast"><use href="#seraphine-b"/><rect x="3" y="4" width="8" height="8" fill="#ffffff"/><rect x="69" y="5" width="7" height="7" fill="#ffffff"/><rect x="5" y="52" width="7" height="7" fill="#ffffff"/><rect x="68" y="51" width="8" height="8" fill="#ffffff"/></g>
+    <g id="seraphine-hurt"><rect x="38" y="7" width="10" height="52" fill="#8fa4b8"/><rect x="14" y="30" width="58" height="8" fill="#8fa4b8"/><rect x="28" y="18" width="30" height="30" fill="#ffffff"/><rect x="5" y="10" width="8" height="8" fill="#ffffff"/></g>
+    <g id="seraphine-death"><rect x="8" y="46" width="64" height="7" fill="#8fa4b8"/><rect x="20" y="41" width="42" height="5" fill="#ffffff"/><rect x="34" y="34" width="8" height="7" fill="#ffffff"/></g>
+
+    <g id="vorrak-a">
+      <rect x="8" y="12" width="64" height="42" fill="#8fa4b8"/><rect x="14" y="18" width="52" height="30" fill="#ffffff"/>
+      <rect x="20" y="24" width="40" height="18" fill="#17202b"/><rect x="24" y="24" width="6" height="8" fill="#ffffff"/><rect x="36" y="34" width="7" height="8" fill="#ffffff"/><rect x="50" y="24" width="6" height="8" fill="#ffffff"/>
+      <rect x="4" y="6" width="10" height="12" fill="#ffffff"/><rect x="66" y="6" width="10" height="12" fill="#ffffff"/>
+    </g>
+    <g id="vorrak-b"><use href="#vorrak-a"/><rect x="18" y="21" width="44" height="24" fill="#17202b"/><rect x="23" y="21" width="7" height="10" fill="#ffffff"/><rect x="49" y="21" width="7" height="10" fill="#ffffff"/></g>
+    <g id="vorrak-attack"><use href="#vorrak-b"/><rect x="12" y="42" width="56" height="12" fill="#ffffff"/><rect x="20" y="42" width="8" height="8" fill="#17202b"/><rect x="52" y="42" width="8" height="8" fill="#17202b"/></g>
+    <g id="vorrak-cast"><use href="#vorrak-a"/><rect x="1" y="24" width="7" height="16" fill="#ffffff"/><rect x="72" y="24" width="7" height="16" fill="#ffffff"/><rect x="36" y="2" width="8" height="8" fill="#ffffff"/></g>
+    <g id="vorrak-hurt"><rect x="12" y="15" width="62" height="40" fill="#8fa4b8"/><rect x="18" y="21" width="50" height="28" fill="#ffffff"/><rect x="25" y="29" width="36" height="14" fill="#17202b"/><rect x="2" y="8" width="8" height="8" fill="#ffffff"/></g>
+    <g id="vorrak-death"><rect x="6" y="44" width="68" height="10" fill="#8fa4b8"/><rect x="14" y="39" width="54" height="6" fill="#ffffff"/><rect x="24" y="36" width="8" height="4" fill="#17202b"/><rect x="50" y="36" width="8" height="4" fill="#17202b"/></g>
+
+    <g id="kaelros-a">
+      <rect x="12" y="18" width="56" height="38" fill="#8fa4b8"/><rect x="18" y="22" width="44" height="30" fill="#dce8f0"/>
+      <rect x="20" y="8" width="8" height="14" fill="#ffffff"/><rect x="36" y="3" width="8" height="19" fill="#ffffff"/><rect x="52" y="8" width="8" height="14" fill="#ffffff"/>
+      <rect x="25" y="28" width="8" height="8" fill="#17202b"/><rect x="47" y="28" width="8" height="8" fill="#17202b"/>
+      <rect x="6" y="52" width="68" height="6" fill="#ffffff"/>
+    </g>
+    <g id="kaelros-b"><use href="#kaelros-a"/><rect x="20" y="49" width="40" height="5" fill="#ffffff"/><rect x="28" y="44" width="24" height="5" fill="#8fa4b8"/></g>
+    <g id="kaelros-attack"><use href="#kaelros-a"/><rect x="0" y="25" width="18" height="8" fill="#ffffff"/><rect x="62" y="25" width="18" height="8" fill="#ffffff"/></g>
+    <g id="kaelros-cast"><use href="#kaelros-b"/><rect x="3" y="5" width="7" height="7" fill="#ffffff"/><rect x="69" y="4" width="8" height="8" fill="#ffffff"/><rect x="1" y="40" width="6" height="6" fill="#ffffff"/><rect x="73" y="42" width="5" height="5" fill="#ffffff"/></g>
+    <g id="kaelros-hurt"><rect x="16" y="20" width="56" height="36" fill="#8fa4b8"/><rect x="22" y="24" width="44" height="28" fill="#ffffff"/><rect x="28" y="31" width="8" height="8" fill="#17202b"/><rect x="52" y="31" width="8" height="8" fill="#17202b"/><rect x="3" y="7" width="8" height="8" fill="#ffffff"/></g>
+    <g id="kaelros-death"><rect x="6" y="46" width="68" height="9" fill="#8fa4b8"/><rect x="18" y="41" width="50" height="5" fill="#ffffff"/><rect x="26" y="35" width="7" height="6" fill="#ffffff"/><rect x="48" y="36" width="8" height="5" fill="#ffffff"/></g>
+
+    <g id="nyxara-a">
+      <rect x="36" y="3" width="8" height="58" fill="#8fa4b8"/><rect x="11" y="28" width="58" height="8" fill="#8fa4b8"/>
+      <rect x="20" y="12" width="40" height="40" fill="#ffffff"/><rect x="26" y="18" width="28" height="28" fill="#17202b"/>
+      <rect x="32" y="24" width="16" height="16" fill="#dce8f0"/><rect x="37" y="29" width="6" height="6" fill="#17202b"/>
+      <rect x="5" y="6" width="6" height="6" fill="#ffffff"/><rect x="69" y="51" width="6" height="6" fill="#ffffff"/>
+    </g>
+    <g id="nyxara-b"><use href="#nyxara-a"/><rect x="24" y="16" width="32" height="32" fill="#ffffff"/><rect x="31" y="23" width="18" height="18" fill="#17202b"/><rect x="37" y="29" width="6" height="6" fill="#ffffff"/></g>
+    <g id="nyxara-attack"><use href="#nyxara-b"/><rect x="0" y="30" width="80" height="4" fill="#ffffff"/><rect x="38" y="0" width="4" height="64" fill="#ffffff"/></g>
+    <g id="nyxara-cast"><use href="#nyxara-a"/><rect x="3" y="3" width="8" height="8" fill="#ffffff"/><rect x="69" y="3" width="8" height="8" fill="#ffffff"/><rect x="3" y="53" width="8" height="8" fill="#ffffff"/><rect x="69" y="53" width="8" height="8" fill="#ffffff"/></g>
+    <g id="nyxara-hurt"><rect x="24" y="14" width="42" height="42" fill="#8fa4b8"/><rect x="30" y="20" width="30" height="30" fill="#ffffff"/><rect x="37" y="27" width="16" height="16" fill="#17202b"/><rect x="4" y="8" width="8" height="8" fill="#ffffff"/><rect x="11" y="45" width="6" height="6" fill="#ffffff"/></g>
+    <g id="nyxara-death"><rect x="8" y="45" width="64" height="8" fill="#8fa4b8"/><rect x="18" y="40" width="44" height="5" fill="#ffffff"/><rect x="26" y="34" width="7" height="6" fill="#ffffff"/><rect x="48" y="35" width="6" height="5" fill="#ffffff"/></g>
+  </defs>
+
+  <g transform="translate(0 0)"><use href="#observer-a"/></g><g transform="translate(80 0)"><use href="#observer-b"/></g><g transform="translate(160 0)"><use href="#observer-a"/></g><g transform="translate(240 0)"><use href="#observer-b"/></g><g transform="translate(320 0)"><use href="#observer-attack"/></g><g transform="translate(400 0)"><use href="#observer-attack"/></g><g transform="translate(480 0)"><use href="#observer-cast"/></g><g transform="translate(560 0)"><use href="#observer-cast"/></g><g transform="translate(640 0)"><use href="#observer-hurt"/></g><g transform="translate(720 0)"><use href="#observer-hurt"/></g><g transform="translate(800 0)"><use href="#observer-death"/></g><g transform="translate(880 0)"><use href="#observer-death"/></g>
+  <g transform="translate(0 64)"><use href="#seraphine-a"/></g><g transform="translate(80 64)"><use href="#seraphine-b"/></g><g transform="translate(160 64)"><use href="#seraphine-a"/></g><g transform="translate(240 64)"><use href="#seraphine-b"/></g><g transform="translate(320 64)"><use href="#seraphine-attack"/></g><g transform="translate(400 64)"><use href="#seraphine-attack"/></g><g transform="translate(480 64)"><use href="#seraphine-cast"/></g><g transform="translate(560 64)"><use href="#seraphine-cast"/></g><g transform="translate(640 64)"><use href="#seraphine-hurt"/></g><g transform="translate(720 64)"><use href="#seraphine-hurt"/></g><g transform="translate(800 64)"><use href="#seraphine-death"/></g><g transform="translate(880 64)"><use href="#seraphine-death"/></g>
+  <g transform="translate(0 128)"><use href="#vorrak-a"/></g><g transform="translate(80 128)"><use href="#vorrak-b"/></g><g transform="translate(160 128)"><use href="#vorrak-a"/></g><g transform="translate(240 128)"><use href="#vorrak-b"/></g><g transform="translate(320 128)"><use href="#vorrak-attack"/></g><g transform="translate(400 128)"><use href="#vorrak-attack"/></g><g transform="translate(480 128)"><use href="#vorrak-cast"/></g><g transform="translate(560 128)"><use href="#vorrak-cast"/></g><g transform="translate(640 128)"><use href="#vorrak-hurt"/></g><g transform="translate(720 128)"><use href="#vorrak-hurt"/></g><g transform="translate(800 128)"><use href="#vorrak-death"/></g><g transform="translate(880 128)"><use href="#vorrak-death"/></g>
+  <g transform="translate(0 192)"><use href="#kaelros-a"/></g><g transform="translate(80 192)"><use href="#kaelros-b"/></g><g transform="translate(160 192)"><use href="#kaelros-a"/></g><g transform="translate(240 192)"><use href="#kaelros-b"/></g><g transform="translate(320 192)"><use href="#kaelros-attack"/></g><g transform="translate(400 192)"><use href="#kaelros-attack"/></g><g transform="translate(480 192)"><use href="#kaelros-cast"/></g><g transform="translate(560 192)"><use href="#kaelros-cast"/></g><g transform="translate(640 192)"><use href="#kaelros-hurt"/></g><g transform="translate(720 192)"><use href="#kaelros-hurt"/></g><g transform="translate(800 192)"><use href="#kaelros-death"/></g><g transform="translate(880 192)"><use href="#kaelros-death"/></g>
+  <g transform="translate(0 256)"><use href="#nyxara-a"/></g><g transform="translate(80 256)"><use href="#nyxara-b"/></g><g transform="translate(160 256)"><use href="#nyxara-a"/></g><g transform="translate(240 256)"><use href="#nyxara-b"/></g><g transform="translate(320 256)"><use href="#nyxara-attack"/></g><g transform="translate(400 256)"><use href="#nyxara-attack"/></g><g transform="translate(480 256)"><use href="#nyxara-cast"/></g><g transform="translate(560 256)"><use href="#nyxara-cast"/></g><g transform="translate(640 256)"><use href="#nyxara-hurt"/></g><g transform="translate(720 256)"><use href="#nyxara-hurt"/></g><g transform="translate(800 256)"><use href="#nyxara-death"/></g><g transform="translate(880 256)"><use href="#nyxara-death"/></g>
+</svg>

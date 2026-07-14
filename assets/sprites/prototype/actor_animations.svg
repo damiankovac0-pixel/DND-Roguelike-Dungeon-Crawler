@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="64" viewBox="0 0 192 64" shape-rendering="crispEdges">
+  <defs>
+    <g id="player-idle-a">
+      <rect x="5" y="1" width="6" height="4" fill="#ffffff"/>
+      <rect x="6" y="2" width="1" height="1" fill="#17202b"/>
+      <rect x="9" y="2" width="1" height="1" fill="#17202b"/>
+      <rect x="4" y="5" width="8" height="6" fill="#dce8f0"/>
+      <rect x="2" y="6" width="2" height="5" fill="#8fa4b8"/>
+      <rect x="12" y="5" width="1" height="7" fill="#ffffff"/>
+      <rect x="13" y="4" width="1" height="3" fill="#ffffff"/>
+      <rect x="4" y="11" width="3" height="4" fill="#8fa4b8"/>
+      <rect x="9" y="11" width="3" height="4" fill="#8fa4b8"/>
+    </g>
+    <g id="player-idle-b">
+      <rect x="5" y="0" width="6" height="4" fill="#ffffff"/>
+      <rect x="6" y="1" width="1" height="1" fill="#17202b"/>
+      <rect x="9" y="1" width="1" height="1" fill="#17202b"/>
+      <rect x="4" y="4" width="8" height="7" fill="#dce8f0"/>
+      <rect x="2" y="5" width="2" height="5" fill="#8fa4b8"/>
+      <rect x="12" y="4" width="1" height="7" fill="#ffffff"/>
+      <rect x="13" y="3" width="1" height="3" fill="#ffffff"/>
+      <rect x="4" y="11" width="3" height="4" fill="#8fa4b8"/>
+      <rect x="9" y="11" width="3" height="4" fill="#8fa4b8"/>
+    </g>
+    <g id="player-move-a">
+      <use href="#player-idle-a"/>
+      <rect x="3" y="13" width="4" height="2" fill="#ffffff"/>
+      <rect x="10" y="11" width="3" height="2" fill="#8fa4b8"/>
+    </g>
+    <g id="player-move-b">
+      <use href="#player-idle-b"/>
+      <rect x="3" y="11" width="3" height="2" fill="#8fa4b8"/>
+      <rect x="9" y="13" width="4" height="2" fill="#ffffff"/>
+    </g>
+    <g id="player-attack-a">
+      <use href="#player-idle-a"/>
+      <rect x="12" y="5" width="3" height="2" fill="#ffffff"/>
+      <rect x="14" y="2" width="1" height="5" fill="#ffffff"/>
+    </g>
+    <g id="player-attack-b">
+      <use href="#player-idle-b"/>
+      <rect x="11" y="7" width="5" height="2" fill="#ffffff"/>
+      <rect x="14" y="9" width="2" height="1" fill="#ffffff"/>
+    </g>
+    <g id="player-cast-a">
+      <use href="#player-idle-a"/>
+      <rect x="1" y="5" width="3" height="2" fill="#ffffff"/>
+      <rect x="13" y="5" width="2" height="2" fill="#ffffff"/>
+      <rect x="14" y="2" width="1" height="1" fill="#ffffff"/>
+    </g>
+    <g id="player-cast-b">
+      <use href="#player-idle-b"/>
+      <rect x="0" y="6" width="4" height="2" fill="#ffffff"/>
+      <rect x="12" y="6" width="4" height="2" fill="#ffffff"/>
+      <rect x="1" y="3" width="1" height="1" fill="#ffffff"/>
+      <rect x="14" y="3" width="1" height="1" fill="#ffffff"/>
+    </g>
+    <g id="player-hurt-a">
+      <rect x="6" y="2" width="6" height="4" fill="#ffffff"/>
+      <rect x="5" y="6" width="8" height="6" fill="#dce8f0"/>
+      <rect x="3" y="12" width="4" height="3" fill="#8fa4b8"/>
+      <rect x="10" y="12" width="4" height="3" fill="#8fa4b8"/>
+    </g>
+    <g id="player-hurt-b">
+      <use href="#player-hurt-a"/>
+      <rect x="1" y="1" width="2" height="2" fill="#ffffff"/>
+      <rect x="14" y="3" width="1" height="1" fill="#ffffff"/>
+    </g>
+    <g id="player-death-a">
+      <rect x="2" y="10" width="11" height="4" fill="#dce8f0"/>
+      <rect x="12" y="9" width="3" height="4" fill="#ffffff"/>
+      <rect x="3" y="8" width="2" height="2" fill="#8fa4b8"/>
+    </g>
+    <g id="player-death-b">
+      <rect x="2" y="12" width="12" height="2" fill="#8fa4b8"/>
+      <rect x="12" y="11" width="3" height="2" fill="#dce8f0"/>
+    </g>
+
+    <g id="enemy-idle-a">
+      <rect x="3" y="1" width="3" height="3" fill="#ffffff"/>
+      <rect x="10" y="1" width="3" height="3" fill="#ffffff"/>
+      <rect x="4" y="3" width="8" height="6" fill="#dce8f0"/>
+      <rect x="5" y="5" width="2" height="2" fill="#17202b"/>
+      <rect x="9" y="5" width="2" height="2" fill="#17202b"/>
+      <rect x="3" y="9" width="10" height="4" fill="#8fa4b8"/>
+      <rect x="2" y="13" width="4" height="2" fill="#ffffff"/>
+      <rect x="10" y="13" width="4" height="2" fill="#ffffff"/>
+    </g>
+    <g id="enemy-idle-b">
+      <use href="#enemy-idle-a"/>
+      <rect x="4" y="2" width="8" height="1" fill="#ffffff"/>
+      <rect x="6" y="4" width="4" height="1" fill="#8fa4b8"/>
+    </g>
+    <g id="enemy-move-a"><use href="#enemy-idle-a"/><rect x="1" y="12" width="5" height="3" fill="#ffffff"/></g>
+    <g id="enemy-move-b"><use href="#enemy-idle-b"/><rect x="10" y="12" width="5" height="3" fill="#ffffff"/></g>
+    <g id="enemy-attack-a"><use href="#enemy-idle-a"/><rect x="12" y="6" width="4" height="2" fill="#ffffff"/><rect x="14" y="4" width="2" height="1" fill="#ffffff"/></g>
+    <g id="enemy-attack-b"><use href="#enemy-idle-b"/><rect x="11" y="8" width="5" height="3" fill="#ffffff"/></g>
+    <g id="enemy-cast-a"><use href="#enemy-idle-a"/><rect x="0" y="4" width="2" height="2" fill="#ffffff"/><rect x="14" y="3" width="1" height="1" fill="#ffffff"/></g>
+    <g id="enemy-cast-b"><use href="#enemy-idle-b"/><rect x="0" y="2" width="1" height="1" fill="#ffffff"/><rect x="14" y="5" width="2" height="2" fill="#ffffff"/></g>
+    <g id="enemy-hurt-a"><rect x="5" y="3" width="8" height="6" fill="#ffffff"/><rect x="4" y="9" width="10" height="4" fill="#8fa4b8"/><rect x="2" y="2" width="2" height="2" fill="#ffffff"/></g>
+    <g id="enemy-hurt-b"><use href="#enemy-hurt-a"/><rect x="14" y="1" width="1" height="3" fill="#ffffff"/></g>
+    <g id="enemy-death-a"><rect x="2" y="10" width="12" height="4" fill="#8fa4b8"/><rect x="4" y="8" width="3" height="2" fill="#ffffff"/><rect x="10" y="8" width="3" height="2" fill="#ffffff"/></g>
+    <g id="enemy-death-b"><rect x="1" y="13" width="14" height="2" fill="#8fa4b8"/><rect x="4" y="11" width="2" height="1" fill="#ffffff"/><rect x="11" y="11" width="2" height="1" fill="#ffffff"/></g>
+
+    <g id="shop-idle-a">
+      <rect x="3" y="1" width="10" height="3" fill="#ffffff"/>
+      <rect x="5" y="4" width="6" height="4" fill="#dce8f0"/>
+      <rect x="4" y="8" width="8" height="6" fill="#8fa4b8"/>
+      <rect x="1" y="8" width="3" height="5" fill="#ffffff"/>
+      <rect x="12" y="9" width="3" height="4" fill="#ffffff"/>
+      <rect x="13" y="10" width="1" height="1" fill="#17202b"/>
+    </g>
+    <g id="shop-idle-b"><use href="#shop-idle-a"/><rect x="6" y="3" width="4" height="1" fill="#ffffff"/></g>
+    <g id="shop-move-a"><use href="#shop-idle-a"/><rect x="2" y="13" width="5" height="2" fill="#ffffff"/></g>
+    <g id="shop-move-b"><use href="#shop-idle-b"/><rect x="9" y="13" width="5" height="2" fill="#ffffff"/></g>
+    <g id="shop-attack-a"><use href="#shop-idle-a"/><rect x="13" y="5" width="3" height="3" fill="#ffffff"/></g>
+    <g id="shop-attack-b"><use href="#shop-idle-b"/><rect x="12" y="4" width="4" height="4" fill="#ffffff"/></g>
+    <g id="shop-cast-a"><use href="#shop-idle-a"/><rect x="13" y="3" width="2" height="2" fill="#ffffff"/></g>
+    <g id="shop-cast-b"><use href="#shop-idle-b"/><rect x="14" y="1" width="1" height="1" fill="#ffffff"/><rect x="12" y="4" width="3" height="2" fill="#ffffff"/></g>
+    <g id="shop-hurt-a"><rect x="5" y="3" width="8" height="4" fill="#ffffff"/><rect x="4" y="7" width="9" height="7" fill="#8fa4b8"/></g>
+    <g id="shop-hurt-b"><use href="#shop-hurt-a"/><rect x="1" y="2" width="2" height="2" fill="#ffffff"/></g>
+    <g id="shop-death-a"><rect x="2" y="10" width="12" height="4" fill="#8fa4b8"/><rect x="3" y="8" width="8" height="2" fill="#ffffff"/></g>
+    <g id="shop-death-b"><rect x="1" y="13" width="14" height="2" fill="#8fa4b8"/></g>
+
+    <g id="summon-idle-a"><rect x="7" y="1" width="2" height="2" fill="#ffffff"/><rect x="5" y="3" width="6" height="7" fill="#dce8f0"/><rect x="3" y="6" width="10" height="3" fill="#8fa4b8"/><rect x="6" y="10" width="4" height="4" fill="#ffffff"/></g>
+    <g id="summon-idle-b"><rect x="6" y="0" width="4" height="3" fill="#ffffff"/><rect x="4" y="3" width="8" height="6" fill="#dce8f0"/><rect x="2" y="5" width="12" height="3" fill="#8fa4b8"/><rect x="7" y="9" width="2" height="5" fill="#ffffff"/></g>
+    <g id="summon-move-a"><use href="#summon-idle-a"/><rect x="2" y="11" width="3" height="1" fill="#ffffff"/></g>
+    <g id="summon-move-b"><use href="#summon-idle-b"/><rect x="11" y="11" width="3" height="1" fill="#ffffff"/></g>
+    <g id="summon-attack-a"><use href="#summon-idle-a"/><rect x="12" y="4" width="4" height="2" fill="#ffffff"/></g>
+    <g id="summon-attack-b"><use href="#summon-idle-b"/><rect x="11" y="6" width="5" height="3" fill="#ffffff"/></g>
+    <g id="summon-cast-a"><use href="#summon-idle-a"/><rect x="0" y="3" width="2" height="2" fill="#ffffff"/><rect x="14" y="2" width="1" height="1" fill="#ffffff"/></g>
+    <g id="summon-cast-b"><use href="#summon-idle-b"/><rect x="1" y="1" width="1" height="1" fill="#ffffff"/><rect x="13" y="4" width="3" height="2" fill="#ffffff"/></g>
+    <g id="summon-hurt-a"><rect x="6" y="3" width="7" height="7" fill="#dce8f0"/><rect x="3" y="6" width="10" height="3" fill="#8fa4b8"/></g>
+    <g id="summon-hurt-b"><use href="#summon-hurt-a"/><rect x="1" y="2" width="2" height="2" fill="#ffffff"/></g>
+    <g id="summon-death-a"><rect x="3" y="7" width="10" height="3" fill="#8fa4b8"/><rect x="5" y="11" width="2" height="2" fill="#ffffff"/><rect x="10" y="12" width="2" height="2" fill="#ffffff"/></g>
+    <g id="summon-death-b"><rect x="2" y="13" width="2" height="1" fill="#ffffff"/><rect x="7" y="11" width="2" height="1" fill="#8fa4b8"/><rect x="12" y="14" width="2" height="1" fill="#ffffff"/></g>
+  </defs>
+
+  <g transform="translate(0 0)"><use href="#player-idle-a"/></g><g transform="translate(16 0)"><use href="#player-idle-b"/></g><g transform="translate(32 0)"><use href="#player-move-a"/></g><g transform="translate(48 0)"><use href="#player-move-b"/></g><g transform="translate(64 0)"><use href="#player-attack-a"/></g><g transform="translate(80 0)"><use href="#player-attack-b"/></g><g transform="translate(96 0)"><use href="#player-cast-a"/></g><g transform="translate(112 0)"><use href="#player-cast-b"/></g><g transform="translate(128 0)"><use href="#player-hurt-a"/></g><g transform="translate(144 0)"><use href="#player-hurt-b"/></g><g transform="translate(160 0)"><use href="#player-death-a"/></g><g transform="translate(176 0)"><use href="#player-death-b"/></g>
+  <g transform="translate(0 16)"><use href="#enemy-idle-a"/></g><g transform="translate(16 16)"><use href="#enemy-idle-b"/></g><g transform="translate(32 16)"><use href="#enemy-move-a"/></g><g transform="translate(48 16)"><use href="#enemy-move-b"/></g><g transform="translate(64 16)"><use href="#enemy-attack-a"/></g><g transform="translate(80 16)"><use href="#enemy-attack-b"/></g><g transform="translate(96 16)"><use href="#enemy-cast-a"/></g><g transform="translate(112 16)"><use href="#enemy-cast-b"/></g><g transform="translate(128 16)"><use href="#enemy-hurt-a"/></g><g transform="translate(144 16)"><use href="#enemy-hurt-b"/></g><g transform="translate(160 16)"><use href="#enemy-death-a"/></g><g transform="translate(176 16)"><use href="#enemy-death-b"/></g>
+  <g transform="translate(0 32)"><use href="#shop-idle-a"/></g><g transform="translate(16 32)"><use href="#shop-idle-b"/></g><g transform="translate(32 32)"><use href="#shop-move-a"/></g><g transform="translate(48 32)"><use href="#shop-move-b"/></g><g transform="translate(64 32)"><use href="#shop-attack-a"/></g><g transform="translate(80 32)"><use href="#shop-attack-b"/></g><g transform="translate(96 32)"><use href="#shop-cast-a"/></g><g transform="translate(112 32)"><use href="#shop-cast-b"/></g><g transform="translate(128 32)"><use href="#shop-hurt-a"/></g><g transform="translate(144 32)"><use href="#shop-hurt-b"/></g><g transform="translate(160 32)"><use href="#shop-death-a"/></g><g transform="translate(176 32)"><use href="#shop-death-b"/></g>
+  <g transform="translate(0 48)"><use href="#summon-idle-a"/></g><g transform="translate(16 48)"><use href="#summon-idle-b"/></g><g transform="translate(32 48)"><use href="#summon-move-a"/></g><g transform="translate(48 48)"><use href="#summon-move-b"/></g><g transform="translate(64 48)"><use href="#summon-attack-a"/></g><g transform="translate(80 48)"><use href="#summon-attack-b"/></g><g transform="translate(96 48)"><use href="#summon-cast-a"/></g><g transform="translate(112 48)"><use href="#summon-cast-b"/></g><g transform="translate(128 48)"><use href="#summon-hurt-a"/></g><g transform="translate(144 48)"><use href="#summon-hurt-b"/></g><g transform="translate(160 48)"><use href="#summon-death-a"/></g><g transform="translate(176 48)"><use href="#summon-death-b"/></g>
+</svg>

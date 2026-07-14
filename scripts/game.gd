@@ -2221,6 +2221,7 @@ func _advance_dash_charge() -> void:
 
 # ===== Combat Resolution =====
 func _resolve_attack(attacker: Node, defender: Node) -> void:
+	_play_actor_presentation_event(attacker, &"attack")
 	var damage_percent: int = _get_damage_percent(defender, &"melee")
 	var attacker_damage_percent: int = _get_attacker_damage_percent(attacker, &"melee")
 	var outcome: Dictionary = CombatSystemScript.attack(
@@ -2350,6 +2351,9 @@ func _try_apply_attack_poison(attacker: Node, defender: Node, outcome: Dictionar
 
 
 func _handle_defender_after_damage(defender: Node, took_damage: bool = true) -> void:
+	if took_damage and defender != null:
+		var animation: StringName = &"hurt" if defender.is_alive() else &"death"
+		_play_actor_presentation_event(defender, animation)
 	if defender == _player:
 		GameManager.emit_player_damaged()
 		if took_damage:
@@ -2723,6 +2727,7 @@ func _activate_fighter_whirlwind() -> void:
 		GameManager.add_log_message("Whirlwind has no adjacent enemies.", &"warning")
 		return
 	_fighter_whirlwind_charges -= 1
+	_play_actor_presentation_event(_player, &"attack")
 	for target: Node2D in adjacent_enemies:
 		var damage_percent: int = _get_damage_percent(target, &"melee")
 		var attacker_damage_percent: int = _get_player_class_damage_percent(
@@ -3265,6 +3270,18 @@ func _open_container_at(cell: Vector2i) -> void:
 	hud.bind_player(_player)
 
 
+func _play_actor_presentation_event(actor: Variant, animation: StringName) -> void:
+	if map_view == null or not map_view.has_method(&"play_actor_event"):
+		return
+	map_view.call(&"play_actor_event", actor, animation)
+
+
+func _play_actor_presentation_event_at_cell(cell: Vector2i, animation: StringName) -> void:
+	if map_view == null or not map_view.has_method(&"play_actor_event_at_cell"):
+		return
+	map_view.call(&"play_actor_event_at_cell", cell, animation)
+
+
 func _play_action_burst(cell: Vector2i, burst_type: StringName) -> void:
 	if map_view == null or not map_view.has_method("play_cell_burst"):
 		return
@@ -3301,6 +3318,7 @@ func _play_action_burst(cell: Vector2i, burst_type: StringName) -> void:
 func _play_projectile_between(
 	source_cell: Vector2i, target_cell: Vector2i, payload: Dictionary
 ) -> void:
+	_play_actor_presentation_event_at_cell(source_cell, &"cast")
 	var cells: Array[Vector2i] = ProjectileSystemScript.line_cells(source_cell, target_cell)
 	_play_projectile_trail(cells, payload)
 
@@ -4299,6 +4317,7 @@ func _play_boss_projectile_resolution(enemy: Node, attack: Resource, cells: Dict
 func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
 	if attack == null:
 		return
+	_play_actor_presentation_event(enemy, &"cast")
 	if attack.shape == &"summon":
 		_resolve_boss_summon(enemy, attack, cells)
 		return

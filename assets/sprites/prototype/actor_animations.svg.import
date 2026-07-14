@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://deovuo83j8wux"
-path="res://.godot/imported/missing_visual.svg-6fa05d467b24b95be567d32e99857c31.ctex"
+uid="uid://6wf4icycpvs2"
+path="res://.godot/imported/actor_animations.svg-eacf3929c4cba51e6e64513e9a824989.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/missing_visual.svg"
-dest_files=["res://.godot/imported/missing_visual.svg-6fa05d467b24b95be567d32e99857c31.ctex"]
+source_file="res://assets/sprites/prototype/actor_animations.svg"
+dest_files=["res://.godot/imported/actor_animations.svg-eacf3929c4cba51e6e64513e9a824989.ctex"]
 
 [params]
 

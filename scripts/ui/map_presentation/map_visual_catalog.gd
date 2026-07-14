@@ -21,8 +21,6 @@ const TILE_ATLAS_COORDS: Dictionary = {
 
 # === Exports ===
 @export var tile_atlas: Texture2D
-@export var player_texture: Texture2D
-@export var missing_texture: Texture2D
 @export var prototype: bool = true
 @export var attribution: String = "Project-authored deterministic Phase 2 prototype"
 
@@ -31,8 +29,6 @@ const TILE_ATLAS_COORDS: Dictionary = {
 func validate() -> String:
 	if tile_atlas == null:
 		return "Prototype tile atlas is missing"
-	if player_texture == null and missing_texture == null:
-		return "Player and missing-visual textures are both missing"
 	return ""
 
 
@@ -58,7 +54,3 @@ func atlas_coords_for_tile(tile_type: int) -> Vector2i:
 
 func is_structure_tile(tile_type: int) -> bool:
 	return tile_type != DungeonDataScript.TileType.FLOOR
-
-
-func player_or_fallback_texture() -> Texture2D:
-	return player_texture if player_texture != null else missing_texture
