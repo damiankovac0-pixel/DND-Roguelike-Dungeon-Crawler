@@ -195,7 +195,7 @@ The automated release gate enforces these renderer budgets:
 
 Reference Web threshold at `1180x760`: at least 55 average FPS with a 25 ms-or-lower p95 frame time during floor transitions, movement, and 90 live renderer changes; the canvas must match every tested viewport and the browser must report no console, page, or resource-load errors.
 
-ASCII remains the backward-compatible default. Hybrid and Full Pixel Map are production-ready opt-in modes; release checks cover all three modes, boss encounters, renderer switching, reduced VFX, viewport resizing, focus return, and browser errors.
+Hybrid is the default for new players and settings files without an explicit graphics preference. Existing saved preferences remain intact, while ASCII remains the compatibility fallback for invalid values or unavailable pixel resources. Full Pixel Map remains opt-in. Release checks cover all three modes, boss encounters, renderer switching, reduced VFX, viewport resizing, focus return, and browser errors.
 
 ## Web export
 

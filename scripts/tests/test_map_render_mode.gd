@@ -197,9 +197,9 @@ func _check_missing_setting_and_persistence() -> void:
 	var sensory_feedback: Control = await _new_sensory_feedback()
 	if sensory_feedback == null:
 		return
-	if StringName(sensory_feedback.call(&"get_map_render_mode")) != &"ascii":
+	if StringName(sensory_feedback.call(&"get_map_render_mode")) != &"hybrid":
 		sensory_feedback.queue_free()
-		_fail("Missing graphics setting should default to ASCII")
+		_fail("Missing graphics setting should default to Hybrid")
 		return
 	sensory_feedback.call(&"set_map_render_mode", &"pixel", true)
 	sensory_feedback.queue_free()

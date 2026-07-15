@@ -21,6 +21,7 @@ const SETTINGS_PATH: String = "user://dungeon_delver_settings.cfg"
 const MapRenderModeScript: GDScript = preload(
 	"res://scripts/ui/map_presentation/map_render_mode.gd"
 )
+const DEFAULT_MAP_RENDER_MODE: StringName = MapRenderModeScript.HYBRID
 const GRAPHICS_SETTINGS_SECTION: String = "graphics"
 const SETTING_MAP_RENDER_MODE: String = "map_render_mode"
 const SETTINGS_SECTION: String = "sensory"
@@ -168,7 +169,7 @@ var _visual_color: Color = Color.TRANSPARENT
 var _visual_duration: float = 0.0
 var _visual_elapsed: float = 0.0
 var _reduced_vfx_enabled: bool = true
-var _map_render_mode: StringName = MapRenderModeScript.ASCII
+var _map_render_mode: StringName = DEFAULT_MAP_RENDER_MODE
 
 
 # === GameManager Access ===
@@ -684,7 +685,7 @@ func _initialize_preference_defaults() -> void:
 	_master_volume = clampf(default_master_volume, 0.0, 1.0)
 	_ambience_enabled = true
 	_reduced_vfx_enabled = true
-	_map_render_mode = MapRenderModeScript.ASCII
+	_map_render_mode = DEFAULT_MAP_RENDER_MODE
 
 
 func _load_preferences() -> void:
@@ -702,7 +703,7 @@ func _load_preferences() -> void:
 	_reduced_vfx_enabled = bool(config.get_value(SETTINGS_SECTION, SETTING_REDUCED_VFX, true))
 	_map_render_mode = MapRenderModeScript.normalize(
 		config.get_value(
-			GRAPHICS_SETTINGS_SECTION, SETTING_MAP_RENDER_MODE, MapRenderModeScript.ASCII
+			GRAPHICS_SETTINGS_SECTION, SETTING_MAP_RENDER_MODE, DEFAULT_MAP_RENDER_MODE
 		)
 	)
 
