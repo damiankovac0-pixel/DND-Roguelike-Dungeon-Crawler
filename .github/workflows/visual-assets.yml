@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/visual-assets.yml"
       - "assets/shaders/**"
-      - "assets/sprites/**"
+      - "assets/pixel_art/**"
       - "assets/visual_asset_attribution.json"
       - "assets/visual_assets.json"
       - "export_presets.cfg"
@@ -20,7 +20,7 @@ on:
     paths:
       - ".github/workflows/visual-assets.yml"
       - "assets/shaders/**"
-      - "assets/sprites/**"
+      - "assets/pixel_art/**"
       - "assets/visual_asset_attribution.json"
       - "assets/visual_assets.json"
       - "export_presets.cfg"

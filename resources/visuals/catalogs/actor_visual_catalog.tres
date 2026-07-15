@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="ActorVisualCatalog" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/actor_visual_catalog.gd" id="1_catalog"]
-[ext_resource type="Texture2D" path="res://assets/sprites/prototype/actor_animations.svg" id="2_actors"]
-[ext_resource type="Texture2D" path="res://assets/sprites/prototype/boss_animations.svg" id="3_bosses"]
+[ext_resource type="Texture2D" path="res://assets/pixel_art/source/actors/core.svg" id="2_actors"]
+[ext_resource type="Texture2D" path="res://assets/pixel_art/source/bosses/core.svg" id="3_bosses"]
 
 [resource]
 script = ExtResource("1_catalog")
 catalog_version = 1
 actor_sheet = ExtResource("2_actors")
 boss_sheet = ExtResource("3_bosses")
-prototype = true
-attribution = "Project-authored deterministic Phase 3 prototype"
+prototype = false
+attribution = "Project-authored production actor visual catalog."

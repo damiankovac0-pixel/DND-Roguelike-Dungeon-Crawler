@@ -48,8 +48,8 @@ const LOOPING_ANIMATIONS: Dictionary = {
 @export var catalog_version: int = 1
 @export var actor_sheet: Texture2D
 @export var boss_sheet: Texture2D
-@export var prototype: bool = true
-@export var attribution: String = "Project-authored deterministic Phase 3 prototype"
+@export var prototype: bool = false
+@export var attribution: String = "Project-authored production actor visual catalog."
 
 # === Private Variables ===
 var _frames_by_visual_id: Dictionary = {}

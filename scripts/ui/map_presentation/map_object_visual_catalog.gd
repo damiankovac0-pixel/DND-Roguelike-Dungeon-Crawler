@@ -32,8 +32,8 @@ const ATLAS_COORDS: Dictionary = {
 # === Exports ===
 @export var catalog_version: int = 1
 @export var object_atlas: Texture2D
-@export var prototype: bool = true
-@export var attribution: String = "Project-authored deterministic Phase 4 prototype"
+@export var prototype: bool = false
+@export var attribution: String = "Project-authored production object visual catalog."
 
 
 # === Public Methods ===

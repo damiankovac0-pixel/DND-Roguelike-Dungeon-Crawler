@@ -8,7 +8,7 @@ const PRESENTATION_DIR: String = "res://scripts/ui/map_presentation/"
 const VISUAL_CATALOG_DIR: String = "res://resources/visuals/catalogs/"
 const GRID_LAYOUT_PATH: String = PRESENTATION_DIR + "map_grid_layout.gd"
 const STATE_PATH: String = PRESENTATION_DIR + "map_presentation_state.gd"
-const OBJECT_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "prototype_map_object_visual_catalog.tres"
+const OBJECT_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "map_object_visual_catalog.tres"
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
 const MAP_VIEW_PATH: String = "res://scripts/ui/map_view.gd"
 

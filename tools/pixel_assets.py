@@ -449,6 +449,50 @@ def check(manifest: Mapping[str, Any], root: Path = REPOSITORY_ROOT) -> None:
         raise PipelineError(f"Generated visual asset files are stale: {relative_paths}. Run generate or export.")
 
 
+def validate_production_readiness(manifest: Mapping[str, Any]) -> list[str]:
+    """Return sorted error strings for every asset/catalogue still marked prototype
+    or whose source/runtime/catalog path contains a ``prototype`` path component."""
+    errors: list[str] = []
+
+    for asset_value in manifest["assets"]:
+        asset = _mapping(asset_value, "asset")
+        asset_id = str(asset["id"])
+        if asset.get("prototype", True) is not False:
+            errors.append(f"Asset {asset_id} is still marked prototype")
+        for path_key in ("source_path", "runtime_path"):
+            path_str = str(asset.get(path_key, ""))
+            if "prototype" in PurePosixPath(path_str).parts:
+                errors.append(
+                    f"Asset {asset_id} {path_key} contains a prototype component: {path_str}"
+                )
+
+    for catalog_value in manifest["catalogs"]:
+        catalog = _mapping(catalog_value, "catalog")
+        catalog_id = str(catalog["id"])
+        if catalog.get("prototype", True) is not False:
+            errors.append(f"Catalogue {catalog_id} is still marked prototype")
+        catalog_path = str(catalog.get("path", ""))
+        if "prototype" in PurePosixPath(catalog_path).parts:
+            errors.append(
+                f"Catalogue {catalog_id} path contains a prototype component: {catalog_path}"
+            )
+
+    errors.sort()
+    return errors
+
+
+def release_check(manifest: Mapping[str, Any], root: Path = REPOSITORY_ROOT) -> None:
+    """Run generated-file check, then production-readiness validation."""
+    check(manifest, root)
+    errors = validate_production_readiness(manifest)
+    if errors:
+        raise PipelineError(
+            "Production readiness violations:\n  " + "\n  ".join(errors)
+        )
+    total = len(manifest["assets"])
+    print(f"All {total} visual assets are production-ready")
+
+
 def resolve_aseprite(explicit_path: str | None = None) -> Path:
     candidates: list[str] = []
     if explicit_path:
@@ -598,6 +642,7 @@ def _parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
     export_parser.add_argument("--aseprite", help="path to the Aseprite executable")
     commands_parser = subparsers.add_parser("commands", help="print deterministic Aseprite commands without running them")
     commands_parser.add_argument("--aseprite", default="${ASEPRITE}", help="executable shown in commands")
+    subparsers.add_parser("release-check", help="run check plus production-readiness validation")
     return parser.parse_args(argv)
 
 
@@ -615,12 +660,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"Generated {path.relative_to(REPOSITORY_ROOT)}")
         else:
             print("Visual asset generated files already current")
+    elif arguments.command == "release-check":
+        release_check(manifest, REPOSITORY_ROOT)
     elif arguments.command == "export":
         count, version = export_aseprite_assets(manifest, REPOSITORY_ROOT, arguments.aseprite)
         if count:
             print(f"Exported {count} Aseprite assets with {version}")
         else:
-            print("No Aseprite-backed assets yet; validated committed prototype sources")
+            print("No Aseprite-backed assets yet; validated committed production sources")
     elif arguments.command == "commands":
         count = _print_commands(manifest, REPOSITORY_ROOT, arguments.aseprite)
         if not count:

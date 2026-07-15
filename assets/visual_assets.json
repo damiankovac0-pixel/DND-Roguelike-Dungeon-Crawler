@@ -21,10 +21,10 @@
     {
       "id": "terrain/core",
       "category": "terrain",
-      "source_path": "assets/sprites/prototype/dungeon_tiles.svg",
+      "source_path": "assets/pixel_art/source/terrain/core.svg",
       "source_format": "svg",
       "exporter": "committed",
-      "runtime_path": "assets/sprites/prototype/dungeon_tiles.svg",
+      "runtime_path": "assets/pixel_art/source/terrain/core.svg",
       "expected_size": [112, 16],
       "frame_size": [16, 16],
       "grid": [7, 1],
@@ -38,17 +38,17 @@
         "door/boss_sealed"
       ],
       "animations": {},
-      "prototype": true,
+      "prototype": false,
       "license_id": "project_authored",
-      "attribution": "Project-authored deterministic Phase 2 terrain prototype."
+      "attribution": "Project-authored production terrain atlas."
     },
     {
       "id": "actor/core",
       "category": "actor",
-      "source_path": "assets/sprites/prototype/actor_animations.svg",
+      "source_path": "assets/pixel_art/source/actors/core.svg",
       "source_format": "svg",
       "exporter": "committed",
-      "runtime_path": "assets/sprites/prototype/actor_animations.svg",
+      "runtime_path": "assets/pixel_art/source/actors/core.svg",
       "expected_size": [192, 64],
       "frame_size": [16, 16],
       "grid": [12, 4],
@@ -72,17 +72,17 @@
         "hurt": 2,
         "death": 2
       },
-      "prototype": true,
+      "prototype": false,
       "license_id": "project_authored",
-      "attribution": "Project-authored deterministic Phase 3 actor prototype."
+      "attribution": "Project-authored production actor sheet."
     },
     {
       "id": "boss/core",
       "category": "boss",
-      "source_path": "assets/sprites/prototype/boss_animations.svg",
+      "source_path": "assets/pixel_art/source/bosses/core.svg",
       "source_format": "svg",
       "exporter": "committed",
-      "runtime_path": "assets/sprites/prototype/boss_animations.svg",
+      "runtime_path": "assets/pixel_art/source/bosses/core.svg",
       "expected_size": [960, 320],
       "frame_size": [80, 64],
       "grid": [12, 5],
@@ -108,17 +108,17 @@
         "hurt": 2,
         "death": 2
       },
-      "prototype": true,
+      "prototype": false,
       "license_id": "project_authored",
-      "attribution": "Project-authored deterministic Phase 3 boss prototype."
+      "attribution": "Project-authored production boss sheet."
     },
     {
       "id": "object/core",
       "category": "object",
-      "source_path": "assets/sprites/prototype/map_objects.svg",
+      "source_path": "assets/pixel_art/source/objects/core.svg",
       "source_format": "svg",
       "exporter": "committed",
-      "runtime_path": "assets/sprites/prototype/map_objects.svg",
+      "runtime_path": "assets/pixel_art/source/objects/core.svg",
       "expected_size": [256, 16],
       "frame_size": [16, 16],
       "grid": [16, 1],
@@ -141,17 +141,17 @@
         "prop/generic"
       ],
       "animations": {},
-      "prototype": true,
+      "prototype": false,
       "license_id": "project_authored",
-      "attribution": "Project-authored deterministic Phase 4 object prototype."
+      "attribution": "Project-authored production object atlas."
     },
     {
       "id": "effect/particle",
       "category": "effect",
-      "source_path": "assets/sprites/prototype/effect_particle.svg",
+      "source_path": "assets/pixel_art/source/effects/particle.svg",
       "source_format": "svg",
       "exporter": "committed",
-      "runtime_path": "assets/sprites/prototype/effect_particle.svg",
+      "runtime_path": "assets/pixel_art/source/effects/particle.svg",
       "expected_size": [3, 3],
       "frame_size": [3, 3],
       "grid": [1, 1],
@@ -159,15 +159,15 @@
         "effect/particle"
       ],
       "animations": {},
-      "prototype": true,
+      "prototype": false,
       "license_id": "project_authored",
-      "attribution": "Project-authored deterministic Phase 5 particle texture."
+      "attribution": "Project-authored production particle texture."
     }
   ],
   "catalogs": [
     {
       "id": "map",
-      "path": "resources/visuals/catalogs/prototype_map_visual_catalog.tres",
+      "path": "resources/visuals/catalogs/map_visual_catalog.tres",
       "script_class": "MapVisualCatalog",
       "script_path": "scripts/ui/map_presentation/map_visual_catalog.gd",
       "textures": [
@@ -177,12 +177,12 @@
           "resource_id": "2_tiles"
         }
       ],
-      "prototype": true,
-      "attribution": "Project-authored deterministic Phase 2 prototype"
+      "prototype": false,
+      "attribution": "Project-authored production map visual catalog."
     },
     {
       "id": "actors",
-      "path": "resources/visuals/catalogs/prototype_actor_visual_catalog.tres",
+      "path": "resources/visuals/catalogs/actor_visual_catalog.tres",
       "script_class": "ActorVisualCatalog",
       "script_path": "scripts/ui/map_presentation/actor_visual_catalog.gd",
       "textures": [
@@ -197,12 +197,12 @@
           "resource_id": "3_bosses"
         }
       ],
-      "prototype": true,
-      "attribution": "Project-authored deterministic Phase 3 prototype"
+      "prototype": false,
+      "attribution": "Project-authored production actor visual catalog."
     },
     {
       "id": "objects",
-      "path": "resources/visuals/catalogs/prototype_map_object_visual_catalog.tres",
+      "path": "resources/visuals/catalogs/map_object_visual_catalog.tres",
       "script_class": "MapObjectVisualCatalog",
       "script_path": "scripts/ui/map_presentation/map_object_visual_catalog.gd",
       "textures": [
@@ -212,8 +212,8 @@
           "resource_id": "2_objects"
         }
       ],
-      "prototype": true,
-      "attribution": "Project-authored deterministic Phase 4 prototype"
+      "prototype": false,
+      "attribution": "Project-authored production object visual catalog."
     }
   ]
 }

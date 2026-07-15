@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dnib67y3rnnh"
-path="res://.godot/imported/boss_animations.svg-6f4bee125f908b1e5d320f3ff37bdcbb.ctex"
+uid="uid://c8iemju4bl68"
+path="res://.godot/imported/core.svg-7b9cdfc3bc1e7663c35d544f5f058c39.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/boss_animations.svg"
-dest_files=["res://.godot/imported/boss_animations.svg-6f4bee125f908b1e5d320f3ff37bdcbb.ctex"]
+source_file="res://assets/pixel_art/source/actors/core.svg"
+dest_files=["res://.godot/imported/core.svg-7b9cdfc3bc1e7663c35d544f5f058c39.ctex"]
 
 [params]
 

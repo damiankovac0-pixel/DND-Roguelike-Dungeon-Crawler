@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6wf4icycpvs2"
-path="res://.godot/imported/actor_animations.svg-eacf3929c4cba51e6e64513e9a824989.ctex"
+uid="uid://4ff10io1hyxc"
+path="res://.godot/imported/core.svg-fffd205374033e806fec0a03062bc130.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/actor_animations.svg"
-dest_files=["res://.godot/imported/actor_animations.svg-eacf3929c4cba51e6e64513e9a824989.ctex"]
+source_file="res://assets/pixel_art/source/objects/core.svg"
+dest_files=["res://.godot/imported/core.svg-fffd205374033e806fec0a03062bc130.ctex"]
 
 [params]
 

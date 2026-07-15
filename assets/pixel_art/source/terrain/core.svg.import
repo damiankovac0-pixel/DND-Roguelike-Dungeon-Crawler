@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ckw6pwuqt04le"
-path="res://.godot/imported/map_objects.svg-19db774c68c0d20280bc1276f94569bc.ctex"
+uid="uid://daamxv0m0uwaj"
+path="res://.godot/imported/core.svg-41b48d3926fda266f776df0c857dc30f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/map_objects.svg"
-dest_files=["res://.godot/imported/map_objects.svg-19db774c68c0d20280bc1276f94569bc.ctex"]
+source_file="res://assets/pixel_art/source/terrain/core.svg"
+dest_files=["res://.godot/imported/core.svg-41b48d3926fda266f776df0c857dc30f.ctex"]
 
 [params]
 

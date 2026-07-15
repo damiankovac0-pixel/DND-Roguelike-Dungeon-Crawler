@@ -1,4 +1,4 @@
-## Phase 2 regression coverage for grid layout, state replay, and pixel prototype.
+## Regression coverage for grid layout, state replay, and pixel rendering.
 ##
 ## Run with:
 ##   /usr/local/bin/godot --headless --path . --script \
@@ -256,7 +256,7 @@ func _check_pixel_renderer_scene() -> void:
 	_check_missing_catalog_fallback(renderer_scene, layout)
 	renderer.queue_free()
 	await process_frame
-	print("  TileMapLayer prototype renders terrain, visibility, and player deterministically")
+	print("  TileMapLayer renders terrain, visibility, and player deterministically")
 
 
 func _check_pixel_visibility_updates(

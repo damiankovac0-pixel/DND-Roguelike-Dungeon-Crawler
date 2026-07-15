@@ -83,8 +83,8 @@ def resolve_godot(explicit_path: Path | None) -> Path:
 def build_checks(godot: Path, visual_capture: bool, web_export: bool) -> list[Check]:
     checks = [
         Check(
-            "Generated visual asset validation",
-            (sys.executable, "tools/pixel_assets.py", "check"),
+            "Production visual validation",
+            (sys.executable, "tools/pixel_assets.py", "release-check"),
             60,
         ),
         Check(

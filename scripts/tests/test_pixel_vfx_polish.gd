@@ -11,7 +11,7 @@ const GRID_LAYOUT_PATH: String = PRESENTATION_DIR + "map_grid_layout.gd"
 const STATE_PATH: String = PRESENTATION_DIR + "map_presentation_state.gd"
 const EFFECT_POOL_PATH: String = PRESENTATION_DIR + "pixel_effect_pool.gd"
 const ACTOR_VIEW_SCENE_PATH: String = "res://scenes/rendering/pixel_actor_view.tscn"
-const ACTOR_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "prototype_actor_visual_catalog.tres"
+const ACTOR_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "actor_visual_catalog.tres"
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
 
 

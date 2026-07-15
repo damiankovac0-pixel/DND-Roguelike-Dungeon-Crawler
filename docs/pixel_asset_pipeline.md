@@ -2,7 +2,7 @@
 
 The pixel renderer loads only explicit Godot resources. `assets/visual_assets.json` is the build-time source of truth for visual source files, runtime textures, atlas dimensions, semantic IDs, licences, attribution, and generated `.tres` catalogues. Runtime code never scans asset directories and never invokes Aseprite.
 
-The five currently declared visual sources are project-authored prototype SVGs. They use `"exporter": "committed"`, so the source and runtime texture are the same file. Production art can replace entries incrementally with committed `.aseprite` sources and generated PNG/JSON pairs; the renderer remains playable from committed outputs without Aseprite installed.
+The five declared visual sources are project-authored production SVG atlases under `assets/pixel_art/source/`. They use `"exporter": "committed"`, so each source is also its runtime texture. The same pipeline supports future committed `.aseprite` sources with generated PNG/JSON pairs; the renderer always remains playable from committed outputs without Aseprite installed.
 
 ## Commands
 
@@ -11,6 +11,9 @@ Run from the repository root:
 ```sh
 # Validate paths, dimensions, animation metadata, hashes, licences, and generated files.
 python3 tools/pixel_assets.py check
+
+# Validate generated files and reject prototype flags or prototype path components.
+python3 tools/pixel_assets.py release-check
 
 # Regenerate deterministic .tres catalogues and the attribution record.
 python3 tools/pixel_assets.py generate
@@ -40,10 +43,10 @@ Aseprite 1.3.0 or newer is required for Aseprite-backed entries. The command use
 
 ## Repository layout
 
-Current prototype files remain in their established paths:
+Production sources and generated contracts use these paths:
 
 ```text
-assets/sprites/prototype/              Project-authored prototype SVG sources/runtime textures
+assets/pixel_art/source/                Project-authored production SVG sources/runtime textures
 assets/visual_assets.json              Hand-edited source manifest
 assets/visual_asset_attribution.json   Generated hashes, paths, licences, and attribution
 resources/visuals/catalogs/            Generated explicit Godot Resource catalogues
@@ -51,18 +54,18 @@ tools/pixel_assets.py                   Build-time exporter, generator, and vali
 tools/tests/test_pixel_assets.py        Build-tool regression coverage
 ```
 
-Create production files only when real art is ready:
+The production source folders are:
 
 ```text
-assets/pixel_art/source/terrain/        .aseprite source documents
-assets/pixel_art/source/actors/         .aseprite source documents
-assets/pixel_art/source/bosses/         .aseprite source documents
-assets/pixel_art/source/objects/        .aseprite source documents
-assets/pixel_art/source/effects/        .aseprite source documents
-assets/pixel_art/generated/             Exported PNG sheets and Aseprite JSON metadata
+assets/pixel_art/source/terrain/        Terrain atlas; currently core.svg
+assets/pixel_art/source/actors/         Actor animation sheet; currently core.svg
+assets/pixel_art/source/bosses/         Boss animation sheet; currently core.svg
+assets/pixel_art/source/objects/        Item, prop, and trap atlas; currently core.svg
+assets/pixel_art/source/effects/        Effect textures; currently particle.svg
+assets/pixel_art/generated/             Optional PNG sheets and JSON for Aseprite-backed entries
 ```
 
-Both source documents and generated runtime outputs are committed. Aseprite is a local/build dependency, never a game or Web-export dependency.
+Committed SVGs are both editable sources and runtime outputs. For Aseprite-backed entries, both source documents and generated runtime outputs are committed. Aseprite is a local/build dependency, never a game or Web-export dependency.
 
 ## Source conventions
 
@@ -105,21 +108,21 @@ The current runtime builds `SpriteFrames` from fixed atlas regions. Exported Ase
 
 - Author at native resolution; do not export scaled sheets.
 - Use opaque or clean alpha-edged pixels. Avoid semi-transparent fringe pixels introduced by resampling.
-- Godot textures must use nearest-neighbour filtering and disabled mipmaps for map presentation.
-- After adding or replacing a PNG, run the Godot editor import once and inspect the generated `.import` settings before committing.
+- Godot SVG and PNG textures must use nearest-neighbour filtering and disabled mipmaps for map presentation.
+- After adding or replacing a texture, run the Godot import step and inspect the generated `.import` settings before committing.
 - Keep atlases within the dimensions declared in the manifest. The Python pipeline and runtime catalogue `validate()` methods reject drift.
 
 ## Manifest entry types
 
-A committed prototype entry uses the same explicit file as source and runtime output:
+A committed production SVG entry uses the same explicit file as source and runtime output:
 
 ```json
 {
   "id": "terrain/core",
-  "source_path": "assets/sprites/prototype/dungeon_tiles.svg",
+  "source_path": "assets/pixel_art/source/terrain/core.svg",
   "source_format": "svg",
   "exporter": "committed",
-  "runtime_path": "assets/sprites/prototype/dungeon_tiles.svg"
+  "runtime_path": "assets/pixel_art/source/terrain/core.svg"
 }
 ```
 
@@ -159,14 +162,14 @@ The current manifest declares no third-party visual assets. Do not reuse audio l
 
 ## Safe production-art update
 
-1. Add or edit the `.aseprite` source and its manifest entry.
+1. Add or edit the committed SVG or `.aseprite` source and its manifest entry.
 2. Keep semantic IDs, row order, dimensions, and required tags stable unless renderer code changes in the same commit.
-3. Run `python3 tools/pixel_assets.py export`.
-4. Open Godot once to import changed PNGs; verify nearest-neighbour filtering, mipmaps, and alpha edges.
-5. Run `python3 tools/pixel_assets.py check`.
+3. Run `python3 tools/pixel_assets.py generate` for committed SVGs, or `python3 tools/pixel_assets.py export` for Aseprite-backed entries.
+4. Run Godot import; verify nearest-neighbour filtering, disabled mipmaps, and clean alpha edges.
+5. Run `python3 tools/pixel_assets.py release-check`.
 6. Run the Python and Godot pipeline tests.
 7. Run the focused pixel renderer tests and a Web release export.
 8. Review Hybrid and Full Pixel Map in a browser before committing.
-9. Commit source documents, generated PNG/JSON, generated `.tres` catalogues, attribution, and Godot `.import` files together.
+9. Commit source documents, runtime textures, generated metadata/catalogues/attribution, and Godot `.import` files together.
 
-Exports are staged in a temporary directory. A failed command, invalid dimension, missing tag, trimmed frame, layer-order mismatch, or malformed metadata is rejected before replacing committed outputs. `check` also fails when catalogues or attribution no longer match the manifest.
+Exports are staged in a temporary directory. A failed command, invalid dimension, missing tag, trimmed frame, layer-order mismatch, or malformed metadata is rejected before replacing committed outputs. `check` fails when catalogues or attribution no longer match the manifest; `release-check` additionally rejects prototype flags and prototype path components.

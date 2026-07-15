@@ -1,10 +1,10 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/pixel_map_renderer.gd" id="1_renderer"]
-[ext_resource type="Resource" path="res://resources/visuals/catalogs/prototype_map_visual_catalog.tres" id="2_catalog"]
+[ext_resource type="Resource" path="res://resources/visuals/catalogs/map_visual_catalog.tres" id="2_catalog"]
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/pixel_fog_layer.gd" id="3_fog"]
-[ext_resource type="Resource" path="res://resources/visuals/catalogs/prototype_actor_visual_catalog.tres" id="4_actors"]
-[ext_resource type="Resource" path="res://resources/visuals/catalogs/prototype_map_object_visual_catalog.tres" id="5_objects"]
+[ext_resource type="Resource" path="res://resources/visuals/catalogs/actor_visual_catalog.tres" id="4_actors"]
+[ext_resource type="Resource" path="res://resources/visuals/catalogs/map_object_visual_catalog.tres" id="5_objects"]
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/pixel_object_layer.gd" id="6_object_layer"]
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/pixel_tactical_layer.gd" id="7_tactical_layer"]
 [ext_resource type="Script" path="res://scripts/ui/map_presentation/pixel_lighting_layer.gd" id="8_lighting_layer"]

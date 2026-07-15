@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="16" viewBox="0 0 256 16" shape-rendering="crispEdges">
+  <g id="consumable">
+    <path d="M6 1H10V3H11V5H10V6H12V7H13V9H14V13H13V14H12V15H4V14H3V13H2V9H3V7H4V6H6V5H5V3H6Z" fill="#171526"/>
+    <rect x="7" y="2" width="2" height="1" fill="#B8853A"/>
+    <rect x="6" y="4" width="4" height="1" fill="#73839A"/>
+    <rect x="7" y="5" width="2" height="2" fill="#D9D0B4"/>
+    <path d="M5 7H11V8H12V12H11V13H5V12H4V8H5Z" fill="#465269"/>
+    <path d="M4 9H12V12H11V13H5V12H4Z" fill="#C24B3E"/>
+    <rect x="5" y="8" width="2" height="1" fill="#F0E5C5"/>
+    <rect x="5" y="9" width="2" height="2" fill="#F08B4A"/>
+  </g>
+  <g id="weapon" transform="translate(16 0)">
+    <rect x="11" y="1" width="3" height="3" fill="#171526"/>
+    <rect x="10" y="3" width="3" height="3" fill="#171526"/>
+    <rect x="9" y="5" width="3" height="3" fill="#171526"/>
+    <rect x="8" y="7" width="3" height="3" fill="#171526"/>
+    <rect x="7" y="9" width="3" height="2" fill="#171526"/>
+    <rect x="12" y="2" width="1" height="2" fill="#F0E5C5"/>
+    <rect x="11" y="4" width="1" height="2" fill="#D9D0B4"/>
+    <rect x="10" y="6" width="1" height="2" fill="#D9D0B4"/>
+    <rect x="9" y="8" width="1" height="2" fill="#73839A"/>
+    <rect x="5" y="11" width="3" height="4" fill="#171526"/>
+    <rect x="6" y="12" width="1" height="2" fill="#754732"/>
+    <rect x="4" y="9" width="8" height="3" fill="#171526"/>
+    <rect x="5" y="10" width="6" height="1" fill="#E1B95B"/>
+    <rect x="3" y="13" width="4" height="2" fill="#171526"/>
+    <rect x="4" y="13" width="2" height="1" fill="#B8853A"/>
+  </g>
+  <g id="armor" transform="translate(32 0)">
+    <path d="M4 2H6V1H10V2H12V3H14V4H15V9H13V10H12V14H10V15H6V14H4V10H2V9H1V4H2V3H4Z" fill="#171526"/>
+    <rect x="2" y="4" width="3" height="5" fill="#465269"/>
+    <rect x="11" y="4" width="3" height="5" fill="#465269"/>
+    <rect x="3" y="4" width="2" height="2" fill="#73839A"/>
+    <rect x="11" y="4" width="2" height="2" fill="#73839A"/>
+    <path d="M6 3H10V4H12V9H11V13H9V14H7V13H5V9H4V4H6Z" fill="#73839A"/>
+    <rect x="7" y="3" width="2" height="2" fill="#171526"/>
+    <path d="M6 5H10V10H9V12H7V10H6Z" fill="#D9D0B4"/>
+    <rect x="8" y="6" width="1" height="6" fill="#465269"/>
+    <rect x="5" y="6" width="1" height="5" fill="#F0E5C5"/>
+    <rect x="6" y="13" width="4" height="1" fill="#465269"/>
+  </g>
+  <g id="accessory" transform="translate(48 0)">
+    <rect x="5" y="1" width="6" height="2" fill="#171526"/>
+    <rect x="3" y="2" width="3" height="3" fill="#171526"/>
+    <rect x="10" y="2" width="3" height="3" fill="#171526"/>
+    <rect x="2" y="4" width="3" height="5" fill="#171526"/>
+    <rect x="11" y="4" width="3" height="5" fill="#171526"/>
+    <rect x="3" y="8" width="3" height="3" fill="#171526"/>
+    <rect x="10" y="8" width="3" height="3" fill="#171526"/>
+    <rect x="6" y="2" width="4" height="1" fill="#E1B95B"/>
+    <rect x="4" y="3" width="2" height="1" fill="#B8853A"/>
+    <rect x="10" y="3" width="2" height="1" fill="#B8853A"/>
+    <rect x="3" y="5" width="1" height="3" fill="#E1B95B"/>
+    <rect x="12" y="5" width="1" height="3" fill="#E1B95B"/>
+    <rect x="4" y="9" width="2" height="1" fill="#B8853A"/>
+    <rect x="10" y="9" width="2" height="1" fill="#B8853A"/>
+    <path d="M7 9H9V10H11V13H10V15H6V13H5V10H7Z" fill="#171526"/>
+    <path d="M7 11H9V12H10V13H9V14H7V13H6V12H7Z" fill="#DF7CAF"/>
+    <rect x="7" y="11" width="2" height="1" fill="#E1B95B"/>
+  </g>
+  <g id="generic-item" transform="translate(64 0)">
+    <path d="M3 2H6V3H8V6H5V5H3ZM10 2H13V5H11V6H8V3H10Z" fill="#171526"/>
+    <rect x="4" y="3" width="2" height="1" fill="#B8853A"/>
+    <rect x="10" y="3" width="2" height="1" fill="#E1B95B"/>
+    <rect x="6" y="3" width="4" height="4" fill="#171526"/>
+    <rect x="7" y="4" width="2" height="2" fill="#E1B95B"/>
+    <path d="M4 5H12V6H13V7H14V13H13V14H11V15H4V14H3V13H2V8H3V6H4Z" fill="#171526"/>
+    <path d="M4 6H12V7H13V13H11V14H5V13H3V8H4Z" fill="#465269"/>
+    <rect x="7" y="6" width="2" height="8" fill="#B8853A"/>
+    <rect x="3" y="9" width="10" height="2" fill="#B8853A"/>
+    <rect x="7" y="9" width="2" height="2" fill="#E1B95B"/>
+    <rect x="4" y="7" width="2" height="2" fill="#73839A"/>
+  </g>
+  <g id="chest" transform="translate(80 0)">
+    <path d="M4 3H12V4H14V6H15V14H13V15H3V14H1V6H2V4H4Z" fill="#171526"/>
+    <path d="M4 4H12V5H13V7H3V5H4Z" fill="#A56E40"/>
+    <rect x="2" y="7" width="12" height="7" fill="#754732"/>
+    <rect x="2" y="7" width="12" height="2" fill="#4C2F29"/>
+    <rect x="4" y="5" width="2" height="9" fill="#765029"/>
+    <rect x="10" y="5" width="2" height="9" fill="#765029"/>
+    <rect x="5" y="5" width="1" height="2" fill="#B8853A"/>
+    <rect x="10" y="5" width="1" height="2" fill="#B8853A"/>
+    <rect x="7" y="7" width="3" height="5" fill="#171526"/>
+    <rect x="8" y="8" width="1" height="3" fill="#E1B95B"/>
+    <rect x="3" y="12" width="4" height="1" fill="#A56E40"/>
+    <rect x="9" y="12" width="4" height="1" fill="#A56E40"/>
+  </g>
+  <g id="boss-chest" transform="translate(96 0)">
+    <path d="M2 1H5V4H6V3H7V1H9V3H10V4H11V1H14V5H15V7H14V14H12V15H4V14H2V7H1V5H2Z" fill="#171526"/>
+    <rect x="3" y="2" width="1" height="3" fill="#E1B95B"/>
+    <rect x="8" y="2" width="1" height="3" fill="#E1B95B"/>
+    <rect x="12" y="2" width="1" height="3" fill="#E1B95B"/>
+    <path d="M3 5H13V6H14V8H2V6H3Z" fill="#B8853A"/>
+    <rect x="2" y="8" width="12" height="6" fill="#29283D"/>
+    <rect x="3" y="9" width="2" height="5" fill="#B8853A"/>
+    <rect x="11" y="9" width="2" height="5" fill="#B8853A"/>
+    <rect x="5" y="9" width="6" height="4" fill="#A34D7A"/>
+    <rect x="6" y="7" width="4" height="6" fill="#171526"/>
+    <path d="M7 8H9V10H10V12H6V10H7Z" fill="#DF7CAF"/>
+    <rect x="7" y="8" width="2" height="1" fill="#F0E5C5"/>
+    <rect x="4" y="13" width="8" height="1" fill="#E1B95B"/>
+  </g>
+  <g id="vase" transform="translate(112 0)">
+    <path d="M5 1H11V4H10V5H12V6H13V8H14V11H13V13H11V15H5V14H4V13H3V11H2V8H3V6H4V5H6V4H5Z" fill="#171526"/>
+    <rect x="6" y="2" width="4" height="1" fill="#D9D0B4"/>
+    <rect x="6" y="4" width="4" height="2" fill="#73839A"/>
+    <path d="M5 6H11V7H12V9H13V11H12V13H10V14H6V13H4V11H3V9H4V7H5Z" fill="#73839A"/>
+    <rect x="4" y="8" width="8" height="3" fill="#A34D7A"/>
+    <rect x="4" y="9" width="8" height="1" fill="#D9D0B4"/>
+    <rect x="5" y="7" width="2" height="5" fill="#F0E5C5"/>
+    <rect x="6" y="13" width="4" height="1" fill="#465269"/>
+  </g>
+  <g id="box" transform="translate(128 0)">
+    <rect x="2" y="2" width="12" height="13" fill="#171526"/>
+    <rect x="3" y="3" width="10" height="11" fill="#754732"/>
+    <rect x="3" y="3" width="10" height="2" fill="#465269"/>
+    <rect x="3" y="12" width="10" height="2" fill="#465269"/>
+    <rect x="3" y="5" width="2" height="7" fill="#465269"/>
+    <rect x="11" y="5" width="2" height="7" fill="#465269"/>
+    <rect x="5" y="5" width="2" height="2" fill="#73839A"/>
+    <rect x="7" y="7" width="2" height="2" fill="#73839A"/>
+    <rect x="9" y="9" width="2" height="2" fill="#73839A"/>
+    <rect x="9" y="5" width="2" height="2" fill="#73839A"/>
+    <rect x="5" y="9" width="2" height="2" fill="#73839A"/>
+    <rect x="4" y="4" width="1" height="1" fill="#E1B95B"/>
+    <rect x="11" y="4" width="1" height="1" fill="#E1B95B"/>
+    <rect x="4" y="12" width="1" height="1" fill="#E1B95B"/>
+    <rect x="11" y="12" width="1" height="1" fill="#E1B95B"/>
+  </g>
+  <g id="damage-trap" transform="translate(144 0)">
+    <path d="M1 13H2V10H3V7H4V4H5V7H6V10H7V13Z" fill="#171526"/>
+    <path d="M5 13H6V9H7V5H8V1H9V5H10V9H11V13Z" fill="#171526"/>
+    <path d="M9 13H10V10H11V7H12V4H13V7H14V10H15V13Z" fill="#171526"/>
+    <rect x="4" y="6" width="1" height="6" fill="#73839A"/>
+    <rect x="8" y="3" width="1" height="9" fill="#F0E5C5"/>
+    <rect x="12" y="6" width="1" height="6" fill="#73839A"/>
+    <rect x="1" y="12" width="14" height="3" fill="#171526"/>
+    <rect x="2" y="13" width="12" height="1" fill="#465269"/>
+    <rect x="7" y="13" width="2" height="1" fill="#C24B3E"/>
+  </g>
+  <g id="poison-trap" transform="translate(160 0)">
+    <path d="M1 2H5V4H6V11H5V13H1Z" fill="#171526"/>
+    <rect x="2" y="3" width="2" height="9" fill="#465269"/>
+    <rect x="3" y="4" width="2" height="2" fill="#B8853A"/>
+    <rect x="3" y="8" width="2" height="2" fill="#B8853A"/>
+    <rect x="4" y="3" width="8" height="3" fill="#171526"/>
+    <path d="M11 2H13V3H15V5H13V6H11Z" fill="#171526"/>
+    <rect x="5" y="4" width="8" height="1" fill="#A7D65B"/>
+    <rect x="4" y="8" width="7" height="3" fill="#171526"/>
+    <path d="M10 7H12V8H14V10H12V11H10Z" fill="#171526"/>
+    <rect x="5" y="9" width="7" height="1" fill="#5C9C49"/>
+    <path d="M9 10H11V12H12V14H11V15H8V14H7V13H8V11H9Z" fill="#171526"/>
+    <path d="M9 12H10V13H11V14H8V13H9Z" fill="#A7D65B"/>
+  </g>
+  <g id="teleport-trap" transform="translate(176 0)">
+    <path d="M5 1H11V2H13V4H15V12H13V14H11V15H5V14H3V12H1V4H3V2H5Z" fill="#171526"/>
+    <path d="M5 3H11V4H13V12H11V13H5V12H3V4H5Z" fill="#3FBAC3"/>
+    <rect x="6" y="3" width="4" height="1" fill="#9BE6DE"/>
+    <rect x="3" y="5" width="1" height="5" fill="#9BE6DE"/>
+    <rect x="6" y="12" width="4" height="1" fill="#236373"/>
+    <path d="M6 5H10V6H11V10H10V11H6V10H5V6H6Z" fill="#29283D"/>
+    <rect x="7" y="6" width="3" height="2" fill="#9BE6DE"/>
+    <rect x="9" y="8" width="2" height="2" fill="#3FBAC3"/>
+    <rect x="6" y="9" width="3" height="2" fill="#A34D7A"/>
+  </g>
+  <g id="alarm-trap" transform="translate(192 0)">
+    <rect x="1" y="4" width="2" height="2" fill="#171526"/>
+    <rect x="1" y="8" width="2" height="2" fill="#171526"/>
+    <rect x="13" y="4" width="2" height="2" fill="#171526"/>
+    <rect x="13" y="8" width="2" height="2" fill="#171526"/>
+    <path d="M7 1H9V2H11V4H12V9H13V10H14V13H10V15H6V14H2V11H3V10H4V4H5V2H7Z" fill="#171526"/>
+    <path d="M7 3H9V4H10V5H11V10H12V11H4V10H5V5H6V4H7Z" fill="#B8853A"/>
+    <rect x="4" y="11" width="8" height="1" fill="#E1B95B"/>
+    <rect x="7" y="12" width="2" height="2" fill="#B8853A"/>
+    <rect x="7" y="6" width="2" height="4" fill="#A34D7A"/>
+    <rect x="6" y="7" width="4" height="1" fill="#DF7CAF"/>
+  </g>
+  <g id="stun-trap" transform="translate(208 0)">
+    <rect x="1" y="4" width="5" height="3" fill="#171526"/>
+    <rect x="1" y="10" width="5" height="3" fill="#171526"/>
+    <rect x="1" y="6" width="2" height="5" fill="#171526"/>
+    <rect x="10" y="4" width="5" height="3" fill="#171526"/>
+    <rect x="10" y="10" width="5" height="3" fill="#171526"/>
+    <rect x="13" y="6" width="2" height="5" fill="#171526"/>
+    <rect x="2" y="5" width="4" height="1" fill="#73839A"/>
+    <rect x="2" y="11" width="4" height="1" fill="#73839A"/>
+    <rect x="10" y="5" width="4" height="1" fill="#73839A"/>
+    <rect x="10" y="11" width="4" height="1" fill="#73839A"/>
+    <path d="M8 1H11V4H9V6H12V8H10V10H8V12H6V15H4V12H6V9H4V7H6V5H8Z" fill="#171526"/>
+    <path d="M9 2H10V4H8V7H10V8H8V10H7V12H6V13H7V9H6V8H7V6H9Z" fill="#9BE6DE"/>
+    <rect x="2" y="8" width="2" height="1" fill="#3FBAC3"/>
+    <rect x="12" y="8" width="2" height="1" fill="#3FBAC3"/>
+  </g>
+  <g id="ambush-trap" transform="translate(224 0)">
+    <rect x="2" y="2" width="12" height="3" fill="#171526"/>
+    <rect x="2" y="11" width="12" height="3" fill="#171526"/>
+    <rect x="1" y="4" width="3" height="8" fill="#171526"/>
+    <rect x="12" y="4" width="3" height="8" fill="#171526"/>
+    <rect x="3" y="3" width="10" height="1" fill="#73839A"/>
+    <rect x="3" y="12" width="10" height="1" fill="#465269"/>
+    <path d="M3 4H6V6H5V9H4V6H3ZM7 4H10V6H9V8H8V6H7ZM11 4H14V6H13V9H12V6H11Z" fill="#D9D0B4"/>
+    <path d="M3 12H6V10H5V7H4V10H3ZM7 12H10V10H9V8H8V10H7ZM11 12H14V10H13V7H12V10H11Z" fill="#F0E5C5"/>
+    <rect x="1" y="7" width="2" height="2" fill="#B8853A"/>
+    <rect x="13" y="7" width="2" height="2" fill="#B8853A"/>
+    <rect x="7" y="7" width="2" height="2" fill="#C24B3E"/>
+  </g>
+  <g id="generic" transform="translate(240 0)">
+    <path d="M8 1H10V4H12V7H11V9H5V8H4V5H6V6H7V2H8Z" fill="#171526"/>
+    <path d="M8 3H9V5H10V7H9V8H6V7H7V4H8Z" fill="#F08B4A"/>
+    <rect x="7" y="6" width="2" height="2" fill="#E1B95B"/>
+    <path d="M1 7H15V10H13V12H10V14H14V15H2V14H6V12H3V10H1Z" fill="#171526"/>
+    <rect x="2" y="8" width="12" height="2" fill="#B8853A"/>
+    <rect x="4" y="10" width="8" height="1" fill="#765029"/>
+    <rect x="7" y="11" width="2" height="3" fill="#465269"/>
+    <rect x="3" y="14" width="3" height="1" fill="#73839A"/>
+    <rect x="10" y="14" width="3" height="1" fill="#73839A"/>
+  </g>
+</svg>

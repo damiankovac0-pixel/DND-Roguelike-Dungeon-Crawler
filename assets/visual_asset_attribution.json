@@ -1,7 +1,7 @@
 {
   "assets": [
     {
-      "attribution": "Project-authored deterministic Phase 3 actor prototype.",
+      "attribution": "Project-authored production actor sheet.",
       "category": "actor",
       "frame_size": [
         16,
@@ -9,18 +9,18 @@
       ],
       "id": "actor/core",
       "license_id": "project_authored",
-      "prototype": true,
-      "runtime_path": "res://assets/sprites/prototype/actor_animations.svg",
-      "sha256": "ee165445b69db587054dc6eb4c1b91540f5633fa23e78abd4fbf24e54628b0c6",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/actors/core.svg",
+      "sha256": "a8a18a65d3ee353680520f9e0aaef365b0e7ade4981577b2bda74fc9cf36ba83",
       "size": [
         192,
         64
       ],
       "source_format": "svg",
-      "source_path": "assets/sprites/prototype/actor_animations.svg"
+      "source_path": "assets/pixel_art/source/actors/core.svg"
     },
     {
-      "attribution": "Project-authored deterministic Phase 3 boss prototype.",
+      "attribution": "Project-authored production boss sheet.",
       "category": "boss",
       "frame_size": [
         80,
@@ -28,18 +28,18 @@
       ],
       "id": "boss/core",
       "license_id": "project_authored",
-      "prototype": true,
-      "runtime_path": "res://assets/sprites/prototype/boss_animations.svg",
-      "sha256": "08dd4ad24f80ac3bf7cfde0142c34cf11a3d270dc4e6ae88b37dc6e09f3a7f29",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/bosses/core.svg",
+      "sha256": "fa343f14bd8b7a3ec0ad1ead2172086c27148b39eb34266239b4bc8b5afbaa29",
       "size": [
         960,
         320
       ],
       "source_format": "svg",
-      "source_path": "assets/sprites/prototype/boss_animations.svg"
+      "source_path": "assets/pixel_art/source/bosses/core.svg"
     },
     {
-      "attribution": "Project-authored deterministic Phase 5 particle texture.",
+      "attribution": "Project-authored production particle texture.",
       "category": "effect",
       "frame_size": [
         3,
@@ -47,18 +47,18 @@
       ],
       "id": "effect/particle",
       "license_id": "project_authored",
-      "prototype": true,
-      "runtime_path": "res://assets/sprites/prototype/effect_particle.svg",
-      "sha256": "150b13155fcfbd080f81ebc092a6aee103d7dbf637cb36d199f2aefbb8661663",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/effects/particle.svg",
+      "sha256": "08f30e2e53ccecac6f07c6a3985df27d7ac69f72c9e8c884690fdb0fff339f4e",
       "size": [
         3,
         3
       ],
       "source_format": "svg",
-      "source_path": "assets/sprites/prototype/effect_particle.svg"
+      "source_path": "assets/pixel_art/source/effects/particle.svg"
     },
     {
-      "attribution": "Project-authored deterministic Phase 4 object prototype.",
+      "attribution": "Project-authored production object atlas.",
       "category": "object",
       "frame_size": [
         16,
@@ -66,18 +66,18 @@
       ],
       "id": "object/core",
       "license_id": "project_authored",
-      "prototype": true,
-      "runtime_path": "res://assets/sprites/prototype/map_objects.svg",
-      "sha256": "d45af0798e8f3bd25e09b5ba6a574b236de57f1ef37eee4469b248937a65b5e6",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/objects/core.svg",
+      "sha256": "538ec2594b366e8cfe180c09f909cf2e4e90a78a29f5eb1c750ffdc826242de6",
       "size": [
         256,
         16
       ],
       "source_format": "svg",
-      "source_path": "assets/sprites/prototype/map_objects.svg"
+      "source_path": "assets/pixel_art/source/objects/core.svg"
     },
     {
-      "attribution": "Project-authored deterministic Phase 2 terrain prototype.",
+      "attribution": "Project-authored production terrain atlas.",
       "category": "terrain",
       "frame_size": [
         16,
@@ -85,15 +85,15 @@
       ],
       "id": "terrain/core",
       "license_id": "project_authored",
-      "prototype": true,
-      "runtime_path": "res://assets/sprites/prototype/dungeon_tiles.svg",
-      "sha256": "b5fc1449ecf80fc291689298912b3d4ae2cc868c4cd1789d605ed736e78bc4fb",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/terrain/core.svg",
+      "sha256": "192cb08522f50a393f340525a501b4a16e8d6d6605e162425b0a063083de79fc",
       "size": [
         112,
         16
       ],
       "source_format": "svg",
-      "source_path": "assets/sprites/prototype/dungeon_tiles.svg"
+      "source_path": "assets/pixel_art/source/terrain/core.svg"
     }
   ],
   "generated_by": "tools/pixel_assets.py",

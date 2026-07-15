@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1ffc3v5nfo2q"
-path="res://.godot/imported/effect_particle.svg-43322712f7bb1035d792961577b69305.ctex"
+uid="uid://du5ig27a6s38i"
+path="res://.godot/imported/core.svg-713a851e6c04b4af3e7a1a936196438c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/effect_particle.svg"
-dest_files=["res://.godot/imported/effect_particle.svg-43322712f7bb1035d792961577b69305.ctex"]
+source_file="res://assets/pixel_art/source/bosses/core.svg"
+dest_files=["res://.godot/imported/core.svg-713a851e6c04b4af3e7a1a936196438c.ctex"]
 
 [params]
 

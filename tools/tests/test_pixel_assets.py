@@ -36,6 +36,31 @@ class PixelAssetPipelineTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(len(first), 4)
 
+    def test_production_manifest_passes_readiness(self) -> None:
+        errors = pixel_assets.validate_production_readiness(self.manifest)
+        self.assertEqual(errors, [])
+
+    def test_production_readiness_rejects_asset_prototype(self) -> None:
+        mutated = copy.deepcopy(self.manifest)
+        mutated["assets"][2]["prototype"] = True
+        errors = pixel_assets.validate_production_readiness(mutated)
+        self.assertIn("Asset boss/core is still marked prototype", errors)
+
+    def test_production_readiness_rejects_catalogue_prototype(self) -> None:
+        mutated = copy.deepcopy(self.manifest)
+        mutated["catalogs"][1]["prototype"] = True
+        errors = pixel_assets.validate_production_readiness(mutated)
+        self.assertIn("Catalogue actors is still marked prototype", errors)
+
+    def test_production_readiness_rejects_prototype_path(self) -> None:
+        mutated = copy.deepcopy(self.manifest)
+        mutated["assets"][0]["source_path"] = "assets/pixel_art/prototype/dungeon_tiles.svg"
+        errors = pixel_assets.validate_production_readiness(mutated)
+        self.assertTrue(
+            any("prototype" in error and "source_path" in error for error in errors),
+            f"No path-prototype error found in {errors}",
+        )
+
     def test_actor_export_command_preserves_fixed_grid(self) -> None:
         command = pixel_assets.build_aseprite_command(
             self.manifest,

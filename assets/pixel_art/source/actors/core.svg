@@ -1,0 +1,747 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="64" viewBox="0 0 192 64" shape-rendering="crispEdges">
+  <defs>
+    <!-- Armored delver: idle -->
+    <g id="player-idle-a">
+      <g fill="#171525">
+        <rect x="5" y="1" width="6" height="1"/><rect x="4" y="2" width="8" height="5"/>
+        <rect x="3" y="7" width="10" height="6"/><rect x="2" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="13" y="5" width="3" height="9"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="2" width="6" height="4"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="3"/><rect x="12" y="9" width="1" height="3"/></g>
+      <g fill="#a7b4be"><rect x="6" y="2" width="4" height="1"/><rect x="6" y="4" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="5" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="4" y="7" width="8" height="1"/><rect x="6" y="9" width="4" height="4"/></g>
+      <g fill="#55c9c7"><rect x="5" y="7" width="4" height="1"/><rect x="7" y="9" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="14" y="6" width="1" height="7"/><rect x="13" y="8" width="3" height="1"/><rect x="14" y="13" width="1" height="1"/></g>
+    </g>
+    <g id="player-idle-b">
+      <g fill="#171525">
+        <rect x="5" y="2" width="6" height="1"/><rect x="4" y="3" width="8" height="4"/>
+        <rect x="3" y="7" width="10" height="6"/><rect x="2" y="8" width="2" height="4"/><rect x="12" y="8" width="2" height="5"/>
+        <rect x="3" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
+        <rect x="13" y="4" width="2" height="3"/><rect x="14" y="6" width="2" height="8"/><rect x="12" y="7" width="3" height="2"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="3" width="6" height="3"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="2"/><rect x="12" y="9" width="1" height="3"/></g>
+      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="10" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="3" y="7" width="9" height="1"/><rect x="5" y="9" width="5" height="4"/></g>
+      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="6" y="9" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="14" y="5" width="1" height="2"/><rect x="15" y="7" width="1" height="7"/><rect x="13" y="7" width="2" height="1"/></g>
+    </g>
+
+    <!-- Armored delver: move -->
+    <g id="player-move-a">
+      <g fill="#171525">
+        <rect x="7" y="1" width="4" height="1"/><rect x="6" y="2" width="6" height="5"/>
+        <rect x="5" y="7" width="8" height="6"/><rect x="2" y="8" width="3" height="4"/><rect x="12" y="8" width="3" height="4"/>
+        <rect x="3" y="12" width="4" height="2"/><rect x="1" y="14" width="6" height="2"/>
+        <rect x="10" y="12" width="3" height="2"/><rect x="11" y="14" width="4" height="2"/>
+        <rect x="13" y="5" width="3" height="8"/>
+      </g>
+      <g fill="#69778a"><rect x="7" y="2" width="5" height="4"/><rect x="6" y="8" width="7" height="5"/><rect x="12" y="9" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="8" y="2" width="3" height="1"/><rect x="8" y="4" width="3" height="1"/><rect x="10" y="8" width="3" height="1"/></g>
+      <g fill="#242238"><rect x="8" y="5" width="3" height="1"/><rect x="1" y="15" width="6" height="1"/><rect x="11" y="15" width="4" height="1"/></g>
+      <g fill="#d8d0b7"><rect x="10" y="5" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="4" y="7" width="8" height="2"/><rect x="2" y="9" width="3" height="2"/><rect x="7" y="9" width="4" height="4"/></g>
+      <g fill="#55c9c7"><rect x="6" y="7" width="5" height="1"/><rect x="8" y="9" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="14" y="6" width="1" height="6"/><rect x="13" y="8" width="3" height="1"/></g>
+    </g>
+    <g id="player-move-b">
+      <g fill="#171525">
+        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="4"/>
+        <rect x="4" y="7" width="8" height="6"/><rect x="2" y="7" width="2" height="5"/><rect x="11" y="8" width="3" height="4"/>
+        <rect x="4" y="12" width="3" height="3"/><rect x="2" y="14" width="5" height="2"/>
+        <rect x="9" y="12" width="3" height="2"/><rect x="10" y="14" width="5" height="2"/>
+        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="7"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="3" width="6" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="9" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="10" y="15" width="5" height="1"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="3" y="7" width="8" height="2"/><rect x="2" y="8" width="2" height="3"/><rect x="6" y="9" width="4" height="4"/></g>
+      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="7" y="9" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="6"/><rect x="12" y="8" width="3" height="1"/></g>
+    </g>
+
+    <!-- Armored delver: attack -->
+    <g id="player-attack-a">
+      <g fill="#171525">
+        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="5"/>
+        <rect x="3" y="8" width="9" height="5"/><rect x="2" y="9" width="2" height="4"/><rect x="10" y="6" width="3" height="4"/>
+        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
+        <rect x="8" y="0" width="4" height="2"/><rect x="10" y="1" width="4" height="2"/><rect x="12" y="2" width="4" height="3"/><rect x="14" y="4" width="2" height="3"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="3" width="6" height="4"/><rect x="4" y="9" width="7" height="4"/><rect x="10" y="7" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="4" y="9" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="3" y="8" width="8" height="1"/><rect x="5" y="10" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="4" y="8" width="4" height="1"/><rect x="6" y="10" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="9" y="0" width="2" height="1"/><rect x="11" y="1" width="2" height="1"/><rect x="13" y="2" width="2" height="2"/><rect x="15" y="4" width="1" height="2"/><rect x="9" y="6" width="3" height="1"/></g>
+    </g>
+    <g id="player-attack-b">
+      <g fill="#171525">
+        <rect x="7" y="2" width="5" height="1"/><rect x="6" y="3" width="7" height="5"/>
+        <rect x="5" y="8" width="8" height="5"/><rect x="3" y="9" width="3" height="4"/><rect x="11" y="6" width="4" height="4"/>
+        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
+        <rect x="11" y="5" width="5" height="3"/><rect x="15" y="4" width="1" height="1"/>
+      </g>
+      <g fill="#69778a"><rect x="7" y="3" width="6" height="4"/><rect x="6" y="9" width="7" height="4"/><rect x="4" y="10" width="2" height="2"/><rect x="11" y="7" width="3" height="2"/></g>
+      <g fill="#a7b4be"><rect x="8" y="3" width="4" height="1"/><rect x="8" y="5" width="4" height="1"/><rect x="10" y="9" width="3" height="1"/></g>
+      <g fill="#242238"><rect x="8" y="6" width="4" height="1"/><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="11" y="6" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="5" y="8" width="8" height="1"/><rect x="7" y="10" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="7" y="8" width="5" height="1"/><rect x="8" y="10" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="12" y="6" width="4" height="1"/><rect x="15" y="5" width="1" height="1"/><rect x="11" y="7" width="2" height="1"/></g>
+    </g>
+
+    <!-- Armored delver: cast -->
+    <g id="player-cast-a">
+      <g fill="#171525">
+        <rect x="5" y="1" width="5" height="1"/><rect x="4" y="2" width="7" height="5"/>
+        <rect x="3" y="7" width="9" height="6"/><rect x="1" y="7" width="3" height="4"/><rect x="11" y="6" width="3" height="4"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="14" y="3" width="2" height="4"/><rect x="13" y="1" width="1" height="1"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="2" width="6" height="4"/><rect x="4" y="8" width="7" height="5"/><rect x="2" y="8" width="2" height="2"/><rect x="11" y="7" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="6" y="2" width="4" height="1"/><rect x="6" y="4" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="5" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="3" y="7" width="8" height="1"/><rect x="6" y="9" width="4" height="4"/></g>
+      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="7" y="9" width="2" height="3"/><rect x="14" y="4" width="2" height="2"/><rect x="13" y="1" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="15" y="3" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/></g>
+    </g>
+    <g id="player-cast-b">
+      <g fill="#171525">
+        <rect x="6" y="0" width="4" height="3"/>
+        <rect x="5" y="3" width="6" height="5"/><rect x="4" y="8" width="8" height="5"/>
+        <rect x="2" y="4" width="3" height="6"/><rect x="11" y="4" width="3" height="6"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+      </g>
+      <g fill="#69778a"><rect x="6" y="3" width="5" height="4"/><rect x="5" y="9" width="6" height="4"/><rect x="3" y="5" width="2" height="4"/><rect x="11" y="5" width="2" height="4"/></g>
+      <g fill="#a7b4be"><rect x="7" y="3" width="3" height="1"/><rect x="7" y="5" width="3" height="1"/></g>
+      <g fill="#242238"><rect x="7" y="6" width="3" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/></g>
+      <g fill="#247d83"><rect x="4" y="8" width="8" height="1"/><rect x="6" y="10" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="7" y="1" width="2" height="1"/><rect x="5" y="8" width="5" height="1"/><rect x="7" y="10" width="2" height="2"/></g>
+      <g fill="#b6e8df"><rect x="7" y="0" width="2" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/></g>
+    </g>
+
+    <!-- Armored delver: hurt and death -->
+    <g id="player-hurt-a">
+      <g fill="#171525">
+        <rect x="8" y="2" width="5" height="1"/><rect x="7" y="3" width="7" height="5"/>
+        <rect x="5" y="8" width="8" height="5"/><rect x="3" y="7" width="3" height="4"/><rect x="12" y="9" width="3" height="4"/>
+        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/><rect x="14" y="10" width="2" height="5"/>
+      </g>
+      <g fill="#69778a"><rect x="8" y="3" width="6" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="9" y="3" width="4" height="1"/><rect x="9" y="5" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="9" y="6" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#247d83"><rect x="5" y="8" width="7" height="1"/><rect x="7" y="10" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="15" y="10" width="1" height="5"/></g>
+      <g fill="#b84972"><rect x="2" y="3" width="2" height="1"/><rect x="1" y="5" width="3" height="1"/><rect x="3" y="7" width="1" height="1"/></g>
+    </g>
+    <g id="player-hurt-b">
+      <g fill="#171525">
+        <rect x="5" y="4" width="5" height="1"/><rect x="4" y="5" width="7" height="5"/>
+        <rect x="3" y="9" width="10" height="5"/><rect x="2" y="11" width="3" height="4"/><rect x="10" y="5" width="3" height="6"/>
+        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
+      </g>
+      <g fill="#69778a"><rect x="5" y="5" width="6" height="4"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
+      <g fill="#a7b4be"><rect x="6" y="5" width="4" height="1"/><rect x="6" y="7" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="8" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
+      <g fill="#247d83"><rect x="3" y="9" width="9" height="1"/><rect x="6" y="11" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="4" y="9" width="5" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
+      <g fill="#b84972"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
+    </g>
+    <g id="player-death-a">
+      <g fill="#171525">
+        <rect x="9" y="6" width="4" height="1"/><rect x="8" y="7" width="6" height="5"/>
+        <rect x="4" y="9" width="8" height="5"/><rect x="2" y="11" width="4" height="4"/>
+        <rect x="2" y="13" width="5" height="3"/><rect x="8" y="13" width="5" height="3"/>
+        <rect x="12" y="13" width="4" height="2"/>
+      </g>
+      <g fill="#69778a"><rect x="9" y="7" width="5" height="4"/><rect x="5" y="10" width="6" height="4"/><rect x="3" y="12" width="2" height="2"/></g>
+      <g fill="#a7b4be"><rect x="10" y="7" width="3" height="1"/><rect x="10" y="9" width="3" height="1"/></g>
+      <g fill="#242238"><rect x="10" y="10" width="3" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
+      <g fill="#247d83"><rect x="4" y="9" width="7" height="1"/><rect x="6" y="11" width="4" height="3"/></g>
+      <g fill="#55c9c7"><rect x="6" y="9" width="4" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="13" y="13" width="3" height="1"/><rect x="15" y="12" width="1" height="1"/></g>
+    </g>
+    <g id="player-death-b">
+      <g fill="#171525">
+        <rect x="11" y="10" width="4" height="3"/><rect x="3" y="11" width="10" height="4"/>
+        <rect x="1" y="13" width="5" height="3"/><rect x="6" y="14" width="9" height="2"/>
+        <rect x="3" y="9" width="6" height="2"/>
+      </g>
+      <g fill="#69778a"><rect x="12" y="11" width="3" height="2"/><rect x="4" y="12" width="8" height="3"/></g>
+      <g fill="#a7b4be"><rect x="12" y="11" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="12" y="12" width="2" height="1"/><rect x="1" y="14" width="5" height="2"/><rect x="7" y="15" width="8" height="1"/></g>
+      <g fill="#247d83"><rect x="5" y="11" width="6" height="1"/><rect x="6" y="13" width="4" height="2"/></g>
+      <g fill="#55c9c7"><rect x="6" y="12" width="3" height="1"/></g>
+      <g fill="#c6984f"><rect x="4" y="9" width="5" height="1"/><rect x="3" y="10" width="1" height="1"/></g>
+    </g>
+
+    <!-- Horned dungeon raider: idle -->
+    <g id="enemy-idle-a">
+      <g fill="#171525">
+        <rect x="3" y="0" width="3" height="3"/><rect x="10" y="0" width="3" height="3"/>
+        <rect x="4" y="2" width="8" height="6"/><rect x="3" y="7" width="10" height="6"/>
+        <rect x="2" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="13" y="6" width="3" height="8"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="3" y="0" width="1" height="2"/><rect x="4" y="1" width="1" height="2"/><rect x="12" y="0" width="1" height="2"/><rect x="11" y="1" width="1" height="2"/></g>
+      <g fill="#49303f"><rect x="5" y="3" width="6" height="4"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="3"/></g>
+      <g fill="#2b293d"><rect x="6" y="4" width="4" height="3"/><rect x="5" y="10" width="6" height="3"/></g>
+      <g fill="#e06a36"><rect x="6" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="5" y="9" width="6" height="1"/></g>
+      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+      <g fill="#69778a"><rect x="14" y="6" width="2" height="5"/></g>
+      <g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    </g>
+    <g id="enemy-idle-b">
+      <g fill="#171525">
+        <rect x="2" y="1" width="4" height="2"/><rect x="10" y="0" width="4" height="3"/>
+        <rect x="3" y="3" width="9" height="5"/><rect x="2" y="7" width="11" height="6"/>
+        <rect x="1" y="9" width="2" height="4"/><rect x="12" y="8" width="2" height="5"/>
+        <rect x="3" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
+        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="3" height="7"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="2" y="1" width="2" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="12" y="0" width="2" height="1"/><rect x="11" y="1" width="2" height="2"/></g>
+      <g fill="#49303f"><rect x="4" y="4" width="7" height="3"/><rect x="3" y="8" width="9" height="5"/><rect x="2" y="9" width="1" height="3"/></g>
+      <g fill="#2b293d"><rect x="5" y="5" width="5" height="2"/><rect x="4" y="10" width="7" height="3"/></g>
+      <g fill="#e06a36"><rect x="5" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="4" y="9" width="7" height="1"/></g>
+      <g fill="#242238"><rect x="3" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#69778a"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="2" height="3"/></g>
+      <g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    </g>
+
+    <!-- Horned dungeon raider: move -->
+    <g id="enemy-move-a">
+      <g fill="#171525">
+        <rect x="5" y="1" width="3" height="2"/><rect x="11" y="1" width="3" height="3"/>
+        <rect x="6" y="3" width="7" height="5"/><rect x="5" y="7" width="9" height="6"/>
+        <rect x="2" y="8" width="3" height="4"/><rect x="13" y="8" width="2" height="4"/>
+        <rect x="3" y="12" width="4" height="2"/><rect x="1" y="14" width="6" height="2"/>
+        <rect x="10" y="12" width="3" height="2"/><rect x="11" y="14" width="4" height="2"/>
+        <rect x="14" y="5" width="2" height="9"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="5" y="1" width="1" height="2"/><rect x="6" y="2" width="1" height="1"/><rect x="13" y="1" width="1" height="2"/><rect x="12" y="2" width="1" height="2"/></g>
+      <g fill="#49303f"><rect x="7" y="4" width="5" height="3"/><rect x="6" y="8" width="7" height="5"/><rect x="3" y="9" width="3" height="2"/></g>
+      <g fill="#2b293d"><rect x="8" y="5" width="4" height="2"/><rect x="7" y="10" width="5" height="3"/></g>
+      <g fill="#e06a36"><rect x="8" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="7" y="9" width="5" height="1"/></g>
+      <g fill="#242238"><rect x="1" y="15" width="6" height="1"/><rect x="11" y="15" width="4" height="1"/></g>
+      <g fill="#69778a"><rect x="15" y="5" width="1" height="5"/></g><g fill="#8d5e2d"><rect x="15" y="10" width="1" height="4"/></g>
+    </g>
+    <g id="enemy-move-b">
+      <g fill="#171525">
+        <rect x="2" y="0" width="3" height="3"/><rect x="9" y="1" width="4" height="2"/>
+        <rect x="3" y="2" width="8" height="6"/><rect x="3" y="7" width="9" height="6"/>
+        <rect x="1" y="8" width="3" height="4"/><rect x="11" y="8" width="3" height="4"/>
+        <rect x="3" y="12" width="3" height="3"/><rect x="1" y="14" width="5" height="2"/>
+        <rect x="8" y="12" width="3" height="2"/><rect x="9" y="14" width="6" height="2"/>
+        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="7"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="2" y="0" width="1" height="2"/><rect x="3" y="1" width="1" height="2"/><rect x="11" y="1" width="2" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="4" y="3" width="6" height="4"/><rect x="4" y="8" width="7" height="5"/><rect x="2" y="9" width="2" height="2"/></g>
+      <g fill="#2b293d"><rect x="5" y="5" width="4" height="2"/><rect x="5" y="10" width="5" height="3"/></g>
+      <g fill="#e06a36"><rect x="5" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="5" y="9" width="5" height="1"/></g>
+      <g fill="#242238"><rect x="1" y="15" width="5" height="1"/><rect x="9" y="15" width="6" height="1"/></g>
+      <g fill="#69778a"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="3"/></g><g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    </g>
+
+    <!-- Horned dungeon raider: attack -->
+    <g id="enemy-attack-a">
+      <g fill="#171525">
+        <rect x="2" y="2" width="3" height="3"/><rect x="8" y="2" width="3" height="3"/>
+        <rect x="3" y="4" width="8" height="5"/><rect x="3" y="8" width="9" height="5"/>
+        <rect x="2" y="9" width="2" height="4"/><rect x="9" y="5" width="3" height="5"/>
+        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
+        <rect x="9" y="0" width="5" height="2"/><rect x="12" y="1" width="4" height="4"/><rect x="14" y="4" width="2" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="2" y="2" width="1" height="2"/><rect x="3" y="3" width="1" height="2"/><rect x="10" y="2" width="1" height="2"/><rect x="9" y="3" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="4" y="5" width="6" height="3"/><rect x="4" y="9" width="7" height="4"/></g>
+      <g fill="#2b293d"><rect x="5" y="6" width="4" height="2"/><rect x="5" y="11" width="5" height="2"/></g>
+      <g fill="#e06a36"><rect x="5" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="5" y="10" width="5" height="1"/></g>
+      <g fill="#242238"><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
+      <g fill="#69778a"><rect x="10" y="0" width="4" height="1"/><rect x="13" y="1" width="3" height="3"/><rect x="15" y="4" width="1" height="2"/></g>
+      <g fill="#8d5e2d"><rect x="10" y="4" width="1" height="4"/></g>
+    </g>
+    <g id="enemy-attack-b">
+      <g fill="#171525">
+        <rect x="5" y="2" width="3" height="3"/><rect x="10" y="2" width="3" height="3"/>
+        <rect x="6" y="4" width="7" height="5"/><rect x="5" y="8" width="8" height="5"/>
+        <rect x="3" y="9" width="3" height="4"/><rect x="11" y="6" width="4" height="4"/>
+        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
+        <rect x="11" y="5" width="5" height="4"/><rect x="15" y="4" width="1" height="1"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="5" y="2" width="1" height="2"/><rect x="6" y="3" width="1" height="2"/><rect x="12" y="2" width="1" height="2"/><rect x="11" y="3" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="7" y="5" width="5" height="3"/><rect x="6" y="9" width="6" height="4"/></g>
+      <g fill="#2b293d"><rect x="8" y="6" width="4" height="2"/><rect x="7" y="11" width="4" height="2"/></g>
+      <g fill="#e06a36"><rect x="8" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="7" y="10" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
+      <g fill="#69778a"><rect x="12" y="6" width="4" height="2"/><rect x="15" y="5" width="1" height="1"/></g>
+      <g fill="#8d5e2d"><rect x="11" y="7" width="2" height="1"/></g>
+    </g>
+
+    <!-- Horned dungeon raider: cast -->
+    <g id="enemy-cast-a">
+      <g fill="#171525">
+        <rect x="4" y="1" width="3" height="3"/><rect x="10" y="1" width="3" height="3"/>
+        <rect x="5" y="3" width="7" height="5"/><rect x="4" y="7" width="8" height="6"/>
+        <rect x="1" y="6" width="4" height="5"/><rect x="11" y="7" width="3" height="4"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="0" y="3" width="3" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="4" y="1" width="1" height="2"/><rect x="5" y="2" width="1" height="2"/><rect x="12" y="1" width="1" height="2"/><rect x="11" y="2" width="1" height="2"/></g>
+      <g fill="#49303f"><rect x="6" y="4" width="5" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="2" y="7" width="3" height="3"/><rect x="11" y="8" width="2" height="2"/></g>
+      <g fill="#2b293d"><rect x="7" y="5" width="3" height="2"/><rect x="6" y="10" width="4" height="3"/></g>
+      <g fill="#e06a36"><rect x="7" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="6" y="9" width="4" height="1"/><rect x="0" y="4" width="2" height="2"/></g>
+      <g fill="#f09a4a"><rect x="1" y="3" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/></g>
+      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+    </g>
+    <g id="enemy-cast-b">
+      <g fill="#171525">
+        <rect x="4" y="3" width="3" height="3"/><rect x="10" y="3" width="3" height="3"/>
+        <rect x="5" y="5" width="7" height="4"/><rect x="4" y="8" width="8" height="5"/>
+        <rect x="2" y="4" width="3" height="6"/><rect x="12" y="4" width="3" height="6"/>
+        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="6" y="0" width="5" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="4" y="3" width="1" height="2"/><rect x="5" y="4" width="1" height="2"/><rect x="12" y="3" width="1" height="2"/><rect x="11" y="4" width="1" height="2"/></g>
+      <g fill="#49303f"><rect x="6" y="6" width="5" height="2"/><rect x="5" y="9" width="6" height="4"/><rect x="3" y="5" width="2" height="4"/><rect x="12" y="5" width="2" height="4"/></g>
+      <g fill="#2b293d"><rect x="7" y="6" width="3" height="2"/><rect x="6" y="11" width="4" height="2"/></g>
+      <g fill="#e06a36"><rect x="7" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="6" y="10" width="4" height="1"/><rect x="7" y="1" width="3" height="2"/></g>
+      <g fill="#f09a4a"><rect x="8" y="0" width="1" height="2"/><rect x="6" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
+      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+    </g>
+
+    <!-- Horned dungeon raider: hurt and death -->
+    <g id="enemy-hurt-a">
+      <g fill="#171525">
+        <rect x="8" y="2" width="3" height="3"/><rect x="12" y="2" width="3" height="2"/>
+        <rect x="7" y="4" width="7" height="5"/><rect x="5" y="8" width="8" height="5"/>
+        <rect x="3" y="7" width="3" height="5"/><rect x="12" y="9" width="3" height="4"/>
+        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="8" y="2" width="1" height="2"/><rect x="9" y="3" width="1" height="2"/><rect x="14" y="2" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="8" y="5" width="5" height="3"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="3"/></g>
+      <g fill="#2b293d"><rect x="9" y="6" width="4" height="2"/><rect x="7" y="11" width="4" height="2"/></g>
+      <g fill="#e06a36"><rect x="9" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="7" y="10" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#f09a4a"><rect x="2" y="3" width="2" height="1"/><rect x="1" y="5" width="3" height="1"/><rect x="3" y="7" width="1" height="1"/></g>
+    </g>
+    <g id="enemy-hurt-b">
+      <g fill="#171525">
+        <rect x="3" y="4" width="3" height="3"/><rect x="9" y="4" width="3" height="3"/>
+        <rect x="4" y="6" width="8" height="4"/><rect x="3" y="9" width="10" height="5"/>
+        <rect x="2" y="10" width="2" height="4"/><rect x="10" y="5" width="3" height="6"/>
+        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="3" y="4" width="1" height="2"/><rect x="4" y="5" width="1" height="2"/><rect x="11" y="4" width="1" height="2"/><rect x="10" y="5" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="5" y="7" width="6" height="2"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
+      <g fill="#2b293d"><rect x="6" y="7" width="4" height="2"/><rect x="5" y="12" width="6" height="2"/></g>
+      <g fill="#e06a36"><rect x="6" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="5" y="11" width="6" height="1"/></g>
+      <g fill="#242238"><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
+      <g fill="#f09a4a"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
+    </g>
+    <g id="enemy-death-a">
+      <g fill="#171525">
+        <rect x="8" y="7" width="3" height="3"/><rect x="12" y="7" width="3" height="2"/>
+        <rect x="7" y="9" width="7" height="4"/><rect x="3" y="10" width="7" height="4"/>
+        <rect x="2" y="12" width="5" height="4"/><rect x="8" y="13" width="5" height="3"/>
+      </g>
+      <g fill="#d8d0b7"><rect x="8" y="7" width="1" height="2"/><rect x="9" y="8" width="1" height="2"/><rect x="14" y="7" width="1" height="1"/></g>
+      <g fill="#49303f"><rect x="8" y="10" width="5" height="2"/><rect x="4" y="11" width="6" height="3"/></g>
+      <g fill="#2b293d"><rect x="9" y="10" width="4" height="2"/><rect x="5" y="13" width="4" height="1"/></g>
+      <g fill="#e06a36"><rect x="9" y="10" width="1" height="1"/><rect x="5" y="12" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
+      <g fill="#69778a"><rect x="13" y="13" width="3" height="1"/></g>
+    </g>
+    <g id="enemy-death-b">
+      <g fill="#171525">
+        <rect x="2" y="11" width="12" height="4"/><rect x="10" y="9" width="4" height="3"/>
+        <rect x="1" y="13" width="5" height="3"/><rect x="6" y="14" width="9" height="2"/>
+        <rect x="14" y="12" width="2" height="2"/>
+      </g>
+      <g fill="#49303f"><rect x="3" y="12" width="8" height="3"/><rect x="11" y="10" width="3" height="2"/></g>
+      <g fill="#2b293d"><rect x="11" y="11" width="3" height="1"/><rect x="5" y="13" width="5" height="2"/></g>
+      <g fill="#e06a36"><rect x="12" y="11" width="1" height="1"/><rect x="4" y="12" width="5" height="1"/></g>
+      <g fill="#242238"><rect x="1" y="14" width="5" height="2"/><rect x="7" y="15" width="8" height="1"/></g>
+      <g fill="#d8d0b7"><rect x="14" y="12" width="2" height="1"/></g>
+    </g>
+
+    <!-- Travelling shopkeeper: idle -->
+    <g id="shop-idle-a">
+      <g fill="#171525">
+        <rect x="6" y="1" width="5" height="1"/><rect x="5" y="2" width="7" height="5"/>
+        <rect x="1" y="5" width="5" height="8"/><rect x="4" y="7" width="9" height="6"/>
+        <rect x="3" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
+        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
+        <rect x="14" y="5" width="2" height="11"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="6" width="4" height="6"/><rect x="1" y="8" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="6" y="2" width="5" height="4"/><rect x="5" y="8" width="7" height="5"/><rect x="4" y="9" width="1" height="3"/><rect x="12" y="9" width="1" height="3"/></g>
+      <g fill="#e1b866"><rect x="7" y="2" width="3" height="1"/><rect x="6" y="4" width="5" height="1"/><rect x="6" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="7" y="5" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="10" y="5" width="1" height="1"/></g>
+      <g fill="#2e7671"><rect x="5" y="7" width="7" height="2"/><rect x="8" y="9" width="3" height="4"/></g>
+      <g fill="#56a9a0"><rect x="6" y="7" width="5" height="1"/><rect x="9" y="9" width="1" height="3"/></g>
+      <g fill="#8d5e2d"><rect x="15" y="6" width="1" height="10"/><rect x="14" y="8" width="2" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="7" width="2" height="1"/></g>
+    </g>
+    <g id="shop-idle-b">
+      <g fill="#171525">
+        <rect x="6" y="2" width="5" height="1"/><rect x="5" y="3" width="7" height="4"/>
+        <rect x="1" y="4" width="5" height="9"/><rect x="4" y="7" width="9" height="6"/>
+        <rect x="3" y="8" width="2" height="5"/><rect x="12" y="7" width="2" height="5"/>
+        <rect x="4" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
+        <rect x="13" y="4" width="2" height="4"/><rect x="14" y="7" width="2" height="9"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="5" width="4" height="7"/><rect x="1" y="7" width="2" height="4"/></g>
+      <g fill="#c6984f"><rect x="6" y="3" width="5" height="3"/><rect x="5" y="8" width="7" height="5"/><rect x="4" y="9" width="1" height="3"/><rect x="12" y="8" width="1" height="3"/></g>
+      <g fill="#e1b866"><rect x="7" y="3" width="3" height="1"/><rect x="7" y="5" width="4" height="1"/><rect x="10" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="7" y="6" width="4" height="1"/><rect x="4" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#d8d0b7"><rect x="10" y="6" width="1" height="1"/></g>
+      <g fill="#2e7671"><rect x="5" y="7" width="7" height="2"/><rect x="7" y="9" width="4" height="4"/></g>
+      <g fill="#56a9a0"><rect x="6" y="7" width="5" height="1"/><rect x="8" y="9" width="2" height="3"/></g>
+      <g fill="#8d5e2d"><rect x="14" y="5" width="1" height="3"/><rect x="15" y="8" width="1" height="8"/><rect x="13" y="7" width="3" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="6" width="2" height="1"/></g>
+    </g>
+
+    <!-- Travelling shopkeeper: move -->
+    <g id="shop-move-a">
+      <g fill="#171525">
+        <rect x="7" y="1" width="5" height="1"/><rect x="6" y="2" width="7" height="5"/>
+        <rect x="2" y="5" width="5" height="8"/><rect x="5" y="7" width="9" height="6"/>
+        <rect x="3" y="8" width="3" height="4"/><rect x="13" y="8" width="2" height="4"/>
+        <rect x="4" y="12" width="4" height="2"/><rect x="2" y="14" width="6" height="2"/>
+        <rect x="11" y="12" width="3" height="2"/><rect x="12" y="14" width="4" height="2"/>
+        <rect x="14" y="5" width="2" height="11"/>
+      </g>
+      <g fill="#654832"><rect x="3" y="6" width="4" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="7" y="2" width="5" height="4"/><rect x="6" y="8" width="7" height="5"/><rect x="4" y="9" width="2" height="2"/></g>
+      <g fill="#e1b866"><rect x="8" y="2" width="3" height="1"/><rect x="8" y="4" width="4" height="1"/><rect x="10" y="8" width="3" height="1"/></g>
+      <g fill="#242238"><rect x="8" y="5" width="4" height="1"/><rect x="2" y="15" width="6" height="1"/><rect x="12" y="15" width="4" height="1"/></g>
+      <g fill="#2e7671"><rect x="6" y="7" width="7" height="2"/><rect x="8" y="9" width="3" height="4"/></g>
+      <g fill="#56a9a0"><rect x="7" y="7" width="5" height="1"/><rect x="9" y="9" width="1" height="3"/></g>
+      <g fill="#8d5e2d"><rect x="15" y="6" width="1" height="10"/></g>
+      <g fill="#a7b4be"><rect x="3" y="7" width="2" height="1"/></g>
+    </g>
+    <g id="shop-move-b">
+      <g fill="#171525">
+        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="4"/>
+        <rect x="1" y="4" width="5" height="9"/><rect x="4" y="7" width="8" height="6"/>
+        <rect x="3" y="8" width="2" height="4"/><rect x="11" y="8" width="3" height="4"/>
+        <rect x="4" y="12" width="3" height="3"/><rect x="2" y="14" width="5" height="2"/>
+        <rect x="9" y="12" width="3" height="2"/><rect x="10" y="14" width="5" height="2"/>
+        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="9"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="5" width="4" height="7"/><rect x="1" y="7" width="2" height="4"/></g>
+      <g fill="#c6984f"><rect x="5" y="3" width="5" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="9" width="2" height="2"/></g>
+      <g fill="#e1b866"><rect x="6" y="3" width="3" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="10" y="15" width="5" height="1"/></g>
+      <g fill="#2e7671"><rect x="4" y="7" width="7" height="2"/><rect x="6" y="9" width="3" height="4"/></g>
+      <g fill="#56a9a0"><rect x="5" y="7" width="5" height="1"/><rect x="7" y="9" width="1" height="3"/></g>
+      <g fill="#8d5e2d"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="8"/></g>
+      <g fill="#a7b4be"><rect x="2" y="6" width="2" height="1"/></g>
+    </g>
+
+    <!-- Travelling shopkeeper: attack -->
+    <g id="shop-attack-a">
+      <g fill="#171525">
+        <rect x="5" y="3" width="5" height="1"/><rect x="4" y="4" width="7" height="4"/>
+        <rect x="1" y="6" width="5" height="7"/><rect x="4" y="8" width="8" height="5"/>
+        <rect x="3" y="9" width="2" height="4"/><rect x="10" y="6" width="3" height="5"/>
+        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
+        <rect x="10" y="0" width="2" height="7"/><rect x="12" y="0" width="4" height="2"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="7" width="4" height="5"/><rect x="1" y="9" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="5" y="4" width="5" height="3"/><rect x="5" y="9" width="6" height="4"/><rect x="10" y="7" width="2" height="3"/></g>
+      <g fill="#e1b866"><rect x="6" y="4" width="3" height="1"/><rect x="6" y="6" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="7" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
+      <g fill="#2e7671"><rect x="4" y="8" width="7" height="2"/><rect x="6" y="10" width="3" height="3"/></g>
+      <g fill="#56a9a0"><rect x="5" y="8" width="5" height="1"/><rect x="7" y="10" width="1" height="2"/></g>
+      <g fill="#8d5e2d"><rect x="11" y="0" width="1" height="7"/><rect x="12" y="1" width="4" height="1"/><rect x="10" y="6" width="3" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="8" width="2" height="1"/></g>
+    </g>
+    <g id="shop-attack-b">
+      <g fill="#171525">
+        <rect x="7" y="2" width="5" height="1"/><rect x="6" y="3" width="7" height="5"/>
+        <rect x="2" y="5" width="5" height="8"/><rect x="5" y="8" width="8" height="5"/>
+        <rect x="3" y="9" width="3" height="4"/><rect x="11" y="7" width="4" height="4"/>
+        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
+        <rect x="11" y="6" width="5" height="3"/>
+      </g>
+      <g fill="#654832"><rect x="3" y="6" width="4" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="7" y="3" width="5" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="11" y="8" width="3" height="2"/></g>
+      <g fill="#e1b866"><rect x="8" y="3" width="3" height="1"/><rect x="8" y="5" width="4" height="1"/><rect x="10" y="9" width="2" height="1"/></g>
+      <g fill="#242238"><rect x="8" y="6" width="4" height="1"/><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
+      <g fill="#2e7671"><rect x="5" y="8" width="7" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
+      <g fill="#56a9a0"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="1" height="2"/></g>
+      <g fill="#8d5e2d"><rect x="12" y="7" width="4" height="1"/><rect x="15" y="6" width="1" height="3"/><rect x="11" y="8" width="2" height="1"/></g>
+      <g fill="#a7b4be"><rect x="3" y="7" width="2" height="1"/></g>
+    </g>
+
+    <!-- Travelling shopkeeper: cast -->
+    <g id="shop-cast-a">
+      <g fill="#171525">
+        <rect x="5" y="1" width="5" height="1"/><rect x="4" y="2" width="7" height="5"/>
+        <rect x="1" y="5" width="5" height="8"/><rect x="4" y="7" width="8" height="6"/>
+        <rect x="3" y="8" width="2" height="5"/><rect x="11" y="6" width="3" height="4"/>
+        <rect x="5" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="13" y="3" width="3" height="5"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="6" width="4" height="6"/><rect x="1" y="8" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="5" y="2" width="5" height="4"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="7" width="2" height="2"/><rect x="14" y="4" width="1" height="3"/></g>
+      <g fill="#e1b866"><rect x="6" y="2" width="3" height="1"/><rect x="6" y="4" width="4" height="1"/><rect x="14" y="4" width="1" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+      <g fill="#2e7671"><rect x="4" y="7" width="7" height="2"/><rect x="7" y="9" width="3" height="4"/></g>
+      <g fill="#56a9a0"><rect x="5" y="7" width="5" height="1"/><rect x="8" y="9" width="1" height="3"/><rect x="14" y="5" width="1" height="2"/></g>
+      <g fill="#b6e8df"><rect x="15" y="3" width="1" height="1"/><rect x="13" y="2" width="1" height="1"/><rect x="15" y="7" width="1" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="7" width="2" height="1"/></g>
+    </g>
+    <g id="shop-cast-b">
+      <g fill="#171525">
+        <rect x="6" y="3" width="5" height="1"/><rect x="5" y="4" width="7" height="4"/>
+        <rect x="1" y="6" width="5" height="7"/><rect x="4" y="8" width="9" height="5"/>
+        <rect x="2" y="5" width="3" height="5"/><rect x="12" y="4" width="3" height="6"/>
+        <rect x="4" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
+        <rect x="7" y="0" width="4" height="3"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="7" width="4" height="5"/><rect x="1" y="9" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="6" y="4" width="5" height="3"/><rect x="5" y="9" width="7" height="4"/><rect x="3" y="6" width="2" height="3"/><rect x="12" y="5" width="2" height="4"/></g>
+      <g fill="#e1b866"><rect x="7" y="4" width="3" height="1"/><rect x="7" y="6" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="7" y="7" width="4" height="1"/><rect x="4" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#2e7671"><rect x="4" y="8" width="8" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
+      <g fill="#56a9a0"><rect x="6" y="8" width="5" height="1"/><rect x="8" y="10" width="1" height="2"/><rect x="8" y="1" width="2" height="1"/></g>
+      <g fill="#b6e8df"><rect x="8" y="0" width="2" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="8" width="2" height="1"/></g>
+    </g>
+
+    <!-- Travelling shopkeeper: hurt and death -->
+    <g id="shop-hurt-a">
+      <g fill="#171525">
+        <rect x="8" y="2" width="5" height="1"/><rect x="7" y="3" width="7" height="5"/>
+        <rect x="2" y="5" width="6" height="8"/><rect x="5" y="8" width="8" height="5"/>
+        <rect x="3" y="7" width="3" height="5"/><rect x="12" y="9" width="3" height="4"/>
+        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
+      </g>
+      <g fill="#654832"><rect x="3" y="6" width="5" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="8" y="3" width="5" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="3"/></g>
+      <g fill="#e1b866"><rect x="9" y="3" width="3" height="1"/><rect x="9" y="5" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="9" y="6" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
+      <g fill="#2e7671"><rect x="5" y="8" width="7" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
+      <g fill="#56a9a0"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="1" height="2"/></g>
+      <g fill="#e06a36"><rect x="1" y="3" width="2" height="1"/><rect x="0" y="5" width="3" height="1"/><rect x="2" y="7" width="1" height="1"/></g>
+      <g fill="#a7b4be"><rect x="4" y="6" width="2" height="1"/></g>
+    </g>
+    <g id="shop-hurt-b">
+      <g fill="#171525">
+        <rect x="5" y="4" width="5" height="1"/><rect x="4" y="5" width="7" height="5"/>
+        <rect x="1" y="7" width="5" height="7"/><rect x="3" y="9" width="10" height="5"/>
+        <rect x="2" y="10" width="2" height="4"/><rect x="10" y="5" width="3" height="6"/>
+        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
+      </g>
+      <g fill="#654832"><rect x="2" y="8" width="4" height="5"/><rect x="1" y="10" width="2" height="3"/></g>
+      <g fill="#c6984f"><rect x="5" y="5" width="6" height="4"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
+      <g fill="#e1b866"><rect x="6" y="5" width="4" height="1"/><rect x="6" y="7" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="6" y="8" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
+      <g fill="#2e7671"><rect x="3" y="9" width="9" height="2"/><rect x="6" y="11" width="4" height="3"/></g>
+      <g fill="#56a9a0"><rect x="5" y="9" width="6" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
+      <g fill="#e06a36"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
+      <g fill="#a7b4be"><rect x="2" y="9" width="2" height="1"/></g>
+    </g>
+    <g id="shop-death-a">
+      <g fill="#171525">
+        <rect x="8" y="7" width="5" height="1"/><rect x="7" y="8" width="7" height="4"/>
+        <rect x="2" y="8" width="6" height="6"/><rect x="4" y="10" width="8" height="4"/>
+        <rect x="2" y="13" width="5" height="3"/><rect x="8" y="13" width="5" height="3"/>
+        <rect x="13" y="14" width="3" height="2"/>
+      </g>
+      <g fill="#654832"><rect x="3" y="9" width="5" height="4"/><rect x="2" y="11" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="8" y="8" width="5" height="3"/><rect x="5" y="11" width="6" height="3"/></g>
+      <g fill="#e1b866"><rect x="9" y="8" width="3" height="1"/><rect x="9" y="10" width="4" height="1"/></g>
+      <g fill="#242238"><rect x="9" y="11" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
+      <g fill="#2e7671"><rect x="4" y="10" width="7" height="2"/><rect x="6" y="12" width="3" height="2"/></g>
+      <g fill="#56a9a0"><rect x="6" y="10" width="4" height="1"/></g>
+      <g fill="#a7b4be"><rect x="4" y="9" width="2" height="1"/></g>
+      <g fill="#e1b866"><rect x="14" y="14" width="1" height="1"/></g>
+    </g>
+    <g id="shop-death-b">
+      <g fill="#171525">
+        <rect x="2" y="10" width="6" height="5"/><rect x="6" y="11" width="9" height="4"/>
+        <rect x="1" y="13" width="5" height="3"/><rect x="7" y="14" width="8" height="2"/>
+        <rect x="14" y="12" width="2" height="2"/><rect x="1" y="10" width="1" height="1"/>
+      </g>
+      <g fill="#654832"><rect x="3" y="11" width="5" height="3"/><rect x="2" y="12" width="2" height="2"/></g>
+      <g fill="#c6984f"><rect x="8" y="12" width="6" height="3"/></g>
+      <g fill="#e1b866"><rect x="10" y="12" width="4" height="1"/><rect x="15" y="12" width="1" height="1"/><rect x="1" y="10" width="1" height="1"/></g>
+      <g fill="#242238"><rect x="1" y="14" width="5" height="2"/><rect x="8" y="15" width="7" height="1"/><rect x="11" y="14" width="3" height="1"/></g>
+      <g fill="#2e7671"><rect x="7" y="11" width="6" height="1"/><rect x="8" y="13" width="3" height="2"/></g>
+      <g fill="#56a9a0"><rect x="8" y="12" width="2" height="1"/></g>
+      <g fill="#a7b4be"><rect x="4" y="11" width="2" height="1"/></g>
+    </g>
+
+    <!-- Arcane summon: idle -->
+    <g id="summon-idle-a">
+      <g fill="#171525">
+        <rect x="6" y="1" width="4" height="2"/><rect x="5" y="3" width="6" height="6"/>
+        <rect x="3" y="5" width="2" height="5"/><rect x="11" y="5" width="2" height="5"/>
+        <rect x="4" y="8" width="8" height="4"/><rect x="5" y="12" width="6" height="2"/>
+        <rect x="6" y="14" width="4" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="6" y="3" width="4" height="5"/><rect x="5" y="9" width="6" height="3"/><rect x="6" y="12" width="4" height="2"/></g>
+      <g fill="#a184cf"><rect x="7" y="3" width="2" height="2"/><rect x="6" y="8" width="4" height="3"/><rect x="4" y="6" width="1" height="3"/><rect x="11" y="6" width="1" height="3"/></g>
+      <g fill="#4ac8cf"><rect x="6" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="7" y="9" width="2" height="3"/><rect x="6" y="14" width="1" height="1"/><rect x="9" y="14" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="7" y="5" width="2" height="1"/><rect x="7" y="10" width="1" height="1"/></g>
+    </g>
+    <g id="summon-idle-b">
+      <g fill="#171525">
+        <rect x="5" y="0" width="6" height="3"/><rect x="4" y="3" width="8" height="6"/>
+        <rect x="2" y="4" width="3" height="5"/><rect x="11" y="4" width="3" height="5"/>
+        <rect x="4" y="8" width="8" height="4"/><rect x="6" y="12" width="4" height="3"/>
+        <rect x="7" y="15" width="2" height="1"/>
+      </g>
+      <g fill="#7151a0"><rect x="5" y="2" width="6" height="6"/><rect x="5" y="9" width="6" height="3"/><rect x="7" y="12" width="2" height="3"/></g>
+      <g fill="#a184cf"><rect x="6" y="1" width="4" height="3"/><rect x="6" y="8" width="4" height="3"/><rect x="3" y="5" width="2" height="3"/><rect x="11" y="5" width="2" height="3"/></g>
+      <g fill="#4ac8cf"><rect x="5" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="7" y="9" width="2" height="2"/><rect x="7" y="13" width="2" height="2"/></g>
+      <g fill="#b6e8df"><rect x="6" y="5" width="4" height="1"/><rect x="8" y="9" width="1" height="1"/></g>
+    </g>
+
+    <!-- Arcane summon: move -->
+    <g id="summon-move-a">
+      <g fill="#171525">
+        <rect x="7" y="1" width="5" height="2"/><rect x="6" y="3" width="7" height="6"/>
+        <rect x="3" y="5" width="3" height="4"/><rect x="12" y="4" width="3" height="5"/>
+        <rect x="5" y="8" width="8" height="4"/><rect x="7" y="12" width="5" height="2"/>
+        <rect x="9" y="14" width="4" height="2"/><rect x="1" y="11" width="3" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="7" y="3" width="5" height="5"/><rect x="6" y="9" width="6" height="3"/><rect x="8" y="12" width="3" height="2"/></g>
+      <g fill="#a184cf"><rect x="8" y="2" width="3" height="2"/><rect x="7" y="8" width="4" height="3"/><rect x="4" y="6" width="2" height="2"/><rect x="12" y="5" width="2" height="3"/></g>
+      <g fill="#4ac8cf"><rect x="7" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="8" y="9" width="2" height="2"/><rect x="10" y="14" width="2" height="1"/><rect x="1" y="11" width="2" height="1"/></g>
+      <g fill="#b6e8df"><rect x="8" y="5" width="3" height="1"/><rect x="9" y="9" width="1" height="1"/></g>
+    </g>
+    <g id="summon-move-b">
+      <g fill="#171525">
+        <rect x="4" y="1" width="5" height="2"/><rect x="3" y="3" width="7" height="6"/>
+        <rect x="1" y="4" width="3" height="5"/><rect x="9" y="5" width="3" height="4"/>
+        <rect x="3" y="8" width="8" height="4"/><rect x="4" y="12" width="5" height="2"/>
+        <rect x="3" y="14" width="4" height="2"/><rect x="12" y="11" width="3" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="4" y="3" width="5" height="5"/><rect x="4" y="9" width="6" height="3"/><rect x="5" y="12" width="3" height="2"/></g>
+      <g fill="#a184cf"><rect x="5" y="2" width="3" height="2"/><rect x="5" y="8" width="4" height="3"/><rect x="2" y="5" width="2" height="3"/><rect x="9" y="6" width="2" height="2"/></g>
+      <g fill="#4ac8cf"><rect x="4" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="6" y="9" width="2" height="2"/><rect x="4" y="14" width="2" height="1"/><rect x="13" y="11" width="2" height="1"/></g>
+      <g fill="#b6e8df"><rect x="5" y="5" width="3" height="1"/><rect x="6" y="9" width="1" height="1"/></g>
+    </g>
+
+    <!-- Arcane summon: attack -->
+    <g id="summon-attack-a">
+      <g fill="#171525">
+        <rect x="4" y="2" width="5" height="2"/><rect x="3" y="4" width="7" height="6"/>
+        <rect x="1" y="6" width="3" height="4"/><rect x="9" y="5" width="4" height="5"/>
+        <rect x="3" y="9" width="8" height="4"/><rect x="5" y="13" width="5" height="3"/>
+        <rect x="11" y="3" width="5" height="3"/><rect x="14" y="2" width="2" height="1"/>
+      </g>
+      <g fill="#7151a0"><rect x="4" y="4" width="5" height="5"/><rect x="4" y="10" width="6" height="3"/><rect x="6" y="13" width="3" height="2"/></g>
+      <g fill="#a184cf"><rect x="5" y="3" width="3" height="2"/><rect x="5" y="9" width="4" height="3"/><rect x="2" y="7" width="2" height="2"/><rect x="9" y="6" width="3" height="3"/></g>
+      <g fill="#4ac8cf"><rect x="4" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="6" y="10" width="2" height="2"/><rect x="12" y="4" width="4" height="1"/><rect x="15" y="2" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="5" y="6" width="3" height="1"/><rect x="13" y="3" width="3" height="1"/></g>
+    </g>
+    <g id="summon-attack-b">
+      <g fill="#171525">
+        <rect x="6" y="2" width="5" height="2"/><rect x="5" y="4" width="7" height="6"/>
+        <rect x="3" y="6" width="3" height="4"/><rect x="10" y="6" width="5" height="4"/>
+        <rect x="4" y="9" width="9" height="4"/><rect x="6" y="13" width="6" height="3"/>
+        <rect x="12" y="6" width="4" height="4"/><rect x="15" y="5" width="1" height="1"/>
+      </g>
+      <g fill="#7151a0"><rect x="6" y="4" width="5" height="5"/><rect x="5" y="10" width="7" height="3"/><rect x="7" y="13" width="4" height="2"/></g>
+      <g fill="#a184cf"><rect x="7" y="3" width="3" height="2"/><rect x="6" y="9" width="5" height="3"/><rect x="4" y="7" width="2" height="2"/><rect x="10" y="7" width="4" height="2"/></g>
+      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="8" y="10" width="2" height="2"/><rect x="12" y="7" width="4" height="2"/><rect x="15" y="5" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="7" y="6" width="3" height="1"/><rect x="14" y="6" width="2" height="1"/><rect x="15" y="9" width="1" height="1"/></g>
+    </g>
+
+    <!-- Arcane summon: cast -->
+    <g id="summon-cast-a">
+      <g fill="#171525">
+        <rect x="6" y="2" width="4" height="2"/><rect x="5" y="4" width="6" height="6"/>
+        <rect x="2" y="4" width="3" height="6"/><rect x="11" y="4" width="3" height="6"/>
+        <rect x="4" y="9" width="8" height="4"/><rect x="6" y="13" width="4" height="3"/>
+        <rect x="0" y="1" width="3" height="3"/><rect x="14" y="2" width="2" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="6" y="4" width="4" height="5"/><rect x="5" y="10" width="6" height="3"/><rect x="7" y="13" width="2" height="2"/></g>
+      <g fill="#a184cf"><rect x="7" y="3" width="2" height="2"/><rect x="6" y="9" width="4" height="3"/><rect x="3" y="5" width="2" height="4"/><rect x="11" y="5" width="2" height="4"/></g>
+      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="7" y="10" width="2" height="2"/><rect x="0" y="2" width="2" height="2"/><rect x="14" y="2" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="7" y="6" width="2" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="15" y="3" width="1" height="1"/></g>
+    </g>
+    <g id="summon-cast-b">
+      <g fill="#171525">
+        <rect x="5" y="0" width="6" height="3"/><rect x="5" y="4" width="6" height="6"/>
+        <rect x="2" y="2" width="3" height="7"/><rect x="11" y="2" width="3" height="7"/>
+        <rect x="4" y="9" width="8" height="4"/><rect x="6" y="13" width="4" height="3"/>
+      </g>
+      <g fill="#7151a0"><rect x="6" y="4" width="4" height="5"/><rect x="5" y="10" width="6" height="3"/><rect x="7" y="13" width="2" height="2"/></g>
+      <g fill="#a184cf"><rect x="6" y="1" width="4" height="2"/><rect x="6" y="9" width="4" height="3"/><rect x="3" y="3" width="2" height="5"/><rect x="11" y="3" width="2" height="5"/></g>
+      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="7" y="10" width="2" height="2"/><rect x="7" y="1" width="2" height="1"/><rect x="2" y="2" width="1" height="2"/><rect x="13" y="2" width="1" height="2"/></g>
+      <g fill="#b6e8df"><rect x="7" y="6" width="2" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="10" y="0" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/></g>
+    </g>
+
+    <!-- Arcane summon: hurt and death -->
+    <g id="summon-hurt-a">
+      <g fill="#171525">
+        <rect x="8" y="3" width="5" height="2"/><rect x="7" y="5" width="7" height="5"/>
+        <rect x="4" y="6" width="3" height="5"/><rect x="13" y="6" width="2" height="4"/>
+        <rect x="6" y="9" width="8" height="4"/><rect x="8" y="13" width="5" height="3"/>
+        <rect x="2" y="3" width="2" height="2"/><rect x="1" y="8" width="2" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="8" y="5" width="5" height="4"/><rect x="7" y="10" width="6" height="3"/><rect x="9" y="13" width="3" height="2"/></g>
+      <g fill="#a184cf"><rect x="9" y="4" width="3" height="2"/><rect x="8" y="9" width="4" height="3"/><rect x="5" y="7" width="2" height="3"/><rect x="13" y="7" width="1" height="2"/></g>
+      <g fill="#4ac8cf"><rect x="8" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="9" y="10" width="2" height="2"/><rect x="2" y="3" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="9" y="7" width="3" height="1"/></g>
+    </g>
+    <g id="summon-hurt-b">
+      <g fill="#171525">
+        <rect x="3" y="4" width="5" height="2"/><rect x="2" y="6" width="7" height="5"/>
+        <rect x="1" y="7" width="2" height="4"/><rect x="8" y="6" width="4" height="5"/>
+        <rect x="2" y="10" width="9" height="4"/><rect x="3" y="14" width="5" height="2"/>
+        <rect x="13" y="2" width="2" height="2"/><rect x="14" y="8" width="2" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="3" y="6" width="5" height="4"/><rect x="3" y="11" width="7" height="3"/><rect x="4" y="14" width="3" height="1"/></g>
+      <g fill="#a184cf"><rect x="4" y="5" width="3" height="2"/><rect x="4" y="10" width="5" height="3"/><rect x="2" y="8" width="1" height="2"/><rect x="8" y="7" width="3" height="3"/></g>
+      <g fill="#4ac8cf"><rect x="3" y="8" width="1" height="1"/><rect x="7" y="8" width="1" height="1"/><rect x="5" y="11" width="2" height="2"/><rect x="14" y="2" width="1" height="1"/><rect x="15" y="9" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="4" y="8" width="3" height="1"/></g>
+    </g>
+    <g id="summon-death-a">
+      <g fill="#171525">
+        <rect x="6" y="7" width="5" height="2"/><rect x="5" y="9" width="7" height="4"/>
+        <rect x="3" y="10" width="2" height="3"/><rect x="12" y="10" width="2" height="3"/>
+        <rect x="4" y="13" width="3" height="2"/><rect x="9" y="13" width="3" height="3"/>
+        <rect x="1" y="8" width="2" height="2"/><rect x="14" y="6" width="2" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="6" y="9" width="5" height="3"/><rect x="5" y="13" width="2" height="1"/><rect x="10" y="13" width="1" height="2"/></g>
+      <g fill="#a184cf"><rect x="7" y="8" width="3" height="2"/><rect x="7" y="11" width="3" height="2"/><rect x="4" y="11" width="1" height="2"/><rect x="12" y="11" width="1" height="2"/></g>
+      <g fill="#4ac8cf"><rect x="6" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="7" y="10" width="3" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/></g>
+    </g>
+    <g id="summon-death-b">
+      <g fill="#171525">
+        <rect x="2" y="12" width="3" height="3"/><rect x="6" y="10" width="3" height="3"/>
+        <rect x="10" y="12" width="3" height="4"/><rect x="14" y="13" width="2" height="2"/>
+        <rect x="0" y="14" width="2" height="2"/>
+      </g>
+      <g fill="#7151a0"><rect x="3" y="13" width="2" height="2"/><rect x="7" y="11" width="2" height="2"/><rect x="11" y="13" width="2" height="2"/></g>
+      <g fill="#a184cf"><rect x="2" y="12" width="1" height="2"/><rect x="6" y="10" width="1" height="2"/><rect x="10" y="12" width="1" height="2"/></g>
+      <g fill="#4ac8cf"><rect x="0" y="15" width="2" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="12" y="15" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/></g>
+      <g fill="#b6e8df"><rect x="2" y="14" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/></g>
+    </g>
+  </defs>
+
+  <g transform="translate(0 0)"><use href="#player-idle-a"/></g><g transform="translate(16 0)"><use href="#player-idle-b"/></g><g transform="translate(32 0)"><use href="#player-move-a"/></g><g transform="translate(48 0)"><use href="#player-move-b"/></g><g transform="translate(64 0)"><use href="#player-attack-a"/></g><g transform="translate(80 0)"><use href="#player-attack-b"/></g><g transform="translate(96 0)"><use href="#player-cast-a"/></g><g transform="translate(112 0)"><use href="#player-cast-b"/></g><g transform="translate(128 0)"><use href="#player-hurt-a"/></g><g transform="translate(144 0)"><use href="#player-hurt-b"/></g><g transform="translate(160 0)"><use href="#player-death-a"/></g><g transform="translate(176 0)"><use href="#player-death-b"/></g>
+  <g transform="translate(0 16)"><use href="#enemy-idle-a"/></g><g transform="translate(16 16)"><use href="#enemy-idle-b"/></g><g transform="translate(32 16)"><use href="#enemy-move-a"/></g><g transform="translate(48 16)"><use href="#enemy-move-b"/></g><g transform="translate(64 16)"><use href="#enemy-attack-a"/></g><g transform="translate(80 16)"><use href="#enemy-attack-b"/></g><g transform="translate(96 16)"><use href="#enemy-cast-a"/></g><g transform="translate(112 16)"><use href="#enemy-cast-b"/></g><g transform="translate(128 16)"><use href="#enemy-hurt-a"/></g><g transform="translate(144 16)"><use href="#enemy-hurt-b"/></g><g transform="translate(160 16)"><use href="#enemy-death-a"/></g><g transform="translate(176 16)"><use href="#enemy-death-b"/></g>
+  <g transform="translate(0 32)"><use href="#shop-idle-a"/></g><g transform="translate(16 32)"><use href="#shop-idle-b"/></g><g transform="translate(32 32)"><use href="#shop-move-a"/></g><g transform="translate(48 32)"><use href="#shop-move-b"/></g><g transform="translate(64 32)"><use href="#shop-attack-a"/></g><g transform="translate(80 32)"><use href="#shop-attack-b"/></g><g transform="translate(96 32)"><use href="#shop-cast-a"/></g><g transform="translate(112 32)"><use href="#shop-cast-b"/></g><g transform="translate(128 32)"><use href="#shop-hurt-a"/></g><g transform="translate(144 32)"><use href="#shop-hurt-b"/></g><g transform="translate(160 32)"><use href="#shop-death-a"/></g><g transform="translate(176 32)"><use href="#shop-death-b"/></g>
+  <g transform="translate(0 48)"><use href="#summon-idle-a"/></g><g transform="translate(16 48)"><use href="#summon-idle-b"/></g><g transform="translate(32 48)"><use href="#summon-move-a"/></g><g transform="translate(48 48)"><use href="#summon-move-b"/></g><g transform="translate(64 48)"><use href="#summon-attack-a"/></g><g transform="translate(80 48)"><use href="#summon-attack-b"/></g><g transform="translate(96 48)"><use href="#summon-cast-a"/></g><g transform="translate(112 48)"><use href="#summon-cast-b"/></g><g transform="translate(128 48)"><use href="#summon-hurt-a"/></g><g transform="translate(144 48)"><use href="#summon-hurt-b"/></g><g transform="translate(160 48)"><use href="#summon-death-a"/></g><g transform="translate(176 48)"><use href="#summon-death-b"/></g>
+</svg>

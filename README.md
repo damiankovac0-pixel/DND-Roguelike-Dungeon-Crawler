@@ -153,11 +153,12 @@ Useful focused tests include:
 
 ## Pixel visual assets
 
-Pixel renderer resources are declared explicitly in `assets/visual_assets.json`. Validate or regenerate the deterministic Godot catalogues with:
+Pixel renderer resources are declared explicitly in `assets/visual_assets.json`; the five project-authored production atlases live under `assets/pixel_art/source/`. Validate, release-check, or regenerate the deterministic Godot catalogues with:
 
 ```sh
 python3 tools/pixel_assets.py check
 python3 tools/pixel_assets.py generate
+python3 tools/pixel_assets.py release-check
 ```
 
 Aseprite source conventions, export commands, generated-file rules, and licensing requirements are documented in [`docs/pixel_asset_pipeline.md`](docs/pixel_asset_pipeline.md).
@@ -194,7 +195,7 @@ The automated release gate enforces these renderer budgets:
 
 Reference Web threshold at `1180x760`: at least 55 average FPS with a 25 ms-or-lower p95 frame time during floor transitions, movement, and 90 live renderer changes; the canvas must match every tested viewport and the browser must report no console, page, or resource-load errors.
 
-ASCII remains the default. Do not change that default until the five prototype visual sources have production replacements, all three modes complete a full manual run including boss encounters, the desktop capture gate passes, and an exported Web build passes renderer switching, reduced-VFX, resize, focus-return, and console-error checks.
+ASCII remains the backward-compatible default. Hybrid and Full Pixel Map are production-ready opt-in modes; release checks cover all three modes, boss encounters, renderer switching, reduced VFX, viewport resizing, focus return, and browser errors.
 
 ## Web export
 
@@ -226,7 +227,7 @@ resources/
 
 scenes/           Godot .tscn scenes
 assets/audio/     Audio assets, including boss battle tracks
-assets/sprites/   Explicit prototype and generated pixel-map textures
+assets/pixel_art/ Production pixel-art atlases and optional generated outputs
 assets/*.json     Visual source manifest and generated attribution
 fonts/            Terminus and JetBrainsMono font resources
 ```

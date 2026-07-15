@@ -7,7 +7,7 @@ extends Node2D
 ## readability, so particle availability never changes gameplay or telegraphs.
 
 # === Constants ===
-const PARTICLE_TEXTURE: Texture2D = preload("res://assets/sprites/prototype/effect_particle.svg")
+const PARTICLE_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/particle.svg")
 const POOL_SIZE: int = 12
 const NORMAL_MIN_LIFETIME: float = 0.16
 const REDUCED_LIFETIME_SCALE: float = 0.52

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cfcf3vbtcplxf"
-path="res://.godot/imported/dungeon_tiles.svg-e2276bd2aea802928bfb29076fed05eb.ctex"
+uid="uid://dwn2uqetsgx8g"
+path="res://.godot/imported/particle.svg-82981d4696e8ec1cf0dbb30054e738f6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/prototype/dungeon_tiles.svg"
-dest_files=["res://.godot/imported/dungeon_tiles.svg-e2276bd2aea802928bfb29076fed05eb.ctex"]
+source_file="res://assets/pixel_art/source/effects/particle.svg"
+dest_files=["res://.godot/imported/particle.svg-82981d4696e8ec1cf0dbb30054e738f6.ctex"]
 
 [params]
 

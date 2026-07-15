@@ -23,8 +23,8 @@ const TILE_ATLAS_COORDS: Dictionary = {
 # === Exports ===
 @export var catalog_version: int = 1
 @export var tile_atlas: Texture2D
-@export var prototype: bool = true
-@export var attribution: String = "Project-authored deterministic Phase 2 prototype"
+@export var prototype: bool = false
+@export var attribution: String = "Project-authored production map visual catalog."
 
 
 # === Public Methods ===
