@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/humanoid"
 display_name = "Ember Archer"
 glyph = "E"
 color = Color(1, 0.46, 0.16, 1)

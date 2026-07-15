@@ -27,3 +27,4 @@ required_class = &"wizard"
 weapon_damage_type = &"magic"
 class_damage_type = &"magic"
 class_damage_percent_bonus = 0
+visual_id = &"item/staff"

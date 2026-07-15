@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/caster"
 display_name = "Void Herald"
 glyph = "V"
 color = Color(0.78, 0.36, 1, 1)

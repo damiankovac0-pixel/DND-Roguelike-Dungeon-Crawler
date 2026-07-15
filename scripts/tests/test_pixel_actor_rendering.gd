@@ -23,6 +23,8 @@ class FakeEnemyData:
 	var is_boss: bool = false
 	var boss_id: StringName = &""
 
+	var visual_id: StringName = &""
+
 
 class FakeActor:
 	extends Node2D
@@ -63,6 +65,8 @@ var _shopkeeper: FakeActor
 var _summon: FakeActor
 var _boss: FakeActor
 var _boss_cells: Array[Vector2i] = []
+var _saved_player_class: StringName = &""
+var _game_manager: Node = null
 
 
 func _init() -> void:
@@ -74,6 +78,9 @@ func _run() -> void:
 	if _failed:
 		return
 	_create_actor_fixture()
+	if _failed:
+		_cleanup_actors()
+		return
 	_check_catalogue_animations()
 	if _failed:
 		_cleanup_actors()
@@ -117,8 +124,16 @@ func _load_dependencies() -> void:
 
 
 func _create_actor_fixture() -> void:
+	_game_manager = root.get_node_or_null("/root/GameManager")
+	if _game_manager == null:
+		_expect(false, "GameManager autoload missing")
+		return
+	_saved_player_class = _game_manager.pending_character_class
 	_player = _new_actor(&"Player", "Hero", "@", Vector2i(2, 2), Color.WHITE)
+	var enemy_visual_data: FakeEnemyData = FakeEnemyData.new()
+	enemy_visual_data.visual_id = &"actor/enemy/brute"
 	_enemy = _new_actor(&"Goblin", "Goblin", "g", Vector2i(3, 2), Color(0.4, 0.9, 0.4))
+	_enemy.enemy_data = enemy_visual_data
 	_shopkeeper = _new_actor(
 		&"Shopkeeper", "Shopkeeper", "S", Vector2i(2, 4), Color(1.0, 0.82, 0.32)
 	)
@@ -153,8 +168,8 @@ func _new_actor(
 
 func _check_catalogue_animations() -> void:
 	var snapshots: Array[Dictionary] = [
-		{"visual_id": &"actor/player", "kind": &"player", "is_boss": false},
-		{"visual_id": &"actor/enemy", "kind": &"enemy", "is_boss": false},
+		{"visual_id": &"actor/player/fighter", "kind": &"player", "is_boss": false},
+		{"visual_id": &"actor/enemy/humanoid", "kind": &"enemy", "is_boss": false},
 		{"visual_id": &"actor/shopkeeper", "kind": &"shopkeeper", "is_boss": false},
 		{"visual_id": &"actor/summon", "kind": &"summon", "is_boss": false},
 		{
@@ -194,6 +209,25 @@ func _check_catalogue_animations() -> void:
 		"Catalogue should reuse immutable SpriteFrames per visual ID",
 	)
 	print("  explicit catalogue provides cached idle/move/attack/cast/hurt/death frames")
+	# Compatibility alias coverage
+	for alias_id: StringName in [&"actor/player", &"actor/enemy"]:
+		var alias_frames: SpriteFrames = _catalog.call(
+			&"sprite_frames_for", {"visual_id": alias_id, "kind": &"enemy", "is_boss": false}
+		)
+		_expect(alias_frames != null, "Compatibility alias %s must return frames" % alias_id)
+		for animation: StringName in EXPECTED_ANIMATIONS:
+			_expect(
+				alias_frames.has_animation(animation),
+				"Alias %s missing animation: %s" % [alias_id, animation],
+			)
+		_expect(
+			alias_frames.get_animation_loop(&"idle"),
+			"Alias %s idle should loop" % alias_id,
+		)
+		var alias_frame: AtlasTexture = alias_frames.get_frame_texture(&"idle", 0) as AtlasTexture
+		_expect(alias_frame != null, "Alias %s frame must use atlas region" % alias_id)
+	_check_actor_catalog_rows()
+	_check_actor_tint_colors()
 
 
 func _check_boss_catalog_rows() -> void:
@@ -215,6 +249,95 @@ func _check_boss_catalog_rows() -> void:
 				float(row * 64),
 				"Boss catalogue row mapping drifted for %s" % boss_id,
 			)
+
+
+func _check_actor_catalog_rows() -> void:
+	var actor_ids: Array[Dictionary] = [
+		{"id": &"actor/player/fighter", "row": 0},
+		{"id": &"actor/player/ranger", "row": 1},
+		{"id": &"actor/player/wizard", "row": 2},
+		{"id": &"actor/enemy/humanoid", "row": 3},
+		{"id": &"actor/enemy/brute", "row": 4},
+		{"id": &"actor/enemy/undead", "row": 5},
+		{"id": &"actor/enemy/beast", "row": 6},
+		{"id": &"actor/enemy/flyer", "row": 7},
+		{"id": &"actor/enemy/construct", "row": 8},
+		{"id": &"actor/enemy/caster", "row": 9},
+		{"id": &"actor/enemy/aquatic", "row": 10},
+		{"id": &"actor/enemy/aberration", "row": 11},
+		{"id": &"actor/shopkeeper", "row": 12},
+		{"id": &"actor/summon", "row": 13},
+	]
+	for entry: Dictionary in actor_ids:
+		var snapshot: Dictionary = {"visual_id": entry["id"], "kind": &"enemy", "is_boss": false}
+		var frames: SpriteFrames = _catalog.call(&"sprite_frames_for", snapshot)
+		var frame: AtlasTexture = frames.get_frame_texture(&"idle", 0) as AtlasTexture
+		var expected_y: float = float(int(entry["row"]) * 16)
+		_expect(frame != null, "%s catalogue frame must be AtlasTexture" % entry["id"])
+		if frame != null:
+			_expect_equal(
+				frame.region.position.y,
+				expected_y,
+				(
+					"Actor catalogue row mapping drifted for %s (expected y=%d)"
+					% [entry["id"], int(expected_y)]
+				),
+			)
+	print("  actor catalogue rows map 14 authored visual IDs to deterministic sheet rows")
+
+
+func _check_actor_tint_colors() -> void:
+	var known_ids: Array[StringName] = [
+		&"actor/player/fighter",
+		&"actor/player/ranger",
+		&"actor/player/wizard",
+		&"actor/enemy/humanoid",
+		&"actor/enemy/brute",
+		&"actor/enemy/undead",
+		&"actor/enemy/beast",
+		&"actor/enemy/flyer",
+		&"actor/enemy/construct",
+		&"actor/enemy/caster",
+		&"actor/enemy/aquatic",
+		&"actor/enemy/aberration",
+		&"actor/shopkeeper",
+		&"actor/summon",
+	]
+	for visual_id: StringName in known_ids:
+		var tint: Color = _catalog.call(
+			&"tint_for", {"visual_id": visual_id, "kind": &"enemy", "is_boss": false}
+		)
+		_expect_equal(
+			tint,
+			Color.WHITE,
+			"Authored visual %s must return Color.WHITE tint" % visual_id,
+		)
+	# Compatibility alias tint checks
+	for alias_id: StringName in [&"actor/player", &"actor/enemy"]:
+		var alias_tint: Color = _catalog.call(
+			&"tint_for", {"visual_id": alias_id, "kind": &"enemy", "is_boss": false}
+		)
+		_expect_equal(
+			alias_tint,
+			Color.WHITE,
+			"Compatibility alias %s must return Color.WHITE tint" % alias_id,
+		)
+	# Unknown visual must return visible safe fallback (magenta)
+	var unknown_tint: Color = _catalog.call(
+		&"tint_for", {"visual_id": &"actor/unknown", "kind": &"enemy", "is_boss": false}
+	)
+	_expect(
+		unknown_tint != Color.WHITE,
+		"Unknown visual must not return Color.WHITE — should use safe fallback",
+	)
+	_expect_equal(
+		unknown_tint,
+		Color(1.0, 0.0, 1.0),
+		"Unknown visual tint must be visible magenta fallback",
+	)
+	print(
+		"  actor tint colours: known authored IDs return WHITE, unknown uses visible magenta fallback"
+	)
 
 
 func _build_state() -> RefCounted:
@@ -286,6 +409,30 @@ func _check_snapshot_contract(state: RefCounted) -> void:
 		"Actor facing should preserve the latest horizontal direction",
 	)
 	print("  state snapshots classify actors and preserve stable IDs and facing")
+	if _game_manager != null:
+		var saved_class: StringName = _game_manager.pending_character_class
+		for player_class: StringName in [&"fighter", &"ranger", &"wizard"]:
+			_game_manager.pending_character_class = player_class
+			state.call(&"capture_actors", _actors)
+			by_id = _snapshots_by_id(state.get("actors"))
+			_expect_equal(
+				by_id[_player.get_instance_id()]["visual_id"],
+				StringName("actor/player/%s" % player_class),
+				(
+					"Player class %s must produce actor/player/%s visual_id"
+					% [player_class, player_class]
+				),
+			)
+		_game_manager.pending_character_class = saved_class
+		state.call(&"capture_actors", _actors)
+	# Enemy resource visual_id coverage
+	by_id = _snapshots_by_id(state.get("actors"))
+	var enemy_visual_id: StringName = by_id[_enemy.get_instance_id()]["visual_id"]
+	_expect_equal(
+		enemy_visual_id,
+		&"actor/enemy/brute",
+		"Enemy with enemy_data.visual_id must use the explicit resource-driven value",
+	)
 
 
 func _check_renderer_lifecycle(state: RefCounted) -> void:
@@ -648,6 +795,8 @@ func _cleanup_actors() -> void:
 		if actor_value != null and is_instance_valid(actor_value):
 			actor_value.free()
 	_actors.clear()
+	if _game_manager != null:
+		_game_manager.pending_character_class = _saved_player_class
 
 
 func _expect(condition: bool, message: String) -> void:

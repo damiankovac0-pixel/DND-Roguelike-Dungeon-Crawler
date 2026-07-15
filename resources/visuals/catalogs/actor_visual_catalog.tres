@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("1_catalog")
-catalog_version = 1
+catalog_version = 2
 actor_sheet = ExtResource("2_actors")
 boss_sheet = ExtResource("3_bosses")
 prototype = false

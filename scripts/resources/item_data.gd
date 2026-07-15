@@ -97,6 +97,7 @@ const RARITY_COLORS: Array[String] = [
 @export var set_damage_resist_percent: int = 0
 @export var set_proc_chance_percent: int = 0
 @export var set_proc_heal_percent: int = 0
+@export var visual_id: StringName = &"item/generic"
 
 
 # === Public Methods ===

@@ -383,7 +383,9 @@ func _rebuild_tiles() -> void:
 	var map_data: Array = _state.get("map_data")
 	var explored_cells: Dictionary = _state.get("explored_cells")
 	var view_rect: Rect2i = _layout.call(&"get_view_rect")
-	var floor_coords: Vector2i = catalog.call(&"atlas_coords_for_tile", FLOOR_TILE_TYPE)
+	var biome_val: Variant = _state.get("biome_theme")
+	var biome_theme: Dictionary = biome_val if biome_val is Dictionary else {}
+	var biome_row: int = clampi(int(biome_theme.get("index", 1)) - 1, 0, 5)
 	for y: int in range(view_rect.position.y, view_rect.end.y):
 		if y < 0 or y >= map_data.size():
 			continue
@@ -394,9 +396,14 @@ func _rebuild_tiles() -> void:
 			if not explored_cells.has(cell):
 				continue
 			var tile_type: int = int(map_data[y][x])
-			ground_layer.set_cell(cell, TILE_SOURCE_ID, floor_coords)
+			var ground_coords: Vector2i = catalog.call(
+				&"atlas_coords_for_tile", FLOOR_TILE_TYPE, biome_row, cell
+			)
+			ground_layer.set_cell(cell, TILE_SOURCE_ID, ground_coords)
 			if bool(catalog.call(&"is_structure_tile", tile_type)):
-				var structure_coords: Vector2i = catalog.call(&"atlas_coords_for_tile", tile_type)
+				var structure_coords: Vector2i = catalog.call(
+					&"atlas_coords_for_tile", tile_type, biome_row, cell
+				)
 				structure_layer.set_cell(cell, TILE_SOURCE_ID, structure_coords)
 
 

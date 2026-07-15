@@ -19,3 +19,4 @@ projectile_id = &"sleep_mote"
 effect_duration = 1
 target_radius = 1
 max_floor = 0
+visual_id = &"item/scroll"

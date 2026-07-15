@@ -18,3 +18,4 @@ attack_bonus = 2
 damage_bonus = 4
 special_effect = 1
 special_amount = 1
+visual_id = &"item/sword"

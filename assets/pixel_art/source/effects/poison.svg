@@ -1,0 +1,9 @@
+<svg id="poison-texture" xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
+  <g id="poison-droplet">
+    <rect x="1" y="0" width="1" height="1" fill="#78944F"/>
+    <rect x="1" y="1" width="1" height="1" fill="#E6DDC5"/>
+    <rect x="0" y="2" width="1" height="1" fill="#55705A"/>
+    <rect x="1" y="2" width="1" height="1" fill="#78944F"/>
+    <rect x="2" y="2" width="1" height="1" fill="#55705A"/>
+  </g>
+</svg>

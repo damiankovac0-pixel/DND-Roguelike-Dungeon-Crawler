@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/flyer"
 display_name = "Glass Dragonling"
 glyph = "j"
 color = Color(0.82, 0.95, 1, 1)

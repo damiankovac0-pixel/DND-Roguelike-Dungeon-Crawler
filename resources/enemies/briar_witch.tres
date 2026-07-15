@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/caster"
 display_name = "Briar Witch"
 glyph = "i"
 color = Color(0.86, 0.46, 0.66, 1)

@@ -8,6 +8,10 @@ extends Node2D
 
 # === Constants ===
 const PARTICLE_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/particle.svg")
+const EMBER_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/ember.svg")
+const ARCANE_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/arcane.svg")
+const POISON_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/poison.svg")
+const FROST_TEXTURE: Texture2D = preload("res://assets/pixel_art/source/effects/frost.svg")
 const POOL_SIZE: int = 12
 const NORMAL_MIN_LIFETIME: float = 0.16
 const REDUCED_LIFETIME_SCALE: float = 0.52
@@ -46,6 +50,7 @@ var _last_event_type: StringName = &""
 var _last_particle_amount: int = 0
 var _last_lifetime: float = 0.0
 var _last_effect_cell: Vector2i = Vector2i.ZERO
+var _last_texture_id: StringName = &""
 
 
 # === Lifecycle Methods ===
@@ -102,7 +107,7 @@ func play_event(event: Dictionary) -> bool:
 	var slot_index: int = _acquire_slot()
 	var profile: Dictionary = EVENT_PROFILES[profile_id]
 	var color: Color = _color_for_event(event, profile_id)
-	_configure_slot(slot_index, effect_cell, profile, color)
+	_configure_slot(slot_index, effect_cell, profile, color, event, profile_id)
 	_event_count += 1
 	_last_event_type = event_type
 	_last_effect_cell = effect_cell
@@ -134,6 +139,7 @@ func get_debug_snapshot() -> Dictionary:
 		"last_particle_amount": _last_particle_amount,
 		"last_lifetime": _last_lifetime,
 		"last_effect_cell": _last_effect_cell,
+		"last_texture_id": _last_texture_id,
 		"child_count": get_child_count(),
 	}
 
@@ -200,7 +206,14 @@ func _create_gpu_emitter(index: int) -> GPUParticles2D:
 	return emitter
 
 
-func _configure_slot(index: int, cell: Vector2i, profile: Dictionary, source_color: Color) -> void:
+func _configure_slot(
+	index: int,
+	cell: Vector2i,
+	profile: Dictionary,
+	source_color: Color,
+	event: Dictionary,
+	profile_id: StringName
+) -> void:
 	var amount: int = int(profile.get("amount", 6))
 	var lifetime: float = maxf(NORMAL_MIN_LIFETIME, float(profile.get("lifetime", 0.3)))
 	var speed: float = float(profile.get("speed", 20.0))
@@ -213,6 +226,8 @@ func _configure_slot(index: int, cell: Vector2i, profile: Dictionary, source_col
 		speed *= 0.55
 		gravity *= 0.55
 		color.a = minf(color.a, REDUCED_ALPHA_CAP)
+	# Select effect texture from event/payload identifiers; default neutral.
+	var effect_texture: Texture2D = _select_texture_for_event(event, profile_id)
 	var emitter: Node2D = _emitters[index]
 	emitter.position = Vector2(_layout.call(&"cell_center_to_local", cell)).round()
 	emitter.visible = true
@@ -226,6 +241,7 @@ func _configure_slot(index: int, cell: Vector2i, profile: Dictionary, source_col
 			gravity,
 			particle_scale,
 			color,
+			effect_texture,
 			seed_value
 		)
 	else:
@@ -238,6 +254,7 @@ func _configure_slot(index: int, cell: Vector2i, profile: Dictionary, source_col
 			gravity,
 			particle_scale,
 			color,
+			effect_texture,
 			seed_value
 		)
 	_generation += 1
@@ -258,7 +275,8 @@ func _configure_cpu(
 	gravity: float,
 	particle_scale: float,
 	color: Color,
-	seed_value: int
+	effect_texture: Texture2D,
+	seed_value: int,
 ) -> void:
 	emitter.amount = amount
 	emitter.lifetime = lifetime
@@ -270,6 +288,7 @@ func _configure_cpu(
 	emitter.scale_amount_min = particle_scale * 0.72
 	emitter.scale_amount_max = particle_scale
 	emitter.color = color
+	emitter.texture = effect_texture
 	emitter.seed = seed_value
 	emitter.emitting = true
 	emitter.restart()
@@ -284,7 +303,8 @@ func _configure_gpu(
 	gravity: float,
 	particle_scale: float,
 	color: Color,
-	seed_value: int
+	effect_texture: Texture2D,
+	seed_value: int,
 ) -> void:
 	var process_material: ParticleProcessMaterial = _gpu_materials[index]
 	process_material.direction = Vector3(0.0, -1.0, 0.0)
@@ -295,6 +315,7 @@ func _configure_gpu(
 	process_material.scale_min = particle_scale * 0.72
 	process_material.scale_max = particle_scale
 	process_material.color = color
+	emitter.texture = effect_texture
 	emitter.amount = amount
 	emitter.lifetime = lifetime
 	emitter.seed = seed_value
@@ -342,6 +363,68 @@ func _color_for_event(event: Dictionary, profile_id: StringName) -> Color:
 		&"death":
 			return Color(0.82, 0.20, 0.32, 0.92)
 	return Color.WHITE
+
+
+## Selects an effect texture based on event/payload identifiers.
+## Selector precedence:
+## 1. payload.element     — most specific semantic field
+## 2. payload.effect_type — effect subtype
+## 3. payload.trap_type   — trap-specific field
+## 4. payload.animation   — animation name (may contain element keywords)
+## 5. payload.profile_id  — semantic projectile or hazard profile
+## 6. profile_id          — event type fallback (e.g., "cast" → arcane)
+## 7. default             — neutral particle.svg
+## Unknown or missing identifiers default to neutral.
+func _select_texture_for_event(event: Dictionary, profile_id: StringName) -> Texture2D:
+	var payload: Dictionary = _payload_for_event(event)
+	for key: StringName in [&"element", &"effect_type", &"trap_type", &"animation", &"profile_id"]:
+		var value: StringName = StringName(payload.get(key, &""))
+		if value != &"":
+			var tex: Texture2D = _texture_from_identifier(value)
+			if tex != null:
+				_last_texture_id = value
+				return tex
+	# Fallback to profile_id (event type)
+	var profile_tex: Texture2D = _texture_from_identifier(profile_id)
+	if profile_tex != null:
+		_last_texture_id = profile_id
+		return profile_tex
+	_last_texture_id = &"neutral"
+	return PARTICLE_TEXTURE
+
+
+static func _texture_from_identifier(id: StringName) -> Texture2D:
+	match id:
+		&"fire", &"flame", &"ember", &"effect/ember":
+			return EMBER_TEXTURE
+		&"ember_bolt", &"fire_bolt", &"fireball", &"ember_arrow":
+			return EMBER_TEXTURE
+		&"starfall_star", &"ash_breath", &"maw_quake", &"molten_cracks":
+			return EMBER_TEXTURE
+		&"magic", &"arcane", &"shadow", &"void", &"cast", &"effect/arcane":
+			return ARCANE_TEXTURE
+		&"arcane_bolt", &"stormglass_bolt", &"void_bolt", &"astral_star":
+			return ARCANE_TEXTURE
+		&"ascendant_star", &"lightning_bolt", &"magic_missile", &"sleep_mote":
+			return ARCANE_TEXTURE
+		&"shadow_bolt", &"observer_gaze", &"blink_pulse", &"mirror_ray":
+			return ARCANE_TEXTURE
+		&"prism_fracture", &"arcane_spark", &"chain_lightning":
+			return ARCANE_TEXTURE
+		&"blink_pulse_hazard", &"mirror_shards":
+			return ARCANE_TEXTURE
+		&"poison", &"acid", &"effect/poison":
+			return POISON_TEXTURE
+		&"thorn_spike", &"thorn_lance", &"spore_burst", &"spore_hazard":
+			return POISON_TEXTURE
+		&"frost", &"ice", &"cold", &"effect/frost":
+			return FROST_TEXTURE
+		&"frost_shard", &"tidal_bolt", &"undertow", &"frost_nova":
+			return FROST_TEXTURE
+		&"undertow_hazard":
+			return FROST_TEXTURE
+		_:
+			return null
 
 
 func _payload_for_event(event: Dictionary) -> Dictionary:

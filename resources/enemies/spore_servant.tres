@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/beast"
 display_name = "Spore Servant"
 glyph = "p"
 color = Color(0.62, 0.72, 0.38, 1)

@@ -84,6 +84,7 @@ telegraph_border_color = Color(0.54, 0.84, 1, 0.88)
 
 [resource]
 script = ExtResource("1")
+visual_id = &"boss/observer"
 display_name = "The Observer"
 glyph = "O"
 color = Color(0.84, 0.88, 1, 1)

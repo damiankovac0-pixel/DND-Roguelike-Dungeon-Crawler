@@ -1,677 +1,763 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320" shape-rendering="crispEdges">
   <defs>
     <g id="observer-shell">
-      <polygon points="5,29 9,29 9,22 14,22 14,16 21,16 21,11 29,11 29,7 51,7 51,11 59,11 59,16 66,16 66,22 71,22 71,28 75,28 75,41 71,41 71,46 65,46 65,51 57,51 57,55 23,55 23,52 15,52 15,48 10,48 10,43 5,43" fill="#101322"/>
-      <polygon points="9,29 13,29 13,22 20,22 20,17 28,17 28,13 52,13 52,17 60,17 60,22 67,22 67,28 71,28 71,41 66,41 66,46 58,46 58,50 22,50 22,47 15,47 15,42 9,42" fill="#5A3280"/>
-      <rect x="11" y="30" width="5" height="10" fill="#A85BD4"/>
-      <rect x="64" y="29" width="7" height="11" fill="#A85BD4"/>
-      <rect x="20" y="17" width="8" height="4" fill="#A85BD4"/>
-      <rect x="52" y="17" width="8" height="4" fill="#A85BD4"/>
-      <rect x="24" y="46" width="10" height="4" fill="#A85BD4"/>
-      <rect x="47" y="46" width="10" height="4" fill="#A85BD4"/>
-      <polygon points="14,17 16,10 25,10 27,17 23,17 22,14 18,14 18,17" fill="#101322"/>
-      <rect x="18" y="12" width="5" height="2" fill="#42C6CF"/>
-      <polygon points="29,10 34,2 46,2 51,10 47,10 44,6 36,6 33,10" fill="#101322"/>
-      <rect x="37" y="5" width="7" height="2" fill="#9BE4DE"/>
-      <polygon points="53,17 55,10 64,10 67,17 62,17 61,14 57,14 57,17" fill="#101322"/>
-      <rect x="57" y="12" width="5" height="2" fill="#42C6CF"/>
-      <polygon points="18,50 22,50 23,57 31,60 33,53 29,52 27,56 25,50" fill="#101322"/>
-      <rect x="24" y="53" width="5" height="2" fill="#42C6CF"/>
-      <polygon points="48,52 52,50 55,50 55,56 59,53 62,53 60,59 51,59" fill="#101322"/>
-      <rect x="52" y="53" width="5" height="2" fill="#42C6CF"/>
+      <polygon points="5,27 10,27 10,22 17,22 17,18 25,18 25,15 55,15 55,18 63,18 63,22 70,22 70,26 75,26 75,40 70,40 70,44 63,44 63,48 17,48 17,44 10,44 10,40 5,40" fill="#0D111C"/>
+      <polygon points="9,28 14,28 14,24 22,24 22,21 58,21 58,24 66,24 66,28 71,28 71,38 66,38 66,42 58,42 58,45 22,45 22,42 14,42 14,38 9,38" fill="#354154"/>
+      <rect x="14" y="28" width="52" height="10" fill="#5E6C80"/>
+      <rect x="22" y="22" width="36" height="4" fill="#95A3B6"/>
+      <rect x="18" y="41" width="44" height="4" fill="#354154"/>
+      <rect x="28" y="7" width="24" height="7" fill="#0D111C"/>
+      <rect x="32" y="4" width="16" height="6" fill="#354154"/>
+      <rect x="34" y="4" width="10" height="2" fill="#95A3B6"/>
+      <rect x="18" y="9" width="8" height="8" fill="#0D111C"/>
+      <rect x="20" y="11" width="6" height="4" fill="#5E6C80"/>
+      <rect x="54" y="8" width="8" height="9" fill="#0D111C"/>
+      <rect x="54" y="10" width="6" height="5" fill="#5E6C80"/>
+      <rect x="22" y="47" width="9" height="9" fill="#0D111C"/>
+      <rect x="25" y="50" width="6" height="9" fill="#354154"/>
+      <rect x="49" y="47" width="9" height="9" fill="#0D111C"/>
+      <rect x="49" y="50" width="6" height="9" fill="#354154"/>
+      <rect x="12" y="30" width="5" height="6" fill="#9C712F"/>
+      <rect x="63" y="29" width="5" height="6" fill="#9C712F"/>
     </g>
     <g id="observer-eye-open">
-      <polygon points="17,32 22,24 31,20 49,20 58,24 63,32 58,40 49,44 31,44 22,40" fill="#101322"/>
-      <polygon points="21,32 25,26 33,23 47,23 55,26 59,32 55,38 47,41 33,41 25,38" fill="#D8D2BD"/>
-      <rect x="31" y="24" width="18" height="16" fill="#5A3280"/>
-      <rect x="34" y="26" width="12" height="12" fill="#42C6CF"/>
-      <rect x="38" y="28" width="7" height="8" fill="#101322"/>
-      <rect x="36" y="26" width="4" height="3" fill="#9BE4DE"/>
+      <polygon points="12,32 18,24 29,20 52,20 63,24 69,32 63,40 52,44 29,44 18,40" fill="#0D111C"/>
+      <polygon points="17,32 22,27 31,24 50,24 59,27 64,32 59,37 50,40 31,40 22,37" fill="#E6DDC5"/>
+      <polygon points="21,32 26,28 34,26 52,26 59,29 61,32 57,36 49,38 31,38 24,35" fill="#070A12"/>
+      <polygon points="25,32 29,27 36,27 40,32 36,38 29,37" fill="#9C712F"/>
+      <rect x="28" y="29" width="8" height="7" fill="#C9A24B"/>
+      <rect x="31" y="30" width="5" height="6" fill="#070A12"/>
+      <rect x="28" y="28" width="4" height="2" fill="#E6DDC5"/>
     </g>
-    <g id="observer-eye-left">
-      <polygon points="17,32 22,24 31,20 49,20 58,24 63,32 58,40 49,44 31,44 22,40" fill="#101322"/>
-      <polygon points="21,32 25,26 33,23 47,23 55,26 59,32 55,38 47,41 33,41 25,38" fill="#D8D2BD"/>
-      <rect x="25" y="25" width="18" height="15" fill="#5A3280"/>
-      <rect x="28" y="27" width="11" height="11" fill="#42C6CF"/>
-      <rect x="31" y="29" width="7" height="7" fill="#101322"/>
-      <rect x="29" y="27" width="4" height="3" fill="#9BE4DE"/>
-    </g>
-    <g id="observer-eye-right">
-      <polygon points="17,32 22,24 31,20 49,20 58,24 63,32 58,40 49,44 31,44 22,40" fill="#101322"/>
-      <polygon points="21,32 25,26 33,23 47,23 55,26 59,32 55,38 47,41 33,41 25,38" fill="#D8D2BD"/>
-      <rect x="37" y="25" width="18" height="15" fill="#5A3280"/>
-      <rect x="41" y="27" width="11" height="11" fill="#42C6CF"/>
-      <rect x="43" y="29" width="7" height="7" fill="#101322"/>
-      <rect x="42" y="27" width="4" height="3" fill="#9BE4DE"/>
-    </g>
-    <g id="observer-eye-wide">
-      <polygon points="14,32 20,21 31,16 49,16 60,21 66,32 60,43 49,48 31,48 20,43" fill="#101322"/>
-      <polygon points="19,32 24,23 33,19 47,19 56,23 61,32 56,41 47,45 33,45 24,41" fill="#D8D2BD"/>
-      <rect x="29" y="20" width="22" height="24" fill="#5A3280"/>
-      <rect x="33" y="23" width="14" height="18" fill="#42C6CF"/>
-      <rect x="37" y="26" width="9" height="12" fill="#101322"/>
-      <rect x="35" y="23" width="5" height="4" fill="#9BE4DE"/>
+    <g id="observer-eye-slit">
+      <polygon points="14,32 21,25 31,22 51,22 61,25 67,32 60,38 50,41 30,41 20,38" fill="#0D111C"/>
+      <polygon points="20,32 28,28 51,28 60,31 54,34 29,35" fill="#E6DDC5"/>
+      <rect x="25" y="31" width="29" height="4" fill="#070A12"/>
+      <rect x="31" y="30" width="7" height="6" fill="#9C712F"/>
+      <rect x="33" y="31" width="5" height="4" fill="#070A12"/>
     </g>
     <g id="observer-eye-closed">
-      <polygon points="16,31 23,24 33,21 48,21 58,25 64,32 57,30 48,28 33,28 24,30" fill="#101322"/>
-      <rect x="23" y="29" width="34" height="4" fill="#A85BD4"/>
-      <rect x="31" y="31" width="18" height="3" fill="#42C6CF"/>
+      <polygon points="15,31 22,25 31,22 50,22 60,26 67,32 59,30 50,28 31,28 22,30" fill="#0D111C"/>
+      <rect x="22" y="29" width="38" height="4" fill="#354154"/>
+      <rect x="28" y="30" width="20" height="2" fill="#95A3B6"/>
+    </g>
+    <g id="observer-vanes-a">
+      <polygon points="3,28 9,25 12,28 12,35 8,38 3,36" fill="#0D111C"/>
+      <rect x="5" y="29" width="7" height="5" fill="#5E6C80"/>
+      <polygon points="68,27 74,25 77,28 77,35 72,38 68,35" fill="#0D111C"/>
+      <rect x="68" y="29" width="7" height="5" fill="#5E6C80"/>
+      <rect x="14" y="52" width="6" height="5" fill="#0D111C"/>
+      <rect x="60" y="51" width="6" height="6" fill="#0D111C"/>
+    </g>
+    <g id="observer-vanes-b">
+      <polygon points="4,20 10,18 13,22 12,29 7,31 4,28" fill="#0D111C"/>
+      <rect x="6" y="21" width="6" height="5" fill="#5E6C80"/>
+      <polygon points="67,36 73,33 76,36 76,43 71,46 67,43" fill="#0D111C"/>
+      <rect x="68" y="37" width="6" height="5" fill="#5E6C80"/>
+      <rect x="16" y="50" width="7" height="8" fill="#0D111C"/>
+      <rect x="57" y="52" width="7" height="5" fill="#0D111C"/>
+    </g>
+    <g id="observer-marker-shadow">
+      <rect x="41" y="25" width="6" height="6" fill="#070A12"/>
     </g>
     <g id="observer-idle-0">
       <use href="#observer-shell"/>
       <use href="#observer-eye-open"/>
-      <rect x="28" y="61" width="24" height="2" fill="#1B2030"/>
+      <use href="#observer-vanes-a"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-idle-1">
-      <use href="#observer-shell" y="-2"/>
-      <use href="#observer-eye-right" y="-2"/>
-      <rect x="24" y="59" width="32" height="3" fill="#1B2030"/>
-      <rect x="6" y="48" width="5" height="3" fill="#42C6CF"/>
+      <use href="#observer-shell"/>
+      <use href="#observer-eye-open"/>
+      <use href="#observer-vanes-b"/>
+      <rect x="7" y="45" width="7" height="3" fill="#9C712F"/>
+      <rect x="66" y="17" width="6" height="3" fill="#9C712F"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-move-0">
-      <use href="#observer-shell" x="-3" y="1"/>
-      <use href="#observer-eye-left" x="-3" y="1"/>
-      <rect x="73" y="20" width="6" height="3" fill="#42C6CF"/>
-      <rect x="70" y="48" width="8" height="3" fill="#5A3280"/>
-      <rect x="25" y="62" width="20" height="2" fill="#1B2030"/>
+      <use href="#observer-shell" x="-2"/>
+      <use href="#observer-eye-open" x="-2"/>
+      <polygon points="67,17 73,15 77,19 74,24 77,28 70,30 66,26" fill="#0D111C"/>
+      <rect x="69" y="19" width="6" height="4" fill="#95A3B6"/>
+      <polygon points="65,46 73,44 77,48 72,52 77,55 68,57 63,52" fill="#354154"/>
+      <rect x="25" y="55" width="7" height="4" fill="#9C712F"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-move-1">
-      <use href="#observer-shell" x="3" y="-1"/>
-      <use href="#observer-eye-right" x="3" y="-1"/>
-      <rect x="1" y="22" width="7" height="3" fill="#42C6CF"/>
-      <rect x="2" y="46" width="10" height="3" fill="#5A3280"/>
-      <rect x="32" y="59" width="24" height="2" fill="#1B2030"/>
+      <use href="#observer-shell" x="2"/>
+      <use href="#observer-eye-open" x="2"/>
+      <polygon points="13,17 7,15 3,19 6,24 3,28 10,30 14,26" fill="#0D111C"/>
+      <rect x="5" y="19" width="6" height="4" fill="#95A3B6"/>
+      <polygon points="15,46 7,44 3,48 8,52 3,55 12,57 17,52" fill="#354154"/>
+      <rect x="48" y="55" width="7" height="4" fill="#9C712F"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-attack-0">
-      <use href="#observer-shell"/>
-      <use href="#observer-eye-wide"/>
-      <rect x="0" y="30" width="13" height="4" fill="#42C6CF"/>
-      <rect x="67" y="30" width="13" height="4" fill="#42C6CF"/>
-      <rect x="38" y="0" width="4" height="5" fill="#9BE4DE"/>
-      <rect x="38" y="57" width="4" height="7" fill="#42C6CF"/>
-      <rect x="7" y="10" width="5" height="5" fill="#A85BD4"/>
-      <rect x="69" y="7" width="5" height="5" fill="#A85BD4"/>
+      <use href="#observer-shell" x="2"/>
+      <use href="#observer-eye-slit" x="2"/>
+      <polygon points="4,18 19,18 25,23 19,27 4,25" fill="#0D111C"/>
+      <rect x="7" y="20" width="15" height="3" fill="#9C712F"/>
+      <polygon points="4,45 19,40 26,44 19,49 4,50" fill="#0D111C"/>
+      <rect x="7" y="45" width="15" height="3" fill="#9C712F"/>
+      <polygon points="60,8 69,5 76,9 70,13 60,12" fill="#354154"/>
+      <rect x="34" y="4" width="12" height="4" fill="#C9A24B"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-attack-1">
-      <use href="#observer-shell" x="-2" y="1"/>
-      <rect x="0" y="28" width="20" height="10" fill="#5A3280"/>
-      <rect x="57" y="26" width="23" height="14" fill="#42C6CF"/>
-      <rect x="62" y="29" width="18" height="8" fill="#9BE4DE"/>
-      <use href="#observer-eye-wide" x="-2" y="1"/>
-      <rect x="42" y="27" width="8" height="14" fill="#101322"/>
-      <rect x="43" y="29" width="5" height="8" fill="#D8D2BD"/>
+      <use href="#observer-shell" x="2"/>
+      <use href="#observer-eye-open" x="2"/>
+      <polygon points="3,31 10,24 28,27 37,31 28,36 10,39 3,35" fill="#0D111C"/>
+      <polygon points="4,31 12,27 31,30 34,32 29,34 11,36 4,34" fill="#E6DDC5"/>
+      <rect x="7" y="31" width="23" height="3" fill="#C9A24B"/>
+      <polygon points="8,17 16,13 22,18 17,22" fill="#5E6C80"/>
+      <polygon points="9,48 18,43 24,48 17,52" fill="#354154"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-cast-0">
       <use href="#observer-shell"/>
-      <use href="#observer-eye-open"/>
-      <rect x="2" y="8" width="8" height="5" fill="#101322"/>
-      <rect x="4" y="9" width="4" height="2" fill="#9BE4DE"/>
-      <rect x="70" y="5" width="7" height="5" fill="#101322"/>
-      <rect x="72" y="7" width="3" height="2" fill="#42C6CF"/>
-      <rect x="0" y="49" width="9" height="6" fill="#101322"/>
-      <rect x="3" y="51" width="4" height="2" fill="#42C6CF"/>
-      <rect x="70" y="52" width="8" height="6" fill="#101322"/>
-      <rect x="72" y="54" width="4" height="2" fill="#9BE4DE"/>
-      <rect x="37" y="29" width="7" height="7" fill="#A85BD4"/>
-      <rect x="39" y="31" width="3" height="3" fill="#D8D2BD"/>
+      <use href="#observer-eye-slit"/>
+      <polygon points="27,10 33,3 39,10 34,16" fill="#0D111C"/>
+      <polygon points="29,10 33,6 36,10 33,13" fill="#C9A24B"/>
+      <polygon points="7,10 13,7 17,12 12,16" fill="#354154"/>
+      <polygon points="63,7 71,10 67,16 61,13" fill="#5E6C80"/>
+      <polygon points="4,49 11,45 16,50 10,55" fill="#5E6C80"/>
+      <polygon points="65,48 73,45 76,52 69,56" fill="#354154"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-cast-1">
-      <use href="#observer-shell" y="-1"/>
-      <polygon points="28,32 34,23 46,23 52,32 46,41 34,41" fill="#101322"/>
-      <polygon points="32,32 37,26 44,26 48,32 43,38 36,38" fill="#42C6CF"/>
-      <rect x="38" y="28" width="5" height="8" fill="#A85BD4"/>
-      <rect x="14" y="3" width="5" height="5" fill="#9BE4DE"/>
-      <rect x="61" y="2" width="4" height="7" fill="#42C6CF"/>
-      <rect x="2" y="28" width="5" height="8" fill="#A85BD4"/>
-      <rect x="74" y="31" width="5" height="7" fill="#9BE4DE"/>
-      <rect x="13" y="56" width="7" height="4" fill="#42C6CF"/>
-      <rect x="61" y="55" width="6" height="5" fill="#A85BD4"/>
+      <use href="#observer-shell"/>
+      <use href="#observer-eye-open"/>
+      <polygon points="4,18 11,8 20,5 27,9 21,13 14,12 9,21" fill="#0D111C"/>
+      <polygon points="53,8 61,4 70,8 76,18 71,20 66,12 59,12" fill="#0D111C"/>
+      <polygon points="4,47 10,42 15,47 12,55 6,57" fill="#9C712F"/>
+      <polygon points="67,44 75,47 76,55 70,58 65,52" fill="#9C712F"/>
+      <rect x="24" y="7" width="5" height="5" fill="#E6DDC5"/>
+      <rect x="52" y="5" width="5" height="5" fill="#95A3B6"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-hurt-0">
-      <use href="#observer-shell" x="4"/>
-      <use href="#observer-eye-closed" x="4"/>
-      <polygon points="42,13 48,13 43,25 50,25 39,39 42,28 35,28" fill="#D8D2BD"/>
-      <rect x="1" y="17" width="6" height="5" fill="#A85BD4"/>
-      <rect x="5" y="49" width="5" height="4" fill="#42C6CF"/>
-      <rect x="13" y="7" width="4" height="4" fill="#D8D2BD"/>
+      <use href="#observer-shell" x="2"/>
+      <use href="#observer-eye-closed" x="2"/>
+      <polygon points="18,14 24,11 28,16 22,21" fill="#95A3B6"/>
+      <polygon points="14,24 20,20 24,25 18,30" fill="#0D111C"/>
+      <polygon points="7,12 13,9 16,14 11,18" fill="#5E6C80"/>
+      <rect x="4" y="40" width="7" height="5" fill="#9C712F"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-hurt-1">
-      <use href="#observer-shell" x="-4" y="2"/>
-      <use href="#observer-eye-closed" x="-4" y="2"/>
-      <rect x="31" y="36" width="5" height="10" fill="#42C6CF"/>
-      <rect x="29" y="45" width="4" height="6" fill="#9BE4DE"/>
-      <rect x="72" y="12" width="7" height="6" fill="#D8D2BD"/>
-      <rect x="69" y="46" width="6" height="5" fill="#A85BD4"/>
-      <rect x="61" y="57" width="5" height="4" fill="#42C6CF"/>
+      <use href="#observer-shell" x="-2"/>
+      <use href="#observer-eye-closed" x="-2"/>
+      <polygon points="53,13 61,9 66,15 59,20" fill="#95A3B6"/>
+      <polygon points="61,23 69,19 75,25 68,31" fill="#0D111C"/>
+      <polygon points="68,8 75,5 77,12 72,16" fill="#5E6C80"/>
+      <rect x="70" y="43" width="6" height="6" fill="#9C712F"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-death-0">
-      <polygon points="8,42 14,34 24,31 56,31 66,35 72,43 68,52 58,57 22,57 12,52" fill="#101322"/>
-      <polygon points="13,43 20,37 29,35 53,35 62,38 67,43 62,49 53,52 26,52 18,49" fill="#5A3280"/>
-      <polygon points="22,42 28,37 49,37 58,42 51,46 29,46" fill="#D8D2BD"/>
-      <rect x="34" y="38" width="13" height="8" fill="#42C6CF"/>
-      <rect x="38" y="39" width="7" height="7" fill="#101322"/>
-      <rect x="18" y="20" width="7" height="8" fill="#A85BD4"/>
-      <rect x="29" y="12" width="5" height="6" fill="#D8D2BD"/>
-      <rect x="53" y="22" width="8" height="6" fill="#42C6CF"/>
-      <rect x="62" y="10" width="5" height="5" fill="#5A3280"/>
-      <rect x="25" y="61" width="32" height="2" fill="#1B2030"/>
+      <polygon points="8,39 15,30 27,27 27,22 38,20 47,23 58,25 58,29 68,32 74,41 70,52 61,57 20,57 11,52" fill="#0D111C"/>
+      <polygon points="14,40 21,34 31,32 40,29 54,31 63,35 68,41 63,48 54,52 24,52 17,48" fill="#354154"/>
+      <polygon points="19,39 27,35 45,34 58,38 53,44 28,45" fill="#E6DDC5"/>
+      <rect x="26" y="38" width="11" height="7" fill="#070A12"/>
+      <rect x="29" y="39" width="5" height="5" fill="#9C712F"/>
+      <polygon points="9,23 16,20 20,26 14,30" fill="#5E6C80"/>
+      <polygon points="59,21 67,18 71,25 64,29" fill="#95A3B6"/>
+      <use href="#observer-marker-shadow"/>
     </g>
     <g id="observer-death-1">
-      <rect x="13" y="53" width="54" height="5" fill="#101322"/>
-      <rect x="21" y="49" width="15" height="5" fill="#5A3280"/>
-      <rect x="45" y="50" width="12" height="4" fill="#A85BD4"/>
-      <rect x="34" y="42" width="12" height="8" fill="#42C6CF"/>
-      <rect x="38" y="43" width="6" height="6" fill="#101322"/>
-      <polygon points="6,20 13,16 17,23 11,29" fill="#5A3280"/>
-      <polygon points="25,6 31,3 34,10 29,15" fill="#D8D2BD"/>
-      <polygon points="53,13 62,8 64,17 57,22" fill="#A85BD4"/>
-      <polygon points="68,31 76,28 78,36 71,40" fill="#42C6CF"/>
-      <rect x="17" y="38" width="6" height="5" fill="#9BE4DE"/>
-      <rect x="28" y="60" width="27" height="3" fill="#1B2030"/>
+      <polygon points="5,49 14,43 24,45 31,40 40,46 49,41 58,46 68,43 76,50 71,58 10,58" fill="#0D111C"/>
+      <polygon points="12,50 20,47 28,49 34,45 41,50 49,46 57,51 66,47 71,52 67,56 16,56" fill="#354154"/>
+      <rect x="24" y="50" width="24" height="5" fill="#5E6C80"/>
+      <rect x="30" y="51" width="8" height="4" fill="#070A12"/>
+      <polygon points="8,41 14,37 19,42 13,47" fill="#9C712F"/>
+      <polygon points="57,39 65,36 68,43 61,47" fill="#95A3B6"/>
     </g>
 
-    <g id="seraphine-body">
-      <polygon points="21,18 23,9 29,12 34,2 39,10 45,2 49,12 58,8 56,19 63,23 63,29 71,31 71,38 77,41 72,47 66,43 62,47 66,55 61,55 61,61 19,61 19,56 13,56 18,47 14,43 8,47 3,42 9,37 9,31 17,29 17,23" fill="#101322"/>
-      <polygon points="24,18 27,13 32,16 35,8 40,14 44,8 48,16 54,13 53,21 58,24 55,30 61,34 58,40 62,54 56,57 24,57 18,53 22,40 19,34 25,29 22,23" fill="#315B3A"/>
-      <polygon points="27,19 31,16 35,19 38,13 41,18 45,13 48,20 52,17 51,24 29,24" fill="#D0A24A"/>
-      <rect x="32" y="18" width="17" height="14" fill="#D8D2BD"/>
-      <rect x="35" y="21" width="4" height="4" fill="#526176"/>
-      <rect x="44" y="21" width="4" height="4" fill="#526176"/>
-      <rect x="39" y="27" width="7" height="3" fill="#9B7332"/>
-      <polygon points="27,30 35,28 47,28 55,31 58,53 51,57 29,57 23,53" fill="#6E9A47"/>
-      <polygon points="36,30 46,30 49,55 34,55" fill="#315B3A"/>
-      <rect x="39" y="31" width="4" height="21" fill="#D0A24A"/>
-      <rect x="32" y="37" width="17" height="4" fill="#9B7332"/>
-      <polygon points="17,30 23,29 30,35 26,40 19,37 14,40 10,37 14,34 9,32" fill="#6E9A47"/>
-      <polygon points="54,34 61,29 67,31 64,34 71,36 67,39 62,37 58,41" fill="#6E9A47"/>
-      <rect x="5" y="40" width="8" height="3" fill="#D0A24A"/>
-      <rect x="68" y="40" width="7" height="3" fill="#D0A24A"/>
-      <rect x="24" y="58" width="13" height="3" fill="#9B7332"/>
-      <rect x="46" y="58" width="12" height="3" fill="#9B7332"/>
+    <g id="seraphine-pillar">
+      <polygon points="32,3 38,10 43,3 48,11 54,8 52,19 59,23 55,30 56,48 62,57 51,59 46,54 41,59 35,54 30,59 19,57 26,48 25,31 21,24 28,19 27,10" fill="#0D111C"/>
+      <polygon points="34,9 38,14 42,8 46,15 50,13 48,21 54,24 51,30 52,47 56,54 49,55 45,50 41,55 36,50 32,55 25,54 30,47 29,30 26,25 32,21 31,14" fill="#5E6C80"/>
+      <polygon points="31,17 36,12 42,15 48,12 51,20 48,27 34,27 30,22" fill="#95A3B6"/>
+      <rect x="34" y="19" width="13" height="8" fill="#E6DDC5"/>
+      <rect x="36" y="21" width="4" height="3" fill="#2F4538"/>
+      <rect x="43" y="21" width="4" height="3" fill="#2F4538"/>
+      <rect x="39" y="25" width="6" height="2" fill="#A35C68"/>
+      <polygon points="31,29 40,27 51,30 52,48 47,53 35,51 29,47" fill="#55705A"/>
+      <rect x="33" y="31" width="5" height="17" fill="#78944F"/>
+      <rect x="38" y="29" width="4" height="22" fill="#A35C68"/>
+      <rect x="33" y="35" width="18" height="4" fill="#2F4538"/>
+    </g>
+    <g id="seraphine-cross-a">
+      <polygon points="31,25 24,23 20,18 16,23 10,20 12,27 5,30 11,34 8,41 16,38 20,44 23,37 31,34" fill="#0D111C"/>
+      <polygon points="29,27 23,27 20,23 17,28 11,26 15,31 11,35 18,34 20,39 23,34 30,32" fill="#55705A"/>
+      <polygon points="50,24 57,22 61,17 65,23 71,20 69,27 76,31 70,35 73,42 65,38 61,44 58,37 50,34" fill="#0D111C"/>
+      <polygon points="52,27 58,26 61,22 64,28 70,26 66,31 71,35 64,34 61,39 58,34 51,32" fill="#55705A"/>
+      <rect x="18" y="29" width="45" height="5" fill="#78944F"/>
+      <rect x="21" y="29" width="37" height="2" fill="#95A3B6"/>
+      <polygon points="20,51 27,47 33,52 29,58 17,58 11,55" fill="#2F4538"/>
+      <polygon points="48,52 55,47 63,52 70,56 63,58 50,58" fill="#2F4538"/>
+    </g>
+    <g id="seraphine-cross-b">
+      <polygon points="30,24 22,26 18,21 14,26 8,24 11,31 5,35 12,38 10,45 17,41 22,46 24,39 31,34" fill="#0D111C"/>
+      <polygon points="29,28 23,29 19,26 17,31 11,30 16,34 13,38 20,37 22,41 24,35 30,32" fill="#55705A"/>
+      <polygon points="51,25 58,24 63,19 67,24 73,22 70,29 76,33 70,37 72,44 65,40 61,45 58,38 50,34" fill="#0D111C"/>
+      <polygon points="52,28 58,28 62,24 64,29 70,28 66,33 71,36 64,35 61,40 58,35 51,32" fill="#55705A"/>
+      <rect x="18" y="30" width="45" height="5" fill="#78944F"/>
+      <rect x="23" y="30" width="36" height="2" fill="#95A3B6"/>
+      <polygon points="18,49 26,46 32,52 26,58 14,57 8,53" fill="#2F4538"/>
+      <polygon points="49,51 56,46 65,51 73,54 67,58 52,58" fill="#2F4538"/>
+    </g>
+    <g id="seraphine-marker-shadow">
+      <rect x="41" y="33" width="6" height="6" fill="#070A12"/>
     </g>
     <g id="seraphine-idle-0">
-      <use href="#seraphine-body"/>
-      <rect x="11" y="20" width="3" height="7" fill="#6E9A47"/>
-      <rect x="68" y="19" width="3" height="8" fill="#D0A24A"/>
+      <use href="#seraphine-pillar"/>
+      <use href="#seraphine-cross-a"/>
+      <rect x="13" y="17" width="4" height="6" fill="#A35C68"/>
+      <rect x="65" y="14" width="4" height="7" fill="#78944F"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-idle-1">
-      <use href="#seraphine-body" y="-1"/>
-      <rect x="6" y="28" width="8" height="3" fill="#D0A24A"/>
-      <rect x="69" y="27" width="8" height="3" fill="#6E9A47"/>
-      <rect x="37" y="59" width="10" height="3" fill="#101322"/>
+      <use href="#seraphine-pillar"/>
+      <use href="#seraphine-cross-b"/>
+      <rect x="9" y="46" width="5" height="5" fill="#A35C68"/>
+      <rect x="68" y="45" width="5" height="6" fill="#78944F"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-move-0">
-      <use href="#seraphine-body" x="-2"/>
-      <polygon points="61,49 74,51 70,55 78,58 69,60 57,56" fill="#315B3A"/>
-      <rect x="1" y="33" width="7" height="3" fill="#D0A24A"/>
-      <rect x="1" y="47" width="5" height="3" fill="#6E9A47"/>
+      <use href="#seraphine-pillar" x="-1"/>
+      <polygon points="30,24 22,20 18,14 14,20 8,16 10,24 4,27 11,31 8,38 16,35 21,42 24,34 31,32" fill="#0D111C"/>
+      <polygon points="29,27 22,24 18,20 16,25 10,22 14,28 10,32 18,31 21,36 24,31" fill="#55705A"/>
+      <polygon points="49,27 57,30 62,27 65,33 72,31 69,38 76,42 69,45 71,52 64,48 59,53 57,45 49,36" fill="#0D111C"/>
+      <polygon points="51,30 58,33 62,31 64,37 70,35 66,40 71,43 64,43 60,48 58,41 51,34" fill="#78944F"/>
+      <polygon points="17,50 27,46 35,52 29,59 15,58 7,54" fill="#2F4538"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-move-1">
-      <use href="#seraphine-body" x="2" y="-1"/>
-      <polygon points="21,49 10,51 14,55 3,58 12,61 25,56" fill="#315B3A"/>
-      <rect x="72" y="30" width="7" height="3" fill="#D0A24A"/>
-      <rect x="74" y="44" width="5" height="3" fill="#6E9A47"/>
+      <use href="#seraphine-pillar" x="1"/>
+      <polygon points="31,27 23,30 18,27 15,33 8,31 11,38 4,42 11,45 9,52 16,48 21,53 24,45 31,36" fill="#0D111C"/>
+      <polygon points="29,30 22,33 18,31 16,37 10,35 14,40 10,43 17,43 21,48 23,41 30,34" fill="#55705A"/>
+      <polygon points="51,24 59,20 63,14 67,20 73,16 71,24 77,27 70,31 73,38 65,35 61,42 58,34 50,32" fill="#0D111C"/>
+      <polygon points="52,27 59,24 63,20 65,25 71,22 67,28 71,32 64,31 61,36 58,31 51,30" fill="#78944F"/>
+      <polygon points="46,52 55,46 65,50 74,55 67,58 50,59" fill="#2F4538"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-attack-0">
-      <use href="#seraphine-body" x="2"/>
-      <polygon points="28,34 20,30 17,26 12,29 7,25 4,29 0,26 2,34 8,33 11,38 16,34 21,39 29,39" fill="#315B3A"/>
-      <rect x="2" y="28" width="19" height="3" fill="#D0A24A"/>
-      <polygon points="3,24 7,19 9,26 14,22 13,29" fill="#6E9A47"/>
+      <use href="#seraphine-pillar" x="4"/>
+      <polygon points="35,29 27,28 20,34 15,31 11,38 6,35 4,43 10,47 17,43 21,48 26,40 34,36" fill="#0D111C"/>
+      <polygon points="34,31 27,31 21,37 16,35 13,41 8,39 10,43 17,40 21,44 25,37 34,34" fill="#78944F"/>
+      <polygon points="8,50 20,45 29,37 34,39 27,45 17,53" fill="#A35C68"/>
+      <polygon points="53,25 61,22 67,17 71,22 76,20 73,28 76,34 69,32 65,38 61,32 53,34" fill="#55705A"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-attack-1">
-      <use href="#seraphine-body" x="-2" y="1"/>
-      <polygon points="52,34 60,29 65,23 69,28 74,22 75,29 80,25 78,34 73,34 70,39 65,35 61,41 52,40" fill="#315B3A"/>
-      <rect x="59" y="30" width="21" height="4" fill="#D0A24A"/>
-      <polygon points="67,24 69,17 72,25 77,19 76,29" fill="#6E9A47"/>
+      <use href="#seraphine-pillar" x="-3"/>
+      <polygon points="48,29 56,27 62,21 65,26 70,18 72,26 77,23 75,31 77,36 69,34 65,42 61,35 49,36" fill="#0D111C"/>
+      <polygon points="50,31 57,30 62,26 64,31 69,24 69,31 74,28 71,34 74,36 67,36 63,39 60,33 50,34" fill="#78944F"/>
+      <polygon points="52,32 63,29 76,31 76,35 62,35 52,36" fill="#E6DDC5"/>
+      <polygon points="9,20 16,16 22,22 18,27 11,26 5,30" fill="#55705A"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-cast-0">
-      <use href="#seraphine-body"/>
-      <rect x="15" y="13" width="7" height="4" fill="#D0A24A"/>
-      <rect x="11" y="17" width="4" height="10" fill="#D0A24A"/>
-      <rect x="59" y="13" width="7" height="4" fill="#D0A24A"/>
-      <rect x="66" y="17" width="4" height="10" fill="#D0A24A"/>
-      <rect x="13" y="53" width="10" height="4" fill="#6E9A47"/>
-      <rect x="58" y="53" width="10" height="4" fill="#6E9A47"/>
-      <rect x="4" y="57" width="16" height="4" fill="#315B3A"/>
-      <rect x="61" y="57" width="15" height="4" fill="#315B3A"/>
+      <use href="#seraphine-pillar"/>
+      <polygon points="31,26 23,19 20,11 15,16 10,10 10,20 4,23 12,28 17,25 24,34" fill="#0D111C"/>
+      <polygon points="29,26 24,20 21,16 18,21 13,16 14,23 9,24 16,26 20,23 25,30" fill="#55705A"/>
+      <polygon points="50,26 58,19 61,11 66,16 71,10 71,20 77,23 69,28 64,25 57,34" fill="#0D111C"/>
+      <polygon points="52,26 57,20 60,16 63,21 68,16 67,23 72,24 65,26 61,23 56,30" fill="#55705A"/>
+      <rect x="18" y="7" width="5" height="5" fill="#E6DDC5"/>
+      <rect x="59" y="6" width="5" height="5" fill="#95A3B6"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-cast-1">
-      <use href="#seraphine-body" y="-2"/>
-      <rect x="38" y="0" width="5" height="8" fill="#D0A24A"/>
-      <rect x="10" y="9" width="5" height="11" fill="#6E9A47"/>
-      <rect x="66" y="8" width="5" height="12" fill="#6E9A47"/>
-      <polygon points="3,58 8,48 12,55 17,45 21,58" fill="#315B3A"/>
-      <polygon points="59,58 64,46 68,54 73,47 78,58" fill="#315B3A"/>
-      <rect x="9" y="57" width="63" height="4" fill="#9B7332"/>
+      <use href="#seraphine-pillar"/>
+      <polygon points="5,37 8,21 15,11 26,6 31,11 22,14 16,22 13,34 18,45 13,50" fill="#0D111C"/>
+      <polygon points="75,37 72,21 65,11 54,6 49,11 58,14 64,22 67,34 62,45 67,50" fill="#0D111C"/>
+      <polygon points="9,35 12,23 18,16 26,11 28,14 21,18 17,25 15,36" fill="#78944F"/>
+      <polygon points="71,35 68,23 62,16 54,11 52,14 59,18 63,25 65,36" fill="#78944F"/>
+      <polygon points="7,50 15,45 22,50 18,58 10,57" fill="#A35C68"/>
+      <polygon points="58,50 65,45 74,50 70,57 62,58" fill="#A35C68"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-hurt-0">
-      <use href="#seraphine-body" x="3"/>
-      <polygon points="36,11 42,11 38,23 45,23 35,39 38,27 31,27" fill="#D8D2BD"/>
-      <rect x="4" y="15" width="7" height="6" fill="#D0A24A"/>
-      <rect x="10" y="8" width="5" height="5" fill="#6E9A47"/>
-      <rect x="3" y="48" width="6" height="4" fill="#315B3A"/>
+      <use href="#seraphine-pillar" x="4"/>
+      <polygon points="35,27 27,24 21,18 17,24 11,21 13,29 6,33 13,37 10,44 18,40 23,46 26,38 35,34" fill="#0D111C"/>
+      <polygon points="31,24 36,19 40,24 35,30" fill="#95A3B6"/>
+      <polygon points="6,14 13,10 17,16 11,21" fill="#55705A"/>
+      <polygon points="8,48 15,44 20,50 14,55" fill="#78944F"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-hurt-1">
-      <use href="#seraphine-body" x="-3" y="1"/>
-      <rect x="47" y="14" width="8" height="5" fill="#101322"/>
-      <rect x="51" y="20" width="7" height="4" fill="#D8D2BD"/>
-      <polygon points="70,8 78,11 73,17 67,14" fill="#D0A24A"/>
-      <rect x="71" y="34" width="7" height="5" fill="#6E9A47"/>
-      <rect x="63" y="53" width="6" height="5" fill="#315B3A"/>
+      <use href="#seraphine-pillar" x="-4"/>
+      <polygon points="48,26 57,23 63,17 67,23 73,20 70,28 76,32 70,36 72,43 64,39 60,45 57,37 49,34" fill="#0D111C"/>
+      <polygon points="49,20 56,16 60,22 54,27" fill="#95A3B6"/>
+      <polygon points="65,8 73,5 76,12 69,17" fill="#55705A"/>
+      <polygon points="67,47 75,44 76,52 70,56" fill="#78944F"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-death-0">
-      <polygon points="25,20 30,14 35,19 40,10 44,20 52,16 50,25 59,31 57,39 66,47 61,59 18,59 13,52 21,42 19,32" fill="#101322"/>
-      <polygon points="29,24 34,20 40,25 47,21 46,29 53,34 50,42 57,51 53,56 23,56 20,52 27,42 24,34" fill="#315B3A"/>
-      <rect x="32" y="25" width="15" height="12" fill="#D8D2BD"/>
-      <polygon points="28,23 33,17 37,22 41,14 45,24 49,20 48,27" fill="#D0A24A"/>
-      <polygon points="27,38 48,37 54,55 23,55" fill="#6E9A47"/>
-      <rect x="33" y="41" width="16" height="4" fill="#9B7332"/>
-      <polygon points="58,18 65,15 68,21 63,25" fill="#D0A24A"/>
-      <rect x="8" y="54" width="16" height="4" fill="#315B3A"/>
-      <rect x="57" y="56" width="17" height="4" fill="#315B3A"/>
+      <polygon points="17,56 24,39 31,32 36,22 42,28 48,20 53,31 61,36 66,48 73,54 70,59 14,59" fill="#0D111C"/>
+      <polygon points="23,55 29,41 36,35 39,28 44,34 48,27 50,36 57,40 61,50 67,54 64,56 20,56" fill="#5E6C80"/>
+      <polygon points="28,41 37,34 47,38 51,48 42,52 30,49" fill="#55705A"/>
+      <rect x="33" y="39" width="14" height="5" fill="#A35C68"/>
+      <polygon points="7,44 14,37 21,41 17,49" fill="#2F4538"/>
+      <polygon points="60,30 68,26 72,33 65,38" fill="#78944F"/>
+      <use href="#seraphine-marker-shadow"/>
     </g>
     <g id="seraphine-death-1">
-      <polygon points="7,52 16,44 26,46 31,39 39,45 48,40 55,47 66,43 74,52 69,59 12,59" fill="#101322"/>
-      <polygon points="13,52 21,48 29,50 34,45 41,50 49,45 55,51 65,48 69,54 65,57 16,57" fill="#315B3A"/>
-      <rect x="23" y="51" width="34" height="5" fill="#6E9A47"/>
-      <polygon points="28,39 33,31 37,39 42,28 46,40 51,34 50,45" fill="#D0A24A"/>
-      <rect x="35" y="42" width="14" height="4" fill="#D8D2BD"/>
-      <rect x="5" y="32" width="7" height="5" fill="#6E9A47"/>
-      <rect x="69" y="25" width="6" height="6" fill="#D0A24A"/>
-      <rect x="18" y="18" width="5" height="5" fill="#9B7332"/>
-      <rect x="57" y="12" width="5" height="5" fill="#315B3A"/>
+      <polygon points="5,49 13,43 24,45 31,40 42,46 51,41 61,46 74,44 77,51 72,59 10,59" fill="#0D111C"/>
+      <polygon points="12,50 20,47 29,49 35,45 42,50 50,46 59,51 68,48 72,53 67,56 16,56" fill="#55705A"/>
+      <rect x="22" y="50" width="34" height="5" fill="#5E6C80"/>
+      <polygon points="28,44 32,38 36,44 38,37 40,45 54,40 52,49" fill="#78944F"/>
+      <rect x="34" y="46" width="15" height="4" fill="#A35C68"/>
+      <polygon points="8,42 14,38 18,44 12,48" fill="#2F4538"/>
     </g>
 
-    <g id="vorrak-body">
-      <polygon points="4,20 4,7 10,7 15,14 18,4 25,4 27,12 53,12 55,4 62,4 66,14 71,7 76,7 76,21 73,24 77,31 74,52 66,60 14,60 6,53 3,31 7,24" fill="#101322"/>
-      <polygon points="10,21 10,13 15,18 21,9 24,17 56,17 59,9 65,18 70,13 70,22 67,26 72,32 69,50 62,55 18,55 11,50 8,32 13,26" fill="#30384A"/>
-      <rect x="14" y="22" width="52" height="8" fill="#526176"/>
-      <rect x="18" y="24" width="8" height="4" fill="#F19A3E"/>
-      <rect x="54" y="24" width="8" height="4" fill="#F19A3E"/>
-      <rect x="8" y="34" width="7" height="12" fill="#6D4A2C"/>
-      <rect x="65" y="34" width="7" height="12" fill="#6D4A2C"/>
-      <rect x="14" y="52" width="14" height="8" fill="#1B2030"/>
-      <rect x="52" y="52" width="14" height="8" fill="#1B2030"/>
-      <rect x="22" y="56" width="10" height="5" fill="#526176"/>
-      <rect x="48" y="56" width="10" height="5" fill="#526176"/>
+    <g id="vorrak-shell">
+      <polygon points="4,30 9,25 18,21 62,21 71,25 76,30 74,49 67,57 13,57 6,50" fill="#0D111C"/>
+      <polygon points="9,31 14,27 22,25 58,25 66,27 71,32 69,47 63,52 17,52 11,47" fill="#49312C"/>
+      <polygon points="9,25 8,14 16,17 19,5 27,12 32,4 36,16 29,23 19,22" fill="#0D111C"/>
+      <polygon points="44,17 49,5 55,12 64,7 67,17 74,14 71,25 62,23 53,21" fill="#0D111C"/>
+      <polygon points="12,25 21,20 31,18 50,18 62,22 69,29 67,35 14,35 10,30" fill="#745044"/>
+      <polygon points="14,22 24,17 34,16 34,20 23,22 17,27" fill="#9A8A7F"/>
+      <rect x="13" y="47" width="54" height="7" fill="#354154"/>
+      <rect x="17" y="50" width="16" height="8" fill="#0D111C"/>
+      <rect x="49" y="50" width="17" height="8" fill="#0D111C"/>
+      <rect x="21" y="53" width="12" height="6" fill="#49312C"/>
+      <rect x="49" y="53" width="13" height="6" fill="#49312C"/>
     </g>
-    <g id="vorrak-mouth-small">
-      <polygon points="18,33 24,29 56,29 63,34 59,44 53,49 27,49 21,44" fill="#101322"/>
-      <rect x="25" y="34" width="30" height="9" fill="#6D4A2C"/>
-      <rect x="29" y="36" width="22" height="7" fill="#D95A2D"/>
-      <rect x="33" y="37" width="14" height="5" fill="#F19A3E"/>
-      <rect x="24" y="30" width="6" height="5" fill="#D8D2BD"/>
-      <rect x="50" y="30" width="6" height="5" fill="#D8D2BD"/>
-      <rect x="37" y="44" width="6" height="5" fill="#D8D2BD"/>
+    <g id="vorrak-jaw-shut">
+      <polygon points="11,31 18,27 61,27 69,32 67,46 59,52 21,52 13,46" fill="#0D111C"/>
+      <polygon points="17,34 23,31 58,31 63,34 61,43 56,47 24,47 18,43" fill="#49312C"/>
+      <polygon points="20,35 28,33 55,33 60,36 55,40 25,40" fill="#E6DDC5"/>
+      <rect x="24" y="37" width="31" height="8" fill="#070A12"/>
+      <polygon points="24,44 30,39 38,40 40,46 33,49 26,47" fill="#C85A32"/>
+      <rect x="28" y="41" width="8" height="5" fill="#C85A32"/>
+      <rect x="17" y="31" width="6" height="7" fill="#9A8A7F"/>
+      <rect x="58" y="31" width="6" height="7" fill="#9A8A7F"/>
     </g>
-    <g id="vorrak-mouth-wide">
-      <polygon points="14,31 21,25 59,25 67,32 64,48 56,54 24,54 16,48" fill="#101322"/>
-      <rect x="21" y="31" width="39" height="17" fill="#6D4A2C"/>
-      <rect x="26" y="35" width="29" height="13" fill="#D95A2D"/>
-      <rect x="32" y="39" width="17" height="9" fill="#F19A3E"/>
-      <rect x="21" y="27" width="7" height="7" fill="#D8D2BD"/>
-      <rect x="34" y="27" width="6" height="6" fill="#D8D2BD"/>
-      <rect x="52" y="27" width="7" height="7" fill="#D8D2BD"/>
-      <rect x="26" y="48" width="7" height="6" fill="#D8D2BD"/>
-      <rect x="47" y="48" width="7" height="6" fill="#D8D2BD"/>
+    <g id="vorrak-jaw-open">
+      <polygon points="9,29 17,24 62,24 71,30 69,49 60,55 20,55 11,49" fill="#0D111C"/>
+      <polygon points="16,31 23,28 58,28 64,32 62,45 57,50 23,50 17,45" fill="#49312C"/>
+      <rect x="20" y="33" width="42" height="14" fill="#070A12"/>
+      <polygon points="23,32 29,29 34,34 39,29 44,34 50,29 57,32 54,37 27,37" fill="#E6DDC5"/>
+      <polygon points="24,46 30,40 38,40 41,48 35,51 27,50" fill="#C85A32"/>
+      <rect x="29" y="42" width="8" height="6" fill="#C85A32"/>
+      <polygon points="27,49 34,45 40,50 47,45 55,49 52,53 29,53" fill="#9A8A7F"/>
+    </g>
+    <g id="vorrak-marker-shadow">
+      <rect x="41" y="33" width="6" height="6" fill="#070A12"/>
     </g>
     <g id="vorrak-idle-0">
-      <use href="#vorrak-body"/>
-      <use href="#vorrak-mouth-small"/>
-      <rect x="35" y="8" width="10" height="4" fill="#1B2030"/>
+      <use href="#vorrak-shell"/>
+      <use href="#vorrak-jaw-shut"/>
+      <rect x="12" y="18" width="7" height="4" fill="#C85A32"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-idle-1">
-      <use href="#vorrak-body" y="-1"/>
-      <use href="#vorrak-mouth-wide" y="-1"/>
-      <rect x="33" y="4" width="6" height="6" fill="#526176"/>
-      <rect x="42" y="0" width="5" height="5" fill="#30384A"/>
-      <rect x="18" y="61" width="44" height="2" fill="#1B2030"/>
+      <use href="#vorrak-shell"/>
+      <use href="#vorrak-jaw-open"/>
+      <rect x="63" y="19" width="7" height="4" fill="#C85A32"/>
+      <rect x="8" y="42" width="6" height="5" fill="#745044"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-move-0">
-      <use href="#vorrak-body" x="-3"/>
-      <use href="#vorrak-mouth-small" x="-3"/>
-      <rect x="72" y="18" width="7" height="4" fill="#D95A2D"/>
-      <rect x="69" y="47" width="10" height="4" fill="#526176"/>
-      <rect x="2" y="59" width="18" height="4" fill="#30384A"/>
+      <use href="#vorrak-shell" x="-1"/>
+      <use href="#vorrak-jaw-shut" x="-1"/>
+      <polygon points="65,15 72,11 77,16 72,21 77,25 69,29 63,24" fill="#0D111C"/>
+      <polygon points="66,18 72,15 74,18 70,22" fill="#745044"/>
+      <polygon points="62,48 71,46 77,51 71,57 61,55" fill="#354154"/>
+      <rect x="4" y="53" width="14" height="6" fill="#49312C"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-move-1">
-      <use href="#vorrak-body" x="3" y="-1"/>
-      <use href="#vorrak-mouth-wide" x="3" y="-1"/>
-      <rect x="0" y="20" width="8" height="4" fill="#D95A2D"/>
-      <rect x="0" y="46" width="11" height="4" fill="#526176"/>
-      <rect x="58" y="59" width="20" height="4" fill="#30384A"/>
+      <use href="#vorrak-shell" x="1"/>
+      <use href="#vorrak-jaw-open" x="1"/>
+      <polygon points="15,15 8,11 3,16 8,21 3,25 11,29 17,24" fill="#0D111C"/>
+      <polygon points="14,18 8,15 6,18 10,22" fill="#745044"/>
+      <polygon points="18,48 9,46 3,51 9,57 19,55" fill="#354154"/>
+      <rect x="62" y="53" width="14" height="6" fill="#49312C"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-attack-0">
-      <use href="#vorrak-body" y="1"/>
-      <use href="#vorrak-mouth-wide" y="1"/>
-      <rect x="9" y="25" width="7" height="18" fill="#D95A2D"/>
-      <rect x="64" y="25" width="7" height="18" fill="#D95A2D"/>
-      <rect x="30" y="20" width="20" height="4" fill="#F19A3E"/>
-      <rect x="35" y="55" width="10" height="8" fill="#F19A3E"/>
+      <use href="#vorrak-shell" x="1"/>
+      <use href="#vorrak-jaw-open" x="1"/>
+      <polygon points="4,25 12,20 20,23 16,29 7,31" fill="#0D111C"/>
+      <polygon points="5,44 14,39 22,44 17,51 7,50" fill="#0D111C"/>
+      <rect x="8" y="28" width="12" height="4" fill="#C85A32"/>
+      <rect x="10" y="45" width="10" height="4" fill="#745044"/>
+      <rect x="27" y="14" width="20" height="5" fill="#9A8A7F"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-attack-1">
-      <polygon points="1,25 7,18 15,18 18,10 25,14 31,8 59,12 68,18 76,20 79,30 74,49 65,57 18,57 7,50" fill="#101322"/>
-      <polygon points="7,26 13,21 21,21 23,16 30,19 35,14 57,16 64,21 71,23 74,31 69,47 61,52 20,52 12,47" fill="#30384A"/>
-      <polygon points="2,31 13,25 59,25 72,31 68,48 58,55 17,54 7,47" fill="#6D4A2C"/>
-      <rect x="12" y="32" width="52" height="15" fill="#D95A2D"/>
-      <rect x="4" y="36" width="56" height="8" fill="#F19A3E"/>
-      <rect x="0" y="38" width="18" height="5" fill="#D8D2BD"/>
-      <rect x="20" y="26" width="7" height="7" fill="#D8D2BD"/>
-      <rect x="48" y="26" width="7" height="7" fill="#D8D2BD"/>
-      <rect x="29" y="47" width="8" height="7" fill="#D8D2BD"/>
-      <rect x="51" y="47" width="8" height="7" fill="#D8D2BD"/>
+      <polygon points="3,29 8,21 17,18 24,10 32,15 39,8 48,14 57,11 64,18 73,20 77,29 75,48 67,56 14,56 6,49" fill="#0D111C"/>
+      <polygon points="7,30 13,24 22,22 27,16 33,20 40,14 47,19 55,16 61,22 69,24 72,31 70,45 63,51 17,51 11,46" fill="#49312C"/>
+      <polygon points="4,33 13,27 58,27 70,32 68,48 59,55 15,54 7,48" fill="#745044"/>
+      <rect x="8" y="34" width="49" height="12" fill="#070A12"/>
+      <polygon points="7,34 14,30 23,33 31,29 38,33 30,38 16,38" fill="#E6DDC5"/>
+      <polygon points="9,45 18,39 31,40 35,47 27,51 15,50" fill="#C85A32"/>
+      <rect x="11" y="42" width="20" height="5" fill="#C85A32"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-cast-0">
-      <use href="#vorrak-body"/>
-      <use href="#vorrak-mouth-small"/>
-      <rect x="34" y="1" width="12" height="11" fill="#30384A"/>
-      <rect x="37" y="0" width="6" height="8" fill="#D95A2D"/>
-      <rect x="16" y="17" width="5" height="5" fill="#F19A3E"/>
-      <rect x="59" y="17" width="5" height="5" fill="#F19A3E"/>
-      <rect x="1" y="31" width="6" height="12" fill="#D95A2D"/>
-      <rect x="73" y="31" width="6" height="12" fill="#D95A2D"/>
+      <use href="#vorrak-shell"/>
+      <use href="#vorrak-jaw-shut"/>
+      <polygon points="17,18 16,8 22,4 27,10 25,19" fill="#0D111C"/>
+      <rect x="19" y="8" width="5" height="9" fill="#745044"/>
+      <polygon points="34,15 35,5 40,3 44,8 43,16" fill="#0D111C"/>
+      <rect x="37" y="7" width="4" height="8" fill="#C85A32"/>
+      <polygon points="54,18 56,7 62,5 66,11 63,20" fill="#0D111C"/>
+      <rect x="58" y="9" width="4" height="8" fill="#745044"/>
+      <rect x="26" y="39" width="10" height="7" fill="#C85A32"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-cast-1">
-      <use href="#vorrak-body"/>
-      <use href="#vorrak-mouth-wide"/>
-      <polygon points="2,25 7,14 12,25 16,10 21,28 15,34 6,34" fill="#D95A2D"/>
-      <polygon points="58,28 64,10 68,25 73,14 78,25 74,34 64,34" fill="#D95A2D"/>
-      <rect x="5" y="26" width="12" height="7" fill="#F19A3E"/>
-      <rect x="63" y="26" width="12" height="7" fill="#F19A3E"/>
-      <rect x="35" y="2" width="10" height="7" fill="#F19A3E"/>
+      <use href="#vorrak-shell"/>
+      <use href="#vorrak-jaw-open"/>
+      <polygon points="6,28 10,15 15,24 20,8 25,26 20,34 10,34" fill="#49312C"/>
+      <polygon points="10,27 14,20 16,28 20,16 21,30 17,32 12,32" fill="#C85A32"/>
+      <polygon points="55,26 61,8 65,24 70,15 75,28 70,34 60,34" fill="#49312C"/>
+      <polygon points="59,29 62,17 65,29 69,21 71,31 67,33 61,32" fill="#C85A32"/>
+      <rect x="31" y="6" width="5" height="5" fill="#9A8A7F"/>
+      <rect x="47" y="5" width="5" height="5" fill="#9A8A7F"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-hurt-0">
-      <use href="#vorrak-body" x="3"/>
-      <use href="#vorrak-mouth-small" x="3"/>
-      <polygon points="40,10 46,10 41,23 48,23 38,39 41,27 34,27" fill="#F19A3E"/>
-      <rect x="2" y="11" width="7" height="6" fill="#526176"/>
-      <rect x="5" y="46" width="6" height="5" fill="#D95A2D"/>
+      <use href="#vorrak-shell" x="1"/>
+      <use href="#vorrak-jaw-shut" x="1"/>
+      <polygon points="21,13 28,9 32,15 26,21" fill="#9A8A7F"/>
+      <polygon points="15,23 21,19 25,25 19,31" fill="#0D111C"/>
+      <polygon points="5,12 12,8 16,14 10,19" fill="#745044"/>
+      <rect x="4" y="43" width="8" height="6" fill="#C85A32"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-hurt-1">
-      <use href="#vorrak-body" x="-3" y="1"/>
-      <use href="#vorrak-mouth-wide" x="-3" y="1"/>
-      <rect x="28" y="19" width="9" height="5" fill="#101322"/>
-      <rect x="61" y="6" width="8" height="6" fill="#D95A2D"/>
-      <rect x="70" y="18" width="7" height="5" fill="#F19A3E"/>
-      <rect x="72" y="36" width="6" height="5" fill="#526176"/>
-      <rect x="65" y="54" width="7" height="5" fill="#30384A"/>
+      <use href="#vorrak-shell" x="-1"/>
+      <use href="#vorrak-jaw-open" x="-1"/>
+      <polygon points="52,13 60,9 65,15 58,21" fill="#9A8A7F"/>
+      <polygon points="61,24 69,19 75,25 68,31" fill="#0D111C"/>
+      <polygon points="67,8 75,5 77,12 71,17" fill="#745044"/>
+      <rect x="69" y="44" width="7" height="6" fill="#C85A32"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-death-0">
-      <polygon points="5,43 12,32 22,30 27,20 36,27 45,19 52,29 65,31 74,42 70,57 10,57" fill="#101322"/>
-      <polygon points="12,43 18,36 28,35 31,28 38,34 45,27 50,35 61,36 68,43 65,52 15,52" fill="#30384A"/>
-      <rect x="20" y="39" width="40" height="10" fill="#6D4A2C"/>
-      <rect x="27" y="41" width="27" height="8" fill="#D95A2D"/>
-      <rect x="34" y="43" width="14" height="6" fill="#F19A3E"/>
-      <polygon points="10,31 8,15 16,17 22,31" fill="#526176"/>
-      <polygon points="58,31 65,16 73,14 70,34" fill="#526176"/>
-      <rect x="24" y="54" width="12" height="6" fill="#1B2030"/>
-      <rect x="49" y="53" width="15" height="7" fill="#1B2030"/>
+      <polygon points="5,43 12,33 23,30 28,22 36,28 44,20 51,29 64,31 74,42 70,57 10,57" fill="#0D111C"/>
+      <polygon points="12,43 18,37 29,35 32,28 38,34 45,27 50,35 61,36 68,43 65,52 15,52" fill="#49312C"/>
+      <rect x="18" y="38" width="43" height="12" fill="#070A12"/>
+      <polygon points="21,37 29,33 36,37 43,33 52,38 48,42 26,42" fill="#E6DDC5"/>
+      <polygon points="22,48 29,42 38,43 41,50 34,53 25,52" fill="#C85A32"/>
+      <polygon points="8,31 7,24 14,21 21,31" fill="#9A8A7F"/>
+      <polygon points="59,31 65,22 73,20 70,34" fill="#745044"/>
+      <use href="#vorrak-marker-shadow"/>
     </g>
     <g id="vorrak-death-1">
-      <polygon points="4,51 13,45 25,47 32,42 41,48 50,43 59,48 71,45 77,52 72,59 9,59" fill="#101322"/>
-      <polygon points="11,52 19,49 28,51 34,47 42,52 50,48 58,52 68,49 72,54 67,57 15,57" fill="#30384A"/>
-      <rect x="26" y="50" width="28" height="6" fill="#6D4A2C"/>
-      <rect x="33" y="51" width="14" height="5" fill="#D95A2D"/>
-      <rect x="9" y="35" width="8" height="7" fill="#526176"/>
-      <rect x="62" y="30" width="9" height="8" fill="#526176"/>
-      <rect x="22" y="23" width="6" height="6" fill="#D95A2D"/>
-      <rect x="47" y="14" width="5" height="7" fill="#F19A3E"/>
-      <rect x="35" y="3" width="6" height="6" fill="#30384A"/>
+      <polygon points="4,50 13,44 25,46 32,41 41,47 50,42 59,47 71,44 77,51 72,59 9,59" fill="#0D111C"/>
+      <polygon points="11,51 19,48 28,50 34,46 42,51 50,47 58,51 68,48 72,53 67,57 15,57" fill="#49312C"/>
+      <rect x="23" y="50" width="34" height="6" fill="#745044"/>
+      <rect x="29" y="51" width="13" height="5" fill="#070A12"/>
+      <polygon points="9,43 16,38 22,44 15,48" fill="#9A8A7F"/>
+      <polygon points="58,40 67,37 71,44 63,48" fill="#C85A32"/>
     </g>
 
-    <g id="kaelros-form">
-      <polygon points="29,17 30,8 36,12 39,2 44,12 49,6 54,17 61,21 61,27 68,31 66,40 71,53 67,61 22,61 18,54 22,41 18,32 25,27 25,21" fill="#101322"/>
-      <polygon points="32,17 34,13 38,16 40,8 44,16 48,11 51,19 56,22 55,29 62,33 60,40 65,53 61,57 28,57 24,53 28,40 24,34 30,29 29,22" fill="#6D4A2C"/>
-      <polygon points="30,18 34,11 38,16 41,7 45,16 49,10 53,19 49,22 34,22" fill="#B7833E"/>
-      <rect x="34" y="20" width="18" height="14" fill="#8290A3"/>
-      <rect x="36" y="23" width="5" height="5" fill="#42C6CF"/>
-      <rect x="47" y="23" width="5" height="5" fill="#42C6CF"/>
-      <rect x="40" y="30" width="9" height="3" fill="#2C6C6D"/>
-      <polygon points="29,33 38,30 53,31 61,35 60,53 54,57 31,57 25,52" fill="#B7833E"/>
-      <rect x="35" y="35" width="20" height="5" fill="#2C6C6D"/>
-      <rect x="39" y="40" width="5" height="16" fill="#9B7332"/>
-      <rect x="50" y="41" width="5" height="14" fill="#526176"/>
-      <polygon points="25,36 19,40 16,47 21,49 27,44" fill="#2C6C6D"/>
-      <polygon points="60,35 67,39 70,46 65,49 59,44" fill="#2C6C6D"/>
-      <rect x="26" y="57" width="14" height="5" fill="#315B3A"/>
-      <rect x="49" y="56" width="15" height="6" fill="#315B3A"/>
+    <g id="kaelros-cape">
+      <polygon points="32,14 41,8 53,9 58,16 65,20 63,27 72,31 69,38 76,47 72,56 62,58 55,53 49,59 42,54 35,59 26,55 30,44 25,35 32,28" fill="#0D111C"/>
+      <polygon points="36,16 43,12 51,13 55,19 60,22 59,29 66,33 63,39 70,47 67,52 60,54 54,49 49,55 43,50 36,54 31,52 35,43 30,36 36,30" fill="#263E4B"/>
+      <polygon points="38,17 46,12 54,16 57,23 52,29 39,28 34,23" fill="#486B78"/>
+      <polygon points="41,17 50,15 55,20 52,26 41,26 37,22" fill="#95A3B6"/>
+      <rect x="47" y="18" width="6" height="5" fill="#9C7448"/>
+      <rect x="49" y="19" width="4" height="3" fill="#E6DDC5"/>
+      <polygon points="34,29 45,27 58,31 62,40 66,50 59,53 52,48 47,54 40,49 34,52 30,46" fill="#486B78"/>
+      <rect x="35" y="33" width="27" height="4" fill="#4F8D8A"/>
+      <rect x="32" y="43" width="34" height="3" fill="#263E4B"/>
+      <rect x="38" y="48" width="28" height="3" fill="#4F8D8A"/>
     </g>
     <g id="kaelros-trident">
-      <rect x="8" y="8" width="6" height="51" fill="#101322"/>
-      <rect x="10" y="10" width="3" height="47" fill="#B7833E"/>
-      <rect x="2" y="5" width="5" height="12" fill="#101322"/>
-      <rect x="9" y="1" width="5" height="16" fill="#101322"/>
-      <rect x="16" y="5" width="5" height="12" fill="#101322"/>
-      <rect x="4" y="7" width="3" height="8" fill="#42C6CF"/>
-      <rect x="10" y="3" width="3" height="12" fill="#9BE4DE"/>
-      <rect x="16" y="7" width="3" height="8" fill="#42C6CF"/>
-      <rect x="5" y="14" width="14" height="4" fill="#B7833E"/>
+      <rect x="10" y="14" width="7" height="45" fill="#0D111C"/>
+      <rect x="12" y="15" width="3" height="42" fill="#9C7448"/>
+      <polygon points="4,4 9,4 10,15 6,18 4,13" fill="#0D111C"/>
+      <polygon points="10,3 16,3 16,16 13,19 10,15" fill="#0D111C"/>
+      <polygon points="17,5 22,5 21,14 17,18 16,14" fill="#0D111C"/>
+      <polygon points="6,6 8,6 8,13 6,15" fill="#4F8D8A"/>
+      <rect x="12" y="5" width="3" height="10" fill="#B8C5D8"/>
+      <polygon points="18,7 20,7 19,13 17,15" fill="#4F8D8A"/>
+      <rect x="6" y="15" width="14" height="4" fill="#9C7448"/>
+    </g>
+    <g id="kaelros-marker-shadow">
+      <rect x="41" y="33" width="6" height="6" fill="#070A12"/>
     </g>
     <g id="kaelros-idle-0">
-      <use href="#kaelros-form"/>
+      <use href="#kaelros-cape"/>
       <use href="#kaelros-trident"/>
-      <rect x="72" y="17" width="5" height="8" fill="#42C6CF"/>
-      <rect x="72" y="25" width="3" height="4" fill="#2C6C6D"/>
+      <polygon points="67,17 73,14 76,20 71,25" fill="#4F8D8A"/>
+      <rect x="65" y="52" width="7" height="5" fill="#263E4B"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-idle-1">
-      <use href="#kaelros-form" y="-1"/>
-      <use href="#kaelros-trident" x="2"/>
-      <rect x="2" y="42" width="5" height="8" fill="#42C6CF"/>
-      <rect x="70" y="48" width="6" height="6" fill="#2C6C6D"/>
-      <rect x="29" y="61" width="35" height="2" fill="#101322"/>
+      <use href="#kaelros-cape"/>
+      <use href="#kaelros-trident" x="1"/>
+      <polygon points="66,20 73,17 76,23 70,28" fill="#4F8D8A"/>
+      <polygon points="61,53 69,50 74,55 69,58" fill="#263E4B"/>
+      <rect x="5" y="37" width="5" height="7" fill="#486B78"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-move-0">
-      <use href="#kaelros-form" x="-2"/>
-      <polygon points="3,7 8,5 18,52 14,59 10,53" fill="#101322"/>
-      <polygon points="6,8 9,8 16,52 13,55" fill="#B7833E"/>
-      <polygon points="0,7 3,1 7,7 10,0 13,6 15,13 4,15" fill="#42C6CF"/>
-      <rect x="67" y="45" width="11" height="4" fill="#2C6C6D"/>
-      <rect x="67" y="54" width="8" height="4" fill="#315B3A"/>
+      <use href="#kaelros-cape" x="-1"/>
+      <polygon points="4,6 9,4 20,55 15,59 11,53" fill="#0D111C"/>
+      <polygon points="7,7 9,7 17,53 14,55" fill="#9C7448"/>
+      <polygon points="3,7 6,3 9,8 12,3 15,8 16,15 6,17" fill="#4F8D8A"/>
+      <polygon points="63,43 72,41 77,46 71,50 76,54 66,57 59,52" fill="#263E4B"/>
+      <rect x="64" y="48" width="10" height="3" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-move-1">
-      <use href="#kaelros-form" x="2" y="-1"/>
-      <polygon points="19,4 24,5 10,56 5,59 8,51" fill="#101322"/>
-      <polygon points="20,7 22,8 10,54 8,54" fill="#B7833E"/>
-      <polygon points="16,6 20,0 22,7 27,2 26,11 23,15 15,12" fill="#42C6CF"/>
-      <rect x="1" y="44" width="10" height="4" fill="#2C6C6D"/>
-      <rect x="3" y="53" width="8" height="4" fill="#315B3A"/>
+      <use href="#kaelros-cape" x="1"/>
+      <polygon points="20,4 25,6 10,56 5,59 8,51" fill="#0D111C"/>
+      <polygon points="21,7 23,8 10,54 8,54" fill="#9C7448"/>
+      <polygon points="17,7 20,3 22,8 27,4 26,12 23,17 15,14" fill="#4F8D8A"/>
+      <polygon points="18,43 9,41 3,46 9,50 4,54 14,57 21,52" fill="#263E4B"/>
+      <rect x="6" y="48" width="10" height="3" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-attack-0">
-      <use href="#kaelros-form" x="8"/>
-      <rect x="4" y="31" width="46" height="7" fill="#101322"/>
-      <rect x="7" y="33" width="43" height="3" fill="#B7833E"/>
-      <rect x="0" y="25" width="8" height="7" fill="#42C6CF"/>
-      <rect x="0" y="37" width="8" height="7" fill="#42C6CF"/>
-      <rect x="4" y="30" width="8" height="9" fill="#9BE4DE"/>
-      <rect x="17" y="25" width="4" height="5" fill="#2C6C6D"/>
+      <polygon points="28,24 40,16 54,17 62,24 65,35 73,45 70,55 60,58 52,52 45,58 36,52 27,55 31,44 24,35" fill="#0D111C"/>
+      <polygon points="33,26 42,21 52,21 57,27 59,36 66,45 63,51 57,53 51,48 45,53 38,48 32,51 35,42 29,36" fill="#263E4B"/>
+      <polygon points="17,57 22,56 62,6 68,4 65,12 25,59" fill="#0D111C"/>
+      <polygon points="21,56 24,56 62,10 64,8 62,13 25,58" fill="#9C7448"/>
+      <polygon points="59,7 62,3 65,8 70,3 70,10 75,8 72,15 64,15" fill="#4F8D8A"/>
+      <rect x="35" y="32" width="24" height="4" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-attack-1">
-      <use href="#kaelros-form" x="-8" y="1"/>
-      <rect x="35" y="29" width="45" height="8" fill="#101322"/>
-      <rect x="35" y="31" width="42" height="4" fill="#B7833E"/>
-      <rect x="72" y="23" width="8" height="8" fill="#42C6CF"/>
-      <rect x="72" y="37" width="8" height="8" fill="#42C6CF"/>
-      <rect x="68" y="29" width="10" height="8" fill="#9BE4DE"/>
-      <rect x="59" y="38" width="5" height="5" fill="#2C6C6D"/>
+      <use href="#kaelros-cape" x="1"/>
+      <rect x="7" y="27" width="50" height="8" fill="#0D111C"/>
+      <rect x="9" y="29" width="46" height="4" fill="#9C7448"/>
+      <polygon points="3,21 9,21 11,29 8,34 3,32" fill="#0D111C"/>
+      <polygon points="3,29 10,27 12,32 8,38 3,38" fill="#0D111C"/>
+      <polygon points="4,37 10,34 12,39 8,45 3,44" fill="#0D111C"/>
+      <rect x="4" y="24" width="4" height="7" fill="#4F8D8A"/>
+      <rect x="4" y="31" width="5" height="5" fill="#B8C5D8"/>
+      <rect x="4" y="38" width="4" height="5" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-cast-0">
-      <use href="#kaelros-form"/>
+      <use href="#kaelros-cape"/>
       <use href="#kaelros-trident"/>
-      <rect x="1" y="28" width="5" height="15" fill="#42C6CF"/>
-      <rect x="18" y="7" width="5" height="11" fill="#2C6C6D"/>
-      <rect x="66" y="8" width="5" height="13" fill="#42C6CF"/>
-      <rect x="72" y="25" width="6" height="15" fill="#2C6C6D"/>
-      <rect x="2" y="55" width="18" height="5" fill="#315B3A"/>
-      <rect x="62" y="55" width="16" height="5" fill="#315B3A"/>
+      <polygon points="4,28 9,23 14,28 10,34" fill="#263E4B"/>
+      <polygon points="20,19 25,14 30,19 26,25" fill="#4F8D8A"/>
+      <polygon points="17,8 22,4 26,10 21,14" fill="#B8C5D8"/>
+      <rect x="4" y="47" width="18" height="4" fill="#486B78"/>
+      <rect x="6" y="52" width="24" height="3" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-cast-1">
-      <use href="#kaelros-form" y="-2"/>
-      <rect x="37" y="0" width="6" height="21" fill="#101322"/>
-      <rect x="39" y="0" width="3" height="18" fill="#B7833E"/>
-      <polygon points="29,5 35,0 39,6 43,0 48,6 53,1 51,11 31,11" fill="#42C6CF"/>
-      <polygon points="1,51 8,42 14,50 21,39 27,52 34,43 41,52 49,40 57,51 65,42 73,51 79,45 79,61 1,61" fill="#2C6C6D"/>
-      <rect x="8" y="56" width="64" height="5" fill="#42C6CF"/>
+      <use href="#kaelros-cape"/>
+      <rect x="14" y="13" width="7" height="46" fill="#0D111C"/>
+      <rect x="16" y="15" width="3" height="42" fill="#9C7448"/>
+      <polygon points="8,8 14,3 18,9 22,3 28,8 25,15 12,15" fill="#4F8D8A"/>
+      <polygon points="4,50 11,42 18,49 25,40 32,50 40,42 48,50 56,40 64,49 72,42 77,50 77,58 4,58" fill="#263E4B"/>
+      <rect x="8" y="53" width="65" height="4" fill="#4F8D8A"/>
+      <rect x="12" y="48" width="55" height="3" fill="#486B78"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-hurt-0">
-      <use href="#kaelros-form" x="5"/>
-      <polygon points="42,10 48,10 43,22 50,22 39,39 42,27 35,27" fill="#9BE4DE"/>
-      <polygon points="5,47 12,43 18,49 12,54" fill="#B7833E"/>
-      <rect x="1" y="15" width="6" height="6" fill="#42C6CF"/>
-      <rect x="7" y="6" width="5" height="5" fill="#8290A3"/>
+      <use href="#kaelros-cape" x="1"/>
+      <polygon points="4,12 9,8 24,52 19,57 15,49" fill="#0D111C"/>
+      <polygon points="7,13 9,12 21,50 19,52" fill="#9C7448"/>
+      <polygon points="4,9 8,4 12,10 16,6 15,15 8,18" fill="#4F8D8A"/>
+      <polygon points="26,18 33,14 37,20 31,25" fill="#B8C5D8"/>
+      <polygon points="68,12 75,8 77,15 71,20" fill="#486B78"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-hurt-1">
-      <use href="#kaelros-form" x="-4" y="1"/>
-      <polygon points="61,10 70,7 72,14 64,18" fill="#B7833E"/>
-      <rect x="56" y="19" width="8" height="5" fill="#8290A3"/>
-      <rect x="69" y="28" width="7" height="8" fill="#42C6CF"/>
-      <rect x="65" y="43" width="6" height="7" fill="#2C6C6D"/>
-      <rect x="56" y="55" width="6" height="5" fill="#315B3A"/>
+      <use href="#kaelros-cape" x="-2"/>
+      <polygon points="57,9 65,5 70,12 63,18" fill="#B8C5D8"/>
+      <polygon points="65,19 74,14 77,22 70,28" fill="#486B78"/>
+      <polygon points="69,38 77,34 77,43 72,48" fill="#4F8D8A"/>
+      <polygon points="5,43 12,38 18,45 11,51" fill="#9C7448"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-death-0">
-      <polygon points="22,29 28,21 35,24 40,15 46,25 54,23 58,31 66,37 65,55 57,61 19,61 13,55 17,42" fill="#101322"/>
-      <polygon points="27,31 32,26 38,29 42,22 46,30 52,28 54,35 60,40 59,54 53,57 24,57 19,53 22,43" fill="#6D4A2C"/>
-      <rect x="30" y="32" width="19" height="13" fill="#8290A3"/>
-      <polygon points="28,29 33,21 37,27 41,17 45,28 50,23 51,32" fill="#B7833E"/>
-      <rect x="34" y="36" width="5" height="5" fill="#42C6CF"/>
-      <rect x="44" y="36" width="5" height="5" fill="#42C6CF"/>
-      <polygon points="3,54 7,47 62,42 75,46 76,51 11,58" fill="#101322"/>
-      <polygon points="7,52 12,49 71,46 73,49 10,56" fill="#B7833E"/>
-      <rect x="3" y="46" width="8" height="5" fill="#42C6CF"/>
-      <rect x="68" y="43" width="8" height="5" fill="#42C6CF"/>
+      <polygon points="19,57 24,42 30,34 37,29 44,31 49,24 55,31 62,34 68,44 76,50 73,58" fill="#0D111C"/>
+      <polygon points="25,54 29,43 35,38 41,34 46,36 50,30 54,37 59,39 63,47 69,51 66,55" fill="#263E4B"/>
+      <polygon points="4,52 8,47 64,36 75,40 76,45 10,57" fill="#0D111C"/>
+      <polygon points="8,51 12,49 72,40 73,43 11,55" fill="#9C7448"/>
+      <polygon points="5,45 10,40 15,46 10,51" fill="#4F8D8A"/>
+      <rect x="36" y="44" width="25" height="4" fill="#4F8D8A"/>
+      <use href="#kaelros-marker-shadow"/>
     </g>
     <g id="kaelros-death-1">
-      <polygon points="7,52 16,46 26,49 34,43 44,49 54,44 63,50 74,47 78,54 71,61 12,61" fill="#101322"/>
-      <polygon points="14,53 22,50 29,52 36,48 44,53 53,49 61,54 70,51 73,55 68,58 17,58" fill="#6D4A2C"/>
-      <rect x="24" y="52" width="38" height="5" fill="#2C6C6D"/>
-      <polygon points="32,43 36,35 40,42 45,33 49,44 53,39 52,48" fill="#B7833E"/>
-      <rect x="36" y="45" width="14" height="4" fill="#8290A3"/>
-      <polygon points="4,33 8,29 73,42 77,47 73,50 8,38" fill="#101322"/>
-      <polygon points="8,32 11,32 74,44 73,47 10,36" fill="#B7833E"/>
-      <rect x="3" y="27" width="8" height="6" fill="#42C6CF"/>
-      <rect x="70" y="40" width="7" height="5" fill="#42C6CF"/>
+      <polygon points="6,50 15,44 26,47 34,41 44,48 54,42 64,48 75,45 77,52 72,59 11,59" fill="#0D111C"/>
+      <polygon points="13,51 21,48 29,51 36,46 44,52 53,47 61,52 70,49 73,54 68,57 17,57" fill="#263E4B"/>
+      <rect x="22" y="51" width="42" height="5" fill="#486B78"/>
+      <polygon points="4,42 8,38 73,49 77,53 73,56 8,47" fill="#0D111C"/>
+      <polygon points="8,42 11,41 74,51 73,54 10,45" fill="#9C7448"/>
+      <rect x="28" y="48" width="34" height="3" fill="#4F8D8A"/>
     </g>
 
-    <g id="nyxara-body">
-      <polygon points="31,19 31,10 37,10 40,2 44,10 51,9 50,20 57,24 57,31 63,38 59,46 67,57 60,61 20,61 14,57 22,46 18,38 24,31 24,24" fill="#101322"/>
-      <polygon points="34,19 35,13 39,13 41,8 44,14 48,13 47,22 52,25 51,32 57,39 53,46 60,56 55,58 25,58 20,55 27,46 23,39 29,32 28,26" fill="#C5479A"/>
-      <polygon points="30,20 36,12 40,17 44,9 49,20 45,24 34,24" fill="#A7ADBC"/>
-      <polygon points="31,25 40,19 50,25 48,35 40,42 31,35" fill="#D5DAE1"/>
-      <polygon points="35,27 40,23 46,27 44,33 40,37 35,33" fill="#30384A"/>
-      <rect x="38" y="25" width="4" height="4" fill="#F08BC5"/>
-      <polygon points="29,35 40,43 51,35 55,51 50,58 29,58 24,52" fill="#5A3280"/>
-      <polygon points="36,43 41,47 46,43 47,57 34,57" fill="#C5479A"/>
-      <rect x="27" y="49" width="9" height="4" fill="#A7ADBC"/>
-      <rect x="46" y="50" width="8" height="4" fill="#A7ADBC"/>
+    <g id="nyxara-core">
+      <polygon points="20,31 31,16 39,21 45,30 40,32 38,43 31,48 21,40" fill="#0D111C"/>
+      <polygon points="24,31 32,21 36,23 40,30 36,34 35,40 31,43 25,38" fill="#655B80"/>
+      <polygon points="25,29 32,21 36,25 32,32" fill="#B8C5D8"/>
+      <polygon points="24,34 32,31 36,35 32,43 26,38" fill="#9A8CB7"/>
+      <polygon points="39,21 49,15 58,28 51,32 45,29" fill="#0D111C"/>
+      <polygon points="43,22 49,19 53,27 49,29 44,27" fill="#9A8CB7"/>
+      <polygon points="39,43 44,39 51,43 47,51 38,48" fill="#0D111C"/>
+      <polygon points="42,44 45,42 48,44 46,48 41,47" fill="#655B80"/>
+      <rect x="28" y="27" width="7" height="8" fill="#070A12"/>
+      <rect x="29" y="27" width="4" height="3" fill="#D3D9DF"/>
     </g>
-    <g id="nyxara-shards-a">
-      <polygon points="7,13 13,7 17,17 12,23" fill="#A7ADBC"/>
-      <polygon points="62,7 70,11 65,22 60,16" fill="#D5DAE1"/>
-      <polygon points="4,35 12,30 14,40 8,45" fill="#C5479A"/>
-      <polygon points="67,33 76,29 74,42 68,45" fill="#A7ADBC"/>
-      <polygon points="10,52 17,48 18,58 12,60" fill="#D5DAE1"/>
-      <polygon points="63,50 70,48 72,58 66,61" fill="#C5479A"/>
+    <g id="nyxara-ring-a">
+      <polygon points="13,15 27,4 35,9 28,19 18,22" fill="#0D111C"/>
+      <polygon points="18,15 27,8 31,10 26,16 20,18" fill="#9A8CB7"/>
+      <polygon points="45,9 58,4 69,14 61,22 51,18" fill="#0D111C"/>
+      <polygon points="50,11 57,8 64,14 60,18 53,16" fill="#655B80"/>
+      <polygon points="65,18 76,26 72,37 62,31 60,24" fill="#0D111C"/>
+      <polygon points="67,23 72,27 70,33 65,29 64,25" fill="#B8C5D8"/>
+      <polygon points="68,39 75,48 63,57 56,49 60,42" fill="#0D111C"/>
+      <polygon points="69,44 71,48 64,53 60,49 62,45" fill="#655B80"/>
+      <polygon points="54,50 46,59 35,56 42,46 49,44" fill="#0D111C"/>
+      <polygon points="50,51 45,56 40,54 44,49 48,47" fill="#9A8CB7"/>
+      <polygon points="31,53 20,59 10,50 18,42 27,45" fill="#0D111C"/>
+      <polygon points="27,53 21,56 15,50 19,46 24,48" fill="#B8C5D8"/>
+      <polygon points="7,38 4,27 14,18 21,25 18,34 13,45" fill="#0D111C"/>
+      <polygon points="10,35 8,28 13,23 17,26 15,33 12,39" fill="#655B80"/>
     </g>
-    <g id="nyxara-shards-b">
-      <polygon points="4,19 10,10 15,17 11,26" fill="#D5DAE1"/>
-      <polygon points="65,4 74,8 68,19 62,14" fill="#C5479A"/>
-      <polygon points="2,41 9,34 15,43 8,49" fill="#A7ADBC"/>
-      <polygon points="68,28 78,33 72,43 66,38" fill="#D5DAE1"/>
-      <polygon points="15,55 23,50 24,61 18,62" fill="#C5479A"/>
-      <polygon points="58,52 66,47 68,58 62,61" fill="#A7ADBC"/>
+    <g id="nyxara-ring-b">
+      <polygon points="16,12 30,4 37,11 29,20 19,20" fill="#0D111C"/>
+      <polygon points="21,13 29,8 33,11 27,17 22,17" fill="#9A8CB7"/>
+      <polygon points="47,7 60,5 70,16 61,23 51,18" fill="#0D111C"/>
+      <polygon points="52,10 59,9 65,15 60,19 54,16" fill="#655B80"/>
+      <polygon points="67,21 77,30 71,40 62,32 62,25" fill="#0D111C"/>
+      <polygon points="69,26 73,30 70,35 66,31 66,27" fill="#B8C5D8"/>
+      <polygon points="66,41 73,51 60,58 54,49 59,43" fill="#0D111C"/>
+      <polygon points="67,46 69,50 62,54 58,49 61,46" fill="#655B80"/>
+      <polygon points="52,49 43,59 33,55 41,45 48,43" fill="#0D111C"/>
+      <polygon points="48,50 43,55 38,53 43,48 47,46" fill="#9A8CB7"/>
+      <polygon points="30,51 18,58 8,48 17,40 26,44" fill="#0D111C"/>
+      <polygon points="26,51 19,55 13,48 18,44 23,47" fill="#B8C5D8"/>
+      <polygon points="8,36 4,25 15,16 22,24 18,34 14,44" fill="#0D111C"/>
+      <polygon points="11,33 8,26 14,21 18,25 15,32 13,39" fill="#655B80"/>
+    </g>
+    <g id="nyxara-marker-shadow">
+      <rect x="41" y="33" width="6" height="6" fill="#070A12"/>
     </g>
     <g id="nyxara-idle-0">
-      <use href="#nyxara-body"/>
-      <use href="#nyxara-shards-a"/>
+      <use href="#nyxara-ring-a"/>
+      <use href="#nyxara-core"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-idle-1">
-      <use href="#nyxara-body" y="-1"/>
-      <use href="#nyxara-shards-b"/>
-      <rect x="32" y="61" width="20" height="2" fill="#101322"/>
+      <use href="#nyxara-ring-b"/>
+      <use href="#nyxara-core"/>
+      <rect x="6" y="45" width="5" height="4" fill="#9A8CB7"/>
+      <rect x="69" y="18" width="5" height="4" fill="#B8C5D8"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-move-0">
-      <use href="#nyxara-body" x="-3"/>
-      <use href="#nyxara-shards-a" x="-2"/>
-      <polygon points="57,48 69,50 65,54 77,57 69,60 54,56" fill="#5A3280"/>
-      <rect x="73" y="20" width="6" height="3" fill="#F08BC5"/>
+      <use href="#nyxara-core" x="-2"/>
+      <polygon points="4,16 18,5 27,10 20,20 10,24" fill="#0D111C"/>
+      <polygon points="8,16 18,9 23,11 18,17 11,20" fill="#9A8CB7"/>
+      <polygon points="5,35 13,24 22,29 17,41 9,48" fill="#0D111C"/>
+      <polygon points="8,35 13,29 18,31 15,38 10,43" fill="#655B80"/>
+      <polygon points="17,51 28,43 36,48 29,58 20,59" fill="#0D111C"/>
+      <polygon points="55,13 68,10 77,19 69,26 58,22" fill="#0D111C"/>
+      <polygon points="58,16 67,14 73,19 68,22 61,20" fill="#B8C5D8"/>
+      <polygon points="59,34 72,31 77,40 68,46 58,42" fill="#0D111C"/>
+      <polygon points="62,36 71,35 73,39 68,42 62,40" fill="#655B80"/>
+      <polygon points="53,50 67,45 75,52 66,58 56,56" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-move-1">
-      <use href="#nyxara-body" x="3" y="-1"/>
-      <use href="#nyxara-shards-b" x="1"/>
-      <polygon points="25,48 13,50 17,54 3,57 11,61 28,55" fill="#5A3280"/>
-      <rect x="1" y="24" width="7" height="3" fill="#D5DAE1"/>
+      <use href="#nyxara-core" x="2"/>
+      <polygon points="76,16 62,5 53,10 60,20 70,24" fill="#0D111C"/>
+      <polygon points="72,16 62,9 57,11 62,17 69,20" fill="#9A8CB7"/>
+      <polygon points="75,35 67,24 58,29 63,41 71,48" fill="#0D111C"/>
+      <polygon points="72,35 67,29 62,31 65,38 70,43" fill="#655B80"/>
+      <polygon points="63,51 52,43 44,48 51,58 60,59" fill="#0D111C"/>
+      <polygon points="25,13 12,10 3,19 11,26 22,22" fill="#0D111C"/>
+      <polygon points="22,16 13,14 7,19 12,22 19,20" fill="#B8C5D8"/>
+      <polygon points="21,34 8,31 3,40 12,46 22,42" fill="#0D111C"/>
+      <polygon points="18,36 9,35 7,39 12,42 18,40" fill="#655B80"/>
+      <polygon points="27,50 13,45 5,52 14,58 24,56" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-attack-0">
-      <use href="#nyxara-body" x="5"/>
-      <polygon points="0,31 8,26 28,29 32,34 27,39 8,37" fill="#101322"/>
-      <polygon points="2,32 10,29 27,31 29,34 25,36 9,35" fill="#D5DAE1"/>
-      <polygon points="3,17 17,20 26,27 12,25" fill="#C5479A"/>
-      <polygon points="4,48 17,41 27,40 15,49" fill="#A7ADBC"/>
+      <use href="#nyxara-core" x="-3"/>
+      <polygon points="4,15 20,18 30,25 15,24" fill="#0D111C"/>
+      <polygon points="7,17 19,20 25,23 13,22" fill="#B8C5D8"/>
+      <polygon points="3,31 19,27 31,31 22,37 7,38" fill="#0D111C"/>
+      <polygon points="7,31 19,30 26,32 20,34 8,35" fill="#9A8CB7"/>
+      <polygon points="5,50 18,41 30,39 21,48 12,54" fill="#0D111C"/>
+      <polygon points="9,49 19,43 25,42 19,46 12,51" fill="#655B80"/>
+      <polygon points="51,12 64,8 74,14 66,21 54,18" fill="#0D111C"/>
+      <polygon points="56,44 70,40 77,48 67,55 55,51" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-attack-1">
-      <use href="#nyxara-body" x="-5" y="1"/>
-      <polygon points="48,28 71,24 80,29 80,37 70,41 48,37" fill="#101322"/>
-      <polygon points="51,30 70,27 78,31 78,35 69,38 51,35" fill="#D5DAE1"/>
-      <polygon points="54,20 68,14 77,16 61,25" fill="#F08BC5"/>
-      <polygon points="53,41 70,45 77,52 60,47" fill="#A7ADBC"/>
+      <use href="#nyxara-core" x="-2"/>
+      <polygon points="44,17 61,12 76,16 65,24 48,24" fill="#0D111C"/>
+      <polygon points="49,18 61,15 71,17 64,21 51,21" fill="#B8C5D8"/>
+      <polygon points="46,27 66,25 77,31 68,37 49,35" fill="#0D111C"/>
+      <polygon points="51,29 65,28 72,31 67,34 52,33" fill="#9A8CB7"/>
+      <polygon points="47,41 65,42 76,49 65,56 48,49" fill="#0D111C"/>
+      <polygon points="52,43 64,45 71,49 64,52 52,47" fill="#655B80"/>
+      <polygon points="5,18 16,11 25,17 19,24 8,24" fill="#0D111C"/>
+      <polygon points="6,45 18,39 27,45 19,53 7,52" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-cast-0">
-      <polygon points="12,32 17,14 29,4 51,4 63,14 68,32 63,50 51,60 29,60 17,50" fill="#101322"/>
-      <polygon points="17,32 21,17 31,9 49,9 59,17 63,32 59,47 49,55 31,55 21,47" fill="#A7ADBC"/>
-      <polygon points="22,32 26,20 34,14 46,14 54,20 58,32 54,44 46,50 34,50 26,44" fill="#5A3280"/>
-      <use href="#nyxara-body"/>
-      <rect x="8" y="28" width="7" height="8" fill="#F08BC5"/>
-      <rect x="65" y="28" width="7" height="8" fill="#F08BC5"/>
-      <rect x="37" y="0" width="7" height="7" fill="#D5DAE1"/>
-      <rect x="37" y="57" width="7" height="7" fill="#C5479A"/>
+      <use href="#nyxara-ring-a"/>
+      <polygon points="19,32 30,17 37,25 32,33 36,43 29,49 19,40" fill="#0D111C"/>
+      <polygon points="24,31 30,22 33,26 29,33 32,40 29,44 24,38" fill="#B8C5D8"/>
+      <polygon points="47,16 58,29 52,43 45,37 49,29 43,22" fill="#0D111C"/>
+      <polygon points="49,22 54,29 51,37 48,34 51,29 47,25" fill="#655B80"/>
+      <rect x="34" y="27" width="5" height="5" fill="#D3D9DF"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-cast-1">
-      <use href="#nyxara-body" y="-1"/>
-      <polygon points="3,18 12,9 21,17 18,31 9,38 2,31" fill="#101322"/>
-      <polygon points="7,19 12,14 17,19 15,28 10,33 6,29" fill="#D5DAE1"/>
-      <polygon points="59,16 68,7 77,16 78,29 70,37 61,30" fill="#101322"/>
-      <polygon points="64,17 69,12 74,18 74,27 69,32 65,28" fill="#A7ADBC"/>
-      <rect x="10" y="20" width="4" height="4" fill="#C5479A"/>
-      <rect x="68" y="18" width="4" height="4" fill="#F08BC5"/>
-      <polygon points="5,49 14,42 20,50 13,59" fill="#C5479A"/>
-      <polygon points="60,48 69,41 76,51 68,60" fill="#D5DAE1"/>
+      <polygon points="4,31 14,15 27,9 36,15 31,24 20,23 14,32 20,41 31,40 36,49 27,55 14,49" fill="#0D111C"/>
+      <polygon points="8,31 16,19 25,14 31,17 28,21 19,20 11,31 19,44 28,43 31,48 25,51 16,46" fill="#9A8CB7"/>
+      <polygon points="44,15 53,8 66,14 76,30 68,48 56,56 47,49 52,41 63,42 69,31 62,20 51,22" fill="#0D111C"/>
+      <polygon points="49,17 54,12 64,16 72,30 66,44 57,51 52,48 55,44 64,45 68,31 60,17 52,20" fill="#655B80"/>
+      <polygon points="27,31 35,22 43,30 37,40" fill="#0D111C"/>
+      <polygon points="30,31 35,26 39,30 36,36" fill="#B8C5D8"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-hurt-0">
-      <use href="#nyxara-body" x="5"/>
-      <polygon points="40,16 46,16 41,28 48,28 37,45 40,33 33,33" fill="#D5DAE1"/>
-      <polygon points="3,12 11,8 15,16 8,21" fill="#C5479A"/>
-      <rect x="2" y="39" width="7" height="6" fill="#A7ADBC"/>
-      <rect x="10" y="54" width="5" height="5" fill="#F08BC5"/>
+      <use href="#nyxara-core" x="4"/>
+      <polygon points="4,12 15,6 22,15 14,22" fill="#0D111C"/>
+      <polygon points="7,13 14,9 18,14 13,18" fill="#9A8CB7"/>
+      <polygon points="8,35 18,28 24,37 15,45" fill="#0D111C"/>
+      <polygon points="6,53 16,46 24,55 17,59" fill="#0D111C"/>
+      <polygon points="58,9 70,5 76,14 67,21" fill="#0D111C"/>
+      <polygon points="62,30 75,27 77,38 67,44" fill="#0D111C"/>
+      <polygon points="58,49 72,46 76,55 66,59" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-hurt-1">
-      <use href="#nyxara-body" x="-5" y="1"/>
-      <rect x="31" y="27" width="8" height="5" fill="#101322"/>
-      <polygon points="65,7 75,11 69,19 61,15" fill="#D5DAE1"/>
-      <polygon points="69,27 79,32 73,41 66,36" fill="#C5479A"/>
-      <polygon points="62,47 72,52 65,60 58,55" fill="#A7ADBC"/>
-      <rect x="52" y="3" width="5" height="5" fill="#F08BC5"/>
+      <use href="#nyxara-core" x="-4"/>
+      <polygon points="76,12 65,6 58,15 66,22" fill="#0D111C"/>
+      <polygon points="73,13 66,9 62,14 67,18" fill="#9A8CB7"/>
+      <polygon points="72,35 62,28 56,37 65,45" fill="#0D111C"/>
+      <polygon points="74,53 64,46 56,55 63,59" fill="#0D111C"/>
+      <polygon points="22,9 10,5 4,14 13,21" fill="#0D111C"/>
+      <polygon points="18,30 5,27 3,38 13,44" fill="#0D111C"/>
+      <polygon points="22,49 8,46 4,55 14,59" fill="#0D111C"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-death-0">
-      <polygon points="20,33 27,22 35,25 40,15 46,26 55,22 59,34 66,43 60,58 20,58 14,49" fill="#101322"/>
-      <polygon points="25,35 31,28 37,31 41,22 45,32 52,28 54,37 60,44 55,54 24,54 20,48" fill="#5A3280"/>
-      <polygon points="29,34 40,25 52,35 49,45 40,51 30,44" fill="#D5DAE1"/>
-      <polygon points="35,35 40,30 46,35 43,41 40,45 35,41" fill="#30384A"/>
-      <polygon points="7,17 15,11 19,22 12,28" fill="#A7ADBC"/>
-      <polygon points="61,10 72,14 66,25 58,19" fill="#C5479A"/>
-      <polygon points="4,43 13,36 17,47 10,53" fill="#F08BC5"/>
-      <polygon points="63,42 76,37 73,51 66,55" fill="#D5DAE1"/>
+      <polygon points="12,57 18,43 27,36 31,25 38,31 44,22 50,33 60,37 66,48 75,53 71,59" fill="#0D111C"/>
+      <polygon points="19,55 23,45 31,40 34,31 38,36 43,29 47,37 56,41 60,49 67,53 64,56" fill="#655B80"/>
+      <polygon points="23,44 33,35 42,41 38,51 28,52" fill="#B8C5D8"/>
+      <polygon points="7,34 15,28 22,36 14,43" fill="#0D111C"/>
+      <polygon points="56,28 66,22 72,31 63,39" fill="#0D111C"/>
+      <polygon points="5,50 13,44 19,51 13,57" fill="#9A8CB7"/>
+      <use href="#nyxara-marker-shadow"/>
     </g>
     <g id="nyxara-death-1">
-      <polygon points="4,14 12,7 17,18 10,25" fill="#A7ADBC"/>
-      <polygon points="27,4 34,1 37,12 31,18" fill="#C5479A"/>
-      <polygon points="49,8 58,3 61,15 53,21" fill="#D5DAE1"/>
-      <polygon points="67,17 77,13 75,28 68,31" fill="#F08BC5"/>
-      <polygon points="2,38 12,31 17,43 8,49" fill="#C5479A"/>
-      <polygon points="23,30 32,24 37,36 28,43" fill="#D5DAE1"/>
-      <polygon points="45,28 55,21 61,34 51,42" fill="#A7ADBC"/>
-      <polygon points="66,42 78,36 75,51 68,56" fill="#C5479A"/>
-      <polygon points="12,56 22,49 27,59 20,63" fill="#D5DAE1"/>
-      <polygon points="35,50 43,44 49,56 41,62" fill="#5A3280"/>
-      <polygon points="55,55 63,49 69,59 61,63" fill="#A7ADBC"/>
+      <polygon points="4,49 12,42 20,47 28,39 36,46 44,39 52,46 61,40 69,47 76,44 77,53 71,59 10,59" fill="#0D111C"/>
+      <polygon points="10,50 16,46 22,50 29,44 36,51 44,43 51,50 60,45 66,51 72,48 73,54 68,56 14,56" fill="#655B80"/>
+      <polygon points="19,49 27,43 33,50 27,55" fill="#B8C5D8"/>
+      <polygon points="39,47 47,41 53,49 46,55" fill="#9A8CB7"/>
+      <polygon points="57,48 66,43 71,51 64,56" fill="#B8C5D8"/>
+      <polygon points="8,45 14,40 19,46 13,51" fill="#9A8CB7"/>
     </g>
   </defs>
   <g id="observer">

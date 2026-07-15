@@ -16,3 +16,4 @@ spawn_weight = 11
 damage_sides = 6
 attack_bonus = 0
 damage_bonus = 2
+visual_id = &"item/mace"

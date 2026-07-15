@@ -16,3 +16,4 @@ min_floor = 1
 use_effect = 6
 max_floor = 8
 effect_duration = 1
+visual_id = &"item/elixir"

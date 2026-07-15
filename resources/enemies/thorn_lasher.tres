@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/beast"
 display_name = "Thorn Lasher"
 glyph = "l"
 color = Color(0.44, 0.76, 0.34, 1)

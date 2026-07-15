@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/undead"
 display_name = "Wraith"
 glyph = "w"
 color = Color(0.68, 0.72, 1, 1)

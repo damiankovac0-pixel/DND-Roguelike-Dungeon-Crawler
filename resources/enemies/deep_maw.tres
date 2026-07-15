@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/aberration"
 display_name = "Deep Maw"
 glyph = "U"
 color = Color(0.55, 0.20, 0.62, 1)

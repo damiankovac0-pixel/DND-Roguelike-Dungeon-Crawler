@@ -1,7 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
-  <rect x="1" y="0" width="1" height="1" fill="#9ad8dc"/>
-  <rect x="0" y="1" width="1" height="1" fill="#9ad8dc"/>
-  <rect x="1" y="1" width="1" height="1" fill="#f6ead0"/>
-  <rect x="2" y="1" width="1" height="1" fill="#9ad8dc"/>
-  <rect x="1" y="2" width="1" height="1" fill="#9ad8dc"/>
+<svg id="particle-texture" xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
+  <g id="particle-plus">
+    <rect x="1" y="0" width="1" height="1" fill="#D3D9DF"/>
+    <rect x="0" y="1" width="1" height="1" fill="#D3D9DF"/>
+    <rect x="1" y="1" width="1" height="1" fill="#E6DDC5"/>
+    <rect x="2" y="1" width="1" height="1" fill="#D3D9DF"/>
+    <rect x="1" y="2" width="1" height="1" fill="#D3D9DF"/>
+  </g>
 </svg>

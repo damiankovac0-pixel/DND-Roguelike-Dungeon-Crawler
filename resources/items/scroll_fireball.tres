@@ -21,3 +21,4 @@ damage_dice = 3
 damage_sides = 6
 damage_bonus = 5
 max_floor = 0
+visual_id = &"item/scroll"

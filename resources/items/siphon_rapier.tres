@@ -22,3 +22,4 @@ set_display_name = "Siphon Set"
 set_required_count = 2
 set_proc_chance_percent = 35
 set_proc_heal_percent = 8
+visual_id = &"item/sword"

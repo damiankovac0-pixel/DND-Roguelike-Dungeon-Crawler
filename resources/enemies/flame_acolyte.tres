@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/caster"
 display_name = "Flame Acolyte"
 glyph = "f"
 color = Color(1, 0.64, 0.26, 1)

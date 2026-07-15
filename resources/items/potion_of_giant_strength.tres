@@ -16,3 +16,4 @@ min_floor = 4
 use_effect = 4
 armor_bonus = 2
 effect_duration = 6
+visual_id = &"item/potion"

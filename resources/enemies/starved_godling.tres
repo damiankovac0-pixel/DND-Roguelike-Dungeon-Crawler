@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/aberration"
 display_name = "Starved Godling"
 glyph = "A"
 color = Color(1, 0.32, 0.88, 1)

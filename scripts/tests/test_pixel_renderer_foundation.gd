@@ -441,6 +441,7 @@ func _check_pixel_renderer_scene() -> void:
 	await _check_pixel_visibility_updates(renderer, state, ground_count)
 	_check_pixel_terrain_update(renderer, state)
 	_check_missing_catalog_fallback(renderer_scene, layout)
+	_check_visual_catalog_contract(renderer)
 	renderer.queue_free()
 	await process_frame
 	print("  TileMapLayer renders terrain, visibility, and player deterministically")
@@ -514,6 +515,133 @@ func _check_missing_catalog_fallback(renderer_scene: PackedScene, layout: RefCou
 		"Missing catalogue renderer must remain unavailable"
 	)
 	missing_renderer.queue_free()
+
+
+func _check_visual_catalog_contract(renderer: Node2D) -> void:
+	var catalog: Resource = renderer.get("catalog")
+	_expect(catalog != null, "Catalog must be set on pixel renderer")
+
+	# Terrain atlas must be exactly 192x96
+	var tile_atlas: Texture2D = catalog.get("tile_atlas")
+	var atlas_size: Vector2i = (
+		Vector2i(tile_atlas.get_size()) if tile_atlas != null else Vector2i.ZERO
+	)
+	_expect_equal(atlas_size, Vector2i(192, 96), "Terrain atlas must be exactly 192x96")
+
+	# Catalog version and validate return no errors
+	_expect_equal(int(catalog.get("catalog_version")), 2, "Catalog version must be 2")
+	var validation: String = str(catalog.call(&"validate"))
+	_expect_equal(validation, "", "validate() must return empty string for valid catalog")
+
+	var cell_a: Vector2i = Vector2i(10, 10)
+	var cell_b: Vector2i = Vector2i(15, 20)
+
+	# Deterministic same-cell variants
+	var floor_a1: Vector2i = catalog.call(&"atlas_coords_for_tile", 0, 0, cell_a)
+	var floor_a2: Vector2i = catalog.call(&"atlas_coords_for_tile", 0, 0, cell_a)
+	_expect_equal(floor_a1, floor_a2, "Same cell + biome must produce same floor variant")
+
+	var wall_a1: Vector2i = catalog.call(&"atlas_coords_for_tile", 1, 0, cell_a)
+	var wall_a2: Vector2i = catalog.call(&"atlas_coords_for_tile", 1, 0, cell_a)
+	_expect_equal(wall_a1, wall_a2, "Same cell + biome must produce same wall variant")
+
+	# Biome row separation: row 0 vs row 5
+	var row0_floor: Vector2i = catalog.call(&"atlas_coords_for_tile", 0, 0, cell_b)
+	var row5_floor: Vector2i = catalog.call(&"atlas_coords_for_tile", 0, 5, cell_b)
+	_expect(
+		row0_floor.y == 0 and row5_floor.y == 5,
+		(
+			"Floor coords must use biome rows: row0 got y=%d, row5 got y=%d"
+			% [row0_floor.y, row5_floor.y]
+		)
+	)
+
+	var row0_wall: Vector2i = catalog.call(&"atlas_coords_for_tile", 1, 0, cell_b)
+	var row5_wall: Vector2i = catalog.call(&"atlas_coords_for_tile", 1, 5, cell_b)
+	_expect(
+		row0_wall.y == 0 and row5_wall.y == 5,
+		"Wall coords must use biome rows: row0 got y=%d, row5 got y=%d" % [row0_wall.y, row5_wall.y]
+	)
+
+	# Floor columns must be in 0-3 across multiple cells
+	for test_x in range(10):
+		for test_y in range(10):
+			var test_cell: Vector2i = Vector2i(test_x * 3 + 1, test_y * 5 + 2)
+			var fc: Vector2i = catalog.call(&"atlas_coords_for_tile", 0, 0, test_cell)
+			_expect(
+				fc.x >= 0 and fc.x <= 3,
+				"Floor variant column must be in [0,3]: at %s got %d" % [test_cell, fc.x]
+			)
+			_expect_equal(fc.y, 0, "Floor row must stay at biome row 0")
+
+	# Wall columns must be in 4-6 across multiple cells
+	for test_x in range(10):
+		var test_cell: Vector2i = Vector2i(test_x * 7 + 3, test_x * 11 + 5)
+		var wc: Vector2i = catalog.call(&"atlas_coords_for_tile", 1, 0, test_cell)
+		_expect(
+			wc.x >= 4 and wc.x <= 6,
+			"Wall variant column must be in [4,6]: at %s got %d" % [test_cell, wc.x]
+		)
+		_expect_equal(wc.y, 0, "Wall row must match biome row 0")
+
+	# Structure columns 7-11 are fixed regardless of cell
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_tile", 2, 0, cell_a),
+		Vector2i(7, 0),
+		"DOOR must map to fixed column 7"
+	)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_tile", 3, 0, cell_a),
+		Vector2i(8, 0),
+		"OPEN_DOOR must map to fixed column 8"
+	)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_tile", 4, 0, cell_a),
+		Vector2i(9, 0),
+		"STAIRS_DOWN must map to fixed column 9"
+	)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_tile", 5, 0, cell_a),
+		Vector2i(10, 0),
+		"BOSS_DOOR must map to fixed column 10"
+	)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_tile", 6, 0, cell_a),
+		Vector2i(11, 0),
+		"SEALED_BOSS_DOOR must map to fixed column 11"
+	)
+
+	# One-argument Tower fallback (no cell -> row 0 Tower, no variant)
+	var tower_floor: Vector2i = catalog.call(&"atlas_coords_for_tile", 0)
+	_expect_equal(
+		tower_floor, Vector2i(0, 0), "One-arg FLOOR fallback must be Tower row 0 column 0"
+	)
+	var tower_wall: Vector2i = catalog.call(&"atlas_coords_for_tile", 1)
+	_expect_equal(tower_wall, Vector2i(4, 0), "One-arg WALL fallback must be Tower row 0 column 4")
+	var tower_door: Vector2i = catalog.call(&"atlas_coords_for_tile", 2)
+	_expect_equal(tower_door, Vector2i(7, 0), "One-arg DOOR fallback must be Tower row 0 column 7")
+
+	# All returned coords bounded within 12x6 atlas
+	for tile_type in [0, 1, 2, 3, 4, 5, 6]:
+		for biome in [0, 2, 4]:
+			for cell in [cell_a, cell_b]:
+				var coords: Vector2i = catalog.call(
+					&"atlas_coords_for_tile", tile_type, biome, cell
+				)
+				_expect(
+					coords.x >= 0 and coords.x <= 11 and coords.y >= 0 and coords.y <= 5,
+					(
+						"Atlas coords must be within 12x6: type=%d biome=%d cell=%s got %s"
+						% [tile_type, biome, cell, coords]
+					)
+				)
+
+	print(
+		(
+			"  visual catalog upholds atlas size, versioning, deterministic variants, "
+			+ "biome rows, floor/wall/structure columns, and bounded coords"
+		)
+	)
 
 
 func _check_adaptive_pixel_renderer() -> void:

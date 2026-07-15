@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_catalog")
-catalog_version = 1
+catalog_version = 2
 tile_atlas = ExtResource("2_tiles")
 prototype = false
 attribution = "Project-authored production map visual catalog."

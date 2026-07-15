@@ -73,9 +73,9 @@ class PixelAssetPipelineTests(unittest.TestCase):
         self.assertLess(command.index("--list-tags"), source_index)
         self.assertEqual(command[command.index("--sheet-type") + 1], "rows")
         self.assertEqual(command[command.index("--sheet-columns") + 1], "12")
-        self.assertEqual(command[command.index("--sheet-rows") + 1], "4")
+        self.assertEqual(command[command.index("--sheet-rows") + 1], "14")
         self.assertEqual(command[command.index("--sheet-width") + 1], "192")
-        self.assertEqual(command[command.index("--sheet-height") + 1], "64")
+        self.assertEqual(command[command.index("--sheet-height") + 1], "224")
         self.assertEqual(command[command.index("--format") + 1], "json-array")
         self.assertNotIn("--trim", command)
         self.assertNotIn("--sheet-pack", command)
@@ -106,10 +106,33 @@ class PixelAssetPipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(pixel_assets.PipelineError, "sheet size is incorrect"):
             pixel_assets.validate_aseprite_metadata(self.actor_asset, wrong_size)
 
+    def test_terrain_manifest_schema(self) -> None:
+        """Terrain is a static 12x6 atlas with 72 fully-qualified semantic IDs, no row_ids, no animations.
+
+        Assertions encode the static-atlas contract and catch reintroduction of
+        row_ids, fake animations, or fewer than 72 semantic IDs.
+        """
+        terrain = self.manifest["assets"][0]
+        self.assertEqual(terrain["id"], "terrain/core")
+        grid = tuple(terrain["grid"])
+        total_slots = grid[0] * grid[1]
+
+        # Static atlas: semantic_ids must fill grid, row_ids and animations absent or empty
+        self.assertEqual(len(terrain["semantic_ids"]), total_slots)
+        self.assertFalse(terrain.get("row_ids", []))       # no row_ids
+        self.assertEqual(terrain.get("animations", {}), {})  # no fake animations
+
+        # Manifest validation rejects a semantic-count mismatch
+        mutated = copy.deepcopy(self.manifest)
+        mutated["assets"][0]["semantic_ids"] = mutated["assets"][0]["semantic_ids"][:total_slots - 1]
+        with self.assertRaises(pixel_assets.PipelineError) as ctx:
+            pixel_assets._validate_manifest_structure(mutated, REPOSITORY_ROOT)
+        self.assertIn("semantic_ids must fill the atlas grid", str(ctx.exception))
+
     @staticmethod
     def _actor_metadata() -> dict[str, object]:
         frames = []
-        for index in range(48):
+        for index in range(168):
             frames.append(
                 {
                     "filename": f"frame-{index}",
@@ -129,7 +152,7 @@ class PixelAssetPipelineTests(unittest.TestCase):
                 "version": "1.3.0",
                 "image": "actors.png",
                 "format": "RGBA8888",
-                "size": {"w": 192, "h": 64},
+                "size": {"w": 192, "h": 224},
                 "scale": "1",
                 "frameTags": [
                     {"name": name, "from": index * 2, "to": index * 2 + 1, "direction": "forward"}
@@ -137,7 +160,22 @@ class PixelAssetPipelineTests(unittest.TestCase):
                 ],
                 "layers": [
                     {"name": name}
-                    for name in ("player", "enemy", "shopkeeper", "summon")
+                    for name in (
+                        "player_fighter",
+                        "player_ranger",
+                        "player_wizard",
+                        "enemy_humanoid",
+                        "enemy_brute",
+                        "enemy_undead",
+                        "enemy_beast",
+                        "enemy_flyer",
+                        "enemy_construct",
+                        "enemy_caster",
+                        "enemy_aquatic",
+                        "enemy_aberration",
+                        "shopkeeper",
+                        "summon",
+                    )
                 ],
             },
         }

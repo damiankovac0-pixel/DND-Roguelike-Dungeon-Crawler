@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/brute"
 display_name = "Frost Guardian"
 glyph = "F"
 color = Color(0.6, 0.85, 1, 1)

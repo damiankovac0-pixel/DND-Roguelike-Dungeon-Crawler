@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/aquatic"
 display_name = "Harpooner"
 glyph = "H"
 color = Color(0.48, 0.76, 0.78, 1)

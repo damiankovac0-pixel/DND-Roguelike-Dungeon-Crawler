@@ -84,6 +84,7 @@ telegraph_border_color = Color(1, 0.85, 0.15, 0.85)
 
 [resource]
 script = ExtResource("1")
+visual_id = &"boss/vorrak"
 display_name = "Vorrak, the Ashen Maw"
 glyph = "V"
 color = Color(1, 0.32, 0.12, 1)

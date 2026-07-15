@@ -16,3 +16,4 @@ min_floor = 23
 attack_bonus = 1
 damage_bonus = 1
 armor_bonus = 3
+visual_id = &"item/charm"

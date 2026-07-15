@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/caster"
 display_name = "Shadow Weaver"
 glyph = "S"
 color = Color(0.5, 0.3, 0.6, 1)

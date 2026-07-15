@@ -13,3 +13,4 @@ min_damage = 0
 max_damage = 0
 detect_dc = 13
 reveal_on_detect = true
+visual_id = &"trap/teleport"

@@ -17,3 +17,4 @@ use_effect = 8
 effect_duration = 5
 healing_amount = 6
 max_floor = 0
+visual_id = &"item/scroll"

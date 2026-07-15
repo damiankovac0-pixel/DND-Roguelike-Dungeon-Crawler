@@ -15,3 +15,4 @@ spawn_weight = 4
 min_floor = 4
 attack_bonus = 1
 damage_bonus = 1
+visual_id = &"item/ring"

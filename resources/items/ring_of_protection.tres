@@ -14,3 +14,4 @@ base_price = 80
 spawn_weight = 6
 min_floor = 2
 armor_bonus = 1
+visual_id = &"item/ring"

@@ -25,21 +25,27 @@ class FakeItem:
 	var kind: int = 0
 	var rarity: int = 0
 	var color: Color = Color.WHITE
+	var visual_id: StringName = &""
 
-	func _init(item_kind: int, item_rarity: int, item_color: Color) -> void:
+	func _init(
+		item_kind: int, item_rarity: int, item_color: Color, item_visual: StringName = &""
+	) -> void:
 		kind = item_kind
 		rarity = item_rarity
 		color = item_color
+		visual_id = item_visual
 
 
 class FakeTrap:
 	extends Resource
 	var effect: int = 0
 	var color: Color = Color.WHITE
+	var visual_id: StringName = &""
 
-	func _init(trap_effect: int, trap_color: Color) -> void:
+	func _init(trap_effect: int, trap_color: Color, trap_visual: StringName = &"") -> void:
 		effect = trap_effect
 		color = trap_color
+		visual_id = trap_visual
 
 
 class FakeActor:
@@ -96,24 +102,37 @@ func _check_object_catalogue() -> void:
 	_expect(atlas != null, "Object catalogue returned no atlas")
 	if atlas != null:
 		_expect_equal(
-			Vector2i(atlas.get_size()), Vector2i(256, 16), "Object atlas dimensions drifted"
+			Vector2i(atlas.get_size()), Vector2i(448, 16), "Object atlas dimensions drifted"
 		)
 	var expected_columns: Dictionary = {
-		&"item/consumable": 0,
-		&"item/weapon": 1,
-		&"item/armor": 2,
-		&"item/accessory": 3,
-		&"item/generic": 4,
-		&"prop/chest": 5,
-		&"prop/boss_chest": 6,
-		&"prop/vase": 7,
-		&"prop/box": 8,
-		&"trap/damage": 9,
-		&"trap/poison": 10,
-		&"trap/teleport": 11,
-		&"trap/alarm": 12,
-		&"trap/stun": 13,
-		&"trap/ambush": 14,
+		&"item/potion": 0,
+		&"item/elixir": 1,
+		&"item/scroll": 2,
+		&"item/sword": 3,
+		&"item/axe": 4,
+		&"item/dagger": 5,
+		&"item/mace": 6,
+		&"item/spear": 7,
+		&"item/bow": 8,
+		&"item/crossbow": 9,
+		&"item/staff": 10,
+		&"item/armor/light": 11,
+		&"item/armor/heavy": 12,
+		&"item/robe": 13,
+		&"item/ring": 14,
+		&"item/charm": 15,
+		&"item/generic": 16,
+		&"prop/chest": 17,
+		&"prop/boss_chest": 18,
+		&"prop/vase": 19,
+		&"prop/box": 20,
+		&"prop/generic": 21,
+		&"trap/damage": 22,
+		&"trap/poison": 23,
+		&"trap/teleport": 24,
+		&"trap/alarm": 25,
+		&"trap/stun": 26,
+		&"trap/ambush": 27,
 	}
 	for visual_id: StringName in expected_columns:
 		var region: Rect2 = _object_catalog.call(&"region_for", visual_id)
@@ -121,8 +140,22 @@ func _check_object_catalogue() -> void:
 			region.position, Vector2(expected_columns[visual_id] * 16, 0), "Atlas mapping drifted"
 		)
 		_expect_equal(region.size, Vector2(16, 16), "Object region must remain 16x16")
+	var alias_checks: Dictionary = {
+		&"item/consumable": 0,
+		&"item/weapon": 3,
+		&"item/armor": 11,
+		&"item/accessory": 14,
+		&"item/generic": 16,
+	}
+	for visual_id: StringName in alias_checks:
+		var region: Rect2 = _object_catalog.call(&"region_for", visual_id)
+		_expect_equal(
+			region.position, Vector2(alias_checks[visual_id] * 16, 0), "Alias mapping drifted"
+		)
 	var fallback: Rect2 = _object_catalog.call(&"region_for", &"missing/visual")
-	_expect_equal(fallback.position, Vector2(240, 0), "Unknown object IDs need a safe fallback")
+	_expect_equal(
+		fallback.position, Vector2(256, 0), "Unknown object IDs need safe fallback at column 16"
+	)
 	print("  explicit object catalogue maps deterministic 16x16 atlas regions")
 
 
@@ -153,9 +186,9 @@ func _build_state() -> RefCounted:
 		. call(
 			&"capture_items",
 			{
-				Vector2i(2, 2): FakeItem.new(1, 2, Color(0.4, 0.7, 1.0)),
-				Vector2i(3, 2): FakeItem.new(2, 1, Color(0.7, 0.8, 0.9)),
-				Vector2i(9, 8): FakeItem.new(0, 0, Color(0.4, 1.0, 0.5)),
+				Vector2i(2, 2): FakeItem.new(1, 2, Color(0.4, 0.7, 1.0), &"item/sword"),
+				Vector2i(3, 2): FakeItem.new(2, 1, Color(0.7, 0.8, 0.9), &"item/armor/heavy"),
+				Vector2i(9, 8): FakeItem.new(0, 0, Color(0.4, 1.0, 0.5), &"item/potion"),
 			},
 		)
 	)
@@ -182,9 +215,9 @@ func _build_state() -> RefCounted:
 		)
 	)
 	var traps: Dictionary = {
-		Vector2i(5, 2): FakeTrap.new(0, Color(1.0, 0.35, 0.2)),
-		Vector2i(6, 2): FakeTrap.new(1, Color(0.4, 1.0, 0.45)),
-		Vector2i(7, 2): FakeTrap.new(2, Color(0.6, 0.4, 1.0)),
+		Vector2i(5, 2): FakeTrap.new(0, Color(1.0, 0.35, 0.2), &"trap/damage"),
+		Vector2i(6, 2): FakeTrap.new(1, Color(0.4, 1.0, 0.45), &"trap/poison"),
+		Vector2i(7, 2): FakeTrap.new(2, Color(0.6, 0.4, 1.0), &"trap/teleport"),
 	}
 	(
 		state
@@ -237,10 +270,13 @@ func _build_state() -> RefCounted:
 func _check_semantic_snapshots(state: RefCounted) -> void:
 	var items: Dictionary = state.get("items")
 	_expect(items[Vector2i(2, 2)] is Dictionary, "Item state must be semantic data")
+	_expect_equal(items[Vector2i(2, 2)].get("visual_id"), &"item/sword", "Sword visual ID drifted")
 	_expect_equal(
-		items[Vector2i(2, 2)].get("visual_id"), &"item/weapon", "Weapon visual ID drifted"
+		items[Vector2i(3, 2)].get("visual_id"), &"item/armor/heavy", "Heavy armor visual ID drifted"
 	)
-	_expect_equal(items[Vector2i(3, 2)].get("visual_id"), &"item/armor", "Armor visual ID drifted")
+	_expect_equal(
+		items[Vector2i(9, 8)].get("visual_id"), &"item/potion", "Potion visual ID drifted"
+	)
 	var containers: Dictionary = state.get("containers")
 	_expect_equal(
 		containers[Vector2i(4, 2)].get("visual_id"), &"prop/chest", "Chest visual ID drifted"
@@ -251,6 +287,9 @@ func _check_semantic_snapshots(state: RefCounted) -> void:
 	var traps: Dictionary = state.get("trap_data")
 	_expect_equal(traps[Vector2i(5, 2)].get("visual_id"), &"trap/damage", "Trap visual ID drifted")
 	_expect(bool(traps[Vector2i(6, 2)].get("triggered")), "Triggered trap state was lost")
+	_expect_equal(
+		traps[Vector2i(7, 2)].get("visual_id"), &"trap/teleport", "Teleport trap visual ID drifted"
+	)
 	print("  shared state converts gameplay resources into semantic object snapshots")
 
 

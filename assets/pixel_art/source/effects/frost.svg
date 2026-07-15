@@ -1,0 +1,8 @@
+<svg id="frost-texture" xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
+  <g id="frost-flake">
+    <rect x="0" y="0" width="1" height="1" fill="#486B78"/>
+    <rect x="2" y="0" width="1" height="1" fill="#486B78"/>
+    <rect x="1" y="1" width="1" height="1" fill="#B8C5D8"/>
+    <rect x="1" y="2" width="1" height="1" fill="#4F8D8A"/>
+  </g>
+</svg>

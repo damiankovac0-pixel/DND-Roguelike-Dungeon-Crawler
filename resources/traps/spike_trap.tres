@@ -13,3 +13,4 @@ min_damage = 3
 max_damage = 10
 detect_dc = 12
 reveal_on_detect = true
+visual_id = &"trap/damage"

@@ -103,6 +103,7 @@ hazard_message = "Lingering mirror fragments slice you for %d magic damage."
 
 [resource]
 script = ExtResource("1")
+visual_id = &"boss/nyxara"
 display_name = "Nyxara, the Mirror Witch"
 glyph = "N"
 color = Color(0.70, 0.48, 1, 1)

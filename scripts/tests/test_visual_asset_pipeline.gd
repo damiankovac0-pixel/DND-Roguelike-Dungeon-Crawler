@@ -11,6 +11,17 @@ const REQUIRED_CATEGORIES: Array[String] = ["terrain", "actor", "boss", "object"
 const REQUIRED_ANIMATIONS: Array[StringName] = [
 	&"idle", &"move", &"attack", &"cast", &"hurt", &"death"
 ]
+const EXPECTED_ASSET_IDS: Array[String] = [
+	"terrain/core",
+	"actor/core",
+	"boss/core",
+	"object/core",
+	"effect/particle",
+	"effect/ember",
+	"effect/arcane",
+	"effect/poison",
+	"effect/frost"
+]
 
 var _failed: bool = false
 var _manifest: Dictionary = {}
@@ -25,6 +36,9 @@ func _run() -> void:
 	if _failed:
 		return
 	_check_explicit_assets()
+	if _failed:
+		return
+	_check_explicit_asset_ids()
 	if _failed:
 		return
 	_check_generated_attribution()
@@ -46,7 +60,7 @@ func _load_manifest() -> void:
 	if parsed is Dictionary:
 		_manifest = parsed
 	_expect_equal(int(_manifest.get("schema_version", 0)), 1, "Manifest schema drifted")
-	_expect_equal(int(_manifest.get("catalog_version", 0)), 1, "Catalogue schema drifted")
+	_expect_equal(int(_manifest.get("catalog_version", 0)), 2, "Catalogue schema drifted")
 
 
 func _check_explicit_assets() -> void:
@@ -93,6 +107,18 @@ func _check_explicit_assets() -> void:
 	for category: String in REQUIRED_CATEGORIES:
 		_expect(seen_categories.has(category), "Required visual category is missing: %s" % category)
 	print("  manifest resolves explicit terrain, actor, boss, object, and effect resources")
+
+
+func _check_explicit_asset_ids() -> void:
+	var asset_values: Array = _array_or_empty(_manifest.get("assets", []))
+	for expected_id: String in EXPECTED_ASSET_IDS:
+		var found: bool = false
+		for asset_value: Variant in asset_values:
+			if asset_value is Dictionary and str(asset_value.get("id", "")) == expected_id:
+				found = true
+				break
+		_expect(found, "Expected visual asset ID is missing: %s" % expected_id)
+	print("  manifest contains all nine production visual asset IDs")
 
 
 func _check_asset_texture(asset: Dictionary) -> void:
@@ -168,11 +194,11 @@ func _check_generated_catalogues() -> void:
 			continue
 		_expect(catalogue.has_method(&"validate"), "Generated catalogue must expose validate()")
 		_expect_equal(
-			int(catalogue.get("catalog_version")), 1, "Generated catalogue version drifted"
+			int(catalogue.get("catalog_version")), 2, "Generated catalogue version drifted"
 		)
 		_expect_equal(str(catalogue.call(&"validate")), "", "Generated catalogue validation failed")
 		var invalid_catalogue: Resource = catalogue.duplicate()
-		invalid_catalogue.set("catalog_version", 2)
+		invalid_catalogue.set("catalog_version", 3)
 		_expect(
 			not str(invalid_catalogue.call(&"validate")).is_empty(),
 			"Unsupported catalogue versions must fail safely"
@@ -188,7 +214,8 @@ func _check_animation_contract(actor_catalogue: Resource) -> void:
 	if actor_catalogue == null:
 		return
 	var frames: SpriteFrames = actor_catalogue.call(
-		&"sprite_frames_for", {"visual_id": &"actor/player", "kind": &"player", "is_boss": false}
+		&"sprite_frames_for",
+		{"visual_id": &"actor/player/fighter", "kind": &"player", "is_boss": false}
 	)
 	_expect(frames != null, "Actor catalogue failed to build SpriteFrames")
 	if frames == null:
@@ -199,6 +226,15 @@ func _check_animation_contract(actor_catalogue: Resource) -> void:
 			frames.get_frame_count(animation),
 			2,
 			"Actor animation frame count drifted: %s" % animation
+		)
+	var unknown_frames: SpriteFrames = actor_catalogue.call(
+		&"sprite_frames_for", {"visual_id": &"unknown/missing", "kind": &"enemy", "is_boss": false}
+	)
+	_expect(unknown_frames != null, "Actor unknown-ID fallback frames must never be null")
+	if unknown_frames != null:
+		_expect(
+			unknown_frames.has_animation(&"idle"),
+			"Actor unknown-ID fallback frames must still provide animations"
 		)
 
 

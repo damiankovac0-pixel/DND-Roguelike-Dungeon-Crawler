@@ -1,0 +1,9 @@
+<svg id="arcane-texture" xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
+  <g id="arcane-cross">
+    <rect x="0" y="0" width="1" height="1" fill="#9A8CB7"/>
+    <rect x="2" y="0" width="1" height="1" fill="#9A8CB7"/>
+    <rect x="1" y="1" width="1" height="1" fill="#B8C5D8"/>
+    <rect x="0" y="2" width="1" height="1" fill="#9A8CB7"/>
+    <rect x="2" y="2" width="1" height="1" fill="#9A8CB7"/>
+  </g>
+</svg>

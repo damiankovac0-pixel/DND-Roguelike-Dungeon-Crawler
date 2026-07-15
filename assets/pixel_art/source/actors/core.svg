@@ -1,747 +1,1208 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="192" height="64" viewBox="0 0 192 64" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="224" viewBox="0 0 192 224" shape-rendering="crispEdges">
   <defs>
-    <!-- Armored delver: idle -->
-    <g id="player-idle-a">
-      <g fill="#171525">
-        <rect x="5" y="1" width="6" height="1"/><rect x="4" y="2" width="8" height="5"/>
-        <rect x="3" y="7" width="10" height="6"/><rect x="2" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="13" y="5" width="3" height="9"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="2" width="6" height="4"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="3"/><rect x="12" y="9" width="1" height="3"/></g>
-      <g fill="#a7b4be"><rect x="6" y="2" width="4" height="1"/><rect x="6" y="4" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="5" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="4" y="7" width="8" height="1"/><rect x="6" y="9" width="4" height="4"/></g>
-      <g fill="#55c9c7"><rect x="5" y="7" width="4" height="1"/><rect x="7" y="9" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="14" y="6" width="1" height="7"/><rect x="13" y="8" width="3" height="1"/><rect x="14" y="13" width="1" height="1"/></g>
+    <g id="player_fighter-idle-a">
+      <path fill="#0D111C" d="M6 1H10V2H11V6H12V12H11V15H8V13H7V15H4V12H5V6H4V3H6ZM2 6H5V13H4V14H2V13H1V8H2ZM13 3H15V5H14V12H15V14H12V12H13Z"/>
+      <path fill="#5E6C80" d="M6 2H10V3H11V6H10V7H6V6H5V3H6ZM6 8H11V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M6 7H10V8H11V10H10V12H7V10H6ZM2 8H4V12H3V13H2Z"/>
+      <path fill="#D3D9DF" d="M6 2H9V3H6ZM6 4H10V5H6ZM5 8H6V11H5Z"/>
+      <path fill="#C9A24B" d="M13 4H14V12H13ZM12 12H15V13H12Z"/>
     </g>
-    <g id="player-idle-b">
-      <g fill="#171525">
-        <rect x="5" y="2" width="6" height="1"/><rect x="4" y="3" width="8" height="4"/>
-        <rect x="3" y="7" width="10" height="6"/><rect x="2" y="8" width="2" height="4"/><rect x="12" y="8" width="2" height="5"/>
-        <rect x="3" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
-        <rect x="13" y="4" width="2" height="3"/><rect x="14" y="6" width="2" height="8"/><rect x="12" y="7" width="3" height="2"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="3" width="6" height="3"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="2"/><rect x="12" y="9" width="1" height="3"/></g>
-      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="10" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="3" y="7" width="9" height="1"/><rect x="5" y="9" width="5" height="4"/></g>
-      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="6" y="9" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="14" y="5" width="1" height="2"/><rect x="15" y="7" width="1" height="7"/><rect x="13" y="7" width="2" height="1"/></g>
+    <g id="player_fighter-idle-b">
+      <path fill="#0D111C" d="M6 1H10V2H11V6H12V12H11V15H9V13H7V15H4V12H5V6H4V3H6ZM2 7H5V14H2V13H1V9H2ZM13 4H15V6H14V13H15V15H12V13H13Z"/>
+      <path fill="#5E6C80" d="M6 2H10V3H11V6H10V7H6V6H5V3H6ZM6 8H11V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M6 7H10V8H11V10H10V12H7V10H6ZM2 9H4V13H2Z"/>
+      <path fill="#D3D9DF" d="M6 2H9V3H6ZM6 4H10V5H6ZM5 8H6V11H5Z"/>
+      <path fill="#C9A24B" d="M13 5H14V13H13ZM12 13H15V14H12Z"/>
     </g>
-
-    <!-- Armored delver: move -->
-    <g id="player-move-a">
-      <g fill="#171525">
-        <rect x="7" y="1" width="4" height="1"/><rect x="6" y="2" width="6" height="5"/>
-        <rect x="5" y="7" width="8" height="6"/><rect x="2" y="8" width="3" height="4"/><rect x="12" y="8" width="3" height="4"/>
-        <rect x="3" y="12" width="4" height="2"/><rect x="1" y="14" width="6" height="2"/>
-        <rect x="10" y="12" width="3" height="2"/><rect x="11" y="14" width="4" height="2"/>
-        <rect x="13" y="5" width="3" height="8"/>
-      </g>
-      <g fill="#69778a"><rect x="7" y="2" width="5" height="4"/><rect x="6" y="8" width="7" height="5"/><rect x="12" y="9" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="8" y="2" width="3" height="1"/><rect x="8" y="4" width="3" height="1"/><rect x="10" y="8" width="3" height="1"/></g>
-      <g fill="#242238"><rect x="8" y="5" width="3" height="1"/><rect x="1" y="15" width="6" height="1"/><rect x="11" y="15" width="4" height="1"/></g>
-      <g fill="#d8d0b7"><rect x="10" y="5" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="4" y="7" width="8" height="2"/><rect x="2" y="9" width="3" height="2"/><rect x="7" y="9" width="4" height="4"/></g>
-      <g fill="#55c9c7"><rect x="6" y="7" width="5" height="1"/><rect x="8" y="9" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="14" y="6" width="1" height="6"/><rect x="13" y="8" width="3" height="1"/></g>
+    <g id="player_fighter-move-a">
+      <path fill="#0D111C" d="M7 1H11V2H12V6H13V11H11V13H9V15H6V13H4V15H1V13H3V10H4V6H5V3H7ZM1 7H5V12H4V13H2V12H1ZM13 4H15V12H14V14H12V12H13Z"/>
+      <path fill="#5E6C80" d="M7 2H11V3H12V6H11V7H7V6H6V3H7ZM5 8H12V11H10V13H7V12H5Z"/>
+      <path fill="#50C9C5" d="M5 7H11V8H12V10H8V12H6V10H5ZM2 8H4V11H2Z"/>
+      <path fill="#D3D9DF" d="M7 2H10V3H7ZM7 4H11V5H7ZM5 8H6V10H5Z"/>
+      <path fill="#C9A24B" d="M14 5H15V12H14ZM12 12H15V13H12Z"/>
     </g>
-    <g id="player-move-b">
-      <g fill="#171525">
-        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="4"/>
-        <rect x="4" y="7" width="8" height="6"/><rect x="2" y="7" width="2" height="5"/><rect x="11" y="8" width="3" height="4"/>
-        <rect x="4" y="12" width="3" height="3"/><rect x="2" y="14" width="5" height="2"/>
-        <rect x="9" y="12" width="3" height="2"/><rect x="10" y="14" width="5" height="2"/>
-        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="7"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="3" width="6" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="9" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="10" y="15" width="5" height="1"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="3" y="7" width="8" height="2"/><rect x="2" y="8" width="2" height="3"/><rect x="6" y="9" width="4" height="4"/></g>
-      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="7" y="9" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="6"/><rect x="12" y="8" width="3" height="1"/></g>
+    <g id="player_fighter-move-b">
+      <path fill="#0D111C" d="M5 2H9V3H10V7H11V12H9V14H7V15H4V13H2V15H1V13H3V10H3V7H4V4H5ZM1 6H4V12H3V13H1ZM11 5H14V7H13V13H15V15H11V13H12V7H11Z"/>
+      <path fill="#5E6C80" d="M5 3H9V4H10V7H9V8H5V7H4V4H5ZM4 9H10V12H8V13H6V12H4Z"/>
+      <path fill="#50C9C5" d="M4 8H9V9H10V11H7V13H5V11H4ZM2 8H3V11H2Z"/>
+      <path fill="#D3D9DF" d="M5 3H8V4H5ZM5 5H9V6H5ZM4 9H5V11H4Z"/>
+      <path fill="#C9A24B" d="M12 6H13V13H12ZM11 13H15V14H11Z"/>
     </g>
-
-    <!-- Armored delver: attack -->
-    <g id="player-attack-a">
-      <g fill="#171525">
-        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="5"/>
-        <rect x="3" y="8" width="9" height="5"/><rect x="2" y="9" width="2" height="4"/><rect x="10" y="6" width="3" height="4"/>
-        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
-        <rect x="8" y="0" width="4" height="2"/><rect x="10" y="1" width="4" height="2"/><rect x="12" y="2" width="4" height="3"/><rect x="14" y="4" width="2" height="3"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="3" width="6" height="4"/><rect x="4" y="9" width="7" height="4"/><rect x="10" y="7" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="6" y="3" width="4" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="4" y="9" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="3" y="8" width="8" height="1"/><rect x="5" y="10" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="4" y="8" width="4" height="1"/><rect x="6" y="10" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="9" y="0" width="2" height="1"/><rect x="11" y="1" width="2" height="1"/><rect x="13" y="2" width="2" height="2"/><rect x="15" y="4" width="1" height="2"/><rect x="9" y="6" width="3" height="1"/></g>
+    <g id="player_fighter-attack-a">
+      <path fill="#0D111C" d="M6 2H10V3H11V7H12V12H11V15H8V13H7V15H4V12H5V7H4V4H6ZM1 7H5V13H4V14H2V13H1ZM10 1H13V2H14V4H15V7H13V5H12V3H10Z"/>
+      <path fill="#5E6C80" d="M6 3H10V4H11V7H10V8H6V7H5V4H6ZM6 9H11V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 8H10V9H11V11H10V12H7V10H5ZM2 9H4V12H2Z"/>
+      <path fill="#D3D9DF" d="M6 3H9V4H6ZM6 5H10V6H6ZM11 2H12V3H13V5H14V6H13V5H12V3H11Z"/>
+      <path fill="#C9A24B" d="M10 6H13V7H10Z"/>
     </g>
-    <g id="player-attack-b">
-      <g fill="#171525">
-        <rect x="7" y="2" width="5" height="1"/><rect x="6" y="3" width="7" height="5"/>
-        <rect x="5" y="8" width="8" height="5"/><rect x="3" y="9" width="3" height="4"/><rect x="11" y="6" width="4" height="4"/>
-        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
-        <rect x="11" y="5" width="5" height="3"/><rect x="15" y="4" width="1" height="1"/>
-      </g>
-      <g fill="#69778a"><rect x="7" y="3" width="6" height="4"/><rect x="6" y="9" width="7" height="4"/><rect x="4" y="10" width="2" height="2"/><rect x="11" y="7" width="3" height="2"/></g>
-      <g fill="#a7b4be"><rect x="8" y="3" width="4" height="1"/><rect x="8" y="5" width="4" height="1"/><rect x="10" y="9" width="3" height="1"/></g>
-      <g fill="#242238"><rect x="8" y="6" width="4" height="1"/><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="11" y="6" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="5" y="8" width="8" height="1"/><rect x="7" y="10" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="7" y="8" width="5" height="1"/><rect x="8" y="10" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="12" y="6" width="4" height="1"/><rect x="15" y="5" width="1" height="1"/><rect x="11" y="7" width="2" height="1"/></g>
+    <g id="player_fighter-attack-b">
+      <path fill="#0D111C" d="M7 2H11V3H12V7H13V12H12V15H9V13H8V15H5V12H6V7H5V4H7ZM2 8H6V13H5V14H3V13H2ZM11 6H15V10H13V9H11Z"/>
+      <path fill="#5E6C80" d="M7 3H11V4H12V7H11V8H7V7H6V4H7ZM7 9H12V12H10V13H8V12H7Z"/>
+      <path fill="#50C9C5" d="M6 8H11V9H12V11H11V12H8V10H6ZM3 9H5V12H3Z"/>
+      <path fill="#D3D9DF" d="M7 3H10V4H7ZM7 5H11V6H7ZM12 7H15V8H12Z"/>
+      <path fill="#C9A24B" d="M11 8H14V9H11Z"/>
+    </g>
+    <g id="player_fighter-cast-a">
+      <path fill="#0D111C" d="M6 2H10V3H11V7H12V12H11V15H8V13H7V15H4V12H5V7H4V4H6ZM1 6H5V13H4V14H2V13H1ZM12 8H15V10H14V14H12Z"/>
+      <path fill="#5E6C80" d="M6 3H10V4H11V7H10V8H6V7H5V4H6ZM6 9H11V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 8H10V9H11V12H7V10H5ZM2 8H4V12H2ZM2 3H3V4H4V5H2ZM1 4H2V5H1Z"/>
+      <path fill="#BCEBE3" d="M2 4H3V5H2ZM6 3H9V4H6ZM5 9H6V11H5Z"/>
+      <path fill="#C9A24B" d="M13 9H14V14H13Z"/>
+    </g>
+    <g id="player_fighter-cast-b">
+      <path fill="#0D111C" d="M6 1H10V2H11V6H12V12H11V15H8V13H7V15H4V12H5V6H4V3H6ZM2 7H5V13H4V14H2V13H1V9H2ZM12 7H15V10H14V13H12Z"/>
+      <path fill="#5E6C80" d="M6 2H10V3H11V6H10V7H6V6H5V3H6ZM6 8H11V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 7H10V8H11V12H7V10H5ZM2 9H4V12H2ZM13 3H14V4H15V6H14V7H12V6H13Z"/>
+      <path fill="#BCEBE3" d="M13 4H14V6H13ZM6 2H9V3H6ZM5 8H6V11H5Z"/>
+      <path fill="#C9A24B" d="M13 8H14V13H13Z"/>
+    </g>
+    <g id="player_fighter-hurt-a">
+      <path fill="#0D111C" d="M8 3H12V4H13V8H14V13H12V15H9V13H7V15H4V13H5V9H4V6H6V4H8ZM2 9H5V14H2V13H1V11H2ZM13 7H15V14H13Z"/>
+      <path fill="#5E6C80" d="M8 4H12V5H13V8H12V9H8V8H7V5H8ZM6 10H13V13H11V14H8V13H6Z"/>
+      <path fill="#50C9C5" d="M6 9H12V10H13V12H9V13H7V12H6ZM2 10H4V13H2Z"/>
+      <path fill="#D3D9DF" d="M8 4H11V5H8ZM8 6H12V7H8ZM3 5H4V6H3ZM1 7H3V8H1Z"/>
+      <path fill="#C9A24B" d="M14 8H15V14H14Z"/>
+    </g>
+    <g id="player_fighter-hurt-b">
+      <path fill="#0D111C" d="M5 5H9V6H10V9H12V13H11V15H8V14H6V15H3V13H2V10H4V7H5ZM1 10H4V14H1ZM10 7H13V10H14V14H12V10H10Z"/>
+      <path fill="#5E6C80" d="M5 6H9V7H10V9H9V10H5V9H4V7H5ZM4 11H11V13H9V14H6V13H4Z"/>
+      <path fill="#50C9C5" d="M4 10H9V11H11V13H7V14H5V13H4ZM2 11H3V13H2Z"/>
+      <path fill="#D3D9DF" d="M5 6H8V7H5ZM5 8H9V9H5ZM13 4H14V5H13ZM14 6H15V7H14Z"/>
+      <path fill="#C9A24B" d="M12 9H13V14H12Z"/>
+    </g>
+    <g id="player_fighter-death-a">
+      <path fill="#0D111C" d="M8 6H12V7H13V10H14V13H12V15H9V14H7V15H3V13H2V10H4V8H8ZM12 9H15V11H14V14H12Z"/>
+      <path fill="#5E6C80" d="M8 7H12V8H13V10H12V11H8V10H7V8H8ZM4 10H12V13H10V14H6V13H4Z"/>
+      <path fill="#50C9C5" d="M4 9H8V10H12V12H10V13H6V12H4Z"/>
+      <path fill="#D3D9DF" d="M8 7H11V8H8ZM3 10H4V12H3Z"/>
+      <path fill="#C9A24B" d="M13 10H14V14H13Z"/>
+    </g>
+    <g id="player_fighter-death-b">
+      <path fill="#0D111C" d="M2 10H6V9H10V11H14V12H15V15H9V14H7V15H1V12H2Z"/>
+      <path fill="#5E6C80" d="M3 11H7V10H9V12H13V14H8V13H6V14H2V12H3Z"/>
+      <path fill="#50C9C5" d="M5 11H9V12H12V13H8V14H5Z"/>
+      <path fill="#D3D9DF" d="M3 11H5V12H3ZM10 12H13V13H10Z"/>
+      <path fill="#C9A24B" d="M1 10H4V11H1Z"/>
     </g>
 
-    <!-- Armored delver: cast -->
-    <g id="player-cast-a">
-      <g fill="#171525">
-        <rect x="5" y="1" width="5" height="1"/><rect x="4" y="2" width="7" height="5"/>
-        <rect x="3" y="7" width="9" height="6"/><rect x="1" y="7" width="3" height="4"/><rect x="11" y="6" width="3" height="4"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="14" y="3" width="2" height="4"/><rect x="13" y="1" width="1" height="1"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="2" width="6" height="4"/><rect x="4" y="8" width="7" height="5"/><rect x="2" y="8" width="2" height="2"/><rect x="11" y="7" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="6" y="2" width="4" height="1"/><rect x="6" y="4" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="5" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="3" y="7" width="8" height="1"/><rect x="6" y="9" width="4" height="4"/></g>
-      <g fill="#55c9c7"><rect x="4" y="7" width="5" height="1"/><rect x="7" y="9" width="2" height="3"/><rect x="14" y="4" width="2" height="2"/><rect x="13" y="1" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="15" y="3" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/></g>
+    <g id="player_ranger-idle-a">
+      <path fill="#0D111C" d="M7 1H9V2H11V4H12V7H10V8H11V12H10V15H8V13H7V15H4V12H5V8H4V5H5V3H7ZM2 2H4V4H3V7H2V11H3V13H4V15H2V14H1V11H2V7H1V4H2ZM11 7H13V13H11Z"/>
+      <path fill="#354154" d="M7 2H9V3H10V4H11V6H9V7H6V6H5V5H6V3H7ZM6 8H10V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 7H9V8H10V10H8V12H6V10H5ZM10 7H12V9H10Z"/>
+      <path fill="#80513B" d="M2 3H3V7H2ZM2 11H3V14H2ZM3 7H4V11H3ZM12 8H13V13H12Z"/>
+      <path fill="#E6DDC5" d="M6 4H9V5H6ZM5 8H6V10H5Z"/>
     </g>
-    <g id="player-cast-b">
-      <g fill="#171525">
-        <rect x="6" y="0" width="4" height="3"/>
-        <rect x="5" y="3" width="6" height="5"/><rect x="4" y="8" width="8" height="5"/>
-        <rect x="2" y="4" width="3" height="6"/><rect x="11" y="4" width="3" height="6"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-      </g>
-      <g fill="#69778a"><rect x="6" y="3" width="5" height="4"/><rect x="5" y="9" width="6" height="4"/><rect x="3" y="5" width="2" height="4"/><rect x="11" y="5" width="2" height="4"/></g>
-      <g fill="#a7b4be"><rect x="7" y="3" width="3" height="1"/><rect x="7" y="5" width="3" height="1"/></g>
-      <g fill="#242238"><rect x="7" y="6" width="3" height="1"/><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="9" y="6" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/></g>
-      <g fill="#247d83"><rect x="4" y="8" width="8" height="1"/><rect x="6" y="10" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="7" y="1" width="2" height="1"/><rect x="5" y="8" width="5" height="1"/><rect x="7" y="10" width="2" height="2"/></g>
-      <g fill="#b6e8df"><rect x="7" y="0" width="2" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/></g>
+    <g id="player_ranger-idle-b">
+      <path fill="#0D111C" d="M7 1H9V2H11V4H12V7H10V8H11V12H10V15H7V13H6V15H4V12H5V8H4V5H5V3H7ZM1 3H3V5H2V8H1V12H2V14H4V15H2V14H1V12H1V8H2V5H1ZM11 8H14V13H11Z"/>
+      <path fill="#354154" d="M7 2H9V3H10V4H11V6H9V7H6V6H5V5H6V3H7ZM6 8H10V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 7H9V8H10V10H8V12H6V10H5ZM10 8H12V10H10Z"/>
+      <path fill="#80513B" d="M2 4H3V8H2ZM1 8H2V12H1ZM2 12H3V14H2ZM12 9H13V13H12Z"/>
+      <path fill="#E6DDC5" d="M6 4H9V5H6ZM5 8H6V10H5Z"/>
     </g>
-
-    <!-- Armored delver: hurt and death -->
-    <g id="player-hurt-a">
-      <g fill="#171525">
-        <rect x="8" y="2" width="5" height="1"/><rect x="7" y="3" width="7" height="5"/>
-        <rect x="5" y="8" width="8" height="5"/><rect x="3" y="7" width="3" height="4"/><rect x="12" y="9" width="3" height="4"/>
-        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/><rect x="14" y="10" width="2" height="5"/>
-      </g>
-      <g fill="#69778a"><rect x="8" y="3" width="6" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="9" y="3" width="4" height="1"/><rect x="9" y="5" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="9" y="6" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#247d83"><rect x="5" y="8" width="7" height="1"/><rect x="7" y="10" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="15" y="10" width="1" height="5"/></g>
-      <g fill="#b84972"><rect x="2" y="3" width="2" height="1"/><rect x="1" y="5" width="3" height="1"/><rect x="3" y="7" width="1" height="1"/></g>
+    <g id="player_ranger-move-a">
+      <path fill="#0D111C" d="M8 1H10V2H12V4H13V7H11V8H12V11H10V13H8V15H5V13H2V15H1V13H3V10H5V8H5V5H6V3H8ZM1 3H3V6H2V9H1V12H2V13H4V14H2V13H1V12H1V9H2V6H1ZM12 8H14V13H12Z"/>
+      <path fill="#354154" d="M8 2H10V3H11V4H12V6H10V7H7V6H6V5H7V3H8ZM6 8H11V11H9V13H7V12H5V10H6Z"/>
+      <path fill="#50C9C5" d="M6 7H10V8H11V10H9V11H7V10H6ZM11 8H13V10H11Z"/>
+      <path fill="#80513B" d="M2 4H3V6H2ZM1 9H2V12H1ZM2 6H3V9H2ZM13 9H14V13H13Z"/>
+      <path fill="#E6DDC5" d="M7 4H10V5H7ZM6 8H7V10H6Z"/>
     </g>
-    <g id="player-hurt-b">
-      <g fill="#171525">
-        <rect x="5" y="4" width="5" height="1"/><rect x="4" y="5" width="7" height="5"/>
-        <rect x="3" y="9" width="10" height="5"/><rect x="2" y="11" width="3" height="4"/><rect x="10" y="5" width="3" height="6"/>
-        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
-      </g>
-      <g fill="#69778a"><rect x="5" y="5" width="6" height="4"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
-      <g fill="#a7b4be"><rect x="6" y="5" width="4" height="1"/><rect x="6" y="7" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="8" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
-      <g fill="#247d83"><rect x="3" y="9" width="9" height="1"/><rect x="6" y="11" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="4" y="9" width="5" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
-      <g fill="#b84972"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
+    <g id="player_ranger-move-b">
+      <path fill="#0D111C" d="M5 2H7V3H9V5H10V8H8V9H10V12H12V14H15V15H11V14H8V13H6V15H3V13H4V9H3V6H4V4H5ZM1 4H3V7H2V10H1V13H2V14H3V15H1V13H1V10H2V7H1ZM10 9H13V13H10Z"/>
+      <path fill="#354154" d="M5 3H7V4H8V5H9V7H7V8H4V7H4V5H5ZM4 9H9V12H7V13H5V12H4Z"/>
+      <path fill="#50C9C5" d="M4 8H8V9H9V11H7V12H5V10H4ZM9 9H12V11H9Z"/>
+      <path fill="#80513B" d="M2 5H3V7H2ZM1 10H2V13H1ZM2 7H3V10H2ZM11 10H12V13H11Z"/>
+      <path fill="#E6DDC5" d="M5 5H8V6H5ZM4 9H5V11H4Z"/>
     </g>
-    <g id="player-death-a">
-      <g fill="#171525">
-        <rect x="9" y="6" width="4" height="1"/><rect x="8" y="7" width="6" height="5"/>
-        <rect x="4" y="9" width="8" height="5"/><rect x="2" y="11" width="4" height="4"/>
-        <rect x="2" y="13" width="5" height="3"/><rect x="8" y="13" width="5" height="3"/>
-        <rect x="12" y="13" width="4" height="2"/>
-      </g>
-      <g fill="#69778a"><rect x="9" y="7" width="5" height="4"/><rect x="5" y="10" width="6" height="4"/><rect x="3" y="12" width="2" height="2"/></g>
-      <g fill="#a7b4be"><rect x="10" y="7" width="3" height="1"/><rect x="10" y="9" width="3" height="1"/></g>
-      <g fill="#242238"><rect x="10" y="10" width="3" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
-      <g fill="#247d83"><rect x="4" y="9" width="7" height="1"/><rect x="6" y="11" width="4" height="3"/></g>
-      <g fill="#55c9c7"><rect x="6" y="9" width="4" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="13" y="13" width="3" height="1"/><rect x="15" y="12" width="1" height="1"/></g>
+    <g id="player_ranger-attack-a">
+      <path fill="#0D111C" d="M7 2H9V3H11V5H12V8H10V9H11V13H10V15H8V13H7V15H4V12H5V9H4V6H5V4H7ZM10 2H13V3H14V5H15V9H14V11H13V13H11V11H12V9H13V5H12V4H10ZM2 7H7V9H2Z"/>
+      <path fill="#354154" d="M7 3H9V4H10V5H11V7H9V8H6V7H5V6H6V4H7ZM6 9H10V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 8H9V9H10V11H8V12H6V10H5Z"/>
+      <path fill="#80513B" d="M12 3H13V5H14V9H13V11H12V9H13V5H12ZM2 7H7V8H2Z"/>
+      <path fill="#E6DDC5" d="M6 5H9V6H6ZM3 6H4V7H3Z"/>
     </g>
-    <g id="player-death-b">
-      <g fill="#171525">
-        <rect x="11" y="10" width="4" height="3"/><rect x="3" y="11" width="10" height="4"/>
-        <rect x="1" y="13" width="5" height="3"/><rect x="6" y="14" width="9" height="2"/>
-        <rect x="3" y="9" width="6" height="2"/>
-      </g>
-      <g fill="#69778a"><rect x="12" y="11" width="3" height="2"/><rect x="4" y="12" width="8" height="3"/></g>
-      <g fill="#a7b4be"><rect x="12" y="11" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="12" y="12" width="2" height="1"/><rect x="1" y="14" width="5" height="2"/><rect x="7" y="15" width="8" height="1"/></g>
-      <g fill="#247d83"><rect x="5" y="11" width="6" height="1"/><rect x="6" y="13" width="4" height="2"/></g>
-      <g fill="#55c9c7"><rect x="6" y="12" width="3" height="1"/></g>
-      <g fill="#c6984f"><rect x="4" y="9" width="5" height="1"/><rect x="3" y="10" width="1" height="1"/></g>
+    <g id="player_ranger-attack-b">
+      <path fill="#0D111C" d="M6 2H8V3H10V5H11V8H9V9H11V13H10V15H7V13H6V15H3V12H4V9H3V6H4V4H6ZM11 5H13V6H14V8H15V10H14V12H13V13H11V11H12V9H11ZM7 7H15V9H7Z"/>
+      <path fill="#354154" d="M6 3H8V4H9V5H10V7H8V8H5V7H4V6H5V4H6ZM5 9H10V12H8V13H6V12H5Z"/>
+      <path fill="#50C9C5" d="M4 8H8V9H10V11H8V12H6V10H4Z"/>
+      <path fill="#80513B" d="M12 6H13V8H14V10H13V12H12V10H13V8H12ZM8 7H15V8H8Z"/>
+      <path fill="#E6DDC5" d="M5 5H8V6H5ZM14 7H15V9H14Z"/>
+    </g>
+    <g id="player_ranger-cast-a">
+      <path fill="#0D111C" d="M7 2H9V3H11V5H12V8H10V9H11V13H10V15H8V13H7V15H4V12H5V9H4V6H5V4H7ZM1 7H5V10H4V12H2V10H1ZM11 8H14V13H11Z"/>
+      <path fill="#354154" d="M7 3H9V4H10V5H11V7H9V8H6V7H5V6H6V4H7ZM6 9H10V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 8H9V9H10V11H8V12H6V10H5ZM2 4H3V5H4V7H2V6H1V5H2Z"/>
+      <path fill="#80513B" d="M12 9H13V13H12ZM2 8H4V10H2Z"/>
+      <path fill="#BCEBE3" d="M2 5H3V6H2ZM6 5H9V6H6Z"/>
+    </g>
+    <g id="player_ranger-cast-b">
+      <path fill="#0D111C" d="M7 1H9V2H11V4H12V7H10V8H11V12H10V15H8V13H7V15H4V12H5V8H4V5H5V3H7ZM2 7H5V11H4V13H2ZM11 7H14V12H11Z"/>
+      <path fill="#354154" d="M7 2H9V3H10V4H11V6H9V7H6V6H5V5H6V3H7ZM6 8H10V12H9V13H7V12H6Z"/>
+      <path fill="#50C9C5" d="M5 7H9V8H10V11H8V12H6V9H5ZM12 3H13V4H14V6H13V7H11V6H12Z"/>
+      <path fill="#80513B" d="M12 8H13V12H12ZM3 8H4V11H3Z"/>
+      <path fill="#BCEBE3" d="M12 4H13V6H12ZM6 4H9V5H6Z"/>
+    </g>
+    <g id="player_ranger-hurt-a">
+      <path fill="#0D111C" d="M8 3H10V4H12V6H13V9H11V10H12V13H11V15H9V13H7V15H4V13H5V10H4V7H6V5H8ZM2 8H5V12H4V14H2ZM12 9H15V13H12Z"/>
+      <path fill="#354154" d="M8 4H10V5H11V6H12V8H10V9H7V8H6V7H7V5H8ZM6 10H11V13H9V14H7V13H6Z"/>
+      <path fill="#50C9C5" d="M5 9H9V10H11V12H9V13H7V11H5Z"/>
+      <path fill="#80513B" d="M3 9H4V12H3ZM13 10H14V13H13Z"/>
+      <path fill="#E6DDC5" d="M8 5H11V6H8ZM2 5H4V6H2ZM1 7H2V8H1Z"/>
+    </g>
+    <g id="player_ranger-hurt-b">
+      <path fill="#0D111C" d="M4 5H6V6H8V8H9V10H11V13H10V15H7V13H6V15H3V13H2V10H3V8H4ZM1 9H3V13H2V14H1ZM10 8H13V10H14V14H12V11H10Z"/>
+      <path fill="#354154" d="M4 6H6V7H7V8H8V9H6V10H4V9H3V8H4ZM4 10H10V13H8V14H5V13H4Z"/>
+      <path fill="#50C9C5" d="M3 9H7V10H9V12H7V13H5V11H3Z"/>
+      <path fill="#80513B" d="M2 10H3V13H2ZM12 10H13V14H12Z"/>
+      <path fill="#E6DDC5" d="M4 7H7V8H4ZM13 5H14V6H13ZM14 7H15V8H14Z"/>
+    </g>
+    <g id="player_ranger-death-a">
+      <path fill="#0D111C" d="M7 6H9V7H11V9H12V11H14V14H12V15H8V14H6V15H2V13H3V10H4V8H7ZM1 9H4V13H2V14H1Z"/>
+      <path fill="#354154" d="M7 7H9V8H10V9H11V10H9V11H6V10H5V9H6V8H7ZM4 11H12V13H10V14H6V13H4Z"/>
+      <path fill="#50C9C5" d="M4 10H8V11H11V13H8V14H6V13H4Z"/>
+      <path fill="#80513B" d="M2 10H3V13H2ZM12 11H13V14H12Z"/>
+      <path fill="#E6DDC5" d="M7 8H10V9H7Z"/>
+    </g>
+    <g id="player_ranger-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H10V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#354154" d="M2 11H5V12H8V10H9V12H13V14H9V13H6V14H3V13H2Z"/>
+      <path fill="#50C9C5" d="M5 12H9V11H10V13H12V14H8V13H5Z"/>
+      <path fill="#80513B" d="M1 10H4V11H1ZM13 12H15V13H13Z"/>
+      <path fill="#E6DDC5" d="M7 10H9V11H7Z"/>
     </g>
 
-    <!-- Horned dungeon raider: idle -->
-    <g id="enemy-idle-a">
-      <g fill="#171525">
-        <rect x="3" y="0" width="3" height="3"/><rect x="10" y="0" width="3" height="3"/>
-        <rect x="4" y="2" width="8" height="6"/><rect x="3" y="7" width="10" height="6"/>
-        <rect x="2" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="13" y="6" width="3" height="8"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="3" y="0" width="1" height="2"/><rect x="4" y="1" width="1" height="2"/><rect x="12" y="0" width="1" height="2"/><rect x="11" y="1" width="1" height="2"/></g>
-      <g fill="#49303f"><rect x="5" y="3" width="6" height="4"/><rect x="4" y="8" width="8" height="5"/><rect x="3" y="9" width="1" height="3"/></g>
-      <g fill="#2b293d"><rect x="6" y="4" width="4" height="3"/><rect x="5" y="10" width="6" height="3"/></g>
-      <g fill="#e06a36"><rect x="6" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="5" y="9" width="6" height="1"/></g>
-      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
-      <g fill="#69778a"><rect x="14" y="6" width="2" height="5"/></g>
-      <g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    <g id="player_wizard-idle-a">
+      <path fill="#0D111C" d="M7 1H9V3H11V4H13V6H11V8H12V11H13V14H11V15H3V14H4V11H5V8H4V6H2V5H6V3H7ZM13 3H15V5H14V13H15V15H12V13H13Z"/>
+      <path fill="#342C4A" d="M7 2H8V4H10V5H11V6H5V5H6V4H7ZM6 7H10V8H11V11H12V14H4V13H5V10H6Z"/>
+      <path fill="#50C9C5" d="M5 6H10V7H9V8H6V7H5ZM6 9H10V12H9V14H7V12H6Z"/>
+      <path fill="#BCEBE3" d="M6 6H9V7H6ZM6 9H7V11H6ZM14 2H15V4H14Z"/>
+      <path fill="#5E6C80" d="M13 4H14V13H13ZM12 13H15V14H12Z"/>
     </g>
-    <g id="enemy-idle-b">
-      <g fill="#171525">
-        <rect x="2" y="1" width="4" height="2"/><rect x="10" y="0" width="4" height="3"/>
-        <rect x="3" y="3" width="9" height="5"/><rect x="2" y="7" width="11" height="6"/>
-        <rect x="1" y="9" width="2" height="4"/><rect x="12" y="8" width="2" height="5"/>
-        <rect x="3" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
-        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="3" height="7"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="2" y="1" width="2" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="12" y="0" width="2" height="1"/><rect x="11" y="1" width="2" height="2"/></g>
-      <g fill="#49303f"><rect x="4" y="4" width="7" height="3"/><rect x="3" y="8" width="9" height="5"/><rect x="2" y="9" width="1" height="3"/></g>
-      <g fill="#2b293d"><rect x="5" y="5" width="5" height="2"/><rect x="4" y="10" width="7" height="3"/></g>
-      <g fill="#e06a36"><rect x="5" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="4" y="9" width="7" height="1"/></g>
-      <g fill="#242238"><rect x="3" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#69778a"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="2" height="3"/></g>
-      <g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    <g id="player_wizard-idle-b">
+      <path fill="#0D111C" d="M7 1H9V3H11V4H13V6H11V8H12V11H13V15H10V14H8V15H3V14H4V11H5V8H4V6H2V5H6V3H7ZM13 4H15V6H14V14H12V12H13Z"/>
+      <path fill="#342C4A" d="M7 2H8V4H10V5H11V6H5V5H6V4H7ZM6 7H10V8H11V11H12V14H4V13H5V10H6Z"/>
+      <path fill="#50C9C5" d="M5 6H10V7H9V8H6V7H5ZM6 9H10V12H9V14H7V12H6Z"/>
+      <path fill="#BCEBE3" d="M6 6H9V7H6ZM6 9H7V11H6ZM14 3H15V5H14Z"/>
+      <path fill="#5E6C80" d="M13 5H14V13H13ZM12 13H14V14H12Z"/>
     </g>
-
-    <!-- Horned dungeon raider: move -->
-    <g id="enemy-move-a">
-      <g fill="#171525">
-        <rect x="5" y="1" width="3" height="2"/><rect x="11" y="1" width="3" height="3"/>
-        <rect x="6" y="3" width="7" height="5"/><rect x="5" y="7" width="9" height="6"/>
-        <rect x="2" y="8" width="3" height="4"/><rect x="13" y="8" width="2" height="4"/>
-        <rect x="3" y="12" width="4" height="2"/><rect x="1" y="14" width="6" height="2"/>
-        <rect x="10" y="12" width="3" height="2"/><rect x="11" y="14" width="4" height="2"/>
-        <rect x="14" y="5" width="2" height="9"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="5" y="1" width="1" height="2"/><rect x="6" y="2" width="1" height="1"/><rect x="13" y="1" width="1" height="2"/><rect x="12" y="2" width="1" height="2"/></g>
-      <g fill="#49303f"><rect x="7" y="4" width="5" height="3"/><rect x="6" y="8" width="7" height="5"/><rect x="3" y="9" width="3" height="2"/></g>
-      <g fill="#2b293d"><rect x="8" y="5" width="4" height="2"/><rect x="7" y="10" width="5" height="3"/></g>
-      <g fill="#e06a36"><rect x="8" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="7" y="9" width="5" height="1"/></g>
-      <g fill="#242238"><rect x="1" y="15" width="6" height="1"/><rect x="11" y="15" width="4" height="1"/></g>
-      <g fill="#69778a"><rect x="15" y="5" width="1" height="5"/></g><g fill="#8d5e2d"><rect x="15" y="10" width="1" height="4"/></g>
+    <g id="player_wizard-move-a">
+      <path fill="#0D111C" d="M8 1H10V3H12V4H14V6H12V8H13V11H14V14H11V15H7V14H5V15H2V13H4V10H5V8H4V6H2V5H7V3H8ZM1 4H3V6H2V13H3V15H1Z"/>
+      <path fill="#342C4A" d="M8 2H9V4H11V5H12V6H6V5H7V4H8ZM6 7H11V8H12V11H13V13H10V14H7V13H4V12H5V9H6Z"/>
+      <path fill="#50C9C5" d="M6 6H11V7H10V8H7V7H6ZM7 9H11V12H9V14H8V12H6V10H7Z"/>
+      <path fill="#BCEBE3" d="M7 6H10V7H7ZM7 9H8V11H7Z"/>
+      <path fill="#5E6C80" d="M2 5H3V13H2ZM1 13H4V14H1Z"/>
     </g>
-    <g id="enemy-move-b">
-      <g fill="#171525">
-        <rect x="2" y="0" width="3" height="3"/><rect x="9" y="1" width="4" height="2"/>
-        <rect x="3" y="2" width="8" height="6"/><rect x="3" y="7" width="9" height="6"/>
-        <rect x="1" y="8" width="3" height="4"/><rect x="11" y="8" width="3" height="4"/>
-        <rect x="3" y="12" width="3" height="3"/><rect x="1" y="14" width="5" height="2"/>
-        <rect x="8" y="12" width="3" height="2"/><rect x="9" y="14" width="6" height="2"/>
-        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="7"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="2" y="0" width="1" height="2"/><rect x="3" y="1" width="1" height="2"/><rect x="11" y="1" width="2" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="4" y="3" width="6" height="4"/><rect x="4" y="8" width="7" height="5"/><rect x="2" y="9" width="2" height="2"/></g>
-      <g fill="#2b293d"><rect x="5" y="5" width="4" height="2"/><rect x="5" y="10" width="5" height="3"/></g>
-      <g fill="#e06a36"><rect x="5" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="5" y="9" width="5" height="1"/></g>
-      <g fill="#242238"><rect x="1" y="15" width="5" height="1"/><rect x="9" y="15" width="6" height="1"/></g>
-      <g fill="#69778a"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="3"/></g><g fill="#8d5e2d"><rect x="14" y="11" width="1" height="3"/></g>
+    <g id="player_wizard-move-b">
+      <path fill="#0D111C" d="M5 2H7V4H9V5H11V7H9V9H10V12H12V14H15V15H10V14H7V15H3V14H1V13H3V10H4V9H3V7H1V6H5V4H5ZM12 5H14V7H13V14H11V12H12Z"/>
+      <path fill="#342C4A" d="M5 3H6V5H8V6H9V7H4V6H5ZM5 8H8V9H9V12H11V13H9V14H5V13H3V12H4V10H5Z"/>
+      <path fill="#50C9C5" d="M4 7H8V8H7V9H5ZM5 10H9V12H8V14H6V12H5Z"/>
+      <path fill="#BCEBE3" d="M5 7H7V8H5ZM5 10H6V12H5Z"/>
+      <path fill="#5E6C80" d="M12 6H13V14H12ZM11 13H14V14H11Z"/>
     </g>
-
-    <!-- Horned dungeon raider: attack -->
-    <g id="enemy-attack-a">
-      <g fill="#171525">
-        <rect x="2" y="2" width="3" height="3"/><rect x="8" y="2" width="3" height="3"/>
-        <rect x="3" y="4" width="8" height="5"/><rect x="3" y="8" width="9" height="5"/>
-        <rect x="2" y="9" width="2" height="4"/><rect x="9" y="5" width="3" height="5"/>
-        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
-        <rect x="9" y="0" width="5" height="2"/><rect x="12" y="1" width="4" height="4"/><rect x="14" y="4" width="2" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="2" y="2" width="1" height="2"/><rect x="3" y="3" width="1" height="2"/><rect x="10" y="2" width="1" height="2"/><rect x="9" y="3" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="4" y="5" width="6" height="3"/><rect x="4" y="9" width="7" height="4"/></g>
-      <g fill="#2b293d"><rect x="5" y="6" width="4" height="2"/><rect x="5" y="11" width="5" height="2"/></g>
-      <g fill="#e06a36"><rect x="5" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="5" y="10" width="5" height="1"/></g>
-      <g fill="#242238"><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
-      <g fill="#69778a"><rect x="10" y="0" width="4" height="1"/><rect x="13" y="1" width="3" height="3"/><rect x="15" y="4" width="1" height="2"/></g>
-      <g fill="#8d5e2d"><rect x="10" y="4" width="1" height="4"/></g>
+    <g id="player_wizard-attack-a">
+      <path fill="#0D111C" d="M7 2H9V4H11V5H13V7H11V9H12V12H13V15H3V14H4V11H5V9H4V7H2V6H6V4H7ZM1 8H5V10H3V12H1ZM12 3H15V5H14V12H12Z"/>
+      <path fill="#342C4A" d="M7 3H8V5H10V6H11V7H5V6H6V5H7ZM6 8H10V9H11V12H12V14H4V13H5V10H6Z"/>
+      <path fill="#50C9C5" d="M5 7H10V8H9V9H6ZM2 8H4V10H2ZM6 10H10V13H8V14H7V12H6Z"/>
+      <path fill="#BCEBE3" d="M2 9H3V10H2ZM6 7H9V8H6ZM13 2H14V4H13Z"/>
+      <path fill="#5E6C80" d="M13 4H14V12H13ZM12 11H15V12H12Z"/>
     </g>
-    <g id="enemy-attack-b">
-      <g fill="#171525">
-        <rect x="5" y="2" width="3" height="3"/><rect x="10" y="2" width="3" height="3"/>
-        <rect x="6" y="4" width="7" height="5"/><rect x="5" y="8" width="8" height="5"/>
-        <rect x="3" y="9" width="3" height="4"/><rect x="11" y="6" width="4" height="4"/>
-        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
-        <rect x="11" y="5" width="5" height="4"/><rect x="15" y="4" width="1" height="1"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="5" y="2" width="1" height="2"/><rect x="6" y="3" width="1" height="2"/><rect x="12" y="2" width="1" height="2"/><rect x="11" y="3" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="7" y="5" width="5" height="3"/><rect x="6" y="9" width="6" height="4"/></g>
-      <g fill="#2b293d"><rect x="8" y="6" width="4" height="2"/><rect x="7" y="11" width="4" height="2"/></g>
-      <g fill="#e06a36"><rect x="8" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/><rect x="7" y="10" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
-      <g fill="#69778a"><rect x="12" y="6" width="4" height="2"/><rect x="15" y="5" width="1" height="1"/></g>
-      <g fill="#8d5e2d"><rect x="11" y="7" width="2" height="1"/></g>
+    <g id="player_wizard-attack-b">
+      <path fill="#0D111C" d="M6 2H8V4H10V5H12V7H10V9H11V12H12V15H2V14H3V11H4V9H3V7H1V6H5V4H6ZM10 7H15V10H12V9H10ZM12 4H14V8H12Z"/>
+      <path fill="#342C4A" d="M6 3H7V5H9V6H10V7H4V6H5V5H6ZM5 8H9V9H10V12H11V14H3V13H4V10H5Z"/>
+      <path fill="#50C9C5" d="M4 7H9V8H8V9H5ZM10 7H14V9H10ZM5 10H9V13H7V14H6V12H5Z"/>
+      <path fill="#BCEBE3" d="M12 7H15V8H12ZM5 7H8V8H5Z"/>
+      <path fill="#5E6C80" d="M12 5H13V9H12Z"/>
+    </g>
+    <g id="player_wizard-cast-a">
+      <path fill="#0D111C" d="M7 2H9V4H11V5H13V7H11V9H12V12H13V15H3V14H4V11H5V9H4V7H2V6H6V4H7ZM12 3H15V6H14V13H12ZM1 3H4V6H1Z"/>
+      <path fill="#342C4A" d="M7 3H8V5H10V6H11V7H5V6H6V5H7ZM6 8H10V9H11V12H12V14H4V13H5V10H6Z"/>
+      <path fill="#50C9C5" d="M5 7H10V8H9V9H6ZM6 10H10V13H8V14H7V12H6ZM2 3H3V4H4V5H2ZM1 4H2V5H1Z"/>
+      <path fill="#BCEBE3" d="M2 4H3V5H2ZM6 7H9V8H6ZM13 2H14V4H13Z"/>
+      <path fill="#5E6C80" d="M13 4H14V13H13ZM12 12H15V13H12Z"/>
+    </g>
+    <g id="player_wizard-cast-b">
+      <path fill="#0D111C" d="M7 1H9V3H11V4H13V6H11V8H12V11H13V15H3V14H4V11H5V8H4V6H2V5H6V3H7ZM12 5H15V8H14V13H12ZM1 6H4V9H1Z"/>
+      <path fill="#342C4A" d="M7 2H8V4H10V5H11V6H5V5H6V4H7ZM6 7H10V8H11V11H12V14H4V13H5V10H6Z"/>
+      <path fill="#50C9C5" d="M5 6H10V7H9V8H6ZM6 9H10V12H8V14H7V12H6ZM12 2H13V3H14V5H13V6H11V5H12ZM2 7H4V9H2Z"/>
+      <path fill="#BCEBE3" d="M12 3H13V5H12ZM6 6H9V7H6ZM2 7H3V8H2Z"/>
+      <path fill="#5E6C80" d="M13 6H14V13H13ZM12 12H15V13H12Z"/>
+    </g>
+    <g id="player_wizard-hurt-a">
+      <path fill="#0D111C" d="M9 3H11V5H13V6H15V8H13V10H14V13H12V15H4V14H5V11H6V9H5V7H3V6H8V5H9ZM2 8H6V10H4V13H2Z"/>
+      <path fill="#342C4A" d="M9 4H10V6H12V7H13V8H7V7H8V6H9ZM7 9H12V10H13V13H11V14H5V13H6V11H7Z"/>
+      <path fill="#50C9C5" d="M7 8H12V9H11V10H8ZM7 11H11V13H9V14H8V13H7ZM3 8H5V10H3Z"/>
+      <path fill="#BCEBE3" d="M8 8H11V9H8ZM2 4H3V5H2ZM1 6H3V7H1Z"/>
+      <path fill="#5E6C80" d="M3 9H4V13H3Z"/>
+    </g>
+    <g id="player_wizard-hurt-b">
+      <path fill="#0D111C" d="M4 5H6V7H8V8H10V10H9V11H11V14H9V15H2V14H3V11H2V9H1V8H4V7H4ZM10 7H13V9H12V14H10Z"/>
+      <path fill="#342C4A" d="M4 6H5V8H7V9H8V10H3V9H4ZM4 10H8V11H10V13H9V14H3V13H4Z"/>
+      <path fill="#50C9C5" d="M3 9H7V10H6V11H4ZM5 11H9V13H7V14H6V13H5Z"/>
+      <path fill="#BCEBE3" d="M4 9H6V10H4ZM13 4H14V5H13ZM14 6H15V7H14Z"/>
+      <path fill="#5E6C80" d="M11 8H12V14H11Z"/>
+    </g>
+    <g id="player_wizard-death-a">
+      <path fill="#0D111C" d="M7 6H9V8H11V9H13V11H12V13H14V15H3V14H2V11H4V9H6V8H7ZM1 8H4V10H2V13H1Z"/>
+      <path fill="#342C4A" d="M7 7H8V9H10V10H11V11H5V10H6V9H7ZM4 11H11V12H12V14H3V13H4Z"/>
+      <path fill="#50C9C5" d="M5 11H10V12H11V14H7V13H5ZM2 9H3V10H2Z"/>
+      <path fill="#BCEBE3" d="M6 10H9V11H6Z"/>
+      <path fill="#5E6C80" d="M2 10H3V13H2Z"/>
+    </g>
+    <g id="player_wizard-death-b">
+      <path fill="#0D111C" d="M2 10H5V9H8V10H11V12H14V13H15V15H9V14H7V15H1V12H2Z"/>
+      <path fill="#342C4A" d="M3 11H6V10H8V11H10V13H13V14H8V13H6V14H2V12H3Z"/>
+      <path fill="#50C9C5" d="M5 11H9V12H11V14H8V13H5Z"/>
+      <path fill="#BCEBE3" d="M3 11H5V12H3Z"/>
+      <path fill="#5E6C80" d="M12 12H15V13H12Z"/>
     </g>
 
-    <!-- Horned dungeon raider: cast -->
-    <g id="enemy-cast-a">
-      <g fill="#171525">
-        <rect x="4" y="1" width="3" height="3"/><rect x="10" y="1" width="3" height="3"/>
-        <rect x="5" y="3" width="7" height="5"/><rect x="4" y="7" width="8" height="6"/>
-        <rect x="1" y="6" width="4" height="5"/><rect x="11" y="7" width="3" height="4"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="0" y="3" width="3" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="4" y="1" width="1" height="2"/><rect x="5" y="2" width="1" height="2"/><rect x="12" y="1" width="1" height="2"/><rect x="11" y="2" width="1" height="2"/></g>
-      <g fill="#49303f"><rect x="6" y="4" width="5" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="2" y="7" width="3" height="3"/><rect x="11" y="8" width="2" height="2"/></g>
-      <g fill="#2b293d"><rect x="7" y="5" width="3" height="2"/><rect x="6" y="10" width="4" height="3"/></g>
-      <g fill="#e06a36"><rect x="7" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="6" y="9" width="4" height="1"/><rect x="0" y="4" width="2" height="2"/></g>
-      <g fill="#f09a4a"><rect x="1" y="3" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/></g>
-      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+    <g id="enemy_humanoid-idle-a">
+      <path fill="#0D111C" d="M4 2H7V3H9V7H10V12H9V15H6V13H5V15H2V12H3V8H2V6H3V3H4ZM10 7H12V9H14V13H12V12H10Z"/>
+      <path fill="#354154" d="M4 3H7V4H8V7H4V6H3V4H4ZM4 8H9V12H7V13H5V12H4Z"/>
+      <path fill="#D75C45" d="M3 7H8V8H9V10H8V12H5V10H4V9H3Z"/>
+      <path fill="#EEA36D" d="M4 4H5V5H4ZM7 4H8V5H7ZM3 8H4V10H3Z"/>
+      <path fill="#80513B" d="M11 8H12V10H14V12H13V11H11Z"/>
     </g>
-    <g id="enemy-cast-b">
-      <g fill="#171525">
-        <rect x="4" y="3" width="3" height="3"/><rect x="10" y="3" width="3" height="3"/>
-        <rect x="5" y="5" width="7" height="4"/><rect x="4" y="8" width="8" height="5"/>
-        <rect x="2" y="4" width="3" height="6"/><rect x="12" y="4" width="3" height="6"/>
-        <rect x="4" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="6" y="0" width="5" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="4" y="3" width="1" height="2"/><rect x="5" y="4" width="1" height="2"/><rect x="12" y="3" width="1" height="2"/><rect x="11" y="4" width="1" height="2"/></g>
-      <g fill="#49303f"><rect x="6" y="6" width="5" height="2"/><rect x="5" y="9" width="6" height="4"/><rect x="3" y="5" width="2" height="4"/><rect x="12" y="5" width="2" height="4"/></g>
-      <g fill="#2b293d"><rect x="7" y="6" width="3" height="2"/><rect x="6" y="11" width="4" height="2"/></g>
-      <g fill="#e06a36"><rect x="7" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="6" y="10" width="4" height="1"/><rect x="7" y="1" width="3" height="2"/></g>
-      <g fill="#f09a4a"><rect x="8" y="0" width="1" height="2"/><rect x="6" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
-      <g fill="#242238"><rect x="4" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
+    <g id="enemy_humanoid-idle-b">
+      <path fill="#0D111C" d="M3 3H6V2H8V3H9V7H10V12H9V15H7V13H5V15H2V12H3V8H1V6H3ZM10 8H13V10H14V14H12V12H10Z"/>
+      <path fill="#354154" d="M4 3H7V4H8V7H4V6H3V4H4ZM4 8H9V12H7V13H5V12H4Z"/>
+      <path fill="#D75C45" d="M3 7H8V8H9V10H8V12H5V10H4V9H3Z"/>
+      <path fill="#EEA36D" d="M4 4H5V5H4ZM7 4H8V5H7ZM2 7H3V9H2Z"/>
+      <path fill="#80513B" d="M11 9H12V11H14V13H13V12H11Z"/>
     </g>
-
-    <!-- Horned dungeon raider: hurt and death -->
-    <g id="enemy-hurt-a">
-      <g fill="#171525">
-        <rect x="8" y="2" width="3" height="3"/><rect x="12" y="2" width="3" height="2"/>
-        <rect x="7" y="4" width="7" height="5"/><rect x="5" y="8" width="8" height="5"/>
-        <rect x="3" y="7" width="3" height="5"/><rect x="12" y="9" width="3" height="4"/>
-        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="8" y="2" width="1" height="2"/><rect x="9" y="3" width="1" height="2"/><rect x="14" y="2" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="8" y="5" width="5" height="3"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="3"/></g>
-      <g fill="#2b293d"><rect x="9" y="6" width="4" height="2"/><rect x="7" y="11" width="4" height="2"/></g>
-      <g fill="#e06a36"><rect x="9" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="7" y="10" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#f09a4a"><rect x="2" y="3" width="2" height="1"/><rect x="1" y="5" width="3" height="1"/><rect x="3" y="7" width="1" height="1"/></g>
+    <g id="enemy_humanoid-move-a">
+      <path fill="#0D111C" d="M5 2H8V3H10V7H11V11H9V13H8V15H5V13H3V15H1V13H2V10H3V8H2V6H4V3H5ZM11 8H14V10H15V13H12V11H11Z"/>
+      <path fill="#354154" d="M5 3H8V4H9V7H5V6H4V4H5ZM4 8H10V11H8V13H6V12H4Z"/>
+      <path fill="#D75C45" d="M3 7H9V8H10V10H8V12H6V10H4V9H3Z"/>
+      <path fill="#EEA36D" d="M5 4H6V5H5ZM8 4H9V5H8ZM3 8H4V10H3Z"/>
+      <path fill="#80513B" d="M12 9H13V11H15V12H13V11H12Z"/>
     </g>
-    <g id="enemy-hurt-b">
-      <g fill="#171525">
-        <rect x="3" y="4" width="3" height="3"/><rect x="9" y="4" width="3" height="3"/>
-        <rect x="4" y="6" width="8" height="4"/><rect x="3" y="9" width="10" height="5"/>
-        <rect x="2" y="10" width="2" height="4"/><rect x="10" y="5" width="3" height="6"/>
-        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="3" y="4" width="1" height="2"/><rect x="4" y="5" width="1" height="2"/><rect x="11" y="4" width="1" height="2"/><rect x="10" y="5" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="5" y="7" width="6" height="2"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
-      <g fill="#2b293d"><rect x="6" y="7" width="4" height="2"/><rect x="5" y="12" width="6" height="2"/></g>
-      <g fill="#e06a36"><rect x="6" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="5" y="11" width="6" height="1"/></g>
-      <g fill="#242238"><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
-      <g fill="#f09a4a"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
+    <g id="enemy_humanoid-move-b">
+      <path fill="#0D111C" d="M3 3H6V2H8V3H9V7H10V11H8V13H6V15H3V13H1V15H1V13H2V10H2V8H1V6H3ZM10 7H13V9H14V14H11V11H10Z"/>
+      <path fill="#354154" d="M4 3H7V4H8V7H4V6H3V4H4ZM3 8H9V11H7V13H5V12H3Z"/>
+      <path fill="#D75C45" d="M2 7H8V8H9V10H7V12H5V10H3V9H2Z"/>
+      <path fill="#EEA36D" d="M4 4H5V5H4ZM7 4H8V5H7ZM2 8H3V10H2Z"/>
+      <path fill="#80513B" d="M11 8H12V10H14V12H13V11H11Z"/>
     </g>
-    <g id="enemy-death-a">
-      <g fill="#171525">
-        <rect x="8" y="7" width="3" height="3"/><rect x="12" y="7" width="3" height="2"/>
-        <rect x="7" y="9" width="7" height="4"/><rect x="3" y="10" width="7" height="4"/>
-        <rect x="2" y="12" width="5" height="4"/><rect x="8" y="13" width="5" height="3"/>
-      </g>
-      <g fill="#d8d0b7"><rect x="8" y="7" width="1" height="2"/><rect x="9" y="8" width="1" height="2"/><rect x="14" y="7" width="1" height="1"/></g>
-      <g fill="#49303f"><rect x="8" y="10" width="5" height="2"/><rect x="4" y="11" width="6" height="3"/></g>
-      <g fill="#2b293d"><rect x="9" y="10" width="4" height="2"/><rect x="5" y="13" width="4" height="1"/></g>
-      <g fill="#e06a36"><rect x="9" y="10" width="1" height="1"/><rect x="5" y="12" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
-      <g fill="#69778a"><rect x="13" y="13" width="3" height="1"/></g>
+    <g id="enemy_humanoid-attack-a">
+      <path fill="#0D111C" d="M4 3H7V4H9V8H10V12H9V15H6V13H5V15H2V12H3V9H2V7H3V4H4ZM1 7H4V9H2V11H1ZM9 7H12V8H14V11H12V10H9Z"/>
+      <path fill="#354154" d="M4 4H7V5H8V8H4V7H3V5H4ZM4 9H9V12H7V13H5V12H4Z"/>
+      <path fill="#D75C45" d="M3 8H8V9H9V11H8V12H5V11H4V10H3Z"/>
+      <path fill="#EEA36D" d="M4 5H5V6H4ZM7 5H8V6H7Z"/>
+      <path fill="#80513B" d="M10 8H12V9H14V10H12V9H10ZM1 8H3V9H1Z"/>
     </g>
-    <g id="enemy-death-b">
-      <g fill="#171525">
-        <rect x="2" y="11" width="12" height="4"/><rect x="10" y="9" width="4" height="3"/>
-        <rect x="1" y="13" width="5" height="3"/><rect x="6" y="14" width="9" height="2"/>
-        <rect x="14" y="12" width="2" height="2"/>
-      </g>
-      <g fill="#49303f"><rect x="3" y="12" width="8" height="3"/><rect x="11" y="10" width="3" height="2"/></g>
-      <g fill="#2b293d"><rect x="11" y="11" width="3" height="1"/><rect x="5" y="13" width="5" height="2"/></g>
-      <g fill="#e06a36"><rect x="12" y="11" width="1" height="1"/><rect x="4" y="12" width="5" height="1"/></g>
-      <g fill="#242238"><rect x="1" y="14" width="5" height="2"/><rect x="7" y="15" width="8" height="1"/></g>
-      <g fill="#d8d0b7"><rect x="14" y="12" width="2" height="1"/></g>
+    <g id="enemy_humanoid-attack-b">
+      <path fill="#0D111C" d="M5 3H8V4H10V8H11V12H10V15H7V13H6V15H3V12H4V9H3V7H4V4H5ZM1 8H4V11H2V10H1ZM10 7H15V10H13V9H10Z"/>
+      <path fill="#354154" d="M5 4H8V5H9V8H5V7H4V5H5ZM5 9H10V12H8V13H6V12H5Z"/>
+      <path fill="#D75C45" d="M4 8H9V9H10V11H9V12H6V11H5V10H4Z"/>
+      <path fill="#EEA36D" d="M5 5H6V6H5ZM8 5H9V6H8Z"/>
+      <path fill="#80513B" d="M11 8H15V9H11ZM2 9H4V10H2Z"/>
+    </g>
+    <g id="enemy_humanoid-cast-a">
+      <path fill="#0D111C" d="M4 2H7V3H9V7H10V12H9V15H6V13H5V15H2V12H3V8H2V6H3V3H4ZM1 4H4V7H1ZM10 8H13V12H10Z"/>
+      <path fill="#354154" d="M4 3H7V4H8V7H4V6H3V4H4ZM4 8H9V12H7V13H5V12H4Z"/>
+      <path fill="#D75C45" d="M3 7H8V8H9V10H8V12H5V10H4V9H3ZM2 4H3V5H4V6H2Z"/>
+      <path fill="#EEA36D" d="M2 5H3V6H2ZM4 4H5V5H4ZM7 4H8V5H7Z"/>
+      <path fill="#80513B" d="M11 9H12V12H11Z"/>
+    </g>
+    <g id="enemy_humanoid-cast-b">
+      <path fill="#0D111C" d="M4 3H7V4H9V8H10V12H9V15H6V13H5V15H2V12H3V9H2V7H3V4H4ZM1 7H4V10H1ZM10 7H13V11H10Z"/>
+      <path fill="#354154" d="M4 4H7V5H8V8H4V7H3V5H4ZM4 9H9V12H7V13H5V12H4Z"/>
+      <path fill="#D75C45" d="M3 8H8V9H9V11H8V12H5V11H4V10H3ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#EEA36D" d="M2 3H3V4H2ZM4 5H5V6H4ZM7 5H8V6H7Z"/>
+      <path fill="#80513B" d="M11 8H12V11H11Z"/>
+    </g>
+    <g id="enemy_humanoid-hurt-a">
+      <path fill="#0D111C" d="M6 4H9V5H11V9H12V13H10V15H7V13H5V15H2V13H3V10H2V8H4V6H6ZM1 9H4V12H2V13H1ZM12 9H14V14H12Z"/>
+      <path fill="#354154" d="M6 5H9V6H10V9H6V8H5V6H6ZM4 10H11V13H9V14H6V13H4Z"/>
+      <path fill="#D75C45" d="M4 9H10V10H11V12H9V13H6V12H5V11H4Z"/>
+      <path fill="#EEA36D" d="M6 6H7V7H6ZM9 6H10V7H9Z"/>
+      <path fill="#80513B" d="M13 10H14V14H13Z"/>
+    </g>
+    <g id="enemy_humanoid-hurt-b">
+      <path fill="#0D111C" d="M3 5H6V6H8V9H10V13H9V15H6V13H4V15H1V12H2V9H1V7H3ZM10 8H13V10H14V14H11V11H10Z"/>
+      <path fill="#354154" d="M3 6H6V7H7V9H3V8H2V7H3ZM3 10H9V13H7V14H5V13H3Z"/>
+      <path fill="#D75C45" d="M2 9H7V10H9V12H7V13H5V12H3V11H2Z"/>
+      <path fill="#EEA36D" d="M3 7H4V8H3ZM6 7H7V8H6Z"/>
+      <path fill="#80513B" d="M12 9H13V14H12Z"/>
+    </g>
+    <g id="enemy_humanoid-death-a">
+      <path fill="#0D111C" d="M6 6H9V7H11V10H12V13H10V15H7V14H5V15H2V13H3V10H2V8H4V7H6ZM11 9H14V12H12V13H11Z"/>
+      <path fill="#354154" d="M6 7H9V8H10V10H6V9H5V8H6ZM4 10H11V13H9V14H6V13H4Z"/>
+      <path fill="#D75C45" d="M3 9H9V10H11V12H9V13H6V12H4V11H3Z"/>
+      <path fill="#EEA36D" d="M6 8H7V9H6Z"/>
+      <path fill="#80513B" d="M12 10H14V11H12Z"/>
+    </g>
+    <g id="enemy_humanoid-death-b">
+      <path fill="#0D111C" d="M1 10H5V9H8V11H12V12H15V15H9V14H6V15H2V14H1Z"/>
+      <path fill="#354154" d="M2 11H6V10H8V12H12V14H8V13H5V14H2Z"/>
+      <path fill="#D75C45" d="M4 11H8V12H11V14H7V13H4Z"/>
+      <path fill="#EEA36D" d="M2 11H3V12H2Z"/>
+      <path fill="#80513B" d="M12 12H15V13H12Z"/>
     </g>
 
-    <!-- Travelling shopkeeper: idle -->
-    <g id="shop-idle-a">
-      <g fill="#171525">
-        <rect x="6" y="1" width="5" height="1"/><rect x="5" y="2" width="7" height="5"/>
-        <rect x="1" y="5" width="5" height="8"/><rect x="4" y="7" width="9" height="6"/>
-        <rect x="3" y="8" width="2" height="5"/><rect x="12" y="8" width="2" height="5"/>
-        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
-        <rect x="14" y="5" width="2" height="11"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="6" width="4" height="6"/><rect x="1" y="8" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="6" y="2" width="5" height="4"/><rect x="5" y="8" width="7" height="5"/><rect x="4" y="9" width="1" height="3"/><rect x="12" y="9" width="1" height="3"/></g>
-      <g fill="#e1b866"><rect x="7" y="2" width="3" height="1"/><rect x="6" y="4" width="5" height="1"/><rect x="6" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="7" y="5" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="10" y="5" width="1" height="1"/></g>
-      <g fill="#2e7671"><rect x="5" y="7" width="7" height="2"/><rect x="8" y="9" width="3" height="4"/></g>
-      <g fill="#56a9a0"><rect x="6" y="7" width="5" height="1"/><rect x="9" y="9" width="1" height="3"/></g>
-      <g fill="#8d5e2d"><rect x="15" y="6" width="1" height="10"/><rect x="14" y="8" width="2" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="7" width="2" height="1"/></g>
+    <g id="enemy_brute-idle-a">
+      <path fill="#0D111C" d="M4 4H8V5H10V7H13V9H15V13H13V14H10V15H7V13H6V15H3V14H1V9H3V6H4Z"/>
+      <path fill="#745044" d="M4 5H8V6H9V8H12V9H13V12H11V13H4V12H3V9H4Z"/>
+      <path fill="#D75C45" d="M3 8H9V9H12V12H10V13H5V12H3Z"/>
+      <path fill="#EEA36D" d="M4 6H5V7H4ZM7 6H8V7H7ZM2 9H3V12H2Z"/>
+      <path fill="#80513B" d="M13 9H15V12H13Z"/>
     </g>
-    <g id="shop-idle-b">
-      <g fill="#171525">
-        <rect x="6" y="2" width="5" height="1"/><rect x="5" y="3" width="7" height="4"/>
-        <rect x="1" y="4" width="5" height="9"/><rect x="4" y="7" width="9" height="6"/>
-        <rect x="3" y="8" width="2" height="5"/><rect x="12" y="7" width="2" height="5"/>
-        <rect x="4" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
-        <rect x="13" y="4" width="2" height="4"/><rect x="14" y="7" width="2" height="9"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="5" width="4" height="7"/><rect x="1" y="7" width="2" height="4"/></g>
-      <g fill="#c6984f"><rect x="6" y="3" width="5" height="3"/><rect x="5" y="8" width="7" height="5"/><rect x="4" y="9" width="1" height="3"/><rect x="12" y="8" width="1" height="3"/></g>
-      <g fill="#e1b866"><rect x="7" y="3" width="3" height="1"/><rect x="7" y="5" width="4" height="1"/><rect x="10" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="7" y="6" width="4" height="1"/><rect x="4" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#d8d0b7"><rect x="10" y="6" width="1" height="1"/></g>
-      <g fill="#2e7671"><rect x="5" y="7" width="7" height="2"/><rect x="7" y="9" width="4" height="4"/></g>
-      <g fill="#56a9a0"><rect x="6" y="7" width="5" height="1"/><rect x="8" y="9" width="2" height="3"/></g>
-      <g fill="#8d5e2d"><rect x="14" y="5" width="1" height="3"/><rect x="15" y="8" width="1" height="8"/><rect x="13" y="7" width="3" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="6" width="2" height="1"/></g>
+    <g id="enemy_brute-idle-b">
+      <path fill="#0D111C" d="M3 5H7V4H9V6H11V8H14V10H15V14H12V15H9V14H7V15H4V14H1V10H2V7H3Z"/>
+      <path fill="#745044" d="M4 5H8V6H10V8H13V10H14V13H11V14H4V13H2V10H3V7H4Z"/>
+      <path fill="#D75C45" d="M3 9H10V10H13V13H10V14H5V13H3Z"/>
+      <path fill="#EEA36D" d="M4 6H5V7H4ZM7 6H8V7H7ZM2 10H3V13H2Z"/>
+      <path fill="#80513B" d="M13 10H14V13H13Z"/>
     </g>
-
-    <!-- Travelling shopkeeper: move -->
-    <g id="shop-move-a">
-      <g fill="#171525">
-        <rect x="7" y="1" width="5" height="1"/><rect x="6" y="2" width="7" height="5"/>
-        <rect x="2" y="5" width="5" height="8"/><rect x="5" y="7" width="9" height="6"/>
-        <rect x="3" y="8" width="3" height="4"/><rect x="13" y="8" width="2" height="4"/>
-        <rect x="4" y="12" width="4" height="2"/><rect x="2" y="14" width="6" height="2"/>
-        <rect x="11" y="12" width="3" height="2"/><rect x="12" y="14" width="4" height="2"/>
-        <rect x="14" y="5" width="2" height="11"/>
-      </g>
-      <g fill="#654832"><rect x="3" y="6" width="4" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="7" y="2" width="5" height="4"/><rect x="6" y="8" width="7" height="5"/><rect x="4" y="9" width="2" height="2"/></g>
-      <g fill="#e1b866"><rect x="8" y="2" width="3" height="1"/><rect x="8" y="4" width="4" height="1"/><rect x="10" y="8" width="3" height="1"/></g>
-      <g fill="#242238"><rect x="8" y="5" width="4" height="1"/><rect x="2" y="15" width="6" height="1"/><rect x="12" y="15" width="4" height="1"/></g>
-      <g fill="#2e7671"><rect x="6" y="7" width="7" height="2"/><rect x="8" y="9" width="3" height="4"/></g>
-      <g fill="#56a9a0"><rect x="7" y="7" width="5" height="1"/><rect x="9" y="9" width="1" height="3"/></g>
-      <g fill="#8d5e2d"><rect x="15" y="6" width="1" height="10"/></g>
-      <g fill="#a7b4be"><rect x="3" y="7" width="2" height="1"/></g>
+    <g id="enemy_brute-move-a">
+      <path fill="#0D111C" d="M5 4H9V5H11V7H14V9H15V12H13V13H11V15H8V13H6V14H2V15H1V13H3V11H1V8H3V6H5Z"/>
+      <path fill="#745044" d="M5 5H9V6H10V8H13V9H14V11H12V12H4V11H2V9H4V7H5Z"/>
+      <path fill="#D75C45" d="M4 8H10V9H13V11H11V12H6V13H4V11H3V9H4Z"/>
+      <path fill="#EEA36D" d="M5 6H6V7H5ZM8 6H9V7H8ZM2 8H3V10H2Z"/>
+      <path fill="#80513B" d="M13 9H15V11H13Z"/>
     </g>
-    <g id="shop-move-b">
-      <g fill="#171525">
-        <rect x="5" y="2" width="5" height="1"/><rect x="4" y="3" width="7" height="4"/>
-        <rect x="1" y="4" width="5" height="9"/><rect x="4" y="7" width="8" height="6"/>
-        <rect x="3" y="8" width="2" height="4"/><rect x="11" y="8" width="3" height="4"/>
-        <rect x="4" y="12" width="3" height="3"/><rect x="2" y="14" width="5" height="2"/>
-        <rect x="9" y="12" width="3" height="2"/><rect x="10" y="14" width="5" height="2"/>
-        <rect x="12" y="5" width="2" height="3"/><rect x="13" y="7" width="2" height="9"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="5" width="4" height="7"/><rect x="1" y="7" width="2" height="4"/></g>
-      <g fill="#c6984f"><rect x="5" y="3" width="5" height="3"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="9" width="2" height="2"/></g>
-      <g fill="#e1b866"><rect x="6" y="3" width="3" height="1"/><rect x="6" y="5" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="6" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="10" y="15" width="5" height="1"/></g>
-      <g fill="#2e7671"><rect x="4" y="7" width="7" height="2"/><rect x="6" y="9" width="3" height="4"/></g>
-      <g fill="#56a9a0"><rect x="5" y="7" width="5" height="1"/><rect x="7" y="9" width="1" height="3"/></g>
-      <g fill="#8d5e2d"><rect x="13" y="6" width="1" height="2"/><rect x="14" y="8" width="1" height="8"/></g>
-      <g fill="#a7b4be"><rect x="2" y="6" width="2" height="1"/></g>
+    <g id="enemy_brute-move-b">
+      <path fill="#0D111C" d="M3 5H7V4H9V6H11V8H14V10H15V13H13V15H10V13H8V14H6V15H2V14H1V12H3V10H1V8H2V6H3Z"/>
+      <path fill="#745044" d="M4 5H8V6H10V8H13V10H14V12H12V13H4V12H2V10H3V7H4Z"/>
+      <path fill="#D75C45" d="M3 9H10V10H13V12H11V13H6V12H3Z"/>
+      <path fill="#EEA36D" d="M4 6H5V7H4ZM7 6H8V7H7ZM2 9H3V11H2Z"/>
+      <path fill="#80513B" d="M13 10H15V12H13Z"/>
     </g>
-
-    <!-- Travelling shopkeeper: attack -->
-    <g id="shop-attack-a">
-      <g fill="#171525">
-        <rect x="5" y="3" width="5" height="1"/><rect x="4" y="4" width="7" height="4"/>
-        <rect x="1" y="6" width="5" height="7"/><rect x="4" y="8" width="8" height="5"/>
-        <rect x="3" y="9" width="2" height="4"/><rect x="10" y="6" width="3" height="5"/>
-        <rect x="3" y="13" width="4" height="3"/><rect x="8" y="13" width="4" height="3"/>
-        <rect x="10" y="0" width="2" height="7"/><rect x="12" y="0" width="4" height="2"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="7" width="4" height="5"/><rect x="1" y="9" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="5" y="4" width="5" height="3"/><rect x="5" y="9" width="6" height="4"/><rect x="10" y="7" width="2" height="3"/></g>
-      <g fill="#e1b866"><rect x="6" y="4" width="3" height="1"/><rect x="6" y="6" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="7" width="4" height="1"/><rect x="3" y="14" width="4" height="2"/><rect x="8" y="14" width="4" height="2"/></g>
-      <g fill="#2e7671"><rect x="4" y="8" width="7" height="2"/><rect x="6" y="10" width="3" height="3"/></g>
-      <g fill="#56a9a0"><rect x="5" y="8" width="5" height="1"/><rect x="7" y="10" width="1" height="2"/></g>
-      <g fill="#8d5e2d"><rect x="11" y="0" width="1" height="7"/><rect x="12" y="1" width="4" height="1"/><rect x="10" y="6" width="3" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="8" width="2" height="1"/></g>
+    <g id="enemy_brute-attack-a">
+      <path fill="#0D111C" d="M4 5H8V6H10V8H13V10H15V13H12V14H10V15H7V13H6V15H3V14H1V10H2V7H4ZM1 5H4V7H3V9H1ZM11 7H14V9H11Z"/>
+      <path fill="#745044" d="M4 6H8V7H9V9H12V10H13V12H11V13H4V12H3V9H4Z"/>
+      <path fill="#D75C45" d="M3 9H9V10H12V12H10V13H5V12H3Z"/>
+      <path fill="#EEA36D" d="M4 7H5V8H4ZM7 7H8V8H7Z"/>
+      <path fill="#80513B" d="M1 6H3V7H1ZM12 8H14V9H12Z"/>
     </g>
-    <g id="shop-attack-b">
-      <g fill="#171525">
-        <rect x="7" y="2" width="5" height="1"/><rect x="6" y="3" width="7" height="5"/>
-        <rect x="2" y="5" width="5" height="8"/><rect x="5" y="8" width="8" height="5"/>
-        <rect x="3" y="9" width="3" height="4"/><rect x="11" y="7" width="4" height="4"/>
-        <rect x="3" y="13" width="5" height="3"/><rect x="10" y="13" width="6" height="3"/>
-        <rect x="11" y="6" width="5" height="3"/>
-      </g>
-      <g fill="#654832"><rect x="3" y="6" width="4" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="7" y="3" width="5" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="11" y="8" width="3" height="2"/></g>
-      <g fill="#e1b866"><rect x="8" y="3" width="3" height="1"/><rect x="8" y="5" width="4" height="1"/><rect x="10" y="9" width="2" height="1"/></g>
-      <g fill="#242238"><rect x="8" y="6" width="4" height="1"/><rect x="3" y="14" width="5" height="2"/><rect x="10" y="14" width="6" height="2"/></g>
-      <g fill="#2e7671"><rect x="5" y="8" width="7" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
-      <g fill="#56a9a0"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="1" height="2"/></g>
-      <g fill="#8d5e2d"><rect x="12" y="7" width="4" height="1"/><rect x="15" y="6" width="1" height="3"/><rect x="11" y="8" width="2" height="1"/></g>
-      <g fill="#a7b4be"><rect x="3" y="7" width="2" height="1"/></g>
+    <g id="enemy_brute-attack-b">
+      <path fill="#0D111C" d="M5 5H9V6H11V8H13V9H15V12H13V14H11V15H8V13H7V15H4V14H2V11H3V8H5ZM10 7H15V10H12V9H10Z"/>
+      <path fill="#745044" d="M5 6H9V7H10V9H12V10H14V11H12V13H5V12H4V9H5Z"/>
+      <path fill="#D75C45" d="M4 9H10V10H13V12H11V13H6V12H4Z"/>
+      <path fill="#EEA36D" d="M5 7H6V8H5ZM8 7H9V8H8Z"/>
+      <path fill="#80513B" d="M11 8H15V9H11Z"/>
+    </g>
+    <g id="enemy_brute-cast-a">
+      <path fill="#0D111C" d="M4 4H8V5H10V7H13V9H15V13H12V14H10V15H7V13H6V15H3V14H1V9H3V6H4ZM1 3H4V6H1Z"/>
+      <path fill="#745044" d="M4 5H8V6H9V8H12V9H13V12H11V13H4V12H3V9H4Z"/>
+      <path fill="#D75C45" d="M3 8H9V9H12V12H10V13H5V12H3ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#EEA36D" d="M2 4H3V5H2ZM4 6H5V7H4ZM7 6H8V7H7Z"/>
+      <path fill="#80513B" d="M13 10H15V12H13Z"/>
+    </g>
+    <g id="enemy_brute-cast-b">
+      <path fill="#0D111C" d="M4 5H8V6H10V8H13V10H15V14H12V15H9V14H7V15H4V14H1V10H2V7H4ZM1 6H3V8H1ZM11 6H13V8H11Z"/>
+      <path fill="#745044" d="M4 6H8V7H9V9H12V10H13V13H10V14H4V13H2V10H3V8H4Z"/>
+      <path fill="#D75C45" d="M3 9H9V10H12V13H9V14H5V13H3ZM2 3H3V4H4V6H2V5H1V4H2Z"/>
+      <path fill="#EEA36D" d="M2 4H3V5H2ZM4 7H5V8H4ZM7 7H8V8H7Z"/>
+      <path fill="#80513B" d="M13 11H15V13H13Z"/>
+    </g>
+    <g id="enemy_brute-hurt-a">
+      <path fill="#0D111C" d="M6 5H10V6H12V8H14V10H15V14H12V15H9V14H7V15H4V14H2V11H3V8H4V7H6ZM1 9H4V12H2V13H1Z"/>
+      <path fill="#745044" d="M6 6H10V7H11V9H13V10H14V13H11V14H5V13H3V11H4V9H6Z"/>
+      <path fill="#D75C45" d="M4 10H11V11H13V13H10V14H6V13H4Z"/>
+      <path fill="#EEA36D" d="M6 7H7V8H6ZM9 7H10V8H9ZM2 9H3V11H2Z"/>
+      <path fill="#80513B" d="M13 10H15V12H13Z"/>
+    </g>
+    <g id="enemy_brute-hurt-b">
+      <path fill="#0D111C" d="M3 6H7V7H9V9H12V11H14V15H10V14H8V15H5V14H2V13H1V10H2V8H3ZM12 9H15V12H12Z"/>
+      <path fill="#745044" d="M3 7H7V8H8V10H11V11H13V14H9V13H3V12H2V10H3Z"/>
+      <path fill="#D75C45" d="M2 10H9V11H12V13H9V14H5V13H3V12H2Z"/>
+      <path fill="#EEA36D" d="M3 8H4V9H3ZM6 8H7V9H6Z"/>
+      <path fill="#80513B" d="M13 10H15V12H13Z"/>
+    </g>
+    <g id="enemy_brute-death-a">
+      <path fill="#0D111C" d="M5 7H9V8H11V10H14V12H15V15H10V14H7V15H3V14H1V11H2V9H5Z"/>
+      <path fill="#745044" d="M5 8H9V9H10V11H13V12H14V14H9V13H4V14H2V11H3V10H5Z"/>
+      <path fill="#D75C45" d="M3 10H10V11H13V13H9V14H5V13H3Z"/>
+      <path fill="#EEA36D" d="M5 9H6V10H5Z"/>
+      <path fill="#80513B" d="M1 10H3V11H1Z"/>
+    </g>
+    <g id="enemy_brute-death-b">
+      <path fill="#0D111C" d="M1 10H5V9H9V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#745044" d="M2 11H6V10H9V12H13V14H9V13H6V14H2Z"/>
+      <path fill="#D75C45" d="M4 11H9V12H12V14H8V13H4Z"/>
+      <path fill="#EEA36D" d="M2 11H3V12H2Z"/>
+      <path fill="#80513B" d="M13 12H15V13H13Z"/>
     </g>
 
-    <!-- Travelling shopkeeper: cast -->
-    <g id="shop-cast-a">
-      <g fill="#171525">
-        <rect x="5" y="1" width="5" height="1"/><rect x="4" y="2" width="7" height="5"/>
-        <rect x="1" y="5" width="5" height="8"/><rect x="4" y="7" width="8" height="6"/>
-        <rect x="3" y="8" width="2" height="5"/><rect x="11" y="6" width="3" height="4"/>
-        <rect x="5" y="13" width="3" height="3"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="13" y="3" width="3" height="5"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="6" width="4" height="6"/><rect x="1" y="8" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="5" y="2" width="5" height="4"/><rect x="5" y="8" width="6" height="5"/><rect x="11" y="7" width="2" height="2"/><rect x="14" y="4" width="1" height="3"/></g>
-      <g fill="#e1b866"><rect x="6" y="2" width="3" height="1"/><rect x="6" y="4" width="4" height="1"/><rect x="14" y="4" width="1" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="5" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="9" y="14" width="3" height="2"/></g>
-      <g fill="#2e7671"><rect x="4" y="7" width="7" height="2"/><rect x="7" y="9" width="3" height="4"/></g>
-      <g fill="#56a9a0"><rect x="5" y="7" width="5" height="1"/><rect x="8" y="9" width="1" height="3"/><rect x="14" y="5" width="1" height="2"/></g>
-      <g fill="#b6e8df"><rect x="15" y="3" width="1" height="1"/><rect x="13" y="2" width="1" height="1"/><rect x="15" y="7" width="1" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="7" width="2" height="1"/></g>
+    <g id="enemy_undead-idle-a">
+      <path fill="#0D111C" d="M4 2H8V3H9V7H8V8H10V10H9V12H8V15H6V12H5V15H3V11H4V9H2V7H4ZM10 7H13V9H15V11H13V10H10Z"/>
+      <path fill="#E6DDC5" d="M4 3H8V4H8V6H7V7H5V6H4ZM5 8H8V9H9V10H5ZM4 10H8V11H4ZM4 12H5V14H4ZM7 12H8V14H7Z"/>
+      <path fill="#95A3B6" d="M5 4H6V5H5ZM7 4H8V5H7ZM3 7H4V9H3Z"/>
+      <path fill="#D75C45" d="M5 5H6V6H5ZM7 5H8V6H7Z"/>
+      <path fill="#354154" d="M11 8H13V9H14V10H12V9H11Z"/>
     </g>
-    <g id="shop-cast-b">
-      <g fill="#171525">
-        <rect x="6" y="3" width="5" height="1"/><rect x="5" y="4" width="7" height="4"/>
-        <rect x="1" y="6" width="5" height="7"/><rect x="4" y="8" width="9" height="5"/>
-        <rect x="2" y="5" width="3" height="5"/><rect x="12" y="4" width="3" height="6"/>
-        <rect x="4" y="13" width="4" height="3"/><rect x="10" y="13" width="3" height="3"/>
-        <rect x="7" y="0" width="4" height="3"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="7" width="4" height="5"/><rect x="1" y="9" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="6" y="4" width="5" height="3"/><rect x="5" y="9" width="7" height="4"/><rect x="3" y="6" width="2" height="3"/><rect x="12" y="5" width="2" height="4"/></g>
-      <g fill="#e1b866"><rect x="7" y="4" width="3" height="1"/><rect x="7" y="6" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="7" y="7" width="4" height="1"/><rect x="4" y="14" width="4" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#2e7671"><rect x="4" y="8" width="8" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
-      <g fill="#56a9a0"><rect x="6" y="8" width="5" height="1"/><rect x="8" y="10" width="1" height="2"/><rect x="8" y="1" width="2" height="1"/></g>
-      <g fill="#b6e8df"><rect x="8" y="0" width="2" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="8" width="2" height="1"/></g>
+    <g id="enemy_undead-idle-b">
+      <path fill="#0D111C" d="M3 3H7V2H8V3H9V7H8V8H10V10H9V12H8V15H5V13H4V15H2V11H3V9H1V7H3ZM10 8H14V10H15V12H13V10H10Z"/>
+      <path fill="#E6DDC5" d="M4 3H8V4H8V6H7V7H4V6H3V4H4ZM4 8H8V9H9V10H4ZM3 10H8V11H3ZM3 12H4V14H3ZM6 12H7V14H6Z"/>
+      <path fill="#95A3B6" d="M4 4H5V5H4ZM7 4H8V5H7ZM2 7H3V9H2Z"/>
+      <path fill="#D75C45" d="M4 5H5V6H4ZM7 5H8V6H7Z"/>
+      <path fill="#354154" d="M11 9H13V10H15V11H13V10H11Z"/>
     </g>
-
-    <!-- Travelling shopkeeper: hurt and death -->
-    <g id="shop-hurt-a">
-      <g fill="#171525">
-        <rect x="8" y="2" width="5" height="1"/><rect x="7" y="3" width="7" height="5"/>
-        <rect x="2" y="5" width="6" height="8"/><rect x="5" y="8" width="8" height="5"/>
-        <rect x="3" y="7" width="3" height="5"/><rect x="12" y="9" width="3" height="4"/>
-        <rect x="5" y="13" width="3" height="3"/><rect x="10" y="13" width="3" height="3"/>
-      </g>
-      <g fill="#654832"><rect x="3" y="6" width="5" height="6"/><rect x="2" y="8" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="8" y="3" width="5" height="4"/><rect x="6" y="9" width="6" height="4"/><rect x="4" y="8" width="2" height="3"/></g>
-      <g fill="#e1b866"><rect x="9" y="3" width="3" height="1"/><rect x="9" y="5" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="9" y="6" width="4" height="1"/><rect x="5" y="14" width="3" height="2"/><rect x="10" y="14" width="3" height="2"/></g>
-      <g fill="#2e7671"><rect x="5" y="8" width="7" height="2"/><rect x="7" y="10" width="3" height="3"/></g>
-      <g fill="#56a9a0"><rect x="7" y="8" width="4" height="1"/><rect x="8" y="10" width="1" height="2"/></g>
-      <g fill="#e06a36"><rect x="1" y="3" width="2" height="1"/><rect x="0" y="5" width="3" height="1"/><rect x="2" y="7" width="1" height="1"/></g>
-      <g fill="#a7b4be"><rect x="4" y="6" width="2" height="1"/></g>
+    <g id="enemy_undead-move-a">
+      <path fill="#0D111C" d="M5 2H9V3H10V7H9V8H11V10H10V12H9V14H7V15H5V13H3V15H1V13H2V10H4V8H3V6H5ZM11 7H14V9H15V11H13V10H11Z"/>
+      <path fill="#E6DDC5" d="M5 3H9V4H9V6H8V7H6V6H5ZM6 8H9V9H10V10H5V9H6ZM4 10H9V11H4ZM4 12H6V13H4ZM8 12H9V14H8Z"/>
+      <path fill="#95A3B6" d="M6 4H7V5H6ZM8 4H9V5H8ZM3 6H4V8H3Z"/>
+      <path fill="#D75C45" d="M6 5H7V6H6ZM8 5H9V6H8Z"/>
+      <path fill="#354154" d="M12 8H14V9H15V10H13V9H12Z"/>
     </g>
-    <g id="shop-hurt-b">
-      <g fill="#171525">
-        <rect x="5" y="4" width="5" height="1"/><rect x="4" y="5" width="7" height="5"/>
-        <rect x="1" y="7" width="5" height="7"/><rect x="3" y="9" width="10" height="5"/>
-        <rect x="2" y="10" width="2" height="4"/><rect x="10" y="5" width="3" height="6"/>
-        <rect x="2" y="13" width="5" height="3"/><rect x="9" y="13" width="5" height="3"/>
-      </g>
-      <g fill="#654832"><rect x="2" y="8" width="4" height="5"/><rect x="1" y="10" width="2" height="3"/></g>
-      <g fill="#c6984f"><rect x="5" y="5" width="6" height="4"/><rect x="4" y="10" width="8" height="4"/><rect x="10" y="6" width="2" height="4"/></g>
-      <g fill="#e1b866"><rect x="6" y="5" width="4" height="1"/><rect x="6" y="7" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="6" y="8" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="9" y="15" width="5" height="1"/></g>
-      <g fill="#2e7671"><rect x="3" y="9" width="9" height="2"/><rect x="6" y="11" width="4" height="3"/></g>
-      <g fill="#56a9a0"><rect x="5" y="9" width="6" height="1"/><rect x="7" y="11" width="2" height="2"/></g>
-      <g fill="#e06a36"><rect x="14" y="2" width="1" height="2"/><rect x="12" y="4" width="3" height="1"/><rect x="13" y="6" width="2" height="1"/></g>
-      <g fill="#a7b4be"><rect x="2" y="9" width="2" height="1"/></g>
+    <g id="enemy_undead-move-b">
+      <path fill="#0D111C" d="M3 3H7V2H8V3H9V7H8V8H10V10H9V12H8V14H10V15H7V14H5V13H4V15H1V13H2V10H3V8H1V6H3ZM10 8H14V10H15V12H13V10H10Z"/>
+      <path fill="#E6DDC5" d="M4 3H8V4H8V6H7V7H4V6H3V4H4ZM4 8H8V9H9V10H4ZM3 10H8V11H3ZM3 12H5V13H3ZM7 12H8V14H7Z"/>
+      <path fill="#95A3B6" d="M4 4H5V5H4ZM7 4H8V5H7ZM2 6H3V8H2Z"/>
+      <path fill="#D75C45" d="M4 5H5V6H4ZM7 5H8V6H7Z"/>
+      <path fill="#354154" d="M11 9H13V10H15V11H13V10H11Z"/>
     </g>
-    <g id="shop-death-a">
-      <g fill="#171525">
-        <rect x="8" y="7" width="5" height="1"/><rect x="7" y="8" width="7" height="4"/>
-        <rect x="2" y="8" width="6" height="6"/><rect x="4" y="10" width="8" height="4"/>
-        <rect x="2" y="13" width="5" height="3"/><rect x="8" y="13" width="5" height="3"/>
-        <rect x="13" y="14" width="3" height="2"/>
-      </g>
-      <g fill="#654832"><rect x="3" y="9" width="5" height="4"/><rect x="2" y="11" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="8" y="8" width="5" height="3"/><rect x="5" y="11" width="6" height="3"/></g>
-      <g fill="#e1b866"><rect x="9" y="8" width="3" height="1"/><rect x="9" y="10" width="4" height="1"/></g>
-      <g fill="#242238"><rect x="9" y="11" width="4" height="1"/><rect x="2" y="15" width="5" height="1"/><rect x="8" y="15" width="5" height="1"/></g>
-      <g fill="#2e7671"><rect x="4" y="10" width="7" height="2"/><rect x="6" y="12" width="3" height="2"/></g>
-      <g fill="#56a9a0"><rect x="6" y="10" width="4" height="1"/></g>
-      <g fill="#a7b4be"><rect x="4" y="9" width="2" height="1"/></g>
-      <g fill="#e1b866"><rect x="14" y="14" width="1" height="1"/></g>
+    <g id="enemy_undead-attack-a">
+      <path fill="#0D111C" d="M4 3H8V4H9V8H8V9H10V11H9V13H8V15H6V13H5V15H2V12H3V10H1V8H3V5H4ZM9 7H12V8H14V10H12V9H9Z"/>
+      <path fill="#E6DDC5" d="M4 4H8V5H8V7H7V8H5V7H4ZM4 9H8V10H9V11H4ZM3 11H8V12H3ZM4 13H5V14H4ZM7 13H8V14H7Z"/>
+      <path fill="#95A3B6" d="M5 5H6V6H5ZM7 5H8V6H7ZM2 8H3V10H2Z"/>
+      <path fill="#D75C45" d="M5 6H6V7H5ZM7 6H8V7H7Z"/>
+      <path fill="#354154" d="M10 8H12V9H14V10H12V9H10Z"/>
     </g>
-    <g id="shop-death-b">
-      <g fill="#171525">
-        <rect x="2" y="10" width="6" height="5"/><rect x="6" y="11" width="9" height="4"/>
-        <rect x="1" y="13" width="5" height="3"/><rect x="7" y="14" width="8" height="2"/>
-        <rect x="14" y="12" width="2" height="2"/><rect x="1" y="10" width="1" height="1"/>
-      </g>
-      <g fill="#654832"><rect x="3" y="11" width="5" height="3"/><rect x="2" y="12" width="2" height="2"/></g>
-      <g fill="#c6984f"><rect x="8" y="12" width="6" height="3"/></g>
-      <g fill="#e1b866"><rect x="10" y="12" width="4" height="1"/><rect x="15" y="12" width="1" height="1"/><rect x="1" y="10" width="1" height="1"/></g>
-      <g fill="#242238"><rect x="1" y="14" width="5" height="2"/><rect x="8" y="15" width="7" height="1"/><rect x="11" y="14" width="3" height="1"/></g>
-      <g fill="#2e7671"><rect x="7" y="11" width="6" height="1"/><rect x="8" y="13" width="3" height="2"/></g>
-      <g fill="#56a9a0"><rect x="8" y="12" width="2" height="1"/></g>
-      <g fill="#a7b4be"><rect x="4" y="11" width="2" height="1"/></g>
+    <g id="enemy_undead-attack-b">
+      <path fill="#0D111C" d="M5 3H9V4H10V8H9V9H11V11H10V13H9V15H7V13H6V15H3V12H4V10H2V8H4V5H5ZM10 7H15V10H13V9H10Z"/>
+      <path fill="#E6DDC5" d="M5 4H9V5H9V7H8V8H6V7H5ZM5 9H9V10H10V11H5ZM4 11H9V12H4ZM5 13H6V14H5ZM8 13H9V14H8Z"/>
+      <path fill="#95A3B6" d="M6 5H7V6H6ZM8 5H9V6H8ZM3 8H4V10H3Z"/>
+      <path fill="#D75C45" d="M6 6H7V7H6ZM8 6H9V7H8Z"/>
+      <path fill="#354154" d="M11 8H15V9H11Z"/>
+    </g>
+    <g id="enemy_undead-cast-a">
+      <path fill="#0D111C" d="M4 2H8V3H9V7H8V8H10V10H9V12H8V15H6V12H5V15H3V11H4V9H2V7H4ZM1 3H4V6H1ZM10 8H13V10H10Z"/>
+      <path fill="#E6DDC5" d="M4 3H8V4H8V6H7V7H5V6H4ZM5 8H8V9H9V10H5ZM4 10H8V11H4ZM4 12H5V14H4ZM7 12H8V14H7Z"/>
+      <path fill="#95A3B6" d="M5 4H6V5H5ZM7 4H8V5H7Z"/>
+      <path fill="#D75C45" d="M5 5H6V6H5ZM7 5H8V6H7ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#354154" d="M2 4H3V5H2ZM11 9H13V10H11Z"/>
+    </g>
+    <g id="enemy_undead-cast-b">
+      <path fill="#0D111C" d="M4 3H8V4H9V8H8V9H10V11H9V13H8V15H6V13H5V15H3V12H4V10H2V8H4ZM1 6H4V9H1ZM10 7H13V10H10Z"/>
+      <path fill="#E6DDC5" d="M4 4H8V5H8V7H7V8H5V7H4ZM5 9H8V10H9V11H5ZM4 11H8V12H4ZM4 13H5V14H4ZM7 13H8V14H7Z"/>
+      <path fill="#95A3B6" d="M5 5H6V6H5ZM7 5H8V6H7Z"/>
+      <path fill="#D75C45" d="M5 6H6V7H5ZM7 6H8V7H7ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#354154" d="M2 7H3V8H2ZM11 8H13V10H11Z"/>
+    </g>
+    <g id="enemy_undead-hurt-a">
+      <path fill="#0D111C" d="M6 4H10V5H11V9H10V10H12V12H11V14H9V15H7V13H5V15H3V12H4V10H2V8H4V6H6ZM12 9H14V12H12Z"/>
+      <path fill="#E6DDC5" d="M6 5H10V6H10V8H9V9H7V8H6ZM6 10H10V11H11V12H6ZM5 12H9V13H5ZM4 13H5V14H4ZM8 13H9V14H8Z"/>
+      <path fill="#95A3B6" d="M7 6H8V7H7ZM9 6H10V7H9ZM3 8H4V10H3Z"/>
+      <path fill="#D75C45" d="M7 7H8V8H7ZM9 7H10V8H9Z"/>
+      <path fill="#354154" d="M13 10H14V12H13Z"/>
+    </g>
+    <g id="enemy_undead-hurt-b">
+      <path fill="#0D111C" d="M3 5H7V6H8V10H10V12H9V14H8V15H6V13H4V15H2V12H3V10H1V8H3ZM10 8H13V10H14V12H12V10H10Z"/>
+      <path fill="#E6DDC5" d="M3 6H7V7H7V9H6V10H4V9H3ZM4 10H8V11H9V12H4ZM3 12H8V13H3ZM3 13H4V14H3ZM7 13H8V14H7Z"/>
+      <path fill="#95A3B6" d="M4 7H5V8H4ZM6 7H7V8H6ZM2 8H3V10H2Z"/>
+      <path fill="#D75C45" d="M4 8H5V9H4ZM6 8H7V9H6Z"/>
+      <path fill="#354154" d="M11 9H13V10H14V11H12V10H11Z"/>
+    </g>
+    <g id="enemy_undead-death-a">
+      <path fill="#0D111C" d="M6 7H10V8H11V11H13V13H12V15H8V14H6V15H2V13H3V10H4V9H6ZM1 9H4V11H2V13H1Z"/>
+      <path fill="#E6DDC5" d="M6 8H10V9H10V10H9V11H7V10H6ZM4 11H10V12H12V13H9V14H5V13H3V12H4Z"/>
+      <path fill="#95A3B6" d="M7 9H8V10H7ZM2 9H3V11H2Z"/>
+      <path fill="#D75C45" d="M9 9H10V10H9Z"/>
+      <path fill="#354154" d="M12 12H14V13H12Z"/>
+    </g>
+    <g id="enemy_undead-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H6V9H9V11H12V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#E6DDC5" d="M2 11H5V12H7V10H9V12H12V14H8V13H6V14H3V13H2Z"/>
+      <path fill="#95A3B6" d="M3 11H4V12H3ZM10 12H12V13H10Z"/>
+      <path fill="#D75C45" d="M7 10H8V11H7Z"/>
+      <path fill="#354154" d="M13 12H15V13H13Z"/>
     </g>
 
-    <!-- Arcane summon: idle -->
+    <g id="enemy_beast-idle-a">
+      <path fill="#0D111C" d="M2 5H5V6H7V7H11V8H13V7H15V10H13V12H11V14H9V11H6V14H4V11H2V10H1V7H2Z"/>
+      <path fill="#55705A" d="M2 6H5V7H7V8H11V9H12V11H10V12H7V10H4V11H2V9H1V8H2Z"/>
+      <path fill="#78944F" d="M3 6H5V7H4V8H2V7H3ZM5 8H10V10H6V11H4V9H5Z"/>
+      <path fill="#D75C45" d="M2 7H3V8H2ZM4 7H5V8H4Z"/>
+      <path fill="#EEA36D" d="M1 8H2V9H1ZM12 9H14V10H12Z"/>
+    </g>
+    <g id="enemy_beast-idle-b">
+      <path fill="#0D111C" d="M2 6H5V5H7V7H11V8H14V9H15V11H13V12H11V14H8V12H6V14H3V12H2V11H1V8H2Z"/>
+      <path fill="#55705A" d="M2 6H6V7H8V8H11V9H14V10H13V11H10V12H7V10H4V11H2V10H1V8H2Z"/>
+      <path fill="#78944F" d="M3 6H5V7H4V8H2V7H3ZM5 8H10V10H7V11H4V9H5Z"/>
+      <path fill="#D75C45" d="M2 7H3V8H2ZM4 7H5V8H4Z"/>
+      <path fill="#EEA36D" d="M1 8H2V9H1ZM13 9H15V10H13Z"/>
+    </g>
+    <g id="enemy_beast-move-a">
+      <path fill="#0D111C" d="M3 5H6V6H8V7H12V8H14V10H13V12H11V13H10V15H7V13H5V12H3V14H1V12H2V10H1V7H3Z"/>
+      <path fill="#55705A" d="M3 6H6V7H8V8H12V9H13V10H12V11H9V12H6V10H3V11H2V8H3Z"/>
+      <path fill="#78944F" d="M4 6H6V7H5V8H3V7H4ZM6 8H11V10H8V11H5V9H6Z"/>
+      <path fill="#D75C45" d="M3 7H4V8H3ZM5 7H6V8H5Z"/>
+      <path fill="#EEA36D" d="M2 8H3V9H2ZM12 9H14V10H12Z"/>
+    </g>
+    <g id="enemy_beast-move-b">
+      <path fill="#0D111C" d="M1 6H4V5H6V7H10V8H13V9H15V11H13V12H11V14H8V12H6V13H4V15H1V13H2V11H1Z"/>
+      <path fill="#55705A" d="M2 6H5V7H7V8H10V9H13V10H14V11H11V12H8V10H5V11H2V10H1V8H2Z"/>
+      <path fill="#78944F" d="M2 6H4V7H3V8H1V7H2ZM4 8H9V10H6V11H3V9H4Z"/>
+      <path fill="#D75C45" d="M1 7H2V8H1ZM3 7H4V8H3Z"/>
+      <path fill="#EEA36D" d="M1 8H2V9H1ZM13 10H15V11H13Z"/>
+    </g>
+    <g id="enemy_beast-attack-a">
+      <path fill="#0D111C" d="M3 4H6V5H7V7H11V8H14V10H13V12H11V14H9V11H6V14H4V11H2V10H1V7H2V5H3ZM1 3H3V5H1Z"/>
+      <path fill="#55705A" d="M3 5H6V6H7V8H11V9H13V10H12V11H9V12H7V10H4V11H2V9H1V7H2V6H3Z"/>
+      <path fill="#78944F" d="M4 5H6V6H5V7H3V6H4ZM5 8H10V10H7V11H4V9H5Z"/>
+      <path fill="#D75C45" d="M3 6H4V7H3ZM5 6H6V7H5Z"/>
+      <path fill="#EEA36D" d="M1 4H2V5H1ZM12 9H14V10H12Z"/>
+    </g>
+    <g id="enemy_beast-attack-b">
+      <path fill="#0D111C" d="M5 5H8V6H10V7H14V8H15V11H13V12H11V14H9V11H7V14H4V12H2V11H1V8H3V6H5Z"/>
+      <path fill="#55705A" d="M5 6H8V7H10V8H14V10H12V11H9V12H7V10H4V11H2V9H3V7H5Z"/>
+      <path fill="#78944F" d="M6 6H8V7H7V8H5V7H6ZM7 8H12V10H9V11H6V9H7Z"/>
+      <path fill="#D75C45" d="M5 7H6V8H5ZM7 7H8V8H7Z"/>
+      <path fill="#EEA36D" d="M3 8H4V9H3ZM13 9H15V10H13Z"/>
+    </g>
+    <g id="enemy_beast-cast-a">
+      <path fill="#0D111C" d="M3 4H6V5H7V7H11V8H14V10H13V12H11V14H9V11H6V14H4V11H2V10H1V7H2V5H3ZM1 2H4V5H1Z"/>
+      <path fill="#55705A" d="M3 5H6V6H7V8H11V9H13V10H12V11H9V12H7V10H4V11H2V9H1V7H2V6H3Z"/>
+      <path fill="#78944F" d="M4 5H6V6H5V7H3V6H4ZM5 8H10V10H7V11H4V9H5Z"/>
+      <path fill="#D75C45" d="M3 6H4V7H3ZM5 6H6V7H5ZM2 2H3V3H4V4H2Z"/>
+      <path fill="#EEA36D" d="M2 3H3V4H2ZM12 9H14V10H12Z"/>
+    </g>
+    <g id="enemy_beast-cast-b">
+      <path fill="#0D111C" d="M2 5H5V6H7V7H11V8H14V10H13V12H11V14H9V11H6V14H4V11H2V10H1V7H2ZM1 3H4V6H1Z"/>
+      <path fill="#55705A" d="M2 6H5V7H7V8H11V9H13V10H12V11H9V12H7V10H4V11H2V9H1V7H2Z"/>
+      <path fill="#78944F" d="M3 6H5V7H4V8H2V7H3ZM5 8H10V10H7V11H4V9H5Z"/>
+      <path fill="#D75C45" d="M2 7H3V8H2ZM4 7H5V8H4ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#EEA36D" d="M2 3H3V4H2ZM12 9H14V10H12Z"/>
+    </g>
+    <g id="enemy_beast-hurt-a">
+      <path fill="#0D111C" d="M5 6H8V7H10V8H13V9H15V12H13V13H11V15H8V13H6V14H3V15H1V13H2V11H3V9H4V7H5Z"/>
+      <path fill="#55705A" d="M5 7H8V8H10V9H13V10H14V11H12V12H9V13H6V11H3V12H2V11H3V9H5Z"/>
+      <path fill="#78944F" d="M6 7H8V8H7V9H5V8H6ZM6 9H11V11H8V12H5V10H6Z"/>
+      <path fill="#D75C45" d="M5 8H6V9H5ZM7 8H8V9H7Z"/>
+      <path fill="#EEA36D" d="M2 8H3V9H2ZM13 10H15V11H13Z"/>
+    </g>
+    <g id="enemy_beast-hurt-b">
+      <path fill="#0D111C" d="M1 7H4V6H6V8H9V9H12V10H14V13H12V14H10V15H7V13H5V15H2V13H1Z"/>
+      <path fill="#55705A" d="M2 7H5V8H7V9H9V10H12V11H13V12H11V13H8V12H5V13H2V11H1V9H2Z"/>
+      <path fill="#78944F" d="M2 7H4V8H3V9H1V8H2ZM4 9H9V11H6V12H3V10H4Z"/>
+      <path fill="#D75C45" d="M1 8H2V9H1ZM3 8H4V9H3Z"/>
+      <path fill="#EEA36D" d="M12 11H14V12H12Z"/>
+    </g>
+    <g id="enemy_beast-death-a">
+      <path fill="#0D111C" d="M2 8H5V7H7V9H10V10H13V11H15V14H12V15H8V14H6V15H2V13H1V10H2Z"/>
+      <path fill="#55705A" d="M2 8H6V9H8V10H11V11H14V13H11V14H7V13H3V12H2Z"/>
+      <path fill="#78944F" d="M3 8H5V9H4V10H2V9H3ZM5 10H10V12H7V13H4V11H5Z"/>
+      <path fill="#D75C45" d="M2 9H3V10H2Z"/>
+      <path fill="#EEA36D" d="M13 12H15V13H13Z"/>
+    </g>
+    <g id="enemy_beast-death-b">
+      <path fill="#0D111C" d="M1 10H5V9H8V11H12V12H15V15H9V14H6V15H2V14H1Z"/>
+      <path fill="#55705A" d="M2 11H6V10H8V12H12V14H8V13H5V14H2Z"/>
+      <path fill="#78944F" d="M3 11H7V12H10V14H6V13H3Z"/>
+      <path fill="#D75C45" d="M2 11H3V12H2Z"/>
+      <path fill="#EEA36D" d="M12 12H15V13H12Z"/>
+    </g>
+
+    <g id="enemy_flyer-idle-a">
+      <path fill="#0D111C" d="M6 4H9V5H10V7H12V6H14V8H15V11H13V12H10V11H9V14H6V11H5V12H2V11H1V8H2V6H4V7H6Z"/>
+      <path fill="#655B80" d="M6 5H9V6H10V8H12V7H13V9H14V10H12V11H9V10H6V11H3V10H2V8H3V7H4V8H6Z"/>
+      <path fill="#9A8CB7" d="M7 5H9V7H10V9H9V11H6V9H5V8H7ZM3 8H5V10H3ZM11 8H13V10H11Z"/>
+      <path fill="#D75C45" d="M6 7H7V8H6ZM9 7H10V8H9Z"/>
+      <path fill="#E6DDC5" d="M7 8H9V9H7Z"/>
+    </g>
+    <g id="enemy_flyer-idle-b">
+      <path fill="#0D111C" d="M6 5H9V6H10V8H12V7H14V9H15V12H13V13H10V12H9V15H6V12H5V13H2V12H1V9H2V7H4V8H6Z"/>
+      <path fill="#655B80" d="M6 6H9V7H10V9H12V8H13V10H14V11H12V12H9V11H6V12H3V11H2V9H3V8H4V9H6Z"/>
+      <path fill="#9A8CB7" d="M7 6H9V8H10V10H9V12H6V10H5V9H7ZM3 9H5V11H3ZM11 9H13V11H11Z"/>
+      <path fill="#D75C45" d="M6 8H7V9H6ZM9 8H10V9H9Z"/>
+      <path fill="#E6DDC5" d="M7 9H9V10H7Z"/>
+    </g>
+    <g id="enemy_flyer-move-a">
+      <path fill="#0D111C" d="M7 3H10V4H11V7H13V6H15V9H14V11H12V12H10V11H9V14H6V11H5V13H2V12H1V9H2V7H4V8H6V5H7Z"/>
+      <path fill="#655B80" d="M7 4H10V5H11V8H13V7H14V9H13V10H11V11H9V10H6V11H3V10H2V9H3V8H4V9H6V6H7Z"/>
+      <path fill="#9A8CB7" d="M8 4H10V6H11V9H9V11H6V9H7V6H8ZM3 9H5V11H3ZM12 8H14V9H12Z"/>
+      <path fill="#D75C45" d="M7 7H8V8H7ZM10 7H11V8H10Z"/>
+      <path fill="#E6DDC5" d="M8 8H10V9H8Z"/>
+    </g>
+    <g id="enemy_flyer-move-b">
+      <path fill="#0D111C" d="M5 5H8V6H9V8H11V7H14V9H15V12H13V13H10V12H9V15H6V12H5V13H2V12H1V9H2V7H4V8H5Z"/>
+      <path fill="#655B80" d="M5 6H8V7H9V9H11V8H13V9H14V11H12V12H9V11H6V12H3V11H2V9H3V8H4V9H5Z"/>
+      <path fill="#9A8CB7" d="M6 6H8V8H9V10H8V12H5V10H4V9H6ZM3 9H5V11H3ZM11 9H13V11H11Z"/>
+      <path fill="#D75C45" d="M5 8H6V9H5ZM8 8H9V9H8Z"/>
+      <path fill="#E6DDC5" d="M6 9H8V10H6Z"/>
+    </g>
+    <g id="enemy_flyer-attack-a">
+      <path fill="#0D111C" d="M6 4H9V5H10V8H12V7H14V9H15V12H13V13H10V12H9V15H6V12H5V13H2V12H1V9H2V7H4V8H6ZM1 5H3V7H1Z"/>
+      <path fill="#655B80" d="M6 5H9V6H10V9H12V8H13V10H14V11H12V12H9V11H6V12H3V11H2V9H3V8H4V9H6Z"/>
+      <path fill="#9A8CB7" d="M7 5H9V7H10V10H9V12H6V10H5V9H7ZM3 9H5V11H3ZM11 9H13V11H11Z"/>
+      <path fill="#D75C45" d="M6 8H7V9H6ZM9 8H10V9H9Z"/>
+      <path fill="#E6DDC5" d="M1 6H3V7H1ZM7 9H9V10H7Z"/>
+    </g>
+    <g id="enemy_flyer-attack-b">
+      <path fill="#0D111C" d="M7 5H10V6H11V8H14V7H15V10H14V12H12V13H11V15H8V13H7V14H4V13H2V11H3V9H5V8H7Z"/>
+      <path fill="#655B80" d="M7 6H10V7H11V9H14V10H13V11H11V12H10V13H7V12H5V11H3V10H5V9H7Z"/>
+      <path fill="#9A8CB7" d="M8 6H10V8H11V10H10V12H7V10H6V9H8ZM4 10H6V12H4ZM12 9H14V11H12Z"/>
+      <path fill="#D75C45" d="M7 9H8V10H7ZM10 9H11V10H10Z"/>
+      <path fill="#E6DDC5" d="M8 10H10V11H8Z"/>
+    </g>
+    <g id="enemy_flyer-cast-a">
+      <path fill="#0D111C" d="M6 4H9V5H10V7H12V6H14V8H15V11H13V12H10V11H9V14H6V11H5V12H2V11H1V8H2V6H4V7H6ZM1 3H4V6H1Z"/>
+      <path fill="#655B80" d="M6 5H9V6H10V8H12V7H13V9H14V10H12V11H9V10H6V11H3V10H2V8H3V7H4V8H6Z"/>
+      <path fill="#9A8CB7" d="M7 5H9V7H10V9H9V11H6V9H5V8H7ZM3 8H5V10H3ZM11 8H13V10H11Z"/>
+      <path fill="#D75C45" d="M6 7H7V8H6ZM9 7H10V8H9ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#E6DDC5" d="M2 4H3V5H2ZM7 8H9V9H7Z"/>
+    </g>
+    <g id="enemy_flyer-cast-b">
+      <path fill="#0D111C" d="M6 5H9V6H10V8H12V7H14V9H15V12H13V13H10V12H9V15H6V12H5V13H2V12H1V9H2V7H4V8H6ZM1 6H4V9H1Z"/>
+      <path fill="#655B80" d="M6 6H9V7H10V9H12V8H13V10H14V11H12V12H9V11H6V12H3V11H2V9H3V8H4V9H6Z"/>
+      <path fill="#9A8CB7" d="M7 6H9V8H10V10H9V12H6V10H5V9H7ZM3 9H5V11H3ZM11 9H13V11H11Z"/>
+      <path fill="#D75C45" d="M6 8H7V9H6ZM9 8H10V9H9ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#E6DDC5" d="M2 3H3V4H2ZM7 9H9V10H7Z"/>
+    </g>
+    <g id="enemy_flyer-hurt-a">
+      <path fill="#0D111C" d="M8 6H11V7H12V9H14V10H15V13H13V14H10V13H9V15H6V13H5V14H2V13H1V10H3V8H5V9H7V7H8Z"/>
+      <path fill="#655B80" d="M8 7H11V8H12V10H14V12H12V13H9V12H6V13H3V12H2V10H3V9H5V10H7V8H8Z"/>
+      <path fill="#9A8CB7" d="M9 7H11V9H12V11H11V13H8V11H7V10H9ZM3 10H5V12H3ZM13 10H14V12H13Z"/>
+      <path fill="#D75C45" d="M8 9H9V10H8ZM11 9H12V10H11Z"/>
+      <path fill="#E6DDC5" d="M2 6H3V7H2ZM1 8H2V9H1Z"/>
+    </g>
+    <g id="enemy_flyer-hurt-b">
+      <path fill="#0D111C" d="M3 6H6V7H7V9H9V8H12V10H14V13H12V14H9V13H8V15H5V13H4V14H1V12H2V10H1V8H3Z"/>
+      <path fill="#655B80" d="M3 7H6V8H7V10H9V9H11V10H13V12H11V13H8V12H5V13H2V11H3V9H2V8H3Z"/>
+      <path fill="#9A8CB7" d="M4 7H6V9H7V11H6V13H3V11H4ZM2 9H4V11H2ZM9 10H11V12H9Z"/>
+      <path fill="#D75C45" d="M3 9H4V10H3ZM6 9H7V10H6Z"/>
+      <path fill="#E6DDC5" d="M13 6H14V7H13ZM14 8H15V9H14Z"/>
+    </g>
+    <g id="enemy_flyer-death-a">
+      <path fill="#0D111C" d="M5 8H8V9H10V10H13V11H15V14H12V15H8V14H6V15H3V14H1V11H2V9H5Z"/>
+      <path fill="#655B80" d="M5 9H8V10H10V11H13V12H14V13H11V14H7V13H4V14H2V12H3V10H5Z"/>
+      <path fill="#9A8CB7" d="M6 9H8V11H9V13H6V12H4V11H6ZM11 11H13V13H11Z"/>
+      <path fill="#D75C45" d="M5 11H6V12H5ZM8 11H9V12H8Z"/>
+      <path fill="#E6DDC5" d="M2 10H3V11H2Z"/>
+    </g>
+    <g id="enemy_flyer-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H9V11H12V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#655B80" d="M2 11H5V12H7V10H9V12H12V14H8V13H6V14H3V13H2Z"/>
+      <path fill="#9A8CB7" d="M4 11H7V12H10V14H6V13H4Z"/>
+      <path fill="#D75C45" d="M7 10H8V11H7Z"/>
+      <path fill="#E6DDC5" d="M13 12H15V13H13Z"/>
+    </g>
+
+    <g id="enemy_construct-idle-a">
+      <path fill="#0D111C" d="M4 2H8V3H9V6H8V7H11V8H13V12H12V14H10V15H7V13H6V15H3V14H2V9H3V7H4ZM11 6H14V9H11Z"/>
+      <path fill="#5E6C80" d="M4 3H8V6H4ZM4 8H10V9H11V12H9V13H5V12H4ZM3 9H4V13H3ZM11 9H12V12H11Z"/>
+      <path fill="#95A3B6" d="M4 3H7V4H4ZM4 8H8V9H4ZM3 9H4V11H3Z"/>
+      <path fill="#C9A24B" d="M5 5H7V6H5ZM6 9H8V11H6Z"/>
+      <path fill="#D75C45" d="M6 10H7V11H6Z"/>
+    </g>
+    <g id="enemy_construct-idle-b">
+      <path fill="#0D111C" d="M4 3H8V4H9V7H8V8H11V9H13V13H12V15H9V14H7V15H4V14H2V10H3V8H4ZM11 7H14V10H11Z"/>
+      <path fill="#5E6C80" d="M4 4H8V7H4ZM4 9H10V10H11V13H9V14H5V13H4ZM3 10H4V13H3ZM11 10H12V13H11Z"/>
+      <path fill="#95A3B6" d="M4 4H7V5H4ZM4 9H8V10H4ZM3 10H4V12H3Z"/>
+      <path fill="#C9A24B" d="M5 6H7V7H5ZM6 10H8V12H6Z"/>
+      <path fill="#D75C45" d="M6 11H7V12H6Z"/>
+    </g>
+    <g id="enemy_construct-move-a">
+      <path fill="#0D111C" d="M5 2H9V3H10V6H9V7H12V8H14V12H12V13H10V15H7V13H5V14H2V15H1V13H3V10H2V8H4V7H5ZM12 6H15V9H12Z"/>
+      <path fill="#5E6C80" d="M5 3H9V6H5ZM5 8H11V9H12V12H10V13H6V12H4V10H5ZM3 9H4V12H3ZM12 9H13V12H12Z"/>
+      <path fill="#95A3B6" d="M5 3H8V4H5ZM5 8H9V9H5ZM3 9H4V11H3Z"/>
+      <path fill="#C9A24B" d="M6 5H8V6H6ZM7 9H9V11H7Z"/>
+      <path fill="#D75C45" d="M7 10H8V11H7Z"/>
+    </g>
+    <g id="enemy_construct-move-b">
+      <path fill="#0D111C" d="M3 3H7V4H8V7H7V8H10V9H13V13H11V15H8V13H6V14H4V15H1V13H2V10H1V8H3ZM10 7H14V10H10Z"/>
+      <path fill="#5E6C80" d="M3 4H7V7H3ZM3 9H9V10H11V13H9V14H5V13H3ZM2 10H3V13H2ZM11 10H12V13H11Z"/>
+      <path fill="#95A3B6" d="M3 4H6V5H3ZM3 9H7V10H3ZM2 10H3V12H2Z"/>
+      <path fill="#C9A24B" d="M4 6H6V7H4ZM5 10H7V12H5Z"/>
+      <path fill="#D75C45" d="M5 11H6V12H5Z"/>
+    </g>
+    <g id="enemy_construct-attack-a">
+      <path fill="#0D111C" d="M4 3H8V4H9V7H8V8H11V9H13V13H12V15H9V14H7V15H4V14H2V10H3V8H4ZM1 7H4V10H1ZM10 7H14V9H10Z"/>
+      <path fill="#5E6C80" d="M4 4H8V7H4ZM4 9H10V10H11V13H9V14H5V13H4ZM2 8H3V10H2ZM11 10H12V13H11Z"/>
+      <path fill="#95A3B6" d="M4 4H7V5H4ZM4 9H8V10H4ZM1 8H3V9H1Z"/>
+      <path fill="#C9A24B" d="M5 6H7V7H5ZM6 10H8V12H6Z"/>
+      <path fill="#D75C45" d="M6 11H7V12H6Z"/>
+    </g>
+    <g id="enemy_construct-attack-b">
+      <path fill="#0D111C" d="M5 3H9V4H10V7H9V8H12V9H15V12H13V14H11V15H8V13H7V15H4V14H3V10H4V8H5ZM11 7H15V10H11Z"/>
+      <path fill="#5E6C80" d="M5 4H9V7H5ZM5 9H11V10H13V12H11V13H6V12H5ZM4 10H5V13H4ZM12 10H14V11H12Z"/>
+      <path fill="#95A3B6" d="M5 4H8V5H5ZM5 9H9V10H5ZM13 10H15V11H13Z"/>
+      <path fill="#C9A24B" d="M6 6H8V7H6ZM7 10H9V12H7Z"/>
+      <path fill="#D75C45" d="M7 11H8V12H7Z"/>
+    </g>
+    <g id="enemy_construct-cast-a">
+      <path fill="#0D111C" d="M4 2H8V3H9V6H8V7H11V8H13V12H12V14H10V15H7V13H6V15H3V14H2V9H3V7H4ZM1 3H4V6H1Z"/>
+      <path fill="#5E6C80" d="M4 3H8V6H4ZM4 8H10V9H11V12H9V13H5V12H4ZM3 9H4V13H3ZM11 9H12V12H11Z"/>
+      <path fill="#95A3B6" d="M4 3H7V4H4ZM4 8H8V9H4Z"/>
+      <path fill="#C9A24B" d="M5 5H7V6H5ZM6 9H8V11H6ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#D75C45" d="M2 4H3V5H2ZM6 10H7V11H6Z"/>
+    </g>
+    <g id="enemy_construct-cast-b">
+      <path fill="#0D111C" d="M4 3H8V4H9V7H8V8H11V9H13V13H12V15H9V14H7V15H4V14H2V10H3V8H4ZM1 6H4V9H1Z"/>
+      <path fill="#5E6C80" d="M4 4H8V7H4ZM4 9H10V10H11V13H9V14H5V13H4ZM3 10H4V13H3ZM11 10H12V13H11Z"/>
+      <path fill="#95A3B6" d="M4 4H7V5H4ZM4 9H8V10H4Z"/>
+      <path fill="#C9A24B" d="M5 6H7V7H5ZM6 10H8V12H6ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#D75C45" d="M2 3H3V4H2ZM6 11H7V12H6Z"/>
+    </g>
+    <g id="enemy_construct-hurt-a">
+      <path fill="#0D111C" d="M6 4H10V5H11V8H10V9H13V10H15V14H12V15H9V14H7V15H4V14H3V10H4V8H6ZM1 9H4V12H1Z"/>
+      <path fill="#5E6C80" d="M6 5H10V8H6ZM6 10H12V11H13V14H10V13H6V14H4V11H6ZM2 10H4V12H2Z"/>
+      <path fill="#95A3B6" d="M6 5H9V6H6ZM6 10H10V11H6ZM2 10H3V11H2Z"/>
+      <path fill="#C9A24B" d="M7 7H9V8H7ZM8 11H10V13H8Z"/>
+      <path fill="#D75C45" d="M8 12H9V13H8Z"/>
+    </g>
+    <g id="enemy_construct-hurt-b">
+      <path fill="#0D111C" d="M3 5H7V6H8V9H10V10H13V12H14V15H10V14H8V15H5V14H2V13H1V10H2V8H3ZM11 9H14V11H11Z"/>
+      <path fill="#5E6C80" d="M3 6H7V9H3ZM3 10H9V11H12V13H10V14H4V13H2V11H3Z"/>
+      <path fill="#95A3B6" d="M3 6H6V7H3ZM3 10H7V11H3Z"/>
+      <path fill="#C9A24B" d="M4 8H6V9H4ZM5 11H7V13H5Z"/>
+      <path fill="#D75C45" d="M5 12H6V13H5Z"/>
+    </g>
+    <g id="enemy_construct-death-a">
+      <path fill="#0D111C" d="M5 7H9V8H10V10H13V11H15V14H12V15H8V14H6V15H2V13H3V10H5Z"/>
+      <path fill="#5E6C80" d="M5 8H9V10H5ZM4 10H10V11H13V13H11V14H6V13H3V11H4Z"/>
+      <path fill="#95A3B6" d="M5 8H8V9H5ZM4 10H8V11H4Z"/>
+      <path fill="#C9A24B" d="M6 9H8V10H6ZM7 11H9V13H7Z"/>
+      <path fill="#D75C45" d="M7 12H8V13H7Z"/>
+    </g>
+    <g id="enemy_construct-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H10V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#5E6C80" d="M2 11H5V12H7V10H10V12H13V14H9V13H6V14H2Z"/>
+      <path fill="#95A3B6" d="M2 11H4V12H2ZM8 10H10V11H8Z"/>
+      <path fill="#C9A24B" d="M6 12H8V14H6Z"/>
+      <path fill="#D75C45" d="M6 13H7V14H6Z"/>
+    </g>
+
+    <g id="enemy_caster-idle-a">
+      <path fill="#0D111C" d="M5 1H7V2H8V4H10V6H9V8H10V11H11V15H3V14H4V11H3V8H2V6H3V4H4V2H5ZM1 4H3V13H1Z"/>
+      <path fill="#655B80" d="M5 2H7V4H8V5H9V6H4V5H5ZM4 7H8V8H9V11H10V14H4V12H3V9H4Z"/>
+      <path fill="#9A8CB7" d="M4 6H8V7H7V8H5V7H4ZM5 9H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M5 6H6V7H5ZM7 6H8V7H7Z"/>
+      <path fill="#E6DDC5" d="M2 3H3V5H2ZM2 12H3V14H1V13H2Z"/>
+    </g>
+    <g id="enemy_caster-idle-b">
+      <path fill="#0D111C" d="M5 2H7V3H8V5H10V7H9V9H10V12H11V15H3V14H4V12H3V9H2V7H3V5H4V3H5ZM1 3H3V13H1Z"/>
+      <path fill="#655B80" d="M5 3H7V5H8V6H9V7H4V6H5ZM4 8H8V9H9V12H10V14H4V12H3V10H4Z"/>
+      <path fill="#9A8CB7" d="M4 7H8V8H7V9H5V8H4ZM5 10H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M5 7H6V8H5ZM7 7H8V8H7Z"/>
+      <path fill="#E6DDC5" d="M2 2H3V4H2ZM2 12H3V14H1V13H2Z"/>
+    </g>
+    <g id="enemy_caster-move-a">
+      <path fill="#0D111C" d="M6 1H8V2H9V4H11V6H10V8H11V11H12V14H10V15H6V14H4V15H2V13H3V10H2V8H3V6H4V4H5V2H6ZM1 4H3V12H1Z"/>
+      <path fill="#655B80" d="M6 2H8V4H9V5H10V6H5V5H6ZM5 7H9V8H10V11H11V13H9V14H5V13H3V11H4V9H5Z"/>
+      <path fill="#9A8CB7" d="M5 6H9V7H8V8H6V7H5ZM6 9H9V12H8V14H6Z"/>
+      <path fill="#D75C45" d="M6 6H7V7H6ZM8 6H9V7H8Z"/>
+      <path fill="#E6DDC5" d="M2 3H3V5H2ZM1 11H3V13H1Z"/>
+    </g>
+    <g id="enemy_caster-move-b">
+      <path fill="#0D111C" d="M4 2H6V3H7V5H9V7H8V9H9V12H11V14H14V15H9V14H6V15H3V14H1V13H3V10H2V8H3V6H3V4H4ZM11 4H13V13H11Z"/>
+      <path fill="#655B80" d="M4 3H6V5H7V6H8V7H3V6H4ZM4 8H7V9H8V12H10V13H8V14H4V13H2V12H3V10H4Z"/>
+      <path fill="#9A8CB7" d="M3 7H7V8H6V9H4ZM5 10H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M4 7H5V8H4ZM6 7H7V8H6Z"/>
+      <path fill="#E6DDC5" d="M12 3H13V5H12ZM11 12H13V14H11Z"/>
+    </g>
+    <g id="enemy_caster-attack-a">
+      <path fill="#0D111C" d="M5 2H7V3H8V5H10V7H9V9H10V12H11V15H3V14H4V11H3V9H2V7H3V5H4V3H5ZM1 7H4V10H1ZM10 7H13V9H10Z"/>
+      <path fill="#655B80" d="M5 3H7V5H8V6H9V7H4V6H5ZM4 8H8V9H9V12H10V14H4V12H3V10H4Z"/>
+      <path fill="#9A8CB7" d="M4 7H8V8H7V9H5V8H4ZM5 10H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M5 7H6V8H5ZM7 7H8V8H7ZM2 8H4V9H2Z"/>
+      <path fill="#E6DDC5" d="M11 8H13V9H11Z"/>
+    </g>
+    <g id="enemy_caster-attack-b">
+      <path fill="#0D111C" d="M6 2H8V3H9V5H11V7H10V9H11V12H12V15H4V14H5V11H4V9H3V7H4V5H5V3H6ZM10 7H15V10H12V9H10Z"/>
+      <path fill="#655B80" d="M6 3H8V5H9V6H10V7H5V6H6ZM5 8H9V9H10V12H11V14H5V12H4V10H5Z"/>
+      <path fill="#9A8CB7" d="M5 7H9V8H8V9H6V8H5ZM6 10H9V12H8V14H6Z"/>
+      <path fill="#D75C45" d="M6 7H7V8H6ZM8 7H9V8H8ZM11 8H15V9H11Z"/>
+      <path fill="#E6DDC5" d="M14 7H15V10H14Z"/>
+    </g>
+    <g id="enemy_caster-cast-a">
+      <path fill="#0D111C" d="M5 1H7V2H8V4H10V6H9V8H10V11H11V15H3V14H4V11H3V8H2V6H3V4H4V2H5ZM1 3H4V6H1ZM1 8H3V12H1Z"/>
+      <path fill="#655B80" d="M5 2H7V4H8V5H9V6H4V5H5ZM4 7H8V8H9V11H10V14H4V12H3V9H4Z"/>
+      <path fill="#9A8CB7" d="M4 6H8V7H7V8H5V7H4ZM5 9H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M5 6H6V7H5ZM7 6H8V7H7ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#E6DDC5" d="M2 4H3V5H2ZM1 9H2V11H1Z"/>
+    </g>
+    <g id="enemy_caster-cast-b">
+      <path fill="#0D111C" d="M5 2H7V3H8V5H10V7H9V9H10V12H11V15H3V14H4V12H3V9H2V7H3V5H4V3H5ZM1 6H4V9H1ZM1 10H3V13H1Z"/>
+      <path fill="#655B80" d="M5 3H7V5H8V6H9V7H4V6H5ZM4 8H8V9H9V12H10V14H4V12H3V10H4Z"/>
+      <path fill="#9A8CB7" d="M4 7H8V8H7V9H5V8H4ZM5 10H8V12H7V14H5Z"/>
+      <path fill="#D75C45" d="M5 7H6V8H5ZM7 7H8V8H7ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#E6DDC5" d="M2 3H3V4H2ZM1 11H2V13H1Z"/>
+    </g>
+    <g id="enemy_caster-hurt-a">
+      <path fill="#0D111C" d="M7 3H9V4H10V6H12V8H11V10H12V13H11V15H4V14H5V11H4V9H3V7H5V5H7ZM1 8H4V11H1Z"/>
+      <path fill="#655B80" d="M7 4H9V6H10V7H11V8H6V7H7ZM6 9H10V10H11V13H10V14H5V12H4V10H6Z"/>
+      <path fill="#9A8CB7" d="M6 8H10V9H9V10H7V9H6ZM7 11H10V13H9V14H7Z"/>
+      <path fill="#D75C45" d="M7 8H8V9H7ZM9 8H10V9H9Z"/>
+      <path fill="#E6DDC5" d="M2 8H4V10H2Z"/>
+    </g>
+    <g id="enemy_caster-hurt-b">
+      <path fill="#0D111C" d="M3 5H5V6H6V8H8V10H7V11H9V14H8V15H1V14H2V11H1V9H2V7H3ZM9 7H12V10H11V14H9Z"/>
+      <path fill="#655B80" d="M3 6H5V8H6V9H7V10H2V9H3ZM3 10H7V11H8V13H7V14H2V13H3Z"/>
+      <path fill="#9A8CB7" d="M2 9H6V10H5V11H3ZM4 11H7V13H6V14H4Z"/>
+      <path fill="#D75C45" d="M3 9H4V10H3ZM5 9H6V10H5Z"/>
+      <path fill="#E6DDC5" d="M10 8H12V10H10Z"/>
+    </g>
+    <g id="enemy_caster-death-a">
+      <path fill="#0D111C" d="M6 7H8V8H9V10H11V12H13V15H4V14H2V11H3V9H5V8H6ZM1 8H4V10H2V13H1Z"/>
+      <path fill="#655B80" d="M6 8H8V10H9V11H10V12H5V11H4V10H5ZM4 12H11V14H4Z"/>
+      <path fill="#9A8CB7" d="M5 11H9V12H8V14H6V13H5Z"/>
+      <path fill="#D75C45" d="M6 11H7V12H6Z"/>
+      <path fill="#E6DDC5" d="M2 9H3V10H2Z"/>
+    </g>
+    <g id="enemy_caster-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H9V11H12V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#655B80" d="M2 11H5V12H7V10H9V12H12V14H8V13H6V14H3V13H2Z"/>
+      <path fill="#9A8CB7" d="M4 11H7V12H10V14H6V13H4Z"/>
+      <path fill="#D75C45" d="M7 10H8V11H7Z"/>
+      <path fill="#E6DDC5" d="M13 12H15V13H13Z"/>
+    </g>
+
+    <g id="enemy_aquatic-idle-a">
+      <path fill="#0D111C" d="M3 4H7V5H8V7H10V9H13V8H15V11H13V13H11V14H8V13H6V15H3V13H1V10H2V7H3Z"/>
+      <path fill="#486B78" d="M3 5H7V6H8V8H10V10H13V9H14V11H12V12H9V13H7V12H4V13H2V10H3V8H2V7H3Z"/>
+      <path fill="#4F8D8A" d="M4 5H7V6H6V7H3V6H4ZM4 8H8V9H10V11H8V12H5V10H3V9H4Z"/>
+      <path fill="#EEA36D" d="M3 6H4V7H3ZM6 6H7V7H6Z"/>
+      <path fill="#E6DDC5" d="M1 8H3V9H1ZM12 10H14V11H12Z"/>
+    </g>
+    <g id="enemy_aquatic-idle-b">
+      <path fill="#0D111C" d="M3 5H7V4H8V6H10V8H13V9H15V12H13V13H11V15H8V13H6V14H4V15H1V13H2V10H1V8H3Z"/>
+      <path fill="#486B78" d="M3 5H7V6H9V8H10V9H13V10H14V11H12V12H10V13H7V12H4V13H2V11H1V9H3Z"/>
+      <path fill="#4F8D8A" d="M4 5H7V6H6V7H3V6H4ZM4 8H8V9H10V11H8V12H5V10H3V9H4Z"/>
+      <path fill="#EEA36D" d="M3 6H4V7H3ZM6 6H7V7H6Z"/>
+      <path fill="#E6DDC5" d="M1 9H3V10H1ZM13 10H15V11H13Z"/>
+    </g>
+    <g id="enemy_aquatic-move-a">
+      <path fill="#0D111C" d="M4 4H8V5H9V7H11V9H14V10H15V12H13V14H10V13H8V15H5V13H3V14H1V12H2V9H3V6H4Z"/>
+      <path fill="#486B78" d="M4 5H8V6H9V8H11V10H14V11H13V12H10V13H8V12H5V13H3V11H2V9H3V7H4Z"/>
+      <path fill="#4F8D8A" d="M5 5H8V6H7V7H4V6H5ZM5 8H9V9H11V11H9V12H6V10H4V9H5Z"/>
+      <path fill="#EEA36D" d="M4 6H5V7H4ZM7 6H8V7H7Z"/>
+      <path fill="#E6DDC5" d="M2 8H3V10H2ZM13 10H15V11H13Z"/>
+    </g>
+    <g id="enemy_aquatic-move-b">
+      <path fill="#0D111C" d="M2 5H6V4H7V6H9V8H12V9H14V11H15V13H12V14H9V13H7V15H4V13H2V14H1V12H2V10H1V8H2Z"/>
+      <path fill="#486B78" d="M2 5H6V6H8V8H9V9H12V10H14V12H11V13H8V12H5V13H3V11H2V10H1V8H2Z"/>
+      <path fill="#4F8D8A" d="M3 5H6V6H5V7H2V6H3ZM3 8H7V9H9V11H7V12H4V10H2V9H3Z"/>
+      <path fill="#EEA36D" d="M2 6H3V7H2ZM5 6H6V7H5Z"/>
+      <path fill="#E6DDC5" d="M1 9H2V10H1ZM13 11H15V12H13Z"/>
+    </g>
+    <g id="enemy_aquatic-attack-a">
+      <path fill="#0D111C" d="M3 3H7V4H8V6H10V8H13V9H15V12H13V13H11V15H8V13H6V14H3V13H1V10H2V7H3ZM1 4H3V7H1Z"/>
+      <path fill="#486B78" d="M3 4H7V5H8V7H10V9H13V10H14V11H12V12H9V13H7V12H4V13H2V10H3V8H2V6H3Z"/>
+      <path fill="#4F8D8A" d="M4 4H7V5H6V6H3V5H4ZM4 7H8V8H10V10H8V11H5V9H3V8H4Z"/>
+      <path fill="#EEA36D" d="M3 5H4V6H3ZM6 5H7V6H6Z"/>
+      <path fill="#E6DDC5" d="M1 5H2V7H1ZM13 10H15V11H13Z"/>
+    </g>
+    <g id="enemy_aquatic-attack-b">
+      <path fill="#0D111C" d="M5 4H9V5H10V7H12V8H15V11H13V13H11V14H8V13H6V15H3V13H1V10H3V7H5Z"/>
+      <path fill="#486B78" d="M5 5H9V6H10V8H12V9H14V10H13V11H10V12H8V13H6V12H3V11H2V10H3V8H5Z"/>
+      <path fill="#4F8D8A" d="M6 5H9V6H8V7H5V6H6ZM6 8H10V9H12V11H10V12H7V10H5V9H6Z"/>
+      <path fill="#EEA36D" d="M5 6H6V7H5ZM8 6H9V7H8Z"/>
+      <path fill="#E6DDC5" d="M3 8H4V10H3ZM13 9H15V10H13Z"/>
+    </g>
+    <g id="enemy_aquatic-cast-a">
+      <path fill="#0D111C" d="M3 4H7V5H8V7H10V9H13V8H15V11H13V13H11V14H8V13H6V15H3V13H1V10H2V7H3ZM1 3H4V6H1Z"/>
+      <path fill="#486B78" d="M3 5H7V6H8V8H10V10H13V9H14V11H12V12H9V13H7V12H4V13H2V10H3V8H2V7H3Z"/>
+      <path fill="#4F8D8A" d="M4 5H7V6H6V7H3V6H4ZM4 8H8V9H10V11H8V12H5V10H3V9H4Z"/>
+      <path fill="#EEA36D" d="M3 6H4V7H3ZM6 6H7V7H6ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#E6DDC5" d="M2 4H3V5H2ZM12 10H14V11H12Z"/>
+    </g>
+    <g id="enemy_aquatic-cast-b">
+      <path fill="#0D111C" d="M3 5H7V6H8V8H10V10H13V9H15V12H13V14H11V15H8V14H6V15H3V14H1V11H2V8H3ZM1 6H4V9H1Z"/>
+      <path fill="#486B78" d="M3 6H7V7H8V9H10V11H13V10H14V12H12V13H9V14H7V13H4V14H2V11H3V9H2V8H3Z"/>
+      <path fill="#4F8D8A" d="M4 6H7V7H6V8H3V7H4ZM4 9H8V10H10V12H8V13H5V11H3V10H4Z"/>
+      <path fill="#EEA36D" d="M3 7H4V8H3ZM6 7H7V8H6ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+      <path fill="#E6DDC5" d="M2 3H3V4H2ZM12 11H14V12H12Z"/>
+    </g>
+    <g id="enemy_aquatic-hurt-a">
+      <path fill="#0D111C" d="M5 6H9V7H10V9H12V10H15V13H13V14H10V15H7V13H5V14H2V13H1V10H3V8H5Z"/>
+      <path fill="#486B78" d="M5 7H9V8H10V10H12V11H14V12H12V13H9V14H7V12H4V13H2V11H3V9H5Z"/>
+      <path fill="#4F8D8A" d="M6 7H9V8H8V9H5V8H6ZM6 10H10V11H12V12H10V13H7V12H5V11H6Z"/>
+      <path fill="#EEA36D" d="M5 8H6V9H5ZM8 8H9V9H8Z"/>
+      <path fill="#E6DDC5" d="M2 7H3V8H2ZM1 9H2V10H1Z"/>
+    </g>
+    <g id="enemy_aquatic-hurt-b">
+      <path fill="#0D111C" d="M2 7H6V8H8V10H11V11H14V13H15V15H11V14H8V15H5V13H3V15H1V13H2Z"/>
+      <path fill="#486B78" d="M2 8H6V9H8V11H11V12H14V13H13V14H9V13H7V14H4V13H2Z"/>
+      <path fill="#4F8D8A" d="M3 8H6V9H5V10H2V9H3ZM4 10H8V11H10V13H8V14H5V12H3V11H4Z"/>
+      <path fill="#EEA36D" d="M2 9H3V10H2ZM5 9H6V10H5Z"/>
+      <path fill="#E6DDC5" d="M13 12H15V13H13Z"/>
+    </g>
+    <g id="enemy_aquatic-death-a">
+      <path fill="#0D111C" d="M2 8H6V7H8V9H10V10H13V11H15V14H12V15H8V14H6V15H2V13H1V10H2Z"/>
+      <path fill="#486B78" d="M2 8H6V9H8V10H10V11H13V12H14V13H11V14H7V13H4V14H2Z"/>
+      <path fill="#4F8D8A" d="M3 8H6V9H5V10H2V9H3ZM4 10H9V11H11V13H8V14H5V12H3V11H4Z"/>
+      <path fill="#EEA36D" d="M2 9H3V10H2Z"/>
+      <path fill="#E6DDC5" d="M13 12H15V13H13Z"/>
+    </g>
+    <g id="enemy_aquatic-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H10V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#486B78" d="M2 11H5V12H7V10H10V12H13V14H9V13H6V14H2Z"/>
+      <path fill="#4F8D8A" d="M4 11H7V12H11V14H7V13H4Z"/>
+      <path fill="#EEA36D" d="M2 11H3V12H2Z"/>
+      <path fill="#E6DDC5" d="M13 12H15V13H13Z"/>
+    </g>
+
+    <g id="enemy_aberration-idle-a">
+      <path fill="#0D111C" d="M4 4H8V5H10V7H11V10H13V12H15V14H12V13H10V15H8V12H6V15H4V13H2V14H1V11H3V9H2V6H4Z"/>
+      <path fill="#54365F" d="M4 5H8V6H9V7H10V10H9V11H5V10H4V9H3V6H4ZM3 10H5V12H3ZM10 10H12V12H10Z"/>
+      <path fill="#6E9DA4" d="M5 5H8V6H9V8H8V10H5V9H4V7H5ZM4 11H6V13H4ZM9 11H11V13H9Z"/>
+      <path fill="#E6DDC5" d="M5 7H9V9H5Z"/>
+      <path fill="#D75C45" d="M6 7H8V8H6Z"/>
+    </g>
+    <g id="enemy_aberration-idle-b">
+      <path fill="#0D111C" d="M4 5H8V6H10V8H11V11H13V13H15V15H12V14H10V15H8V13H6V15H4V14H2V15H1V12H3V10H2V7H4Z"/>
+      <path fill="#54365F" d="M4 6H8V7H9V8H10V11H9V12H5V11H4V10H3V7H4ZM3 11H5V13H3ZM10 11H12V13H10Z"/>
+      <path fill="#6E9DA4" d="M5 6H8V7H9V9H8V11H5V10H4V8H5ZM4 12H6V14H4ZM9 12H11V14H9Z"/>
+      <path fill="#E6DDC5" d="M5 8H9V10H5Z"/>
+      <path fill="#D75C45" d="M6 8H8V9H6Z"/>
+    </g>
+    <g id="enemy_aberration-move-a">
+      <path fill="#0D111C" d="M5 4H9V5H11V7H12V10H14V12H15V14H12V13H10V15H7V13H5V14H2V15H1V13H3V10H2V7H4V6H5Z"/>
+      <path fill="#54365F" d="M5 5H9V6H10V7H11V10H10V11H6V10H5V9H4V7H5ZM4 10H6V12H4ZM11 10H13V12H11Z"/>
+      <path fill="#6E9DA4" d="M6 5H9V6H10V8H9V10H6V9H5V7H6ZM5 11H7V13H5ZM10 11H12V13H10Z"/>
+      <path fill="#E6DDC5" d="M6 7H10V9H6Z"/>
+      <path fill="#D75C45" d="M7 7H9V8H7Z"/>
+    </g>
+    <g id="enemy_aberration-move-b">
+      <path fill="#0D111C" d="M3 5H7V6H9V8H10V11H12V13H14V15H11V14H9V15H7V13H5V15H2V14H1V12H2V10H1V7H3Z"/>
+      <path fill="#54365F" d="M3 6H7V7H8V8H9V11H8V12H4V11H3V10H2V7H3ZM2 11H4V13H2ZM9 11H11V13H9Z"/>
+      <path fill="#6E9DA4" d="M4 6H7V7H8V9H7V11H4V10H3V8H4ZM3 12H5V14H3ZM8 12H10V14H8Z"/>
+      <path fill="#E6DDC5" d="M4 8H8V10H4Z"/>
+      <path fill="#D75C45" d="M5 8H7V9H5Z"/>
+    </g>
+    <g id="enemy_aberration-attack-a">
+      <path fill="#0D111C" d="M4 4H8V5H10V7H11V10H13V12H15V14H12V13H10V15H8V12H6V15H4V13H2V14H1V11H3V9H2V6H4ZM1 4H3V6H1Z"/>
+      <path fill="#54365F" d="M4 5H8V6H9V7H10V10H9V11H5V10H4V9H3V6H4ZM3 10H5V12H3ZM10 10H12V12H10Z"/>
+      <path fill="#6E9DA4" d="M5 5H8V6H9V8H8V10H5V9H4V7H5ZM4 11H6V13H4ZM9 11H11V13H9Z"/>
+      <path fill="#E6DDC5" d="M5 7H9V9H5ZM1 5H3V6H1Z"/>
+      <path fill="#D75C45" d="M6 7H8V8H6Z"/>
+    </g>
+    <g id="enemy_aberration-attack-b">
+      <path fill="#0D111C" d="M5 5H9V6H11V8H12V10H15V13H13V14H11V15H9V13H7V15H5V13H3V14H1V11H3V8H5Z"/>
+      <path fill="#54365F" d="M5 6H9V7H10V8H11V10H10V11H6V10H5V9H4V8H5ZM4 10H6V12H4ZM11 10H14V12H11Z"/>
+      <path fill="#6E9DA4" d="M6 6H9V7H10V9H9V10H6V9H5V8H6ZM5 11H7V13H5ZM10 11H13V13H10Z"/>
+      <path fill="#E6DDC5" d="M6 8H10V10H6ZM13 11H15V12H13Z"/>
+      <path fill="#D75C45" d="M7 8H9V9H7Z"/>
+    </g>
+    <g id="enemy_aberration-cast-a">
+      <path fill="#0D111C" d="M4 4H8V5H10V7H11V10H13V12H15V14H12V13H10V15H8V12H6V15H4V13H2V14H1V11H3V9H2V6H4ZM1 3H4V6H1Z"/>
+      <path fill="#54365F" d="M4 5H8V6H9V7H10V10H9V11H5V10H4V9H3V6H4ZM3 10H5V12H3ZM10 10H12V12H10Z"/>
+      <path fill="#6E9DA4" d="M5 5H8V6H9V8H8V10H5V9H4V7H5ZM4 11H6V13H4ZM9 11H11V13H9Z"/>
+      <path fill="#E6DDC5" d="M5 7H9V9H5Z"/>
+      <path fill="#D75C45" d="M6 7H8V8H6ZM2 3H3V4H4V5H2Z"/>
+    </g>
+    <g id="enemy_aberration-cast-b">
+      <path fill="#0D111C" d="M4 5H8V6H10V8H11V11H13V13H15V15H12V14H10V15H8V13H6V15H4V14H2V15H1V12H3V10H2V7H4ZM1 6H4V9H1Z"/>
+      <path fill="#54365F" d="M4 6H8V7H9V8H10V11H9V12H5V11H4V10H3V7H4ZM3 11H5V13H3ZM10 11H12V13H10Z"/>
+      <path fill="#6E9DA4" d="M5 6H8V7H9V9H8V11H5V10H4V8H5ZM4 12H6V14H4ZM9 12H11V14H9Z"/>
+      <path fill="#E6DDC5" d="M5 8H9V10H5Z"/>
+      <path fill="#D75C45" d="M6 8H8V9H6ZM2 2H3V3H4V5H2V4H1V3H2Z"/>
+    </g>
+    <g id="enemy_aberration-hurt-a">
+      <path fill="#0D111C" d="M6 6H10V7H12V9H13V12H15V14H12V13H10V15H8V13H6V15H4V14H2V15H1V12H3V10H4V8H6Z"/>
+      <path fill="#54365F" d="M6 7H10V8H11V9H12V12H11V13H7V12H6V11H5V9H6ZM3 11H6V13H3ZM12 11H14V13H12Z"/>
+      <path fill="#6E9DA4" d="M7 7H10V8H11V10H10V12H7V11H6V9H7ZM5 12H7V14H5ZM10 12H12V14H10Z"/>
+      <path fill="#E6DDC5" d="M7 9H11V11H7Z"/>
+      <path fill="#D75C45" d="M8 9H10V10H8Z"/>
+    </g>
+    <g id="enemy_aberration-hurt-b">
+      <path fill="#0D111C" d="M2 7H6V8H8V10H9V12H12V13H14V15H10V14H8V15H6V13H4V15H2V14H1V11H2Z"/>
+      <path fill="#54365F" d="M2 8H6V9H7V10H8V12H7V13H3V12H2V11H1V9H2ZM9 12H11V14H9Z"/>
+      <path fill="#6E9DA4" d="M3 8H6V9H7V11H6V12H3V11H2V9H3ZM4 12H6V14H4ZM8 13H10V15H8Z"/>
+      <path fill="#E6DDC5" d="M3 10H7V12H3Z"/>
+      <path fill="#D75C45" d="M4 10H6V11H4Z"/>
+    </g>
+    <g id="enemy_aberration-death-a">
+      <path fill="#0D111C" d="M4 8H8V9H10V11H13V12H15V15H11V14H9V15H6V13H4V15H2V14H1V11H2V9H4Z"/>
+      <path fill="#54365F" d="M4 9H8V10H9V11H11V12H14V14H10V13H6V14H3V13H2V11H4Z"/>
+      <path fill="#6E9DA4" d="M5 9H8V10H9V12H8V13H5V12H4V10H5ZM10 12H12V14H10Z"/>
+      <path fill="#E6DDC5" d="M5 11H9V13H5Z"/>
+      <path fill="#D75C45" d="M6 11H8V12H6Z"/>
+    </g>
+    <g id="enemy_aberration-death-b">
+      <path fill="#0D111C" d="M1 10H4V11H7V9H10V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#54365F" d="M2 11H5V12H7V10H10V12H13V14H9V13H6V14H2Z"/>
+      <path fill="#6E9DA4" d="M4 11H7V12H11V14H7V13H4Z"/>
+      <path fill="#E6DDC5" d="M7 10H10V12H7Z"/>
+      <path fill="#D75C45" d="M8 10H9V11H8Z"/>
+    </g>
+
+    <g id="shopkeeper-idle-a">
+      <path fill="#0D111C" d="M4 2H10V3H13V5H11V7H12V9H14V13H12V15H9V14H7V15H4V13H3V8H4V6H2V5H4Z"/>
+      <path fill="#80513B" d="M4 3H10V4H12V5H3V4H4ZM5 6H10V8H11V13H9V14H5V13H4V8H5ZM12 9H13V13H12Z"/>
+      <path fill="#C59B42" d="M5 8H10V13H8V14H6V12H5ZM3 4H11V5H3Z"/>
+      <path fill="#E6DDC5" d="M5 6H9V7H5ZM4 9H5V11H4Z"/>
+      <path fill="#C9A24B" d="M12 10H13V12H12Z"/>
+    </g>
+    <g id="shopkeeper-idle-b">
+      <path fill="#0D111C" d="M4 2H10V3H13V5H11V7H12V9H14V13H12V15H9V14H6V15H4V13H3V8H4V6H2V5H4Z"/>
+      <path fill="#80513B" d="M4 3H10V4H12V5H3V4H4ZM5 6H10V8H11V13H9V14H5V13H4V8H5ZM12 9H13V13H12Z"/>
+      <path fill="#C59B42" d="M5 8H10V13H8V14H6V12H5ZM3 4H11V5H3Z"/>
+      <path fill="#E6DDC5" d="M5 6H9V7H5ZM10 8H11V10H10Z"/>
+      <path fill="#C9A24B" d="M12 11H13V13H12Z"/>
+    </g>
+    <g id="shopkeeper-move-a">
+      <path fill="#0D111C" d="M5 2H11V3H14V5H12V7H13V9H15V13H13V14H11V15H8V14H6V15H2V13H4V10H3V8H5V6H3V5H5Z"/>
+      <path fill="#80513B" d="M5 3H11V4H13V5H4V4H5ZM6 6H11V8H12V13H10V14H6V13H4V10H5V8H6ZM13 9H14V13H13Z"/>
+      <path fill="#C59B42" d="M6 8H11V12H10V13H7V12H5V10H6ZM4 4H12V5H4Z"/>
+      <path fill="#E6DDC5" d="M6 6H10V7H6ZM5 8H6V10H5Z"/>
+      <path fill="#C9A24B" d="M13 10H14V12H13Z"/>
+    </g>
+    <g id="shopkeeper-move-b">
+      <path fill="#0D111C" d="M3 3H9V4H12V6H10V8H11V10H13V14H11V15H8V14H6V15H3V14H1V13H3V10H2V9H3V7H1V6H3Z"/>
+      <path fill="#80513B" d="M3 4H9V5H11V6H2V5H3ZM4 7H9V9H10V13H9V14H5V13H3V10H4ZM11 10H12V14H11Z"/>
+      <path fill="#C59B42" d="M4 9H9V13H7V14H5V12H4ZM2 5H10V6H2Z"/>
+      <path fill="#E6DDC5" d="M4 7H8V8H4ZM9 9H10V11H9Z"/>
+      <path fill="#C9A24B" d="M11 11H12V13H11Z"/>
+    </g>
+    <g id="shopkeeper-attack-a">
+      <path fill="#0D111C" d="M4 2H10V3H13V5H11V7H12V9H14V13H12V15H9V14H7V15H4V13H3V8H4V6H2V5H4ZM1 8H5V11H1Z"/>
+      <path fill="#80513B" d="M4 3H10V4H12V5H3V4H4ZM5 6H10V8H11V13H9V14H5V13H4V8H5ZM12 9H13V13H12Z"/>
+      <path fill="#C59B42" d="M5 8H10V13H8V14H6V12H5ZM3 4H11V5H3Z"/>
+      <path fill="#E6DDC5" d="M5 6H9V7H5ZM2 9H5V10H2Z"/>
+      <path fill="#C9A24B" d="M12 10H13V12H12Z"/>
+    </g>
+    <g id="shopkeeper-attack-b">
+      <path fill="#0D111C" d="M5 2H11V3H14V5H12V7H13V9H15V13H13V15H10V14H8V15H5V13H4V8H5V6H3V5H5ZM11 7H15V10H11Z"/>
+      <path fill="#80513B" d="M5 3H11V4H13V5H4V4H5ZM6 6H11V8H12V13H10V14H6V13H5V8H6ZM13 9H14V13H13Z"/>
+      <path fill="#C59B42" d="M6 8H11V13H9V14H7V12H6ZM4 4H12V5H4Z"/>
+      <path fill="#E6DDC5" d="M6 6H10V7H6ZM12 8H15V9H12Z"/>
+      <path fill="#C9A24B" d="M13 10H14V12H13Z"/>
+    </g>
+    <g id="shopkeeper-cast-a">
+      <path fill="#0D111C" d="M4 2H10V3H13V5H11V7H12V9H14V13H12V15H9V14H7V15H4V13H3V8H4V6H2V5H4ZM1 4H4V7H1Z"/>
+      <path fill="#80513B" d="M4 3H10V4H12V5H3V4H4ZM5 6H10V8H11V13H9V14H5V13H4V8H5ZM12 9H13V13H12Z"/>
+      <path fill="#C59B42" d="M5 8H10V13H8V14H6V12H5ZM3 4H11V5H3ZM2 4H3V5H4V6H2Z"/>
+      <path fill="#E6DDC5" d="M5 6H9V7H5ZM2 5H3V6H2Z"/>
+      <path fill="#C9A24B" d="M12 10H13V12H12Z"/>
+    </g>
+    <g id="shopkeeper-cast-b">
+      <path fill="#0D111C" d="M4 2H10V3H13V5H11V7H12V9H14V13H12V15H9V14H7V15H4V13H3V8H4V6H2V5H4ZM11 4H15V7H11Z"/>
+      <path fill="#80513B" d="M4 3H10V4H12V5H3V4H4ZM5 6H10V8H11V13H9V14H5V13H4V8H5ZM12 9H13V13H12Z"/>
+      <path fill="#C59B42" d="M5 8H10V13H8V14H6V12H5ZM3 4H11V5H3ZM12 4H13V5H14V6H12Z"/>
+      <path fill="#E6DDC5" d="M5 6H9V7H5ZM12 5H13V6H12Z"/>
+      <path fill="#C9A24B" d="M12 10H13V12H12Z"/>
+    </g>
+    <g id="shopkeeper-hurt-a">
+      <path fill="#0D111C" d="M6 3H12V4H15V6H13V8H14V10H15V14H12V15H9V14H7V15H4V14H3V9H4V7H6V5H4V4H6ZM1 9H4V12H1Z"/>
+      <path fill="#80513B" d="M6 4H12V5H14V6H5V5H6ZM7 7H12V9H13V13H11V14H7V13H5V10H6V9H7ZM13 10H14V14H13Z"/>
+      <path fill="#C59B42" d="M7 9H12V13H10V14H8V12H7ZM5 5H13V6H5Z"/>
+      <path fill="#E6DDC5" d="M7 7H11V8H7ZM2 9H4V11H2Z"/>
+      <path fill="#C9A24B" d="M13 11H14V13H13Z"/>
+    </g>
+    <g id="shopkeeper-hurt-b">
+      <path fill="#0D111C" d="M2 5H8V6H11V8H9V10H10V11H13V15H9V14H7V15H4V14H1V10H2V8H1V7H2ZM11 9H14V14H11Z"/>
+      <path fill="#80513B" d="M2 6H8V7H10V8H1V7H2ZM3 9H8V11H9V14H4V13H2V10H3ZM11 10H13V14H11Z"/>
+      <path fill="#C59B42" d="M3 11H8V14H6V13H4V12H3ZM1 7H9V8H1Z"/>
+      <path fill="#E6DDC5" d="M3 9H7V10H3ZM12 9H14V10H12Z"/>
+      <path fill="#C9A24B" d="M12 11H13V13H12Z"/>
+    </g>
+    <g id="shopkeeper-death-a">
+      <path fill="#0D111C" d="M5 7H11V8H14V10H12V12H14V15H9V14H7V15H3V14H1V11H2V9H5Z"/>
+      <path fill="#80513B" d="M5 8H11V9H13V10H4V9H5ZM4 10H10V12H12V14H8V13H5V14H2V11H4Z"/>
+      <path fill="#C59B42" d="M4 11H10V13H8V14H6V13H4ZM4 9H12V10H4Z"/>
+      <path fill="#E6DDC5" d="M5 10H9V11H5Z"/>
+      <path fill="#C9A24B" d="M12 12H14V13H12Z"/>
+    </g>
+    <g id="shopkeeper-death-b">
+      <path fill="#0D111C" d="M1 10H5V9H10V11H13V12H15V15H10V14H7V15H2V14H1Z"/>
+      <path fill="#80513B" d="M2 11H6V10H10V12H13V14H9V13H6V14H2Z"/>
+      <path fill="#C59B42" d="M4 11H10V12H12V14H8V13H4Z"/>
+      <path fill="#E6DDC5" d="M2 11H4V12H2Z"/>
+      <path fill="#C9A24B" d="M13 12H15V13H13Z"/>
+    </g>
+
     <g id="summon-idle-a">
-      <g fill="#171525">
-        <rect x="6" y="1" width="4" height="2"/><rect x="5" y="3" width="6" height="6"/>
-        <rect x="3" y="5" width="2" height="5"/><rect x="11" y="5" width="2" height="5"/>
-        <rect x="4" y="8" width="8" height="4"/><rect x="5" y="12" width="6" height="2"/>
-        <rect x="6" y="14" width="4" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="6" y="3" width="4" height="5"/><rect x="5" y="9" width="6" height="3"/><rect x="6" y="12" width="4" height="2"/></g>
-      <g fill="#a184cf"><rect x="7" y="3" width="2" height="2"/><rect x="6" y="8" width="4" height="3"/><rect x="4" y="6" width="1" height="3"/><rect x="11" y="6" width="1" height="3"/></g>
-      <g fill="#4ac8cf"><rect x="6" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="7" y="9" width="2" height="3"/><rect x="6" y="14" width="1" height="1"/><rect x="9" y="14" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="7" y="5" width="2" height="1"/><rect x="7" y="10" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M6 2H10V3H12V6H13V9H11V11H10V13H9V15H7V13H6V11H4V9H3V6H4V3H6Z"/>
+      <path fill="#342C4A" d="M6 3H10V4H11V6H12V8H10V10H9V12H8V14H7V12H6V10H5V8H4V6H5V4H6Z"/>
+      <path fill="#A68BDB" d="M7 3H10V4H11V6H10V8H9V10H7V9H6V7H5V5H7ZM6 10H9V12H8V14H7V12H6Z"/>
+      <path fill="#78CAD8" d="M6 6H7V7H6ZM10 6H11V7H10ZM7 8H10V9H7Z"/>
+      <path fill="#BCEBE3" d="M7 4H9V5H7ZM8 8H9V9H8Z"/>
     </g>
     <g id="summon-idle-b">
-      <g fill="#171525">
-        <rect x="5" y="0" width="6" height="3"/><rect x="4" y="3" width="8" height="6"/>
-        <rect x="2" y="4" width="3" height="5"/><rect x="11" y="4" width="3" height="5"/>
-        <rect x="4" y="8" width="8" height="4"/><rect x="6" y="12" width="4" height="3"/>
-        <rect x="7" y="15" width="2" height="1"/>
-      </g>
-      <g fill="#7151a0"><rect x="5" y="2" width="6" height="6"/><rect x="5" y="9" width="6" height="3"/><rect x="7" y="12" width="2" height="3"/></g>
-      <g fill="#a184cf"><rect x="6" y="1" width="4" height="3"/><rect x="6" y="8" width="4" height="3"/><rect x="3" y="5" width="2" height="3"/><rect x="11" y="5" width="2" height="3"/></g>
-      <g fill="#4ac8cf"><rect x="5" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="7" y="9" width="2" height="2"/><rect x="7" y="13" width="2" height="2"/></g>
-      <g fill="#b6e8df"><rect x="6" y="5" width="4" height="1"/><rect x="8" y="9" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M6 1H10V2H12V5H13V8H11V10H10V12H9V14H8V15H7V13H6V11H4V8H3V5H4V2H6Z"/>
+      <path fill="#342C4A" d="M6 2H10V3H11V5H12V7H10V9H9V11H8V13H7V11H6V9H5V7H4V5H5V3H6Z"/>
+      <path fill="#A68BDB" d="M7 2H10V3H11V5H10V7H9V9H7V8H6V6H5V4H7ZM6 9H9V11H8V13H7V11H6Z"/>
+      <path fill="#78CAD8" d="M6 5H7V6H6ZM10 5H11V6H10ZM7 7H10V8H7Z"/>
+      <path fill="#BCEBE3" d="M7 3H9V4H7ZM8 7H9V8H8Z"/>
     </g>
-
-    <!-- Arcane summon: move -->
     <g id="summon-move-a">
-      <g fill="#171525">
-        <rect x="7" y="1" width="5" height="2"/><rect x="6" y="3" width="7" height="6"/>
-        <rect x="3" y="5" width="3" height="4"/><rect x="12" y="4" width="3" height="5"/>
-        <rect x="5" y="8" width="8" height="4"/><rect x="7" y="12" width="5" height="2"/>
-        <rect x="9" y="14" width="4" height="2"/><rect x="1" y="11" width="3" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="7" y="3" width="5" height="5"/><rect x="6" y="9" width="6" height="3"/><rect x="8" y="12" width="3" height="2"/></g>
-      <g fill="#a184cf"><rect x="8" y="2" width="3" height="2"/><rect x="7" y="8" width="4" height="3"/><rect x="4" y="6" width="2" height="2"/><rect x="12" y="5" width="2" height="3"/></g>
-      <g fill="#4ac8cf"><rect x="7" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="8" y="9" width="2" height="2"/><rect x="10" y="14" width="2" height="1"/><rect x="1" y="11" width="2" height="1"/></g>
-      <g fill="#b6e8df"><rect x="8" y="5" width="3" height="1"/><rect x="9" y="9" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M7 1H11V2H13V5H14V8H12V10H11V12H10V14H9V15H7V13H6V11H4V9H3V6H4V3H7Z"/>
+      <path fill="#342C4A" d="M7 2H11V3H12V5H13V7H11V9H10V11H9V13H8V12H7V10H5V8H4V6H5V4H7Z"/>
+      <path fill="#A68BDB" d="M8 2H11V3H12V5H11V7H10V9H8V8H7V6H6V4H8ZM7 9H10V11H9V13H8V11H7Z"/>
+      <path fill="#78CAD8" d="M7 5H8V6H7ZM11 5H12V6H11ZM8 7H11V8H8Z"/>
+      <path fill="#BCEBE3" d="M8 3H10V4H8ZM9 7H10V8H9Z"/>
     </g>
     <g id="summon-move-b">
-      <g fill="#171525">
-        <rect x="4" y="1" width="5" height="2"/><rect x="3" y="3" width="7" height="6"/>
-        <rect x="1" y="4" width="3" height="5"/><rect x="9" y="5" width="3" height="4"/>
-        <rect x="3" y="8" width="8" height="4"/><rect x="4" y="12" width="5" height="2"/>
-        <rect x="3" y="14" width="4" height="2"/><rect x="12" y="11" width="3" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="4" y="3" width="5" height="5"/><rect x="4" y="9" width="6" height="3"/><rect x="5" y="12" width="3" height="2"/></g>
-      <g fill="#a184cf"><rect x="5" y="2" width="3" height="2"/><rect x="5" y="8" width="4" height="3"/><rect x="2" y="5" width="2" height="3"/><rect x="9" y="6" width="2" height="2"/></g>
-      <g fill="#4ac8cf"><rect x="4" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="6" y="9" width="2" height="2"/><rect x="4" y="14" width="2" height="1"/><rect x="13" y="11" width="2" height="1"/></g>
-      <g fill="#b6e8df"><rect x="5" y="5" width="3" height="1"/><rect x="6" y="9" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M4 2H8V3H10V6H11V9H9V11H8V13H7V15H5V13H4V11H2V9H1V6H2V3H4Z"/>
+      <path fill="#342C4A" d="M4 3H8V4H9V6H10V8H8V10H7V12H6V14H5V12H4V10H3V8H2V6H3V4H4Z"/>
+      <path fill="#A68BDB" d="M5 3H8V4H9V6H8V8H7V10H5V9H4V7H3V5H5ZM4 10H7V12H6V14H5V12H4Z"/>
+      <path fill="#78CAD8" d="M4 6H5V7H4ZM8 6H9V7H8ZM5 8H8V9H5Z"/>
+      <path fill="#BCEBE3" d="M5 4H7V5H5ZM6 8H7V9H6Z"/>
     </g>
-
-    <!-- Arcane summon: attack -->
     <g id="summon-attack-a">
-      <g fill="#171525">
-        <rect x="4" y="2" width="5" height="2"/><rect x="3" y="4" width="7" height="6"/>
-        <rect x="1" y="6" width="3" height="4"/><rect x="9" y="5" width="4" height="5"/>
-        <rect x="3" y="9" width="8" height="4"/><rect x="5" y="13" width="5" height="3"/>
-        <rect x="11" y="3" width="5" height="3"/><rect x="14" y="2" width="2" height="1"/>
-      </g>
-      <g fill="#7151a0"><rect x="4" y="4" width="5" height="5"/><rect x="4" y="10" width="6" height="3"/><rect x="6" y="13" width="3" height="2"/></g>
-      <g fill="#a184cf"><rect x="5" y="3" width="3" height="2"/><rect x="5" y="9" width="4" height="3"/><rect x="2" y="7" width="2" height="2"/><rect x="9" y="6" width="3" height="3"/></g>
-      <g fill="#4ac8cf"><rect x="4" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="6" y="10" width="2" height="2"/><rect x="12" y="4" width="4" height="1"/><rect x="15" y="2" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="5" y="6" width="3" height="1"/><rect x="13" y="3" width="3" height="1"/></g>
+      <path fill="#0D111C" d="M6 2H10V3H12V6H13V9H11V11H10V13H9V15H7V13H6V11H4V9H3V6H4V3H6ZM1 7H4V10H1Z"/>
+      <path fill="#342C4A" d="M6 3H10V4H11V6H12V8H10V10H9V12H8V14H7V12H6V10H5V8H4V6H5V4H6Z"/>
+      <path fill="#A68BDB" d="M7 3H10V4H11V6H10V8H9V10H7V9H6V7H5V5H7ZM6 10H9V12H8V14H7V12H6Z"/>
+      <path fill="#78CAD8" d="M6 6H7V7H6ZM10 6H11V7H10ZM2 8H5V9H2Z"/>
+      <path fill="#BCEBE3" d="M7 4H9V5H7ZM1 8H3V9H1Z"/>
     </g>
     <g id="summon-attack-b">
-      <g fill="#171525">
-        <rect x="6" y="2" width="5" height="2"/><rect x="5" y="4" width="7" height="6"/>
-        <rect x="3" y="6" width="3" height="4"/><rect x="10" y="6" width="5" height="4"/>
-        <rect x="4" y="9" width="9" height="4"/><rect x="6" y="13" width="6" height="3"/>
-        <rect x="12" y="6" width="4" height="4"/><rect x="15" y="5" width="1" height="1"/>
-      </g>
-      <g fill="#7151a0"><rect x="6" y="4" width="5" height="5"/><rect x="5" y="10" width="7" height="3"/><rect x="7" y="13" width="4" height="2"/></g>
-      <g fill="#a184cf"><rect x="7" y="3" width="3" height="2"/><rect x="6" y="9" width="5" height="3"/><rect x="4" y="7" width="2" height="2"/><rect x="10" y="7" width="4" height="2"/></g>
-      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="8" y="10" width="2" height="2"/><rect x="12" y="7" width="4" height="2"/><rect x="15" y="5" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="7" y="6" width="3" height="1"/><rect x="14" y="6" width="2" height="1"/><rect x="15" y="9" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M7 2H11V3H13V6H14V9H12V11H11V13H10V15H8V13H7V11H5V9H4V6H5V3H7ZM11 7H15V10H11Z"/>
+      <path fill="#342C4A" d="M7 3H11V4H12V6H13V8H11V10H10V12H9V14H8V12H7V10H6V8H5V6H6V4H7Z"/>
+      <path fill="#A68BDB" d="M8 3H11V4H12V6H11V8H10V10H8V9H7V7H6V5H8ZM7 10H10V12H9V14H8V12H7Z"/>
+      <path fill="#78CAD8" d="M7 6H8V7H7ZM11 6H12V7H11ZM11 8H15V9H11Z"/>
+      <path fill="#BCEBE3" d="M8 4H10V5H8ZM13 8H15V9H13Z"/>
     </g>
-
-    <!-- Arcane summon: cast -->
     <g id="summon-cast-a">
-      <g fill="#171525">
-        <rect x="6" y="2" width="4" height="2"/><rect x="5" y="4" width="6" height="6"/>
-        <rect x="2" y="4" width="3" height="6"/><rect x="11" y="4" width="3" height="6"/>
-        <rect x="4" y="9" width="8" height="4"/><rect x="6" y="13" width="4" height="3"/>
-        <rect x="0" y="1" width="3" height="3"/><rect x="14" y="2" width="2" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="6" y="4" width="4" height="5"/><rect x="5" y="10" width="6" height="3"/><rect x="7" y="13" width="2" height="2"/></g>
-      <g fill="#a184cf"><rect x="7" y="3" width="2" height="2"/><rect x="6" y="9" width="4" height="3"/><rect x="3" y="5" width="2" height="4"/><rect x="11" y="5" width="2" height="4"/></g>
-      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="7" y="10" width="2" height="2"/><rect x="0" y="2" width="2" height="2"/><rect x="14" y="2" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="7" y="6" width="2" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="15" y="3" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M6 2H10V3H12V6H13V9H11V11H10V13H9V15H7V13H6V11H4V9H3V6H4V3H6ZM1 3H4V6H1Z"/>
+      <path fill="#342C4A" d="M6 3H10V4H11V6H12V8H10V10H9V12H8V14H7V12H6V10H5V8H4V6H5V4H6Z"/>
+      <path fill="#A68BDB" d="M7 3H10V4H11V6H10V8H9V10H7V9H6V7H5V5H7ZM6 10H9V12H8V14H7V12H6Z"/>
+      <path fill="#78CAD8" d="M6 6H7V7H6ZM10 6H11V7H10ZM2 3H3V4H4V5H2Z"/>
+      <path fill="#BCEBE3" d="M7 4H9V5H7ZM2 4H3V5H2Z"/>
     </g>
     <g id="summon-cast-b">
-      <g fill="#171525">
-        <rect x="5" y="0" width="6" height="3"/><rect x="5" y="4" width="6" height="6"/>
-        <rect x="2" y="2" width="3" height="7"/><rect x="11" y="2" width="3" height="7"/>
-        <rect x="4" y="9" width="8" height="4"/><rect x="6" y="13" width="4" height="3"/>
-      </g>
-      <g fill="#7151a0"><rect x="6" y="4" width="4" height="5"/><rect x="5" y="10" width="6" height="3"/><rect x="7" y="13" width="2" height="2"/></g>
-      <g fill="#a184cf"><rect x="6" y="1" width="4" height="2"/><rect x="6" y="9" width="4" height="3"/><rect x="3" y="3" width="2" height="5"/><rect x="11" y="3" width="2" height="5"/></g>
-      <g fill="#4ac8cf"><rect x="6" y="6" width="1" height="1"/><rect x="9" y="6" width="1" height="1"/><rect x="7" y="10" width="2" height="2"/><rect x="7" y="1" width="2" height="1"/><rect x="2" y="2" width="1" height="2"/><rect x="13" y="2" width="1" height="2"/></g>
-      <g fill="#b6e8df"><rect x="7" y="6" width="2" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="10" y="0" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M6 1H10V2H12V5H13V8H11V10H10V12H9V14H8V15H7V13H6V11H4V8H3V5H4V2H6ZM11 3H15V6H11Z"/>
+      <path fill="#342C4A" d="M6 2H10V3H11V5H12V7H10V9H9V11H8V13H7V11H6V9H5V7H4V5H5V3H6Z"/>
+      <path fill="#A68BDB" d="M7 2H10V3H11V5H10V7H9V9H7V8H6V6H5V4H7ZM6 9H9V11H8V13H7V11H6Z"/>
+      <path fill="#78CAD8" d="M6 5H7V6H6ZM10 5H11V6H10ZM12 3H13V4H14V5H12Z"/>
+      <path fill="#BCEBE3" d="M7 3H9V4H7ZM12 4H13V5H12Z"/>
     </g>
-
-    <!-- Arcane summon: hurt and death -->
     <g id="summon-hurt-a">
-      <g fill="#171525">
-        <rect x="8" y="3" width="5" height="2"/><rect x="7" y="5" width="7" height="5"/>
-        <rect x="4" y="6" width="3" height="5"/><rect x="13" y="6" width="2" height="4"/>
-        <rect x="6" y="9" width="8" height="4"/><rect x="8" y="13" width="5" height="3"/>
-        <rect x="2" y="3" width="2" height="2"/><rect x="1" y="8" width="2" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="8" y="5" width="5" height="4"/><rect x="7" y="10" width="6" height="3"/><rect x="9" y="13" width="3" height="2"/></g>
-      <g fill="#a184cf"><rect x="9" y="4" width="3" height="2"/><rect x="8" y="9" width="4" height="3"/><rect x="5" y="7" width="2" height="3"/><rect x="13" y="7" width="1" height="2"/></g>
-      <g fill="#4ac8cf"><rect x="8" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="9" y="10" width="2" height="2"/><rect x="2" y="3" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="9" y="7" width="3" height="1"/></g>
+      <path fill="#0D111C" d="M8 4H12V5H14V8H15V11H13V13H12V15H9V14H8V12H6V11H5V8H6V6H8ZM2 7H5V10H2Z"/>
+      <path fill="#342C4A" d="M8 5H12V6H13V8H14V10H12V12H11V14H10V13H9V11H7V10H6V8H7V6H8Z"/>
+      <path fill="#A68BDB" d="M9 5H12V6H13V8H12V10H11V12H9V11H8V9H7V7H9ZM8 11H11V13H10V14H9V13H8Z"/>
+      <path fill="#78CAD8" d="M8 8H9V9H8ZM12 8H13V9H12ZM3 8H5V9H3Z"/>
+      <path fill="#BCEBE3" d="M9 6H11V7H9ZM2 5H3V6H2Z"/>
     </g>
     <g id="summon-hurt-b">
-      <g fill="#171525">
-        <rect x="3" y="4" width="5" height="2"/><rect x="2" y="6" width="7" height="5"/>
-        <rect x="1" y="7" width="2" height="4"/><rect x="8" y="6" width="4" height="5"/>
-        <rect x="2" y="10" width="9" height="4"/><rect x="3" y="14" width="5" height="2"/>
-        <rect x="13" y="2" width="2" height="2"/><rect x="14" y="8" width="2" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="3" y="6" width="5" height="4"/><rect x="3" y="11" width="7" height="3"/><rect x="4" y="14" width="3" height="1"/></g>
-      <g fill="#a184cf"><rect x="4" y="5" width="3" height="2"/><rect x="4" y="10" width="5" height="3"/><rect x="2" y="8" width="1" height="2"/><rect x="8" y="7" width="3" height="3"/></g>
-      <g fill="#4ac8cf"><rect x="3" y="8" width="1" height="1"/><rect x="7" y="8" width="1" height="1"/><rect x="5" y="11" width="2" height="2"/><rect x="14" y="2" width="1" height="1"/><rect x="15" y="9" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="4" y="8" width="3" height="1"/></g>
+      <path fill="#0D111C" d="M3 5H7V6H9V9H10V12H8V14H7V15H5V13H4V12H2V10H1V7H3ZM10 7H13V10H10Z"/>
+      <path fill="#342C4A" d="M3 6H7V7H8V9H9V11H7V13H6V14H5V12H4V11H3V9H2V7H3Z"/>
+      <path fill="#A68BDB" d="M4 6H7V7H8V9H7V11H6V13H5V11H4V10H3V8H4Z"/>
+      <path fill="#78CAD8" d="M3 9H4V10H3ZM7 9H8V10H7ZM11 8H13V9H11Z"/>
+      <path fill="#BCEBE3" d="M4 7H6V8H4ZM13 5H14V6H13Z"/>
     </g>
     <g id="summon-death-a">
-      <g fill="#171525">
-        <rect x="6" y="7" width="5" height="2"/><rect x="5" y="9" width="7" height="4"/>
-        <rect x="3" y="10" width="2" height="3"/><rect x="12" y="10" width="2" height="3"/>
-        <rect x="4" y="13" width="3" height="2"/><rect x="9" y="13" width="3" height="3"/>
-        <rect x="1" y="8" width="2" height="2"/><rect x="14" y="6" width="2" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="6" y="9" width="5" height="3"/><rect x="5" y="13" width="2" height="1"/><rect x="10" y="13" width="1" height="2"/></g>
-      <g fill="#a184cf"><rect x="7" y="8" width="3" height="2"/><rect x="7" y="11" width="3" height="2"/><rect x="4" y="11" width="1" height="2"/><rect x="12" y="11" width="1" height="2"/></g>
-      <g fill="#4ac8cf"><rect x="6" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="15" y="6" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="7" y="10" width="3" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M5 7H9V8H11V10H13V12H15V14H12V15H9V13H7V15H4V13H2V14H1V11H3V9H5Z"/>
+      <path fill="#342C4A" d="M5 8H9V9H10V10H12V12H14V13H11V14H8V12H6V14H4V12H2V11H3V10H5Z"/>
+      <path fill="#A68BDB" d="M6 8H9V9H10V11H11V13H9V12H7V14H5V12H4V10H6Z"/>
+      <path fill="#78CAD8" d="M5 10H6V11H5ZM9 10H10V11H9ZM12 12H14V13H12Z"/>
+      <path fill="#BCEBE3" d="M6 9H8V10H6Z"/>
     </g>
     <g id="summon-death-b">
-      <g fill="#171525">
-        <rect x="2" y="12" width="3" height="3"/><rect x="6" y="10" width="3" height="3"/>
-        <rect x="10" y="12" width="3" height="4"/><rect x="14" y="13" width="2" height="2"/>
-        <rect x="0" y="14" width="2" height="2"/>
-      </g>
-      <g fill="#7151a0"><rect x="3" y="13" width="2" height="2"/><rect x="7" y="11" width="2" height="2"/><rect x="11" y="13" width="2" height="2"/></g>
-      <g fill="#a184cf"><rect x="2" y="12" width="1" height="2"/><rect x="6" y="10" width="1" height="2"/><rect x="10" y="12" width="1" height="2"/></g>
-      <g fill="#4ac8cf"><rect x="0" y="15" width="2" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="12" y="15" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/></g>
-      <g fill="#b6e8df"><rect x="2" y="14" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/></g>
+      <path fill="#0D111C" d="M1 10H3V12H5V9H7V11H9V13H11V10H13V12H15V15H12V14H10V15H7V14H5V15H2V14H1Z"/>
+      <path fill="#342C4A" d="M2 11H3V13H5V10H6V12H8V14H10V11H12V13H14V14H11V13H10V14H7V13H5V14H3V13H2Z"/>
+      <path fill="#A68BDB" d="M3 12H5V11H6V13H8V14H6V13H4V14H3ZM10 12H12V14H10Z"/>
+      <path fill="#78CAD8" d="M2 11H3V12H2ZM6 10H7V11H6ZM12 11H13V12H12Z"/>
+      <path fill="#BCEBE3" d="M4 10H5V11H4ZM9 13H10V14H9ZM14 13H15V14H14Z"/>
     </g>
   </defs>
 
-  <g transform="translate(0 0)"><use href="#player-idle-a"/></g><g transform="translate(16 0)"><use href="#player-idle-b"/></g><g transform="translate(32 0)"><use href="#player-move-a"/></g><g transform="translate(48 0)"><use href="#player-move-b"/></g><g transform="translate(64 0)"><use href="#player-attack-a"/></g><g transform="translate(80 0)"><use href="#player-attack-b"/></g><g transform="translate(96 0)"><use href="#player-cast-a"/></g><g transform="translate(112 0)"><use href="#player-cast-b"/></g><g transform="translate(128 0)"><use href="#player-hurt-a"/></g><g transform="translate(144 0)"><use href="#player-hurt-b"/></g><g transform="translate(160 0)"><use href="#player-death-a"/></g><g transform="translate(176 0)"><use href="#player-death-b"/></g>
-  <g transform="translate(0 16)"><use href="#enemy-idle-a"/></g><g transform="translate(16 16)"><use href="#enemy-idle-b"/></g><g transform="translate(32 16)"><use href="#enemy-move-a"/></g><g transform="translate(48 16)"><use href="#enemy-move-b"/></g><g transform="translate(64 16)"><use href="#enemy-attack-a"/></g><g transform="translate(80 16)"><use href="#enemy-attack-b"/></g><g transform="translate(96 16)"><use href="#enemy-cast-a"/></g><g transform="translate(112 16)"><use href="#enemy-cast-b"/></g><g transform="translate(128 16)"><use href="#enemy-hurt-a"/></g><g transform="translate(144 16)"><use href="#enemy-hurt-b"/></g><g transform="translate(160 16)"><use href="#enemy-death-a"/></g><g transform="translate(176 16)"><use href="#enemy-death-b"/></g>
-  <g transform="translate(0 32)"><use href="#shop-idle-a"/></g><g transform="translate(16 32)"><use href="#shop-idle-b"/></g><g transform="translate(32 32)"><use href="#shop-move-a"/></g><g transform="translate(48 32)"><use href="#shop-move-b"/></g><g transform="translate(64 32)"><use href="#shop-attack-a"/></g><g transform="translate(80 32)"><use href="#shop-attack-b"/></g><g transform="translate(96 32)"><use href="#shop-cast-a"/></g><g transform="translate(112 32)"><use href="#shop-cast-b"/></g><g transform="translate(128 32)"><use href="#shop-hurt-a"/></g><g transform="translate(144 32)"><use href="#shop-hurt-b"/></g><g transform="translate(160 32)"><use href="#shop-death-a"/></g><g transform="translate(176 32)"><use href="#shop-death-b"/></g>
-  <g transform="translate(0 48)"><use href="#summon-idle-a"/></g><g transform="translate(16 48)"><use href="#summon-idle-b"/></g><g transform="translate(32 48)"><use href="#summon-move-a"/></g><g transform="translate(48 48)"><use href="#summon-move-b"/></g><g transform="translate(64 48)"><use href="#summon-attack-a"/></g><g transform="translate(80 48)"><use href="#summon-attack-b"/></g><g transform="translate(96 48)"><use href="#summon-cast-a"/></g><g transform="translate(112 48)"><use href="#summon-cast-b"/></g><g transform="translate(128 48)"><use href="#summon-hurt-a"/></g><g transform="translate(144 48)"><use href="#summon-hurt-b"/></g><g transform="translate(160 48)"><use href="#summon-death-a"/></g><g transform="translate(176 48)"><use href="#summon-death-b"/></g>
+  <use href="#player_fighter-idle-a" x="0" y="0"/><use href="#player_fighter-idle-b" x="16" y="0"/><use href="#player_fighter-move-a" x="32" y="0"/><use href="#player_fighter-move-b" x="48" y="0"/><use href="#player_fighter-attack-a" x="64" y="0"/><use href="#player_fighter-attack-b" x="80" y="0"/><use href="#player_fighter-cast-a" x="96" y="0"/><use href="#player_fighter-cast-b" x="112" y="0"/><use href="#player_fighter-hurt-a" x="128" y="0"/><use href="#player_fighter-hurt-b" x="144" y="0"/><use href="#player_fighter-death-a" x="160" y="0"/><use href="#player_fighter-death-b" x="176" y="0"/>
+  <use href="#player_ranger-idle-a" x="0" y="16"/><use href="#player_ranger-idle-b" x="16" y="16"/><use href="#player_ranger-move-a" x="32" y="16"/><use href="#player_ranger-move-b" x="48" y="16"/><use href="#player_ranger-attack-a" x="64" y="16"/><use href="#player_ranger-attack-b" x="80" y="16"/><use href="#player_ranger-cast-a" x="96" y="16"/><use href="#player_ranger-cast-b" x="112" y="16"/><use href="#player_ranger-hurt-a" x="128" y="16"/><use href="#player_ranger-hurt-b" x="144" y="16"/><use href="#player_ranger-death-a" x="160" y="16"/><use href="#player_ranger-death-b" x="176" y="16"/>
+  <use href="#player_wizard-idle-a" x="0" y="32"/><use href="#player_wizard-idle-b" x="16" y="32"/><use href="#player_wizard-move-a" x="32" y="32"/><use href="#player_wizard-move-b" x="48" y="32"/><use href="#player_wizard-attack-a" x="64" y="32"/><use href="#player_wizard-attack-b" x="80" y="32"/><use href="#player_wizard-cast-a" x="96" y="32"/><use href="#player_wizard-cast-b" x="112" y="32"/><use href="#player_wizard-hurt-a" x="128" y="32"/><use href="#player_wizard-hurt-b" x="144" y="32"/><use href="#player_wizard-death-a" x="160" y="32"/><use href="#player_wizard-death-b" x="176" y="32"/>
+  <use href="#enemy_humanoid-idle-a" x="0" y="48"/><use href="#enemy_humanoid-idle-b" x="16" y="48"/><use href="#enemy_humanoid-move-a" x="32" y="48"/><use href="#enemy_humanoid-move-b" x="48" y="48"/><use href="#enemy_humanoid-attack-a" x="64" y="48"/><use href="#enemy_humanoid-attack-b" x="80" y="48"/><use href="#enemy_humanoid-cast-a" x="96" y="48"/><use href="#enemy_humanoid-cast-b" x="112" y="48"/><use href="#enemy_humanoid-hurt-a" x="128" y="48"/><use href="#enemy_humanoid-hurt-b" x="144" y="48"/><use href="#enemy_humanoid-death-a" x="160" y="48"/><use href="#enemy_humanoid-death-b" x="176" y="48"/>
+  <use href="#enemy_brute-idle-a" x="0" y="64"/><use href="#enemy_brute-idle-b" x="16" y="64"/><use href="#enemy_brute-move-a" x="32" y="64"/><use href="#enemy_brute-move-b" x="48" y="64"/><use href="#enemy_brute-attack-a" x="64" y="64"/><use href="#enemy_brute-attack-b" x="80" y="64"/><use href="#enemy_brute-cast-a" x="96" y="64"/><use href="#enemy_brute-cast-b" x="112" y="64"/><use href="#enemy_brute-hurt-a" x="128" y="64"/><use href="#enemy_brute-hurt-b" x="144" y="64"/><use href="#enemy_brute-death-a" x="160" y="64"/><use href="#enemy_brute-death-b" x="176" y="64"/>
+  <use href="#enemy_undead-idle-a" x="0" y="80"/><use href="#enemy_undead-idle-b" x="16" y="80"/><use href="#enemy_undead-move-a" x="32" y="80"/><use href="#enemy_undead-move-b" x="48" y="80"/><use href="#enemy_undead-attack-a" x="64" y="80"/><use href="#enemy_undead-attack-b" x="80" y="80"/><use href="#enemy_undead-cast-a" x="96" y="80"/><use href="#enemy_undead-cast-b" x="112" y="80"/><use href="#enemy_undead-hurt-a" x="128" y="80"/><use href="#enemy_undead-hurt-b" x="144" y="80"/><use href="#enemy_undead-death-a" x="160" y="80"/><use href="#enemy_undead-death-b" x="176" y="80"/>
+  <use href="#enemy_beast-idle-a" x="0" y="96"/><use href="#enemy_beast-idle-b" x="16" y="96"/><use href="#enemy_beast-move-a" x="32" y="96"/><use href="#enemy_beast-move-b" x="48" y="96"/><use href="#enemy_beast-attack-a" x="64" y="96"/><use href="#enemy_beast-attack-b" x="80" y="96"/><use href="#enemy_beast-cast-a" x="96" y="96"/><use href="#enemy_beast-cast-b" x="112" y="96"/><use href="#enemy_beast-hurt-a" x="128" y="96"/><use href="#enemy_beast-hurt-b" x="144" y="96"/><use href="#enemy_beast-death-a" x="160" y="96"/><use href="#enemy_beast-death-b" x="176" y="96"/>
+  <use href="#enemy_flyer-idle-a" x="0" y="112"/><use href="#enemy_flyer-idle-b" x="16" y="112"/><use href="#enemy_flyer-move-a" x="32" y="112"/><use href="#enemy_flyer-move-b" x="48" y="112"/><use href="#enemy_flyer-attack-a" x="64" y="112"/><use href="#enemy_flyer-attack-b" x="80" y="112"/><use href="#enemy_flyer-cast-a" x="96" y="112"/><use href="#enemy_flyer-cast-b" x="112" y="112"/><use href="#enemy_flyer-hurt-a" x="128" y="112"/><use href="#enemy_flyer-hurt-b" x="144" y="112"/><use href="#enemy_flyer-death-a" x="160" y="112"/><use href="#enemy_flyer-death-b" x="176" y="112"/>
+  <use href="#enemy_construct-idle-a" x="0" y="128"/><use href="#enemy_construct-idle-b" x="16" y="128"/><use href="#enemy_construct-move-a" x="32" y="128"/><use href="#enemy_construct-move-b" x="48" y="128"/><use href="#enemy_construct-attack-a" x="64" y="128"/><use href="#enemy_construct-attack-b" x="80" y="128"/><use href="#enemy_construct-cast-a" x="96" y="128"/><use href="#enemy_construct-cast-b" x="112" y="128"/><use href="#enemy_construct-hurt-a" x="128" y="128"/><use href="#enemy_construct-hurt-b" x="144" y="128"/><use href="#enemy_construct-death-a" x="160" y="128"/><use href="#enemy_construct-death-b" x="176" y="128"/>
+  <use href="#enemy_caster-idle-a" x="0" y="144"/><use href="#enemy_caster-idle-b" x="16" y="144"/><use href="#enemy_caster-move-a" x="32" y="144"/><use href="#enemy_caster-move-b" x="48" y="144"/><use href="#enemy_caster-attack-a" x="64" y="144"/><use href="#enemy_caster-attack-b" x="80" y="144"/><use href="#enemy_caster-cast-a" x="96" y="144"/><use href="#enemy_caster-cast-b" x="112" y="144"/><use href="#enemy_caster-hurt-a" x="128" y="144"/><use href="#enemy_caster-hurt-b" x="144" y="144"/><use href="#enemy_caster-death-a" x="160" y="144"/><use href="#enemy_caster-death-b" x="176" y="144"/>
+  <use href="#enemy_aquatic-idle-a" x="0" y="160"/><use href="#enemy_aquatic-idle-b" x="16" y="160"/><use href="#enemy_aquatic-move-a" x="32" y="160"/><use href="#enemy_aquatic-move-b" x="48" y="160"/><use href="#enemy_aquatic-attack-a" x="64" y="160"/><use href="#enemy_aquatic-attack-b" x="80" y="160"/><use href="#enemy_aquatic-cast-a" x="96" y="160"/><use href="#enemy_aquatic-cast-b" x="112" y="160"/><use href="#enemy_aquatic-hurt-a" x="128" y="160"/><use href="#enemy_aquatic-hurt-b" x="144" y="160"/><use href="#enemy_aquatic-death-a" x="160" y="160"/><use href="#enemy_aquatic-death-b" x="176" y="160"/>
+  <use href="#enemy_aberration-idle-a" x="0" y="176"/><use href="#enemy_aberration-idle-b" x="16" y="176"/><use href="#enemy_aberration-move-a" x="32" y="176"/><use href="#enemy_aberration-move-b" x="48" y="176"/><use href="#enemy_aberration-attack-a" x="64" y="176"/><use href="#enemy_aberration-attack-b" x="80" y="176"/><use href="#enemy_aberration-cast-a" x="96" y="176"/><use href="#enemy_aberration-cast-b" x="112" y="176"/><use href="#enemy_aberration-hurt-a" x="128" y="176"/><use href="#enemy_aberration-hurt-b" x="144" y="176"/><use href="#enemy_aberration-death-a" x="160" y="176"/><use href="#enemy_aberration-death-b" x="176" y="176"/>
+  <use href="#shopkeeper-idle-a" x="0" y="192"/><use href="#shopkeeper-idle-b" x="16" y="192"/><use href="#shopkeeper-move-a" x="32" y="192"/><use href="#shopkeeper-move-b" x="48" y="192"/><use href="#shopkeeper-attack-a" x="64" y="192"/><use href="#shopkeeper-attack-b" x="80" y="192"/><use href="#shopkeeper-cast-a" x="96" y="192"/><use href="#shopkeeper-cast-b" x="112" y="192"/><use href="#shopkeeper-hurt-a" x="128" y="192"/><use href="#shopkeeper-hurt-b" x="144" y="192"/><use href="#shopkeeper-death-a" x="160" y="192"/><use href="#shopkeeper-death-b" x="176" y="192"/>
+  <use href="#summon-idle-a" x="0" y="208"/><use href="#summon-idle-b" x="16" y="208"/><use href="#summon-move-a" x="32" y="208"/><use href="#summon-move-b" x="48" y="208"/><use href="#summon-attack-a" x="64" y="208"/><use href="#summon-attack-b" x="80" y="208"/><use href="#summon-cast-a" x="96" y="208"/><use href="#summon-cast-b" x="112" y="208"/><use href="#summon-hurt-a" x="128" y="208"/><use href="#summon-hurt-b" x="144" y="208"/><use href="#summon-death-a" x="160" y="208"/><use href="#summon-death-b" x="176" y="208"/>
 </svg>

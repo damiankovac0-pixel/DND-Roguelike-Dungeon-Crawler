@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/flyer"
 display_name = "Bat"
 glyph = "b"
 color = Color(0.45, 0.55, 0.95, 1)

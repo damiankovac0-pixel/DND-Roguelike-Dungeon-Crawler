@@ -87,6 +87,7 @@ hazard_message = "The deluge's remnants wash over you for %d magic damage."
 
 [resource]
 script = ExtResource("1")
+visual_id = &"boss/kaelros"
 display_name = "Kaelros, the Drowned King"
 glyph = "K"
 color = Color(0.32, 0.68, 0.86, 1)

@@ -17,3 +17,4 @@ max_floor = 10
 healing_amount = 4
 use_effect = 8
 effect_duration = 4
+visual_id = &"item/potion"

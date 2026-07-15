@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/construct"
 display_name = "Clockwork Spider"
 glyph = "x"
 color = Color(0.78, 0.60, 0.32, 1)

@@ -21,3 +21,4 @@ required_class = &"fighter"
 weapon_damage_type = &"melee"
 class_damage_type = &"melee"
 class_damage_percent_bonus = 10
+visual_id = &"item/sword"

@@ -16,3 +16,4 @@ min_floor = 11
 healing_amount = 70
 max_floor = 0
 use_effect = 1
+visual_id = &"item/elixir"

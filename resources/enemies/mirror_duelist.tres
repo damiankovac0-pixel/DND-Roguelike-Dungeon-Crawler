@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/humanoid"
 display_name = "Mirror Duelist"
 glyph = "m"
 color = Color(0.78, 0.76, 0.95, 1)

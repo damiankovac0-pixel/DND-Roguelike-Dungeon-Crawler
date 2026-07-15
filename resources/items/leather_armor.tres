@@ -13,3 +13,4 @@ rarity = 0
 base_price = 25
 spawn_weight = 12
 armor_bonus = 2
+visual_id = &"item/armor/light"

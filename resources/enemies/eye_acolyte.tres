@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/caster"
 display_name = "Eye Acolyte"
 glyph = "e"
 color = Color(0.72, 0.78, 1, 1)

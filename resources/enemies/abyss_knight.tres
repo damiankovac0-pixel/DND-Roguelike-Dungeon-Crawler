@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/brute"
 display_name = "Abyss Knight"
 glyph = "K"
 color = Color(0.72, 0.38, 0.95, 1)

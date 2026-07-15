@@ -109,7 +109,10 @@ func capture_items(item_nodes: Dictionary) -> void:
 		var item: Resource = item_value
 		var kind_index: int = int(item.get("kind"))
 		var visual_id: StringName = &"item/generic"
-		if kind_index >= 0 and kind_index < ITEM_VISUAL_IDS.size():
+		var item_visual: Variant = item.get("visual_id")
+		if item_visual != null and str(item_visual) != "":
+			visual_id = StringName(item_visual)
+		elif kind_index >= 0 and kind_index < ITEM_VISUAL_IDS.size():
 			visual_id = ITEM_VISUAL_IDS[kind_index]
 		var color_value: Variant = item.get("color")
 		items[cell_value] = {
@@ -162,7 +165,10 @@ func capture_traps(traps: Dictionary, revealed: Dictionary, triggered: Dictionar
 		var trap: Resource = trap_value
 		var effect_index: int = int(trap.get("effect"))
 		var visual_id: StringName = &"trap/generic"
-		if effect_index >= 0 and effect_index < TRAP_VISUAL_IDS.size():
+		var trap_visual: Variant = trap.get("visual_id")
+		if trap_visual != null and str(trap_visual) != "":
+			visual_id = StringName(trap_visual)
+		elif effect_index >= 0 and effect_index < TRAP_VISUAL_IDS.size():
 			visual_id = TRAP_VISUAL_IDS[effect_index]
 		var color_value: Variant = trap.get("color")
 		trap_data[cell_value] = {
@@ -286,7 +292,7 @@ func _snapshot_actor(actor: Variant) -> Dictionary:
 		"name": actor_name,
 		"display_name": display_name,
 		"kind": kind,
-		"visual_id": _visual_id_for(kind, boss_id),
+		"visual_id": _visual_id_for(is_player, kind, enemy_data, boss_id),
 		"is_player": is_player,
 		"is_boss": is_boss,
 		"is_summon": is_summon,
@@ -314,10 +320,50 @@ func _actor_kind(
 	return &"enemy"
 
 
-func _visual_id_for(kind: StringName, boss_id: StringName) -> StringName:
-	if kind == &"boss":
-		return StringName("boss/%s" % boss_id)
-	return StringName("actor/%s" % kind)
+func _get_player_class() -> StringName:
+	var main_loop: MainLoop = Engine.get_main_loop()
+	var tree: SceneTree = main_loop as SceneTree
+	if tree == null or tree.root == null:
+		return &"fighter"
+	var gm: Node = tree.root.get_node_or_null(^"GameManager")
+	if gm == null:
+		return &"fighter"
+	var raw: Variant = gm.get("pending_character_class")
+	if raw == null:
+		return &"fighter"
+	var cls: StringName = StringName(raw)
+	if cls == &"fighter" or cls == &"ranger" or cls == &"wizard":
+		return cls
+	return &"fighter"
+
+
+func _visual_id_for(
+	is_player: bool, kind: StringName, enemy_data: Resource, boss_id: StringName
+) -> StringName:
+	var visual_id: StringName
+	if is_player:
+		var player_class: StringName = _get_player_class()
+		visual_id = StringName("actor/player/%s" % player_class)
+	elif kind == &"boss":
+		var enemy_visual: Variant = enemy_data.get("visual_id") if enemy_data != null else null
+		if enemy_visual != null and str(enemy_visual) != "":
+			visual_id = StringName(enemy_visual)
+		elif boss_id != StringName():
+			visual_id = StringName("boss/%s" % boss_id)
+		else:
+			visual_id = &"boss/unknown"
+	elif kind == &"shopkeeper":
+		visual_id = &"actor/shopkeeper"
+	elif kind == &"summon":
+		visual_id = &"actor/summon"
+	else:
+		# Normal enemy — prefer resource visual_id, fall back to humanoid
+		var enemy_visual: Variant = enemy_data.get("visual_id") if enemy_data != null else null
+		if enemy_visual != null and str(enemy_visual) != "":
+			visual_id = StringName(enemy_visual)
+		else:
+			visual_id = &"actor/enemy/humanoid"
+	return visual_id
 
 
 func _update_actor_facing(actor_id: int, cell: Vector2i) -> StringName:

@@ -1,0 +1,8 @@
+<svg id="ember-texture" xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" shape-rendering="crispEdges">
+  <g id="ember-rising-core">
+    <rect x="2" y="0" width="1" height="1" fill="#C85A32"/>
+    <rect x="1" y="1" width="1" height="1" fill="#E6DDC5"/>
+    <rect x="0" y="2" width="1" height="1" fill="#745044"/>
+    <rect x="1" y="2" width="1" height="1" fill="#C85A32"/>
+  </g>
+</svg>

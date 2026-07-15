@@ -80,6 +80,7 @@ hazard_message = "Lingering spores erupt for %d magic damage."
 
 [resource]
 script = ExtResource("1")
+visual_id = &"boss/seraphine"
 display_name = "Seraphine, the Thorn Saint"
 glyph = "S"
 color = Color(0.88, 0.42, 0.58, 1)

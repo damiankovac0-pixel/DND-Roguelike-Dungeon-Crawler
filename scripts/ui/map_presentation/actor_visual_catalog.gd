@@ -8,13 +8,33 @@ extends Resource
 # === Constants ===
 const ACTOR_FRAME_SIZE: Vector2i = Vector2i(16, 16)
 const BOSS_FRAME_SIZE: Vector2i = Vector2i(80, 64)
-const ACTOR_SHEET_SIZE: Vector2i = Vector2i(192, 64)
+const ACTOR_SHEET_SIZE: Vector2i = Vector2i(192, 224)
 const BOSS_SHEET_SIZE: Vector2i = Vector2i(960, 320)
 const ACTOR_ROWS: Dictionary = {
+	# New canonical visual IDs (actor/ namespace)
+	&"actor/player/fighter": 0,
+	&"actor/player/ranger": 1,
+	&"actor/player/wizard": 2,
+	&"actor/enemy/humanoid": 3,
+	&"actor/enemy/brute": 4,
+	&"actor/enemy/undead": 5,
+	&"actor/enemy/beast": 6,
+	&"actor/enemy/flyer": 7,
+	&"actor/enemy/construct": 8,
+	&"actor/enemy/caster": 9,
+	&"actor/enemy/aquatic": 10,
+	&"actor/enemy/aberration": 11,
+	&"actor/shopkeeper": 12,
+	&"actor/summon": 13,
+	# Old semantic aliases
+	&"actor/player": 0,
+	&"actor/enemy": 3,
+}
+const KIND_FALLBACK_ROWS: Dictionary = {
 	&"player": 0,
-	&"enemy": 1,
-	&"shopkeeper": 2,
-	&"summon": 3,
+	&"enemy": 3,
+	&"shopkeeper": 12,
+	&"summon": 13,
 }
 const BOSS_ROWS: Dictionary = {
 	&"observer": 0,
@@ -45,7 +65,7 @@ const LOOPING_ANIMATIONS: Dictionary = {
 }
 
 # === Exports ===
-@export var catalog_version: int = 1
+@export var catalog_version: int = 2
 @export var actor_sheet: Texture2D
 @export var boss_sheet: Texture2D
 @export var prototype: bool = false
@@ -58,7 +78,7 @@ var _frames_by_visual_id: Dictionary = {}
 # === Public Methods ===
 func validate() -> String:
 	var validation_error: String = ""
-	if catalog_version != 1:
+	if catalog_version != 2:
 		validation_error = "Unsupported actor visual catalogue version"
 	elif actor_sheet == null:
 		validation_error = "Pixel actor animation sheet is missing"
@@ -87,16 +107,14 @@ func sprite_frames_for(snapshot: Dictionary) -> SpriteFrames:
 
 
 func tint_for(snapshot: Dictionary) -> Color:
-	var kind: StringName = snapshot.get("kind", &"enemy")
-	match kind:
-		&"player":
-			return Color(0.34, 0.94, 1.0)
-		&"shopkeeper":
-			return Color(1.0, 0.82, 0.32)
-		&"summon":
-			return Color(0.72, 0.58, 1.0)
-	var color_value: Variant = snapshot.get("color", Color.WHITE)
-	return color_value if color_value is Color else Color.WHITE
+	var visual_id: StringName = snapshot.get("visual_id", &"actor/enemy")
+	if visual_id != &"" and ACTOR_ROWS.has(visual_id):
+		return Color.WHITE
+	var boss_id: StringName = snapshot.get("boss_id", &"")
+	if boss_id != &"" and BOSS_ROWS.has(boss_id):
+		return Color.WHITE
+	# Unknown visual — visible magenta fallback so missing assets are obvious
+	return Color(1.0, 0.0, 1.0)
 
 
 func frame_size_for(snapshot: Dictionary) -> Vector2i:
@@ -109,8 +127,12 @@ func clear_cache() -> void:
 
 # === Private Methods ===
 func _actor_row(snapshot: Dictionary) -> int:
+	var visual_id: StringName = snapshot.get("visual_id", &"actor/enemy")
+	if visual_id != &"" and ACTOR_ROWS.has(visual_id):
+		return int(ACTOR_ROWS[visual_id])
+	# Fall back to kind-based row
 	var kind: StringName = snapshot.get("kind", &"enemy")
-	return int(ACTOR_ROWS.get(kind, ACTOR_ROWS[&"enemy"]))
+	return int(KIND_FALLBACK_ROWS.get(kind, ACTOR_ROWS[&"actor/enemy"]))
 
 
 func _boss_row(snapshot: Dictionary) -> int:

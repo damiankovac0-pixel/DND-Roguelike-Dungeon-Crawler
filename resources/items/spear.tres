@@ -16,3 +16,4 @@ min_floor = 1
 damage_sides = 6
 attack_bonus = 1
 damage_bonus = 0
+visual_id = &"item/spear"

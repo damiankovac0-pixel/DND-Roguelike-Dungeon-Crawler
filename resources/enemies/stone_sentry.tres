@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+visual_id = &"actor/enemy/construct"
 display_name = "Stone Sentry"
 glyph = "u"
 color = Color(0.62, 0.62, 0.68, 1)

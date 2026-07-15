@@ -42,6 +42,7 @@ extends Resource
 @export var fireball_damage_sides: int = 0
 @export var fireball_damage_bonus: int = 0
 @export var fireball_projectile_id: StringName = &""
+@export var visual_id: StringName = &"actor/enemy/humanoid"
 
 @export var is_boss: bool = false
 @export var boss_id: StringName = &""

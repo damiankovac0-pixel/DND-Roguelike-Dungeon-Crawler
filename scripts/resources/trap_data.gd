@@ -23,3 +23,4 @@ enum TrapEffect {
 @export var detect_dc: int = 12
 # Passive bonus to detection (higher = harder to spot)
 @export var reveal_on_detect: bool = true
+@export var visual_id: StringName = &"trap/generic"

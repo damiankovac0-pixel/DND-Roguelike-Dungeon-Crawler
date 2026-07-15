@@ -14,3 +14,4 @@ base_price = 320
 spawn_weight = 2
 min_floor = 14
 armor_bonus = 8
+visual_id = &"item/armor/heavy"

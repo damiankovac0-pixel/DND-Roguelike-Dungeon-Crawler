@@ -16,3 +16,4 @@ min_floor = 4
 damage_sides = 6
 attack_bonus = 1
 damage_bonus = 2
+visual_id = &"item/sword"

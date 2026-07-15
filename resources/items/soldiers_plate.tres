@@ -17,3 +17,4 @@ armor_bonus = 5
 required_class = &"fighter"
 class_damage_type = &"melee"
 class_damage_percent_bonus = 5
+visual_id = &"item/armor/heavy"

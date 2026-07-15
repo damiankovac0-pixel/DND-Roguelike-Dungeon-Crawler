@@ -227,6 +227,65 @@ func _check_fixed_effect_pool(layout: RefCounted, state: RefCounted) -> void:
 		0,
 		"Completed particle slots were not released",
 	)
+	# --- Effect texture selector tests ---
+	pool.call(&"reset_transients")
+	var texture_tests: Array[Dictionary] = [
+		{"element": &"fire", "expected": &"fire"},
+		{"element": &"arcane", "expected": &"arcane"},
+		{"element": &"poison", "expected": &"poison"},
+		{"element": &"frost", "expected": &"frost"},
+		{"element": &"unknown", "expected": &"neutral"},
+	]
+	for test: Dictionary in texture_tests:
+		var tex_accepted: bool = bool(
+			pool.call(
+				&"play_event",
+				{
+					"type": &"cell_burst",
+					"payload": {"cell": Vector2i(3, 3), "element": test.element}
+				}
+			)
+		)
+		_expect(tex_accepted, "Texture test for '%s' was rejected" % test.element)
+		var tex_snap: Dictionary = pool.call(&"get_debug_snapshot")
+		_expect_equal(
+			tex_snap.get("last_texture_id"),
+			test.expected,
+			"Sematic element '%s' selected wrong effect texture" % test.element
+		)
+		pool.call(&"reset_transients")
+	var profile_texture_tests: Array[Dictionary] = [
+		{"profile_id": &"fireball", "expected": &"fireball"},
+		{"profile_id": &"arcane_bolt", "expected": &"arcane_bolt"},
+		{"profile_id": &"spore_hazard", "expected": &"spore_hazard"},
+		{"profile_id": &"frost_nova", "expected": &"frost_nova"},
+		{"profile_id": &"arrow", "expected": &"neutral"},
+	]
+	for test: Dictionary in profile_texture_tests:
+		var projectile_profile_id: StringName = test.get("profile_id", &"")
+		var profile_accepted: bool = bool(
+			(
+				pool
+				. call(
+					&"play_event",
+					{
+						"type": &"projectile_trail",
+						"payload": {"cell": Vector2i(3, 3), "profile_id": projectile_profile_id},
+					}
+				)
+			)
+		)
+		_expect(
+			profile_accepted,
+			"Texture test for projectile profile '%s' was rejected" % projectile_profile_id,
+		)
+		var profile_snapshot: Dictionary = pool.call(&"get_debug_snapshot")
+		_expect_equal(
+			profile_snapshot.get("last_texture_id"),
+			test.expected,
+			"Projectile profile '%s' selected wrong effect texture" % projectile_profile_id,
+		)
+		pool.call(&"reset_transients")
 	pool.queue_free()
 	await process_frame
 	print("  fixed particle pool caps nodes and uses the Web-safe CPU fallback")
@@ -238,7 +297,7 @@ func _check_actor_shader_feedback(layout: RefCounted, visible_cells: Dictionary)
 	await process_frame
 	var player_snapshot: Dictionary = {
 		"id": 1001,
-		"visual_id": &"actor/player",
+		"visual_id": &"actor/player/fighter",
 		"kind": &"player",
 		"cell": _player.grid_position,
 		"facing": &"right",
@@ -246,6 +305,14 @@ func _check_actor_shader_feedback(layout: RefCounted, visible_cells: Dictionary)
 		"is_boss": false,
 	}
 	var player_frames: SpriteFrames = _actor_catalog.call(&"sprite_frames_for", player_snapshot)
+	# Verify backward-compatible visual ID alias still resolves
+	var alias_snapshot: Dictionary = player_snapshot.duplicate()
+	alias_snapshot["visual_id"] = &"actor/player"
+	var alias_frames: SpriteFrames = _actor_catalog.call(&"sprite_frames_for", alias_snapshot)
+	_expect(
+		alias_frames.has_animation(&"idle") and alias_frames.has_animation(&"hurt"),
+		"Legacy 'actor/player' visual ID alias should produce valid sprite frames"
+	)
 	player_view.call(&"initialize_view", player_snapshot, player_frames, Color.WHITE, layout, false)
 	var player_cells: Array[Vector2i] = [_player.grid_position]
 	(
