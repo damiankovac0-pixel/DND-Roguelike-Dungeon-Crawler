@@ -102,6 +102,19 @@ def build_checks(godot: Path, visual_capture: bool, web_export: bool) -> list[Ch
             60,
         ),
     ]
+    checks.append(
+        Check(
+            "Godot resource import",
+            (
+                str(godot),
+                "--headless",
+                "--path",
+                str(REPOSITORY_ROOT),
+                "--import",
+            ),
+            180,
+        )
+    )
     for test_path in GODOT_TESTS:
         checks.append(
             Check(
