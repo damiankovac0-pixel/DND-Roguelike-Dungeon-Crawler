@@ -222,6 +222,41 @@ func get_debug_summary() -> Dictionary:
 	}
 
 
+func get_parity_snapshot() -> Dictionary:
+	return {
+		"map_data": map_data.duplicate(true),
+		"map_size": map_size,
+		"biome_theme": biome_theme.duplicate(true),
+		"atmosphere_profile": atmosphere_profile.duplicate(true),
+		"atmosphere_enabled": atmosphere_enabled,
+		"reduced_vfx_enabled": reduced_vfx_enabled,
+		"visible_cells": visible_cells.duplicate(true),
+		"explored_cells": explored_cells.duplicate(true),
+		"actors": actors.duplicate(true),
+		"focus_cell": focus_cell,
+		"items": items.duplicate(true),
+		"containers": containers.duplicate(true),
+		"trap_data": trap_data.duplicate(true),
+		"revealed_traps": revealed_traps.duplicate(true),
+		"triggered_traps": triggered_traps.duplicate(true),
+		"secret_walls": secret_walls.duplicate(true),
+		"revealed_secret_walls": revealed_secret_walls.duplicate(true),
+		"secret_wall_hint_color": secret_wall_hint_color,
+		"enemy_intents": enemy_intents.duplicate(true),
+		"targeting_active": targeting_active,
+		"target_cursor": target_cursor,
+		"target_range_cells": target_range_cells.duplicate(true),
+		"target_area_cells": target_area_cells.duplicate(true),
+		"boss_room_cells": boss_room_cells.duplicate(true),
+		"boss_door_cells": boss_door_cells.duplicate(),
+		"boss_room_locked": boss_room_locked,
+		"boss_room_tint_color": boss_room_tint_color,
+		"boss_visuals": boss_visuals.duplicate(true),
+		"boss_telegraphs": boss_telegraphs.duplicate(true),
+		"boss_hazards": boss_hazards.duplicate(true),
+	}
+
+
 # === Private Methods ===
 func _snapshot_actor(actor: Variant) -> Dictionary:
 	if actor == null or not is_instance_valid(actor):

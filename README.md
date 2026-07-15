@@ -162,6 +162,40 @@ python3 tools/pixel_assets.py generate
 
 Aseprite source conventions, export commands, generated-file rules, and licensing requirements are documented in [`docs/pixel_asset_pipeline.md`](docs/pixel_asset_pipeline.md).
 
+## Pixel renderer release validation
+
+Run the focused renderer, gameplay-parity, accessibility, and startup gates with:
+
+```sh
+python3 tools/run_pixel_release_gate.py
+```
+
+Optional release-candidate checks:
+
+```sh
+# Requires a desktop rendering backend; captures one fixed scene in all three modes.
+python3 tools/run_pixel_release_gate.py --visual-capture
+
+# Requires Godot Web export templates.
+python3 tools/run_pixel_release_gate.py --web-export
+```
+
+The automated release gate enforces these renderer budgets:
+
+- 120 live `ASCII -> Hybrid -> Full Pixel` cycles without actor-view duplication, transient-effect leaks, or more than four residual nodes.
+- No more than 16 MiB of retained static-memory growth across that switch stress.
+- A fixed 12-emitter particle pool with zero active emitters after renderer reset.
+- 64 actors across 60 presentation updates in at most 5 seconds, with no static-tile rebuilds for actor-only changes.
+- Identical renderer-neutral state before and after mode changes, transient effects, dense actor updates, and viewport changes.
+- Fixed-scene desktop captures that distinguish ASCII from Hybrid and Hybrid from Full Pixel.
+- Five viewport sizes from `720x610` through `1600x900`, followed by verified ASCII restoration.
+
+`.github/workflows/visual-assets.yml` runs the focused suite and a clean Web release export for renderer-affecting pull requests and pushes to `main`. Headless CI cannot read rendered textures, so the desktop capture gate remains an explicit release-candidate command.
+
+Reference Web threshold at `1180x760`: at least 55 average FPS with a 25 ms-or-lower p95 frame time during floor transitions, movement, and 90 live renderer changes; the canvas must match every tested viewport and the browser must report no console, page, or resource-load errors.
+
+ASCII remains the default. Do not change that default until the five prototype visual sources have production replacements, all three modes complete a full manual run including boss encounters, the desktop capture gate passes, and an exported Web build passes renderer switching, reduced-VFX, resize, focus-return, and console-error checks.
+
 ## Web export
 
 The repo includes a Web export preset.

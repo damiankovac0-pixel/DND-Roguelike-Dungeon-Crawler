@@ -38,6 +38,11 @@ var _transient_reset_count: int = 0
 var _actor_views: Dictionary = {}
 var _retired_actor_ids: Dictionary = {}
 var _actor_event_count: int = 0
+var _present_count: int = 0
+var _tile_rebuild_count: int = 0
+var _actor_sync_count: int = 0
+var _actor_view_create_count: int = 0
+var _actor_view_remove_count: int = 0
 var _pending_boss_intro: Dictionary = {}
 var _playfield_rect: Rect2 = Rect2(Vector2(10, 10), Vector2(680, 590))
 var _outer_background_color: Color = Color(0.0, 0.02, 0.035)
@@ -152,6 +157,7 @@ func present(state: RefCounted) -> void:
 	if not is_renderer_available():
 		return
 	_state = state
+	_present_count += 1
 	var view_changed: bool = bool(_layout.call(&"set_map_size", state.get("map_size")))
 	view_changed = bool(_layout.call(&"set_focus_cell", state.get("focus_cell"))) or view_changed
 	_update_layer_positions()
@@ -258,6 +264,15 @@ func get_debug_snapshot() -> Dictionary:
 	return {
 		"available": is_renderer_available(),
 		"profile": _render_profile,
+		"visible": visible,
+		"process_mode": process_mode,
+		"renderer_child_count": get_child_count(),
+		"actor_layer_child_count": actor_layer.get_child_count(),
+		"present_count": _present_count,
+		"tile_rebuild_count": _tile_rebuild_count,
+		"actor_sync_count": _actor_sync_count,
+		"actor_view_create_count": _actor_view_create_count,
+		"actor_view_remove_count": _actor_view_remove_count,
 		"ground_cell_count": ground_layer.get_used_cells().size(),
 		"structure_cell_count": structure_layer.get_used_cells().size(),
 		"player_visible": bool(player_debug.get("visible", false)),
@@ -268,6 +283,7 @@ func get_debug_snapshot() -> Dictionary:
 		"visibility_revision": _last_visibility_revision,
 		"actor_revision": _last_actor_revision,
 		"overlay_revision": _last_overlay_revision,
+		"environment_revision": _last_environment_revision,
 		"actor_count": _actor_views.size(),
 		"visible_actor_count": _visible_actor_count(actor_debug),
 		"boss_actor_count": _boss_actor_count(actor_debug),
@@ -320,6 +336,7 @@ func _update_layer_positions() -> void:
 
 
 func _rebuild_tiles() -> void:
+	_tile_rebuild_count += 1
 	ground_layer.clear()
 	structure_layer.clear()
 	var map_data: Array = _state.get("map_data")
@@ -343,6 +360,7 @@ func _rebuild_tiles() -> void:
 
 
 func _sync_actor_views(animate_moves: bool) -> void:
+	_actor_sync_count += 1
 	var actor_snapshots: Array = _state.get("actors")
 	var visible_cells: Dictionary = _state.get("visible_cells")
 	var active_actor_ids: Dictionary = {}
@@ -397,6 +415,7 @@ func _create_actor_view(snapshot: Dictionary) -> PixelActorView:
 	view.death_finished.connect(_on_actor_death_finished.bind(view))
 	var actor_id: int = int(snapshot.get("id", 0))
 	_actor_views[actor_id] = view
+	_actor_view_create_count += 1
 	return view
 
 
@@ -571,6 +590,7 @@ func _remove_actor_view(actor_id: int) -> void:
 		return
 	view.prepare_for_removal()
 	_actor_views.erase(actor_id)
+	_actor_view_remove_count += 1
 	view.queue_free()
 
 

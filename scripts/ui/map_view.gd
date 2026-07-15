@@ -123,6 +123,31 @@ func is_map_render_mode_available(mode: Variant) -> bool:
 	return bool(_presentation_controller.call(&"is_mode_available", mode))
 
 
+func get_presentation_debug_snapshot() -> Dictionary:
+	var pixel_debug: Dictionary = {}
+	if is_instance_valid(_pixel_renderer) and _pixel_renderer.has_method(&"get_debug_snapshot"):
+		pixel_debug = _pixel_renderer.call(&"get_debug_snapshot")
+	return {
+		"requested_mode": get_requested_map_render_mode(),
+		"effective_mode": get_effective_map_render_mode(),
+		"shared": _presentation_state.call(&"get_parity_snapshot"),
+		"ascii":
+		{
+			"active": get_effective_map_render_mode() == &"ascii",
+			"base_active": get_effective_map_render_mode() == &"ascii",
+			"tactical_active": get_effective_map_render_mode() != &"pixel",
+			"actor_count": _actors.size(),
+			"item_count": _items.size(),
+			"container_count": _containers.size(),
+			"cell_burst_count": _cell_bursts.size(),
+			"projectile_count": _projectile_trails.size(),
+			"boss_spawn_count": _boss_spawn_effects.size(),
+			"processing": is_processing(),
+		},
+		"pixel": pixel_debug,
+	}
+
+
 func configure_map(map_data: Array) -> void:
 	_map_data = map_data
 	_update_boss_room_draw_offset()
