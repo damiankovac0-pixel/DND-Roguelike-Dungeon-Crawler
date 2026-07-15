@@ -12,6 +12,11 @@ var _view_capacity: Vector2i = Vector2i.ONE
 var _map_size: Vector2i = Vector2i.ZERO
 var _focus_cell: Vector2i = Vector2i.ZERO
 var _view_origin_cell: Vector2i = Vector2i.ZERO
+var _base_cell_size: Vector2i = Vector2i(16, 16)
+var _scale: int = 1
+var _slack: Vector2i = Vector2i.ZERO
+var _edge_padding: Vector2i = Vector2i.ZERO
+var _adaptive: bool = false
 
 
 # === Public Methods ===
@@ -19,6 +24,38 @@ func configure(cell_size: Vector2i, origin: Vector2, view_capacity: Vector2i) ->
 	_cell_size = Vector2i(maxi(1, cell_size.x), maxi(1, cell_size.y))
 	_origin = origin
 	_view_capacity = Vector2i(maxi(1, view_capacity.x), maxi(1, view_capacity.y))
+	_adaptive = false
+	_recalculate_view_origin()
+
+
+func configure_adaptive(
+	base_cell_size: Vector2i,
+	origin: Vector2,
+	available_pixels: Vector2,
+	preferred_scales: Array[int],
+	minimum_capacity: Vector2i,
+	edge_padding_cells: Vector2i
+) -> void:
+	_base_cell_size = Vector2i(maxi(1, base_cell_size.x), maxi(1, base_cell_size.y))
+	_edge_padding = Vector2i(maxi(0, edge_padding_cells.x), maxi(0, edge_padding_cells.y))
+	var px: Vector2i = Vector2i(maxi(1, int(available_pixels.x)), maxi(1, int(available_pixels.y)))
+	# Deterministic largest-valid scale selection
+	_scale = 1
+	for s in preferred_scales:
+		if s < 1:
+			continue
+		var cell_at_scale: Vector2i = _base_cell_size * s
+		var cap: Vector2i = Vector2i(
+			maxi(1, px.x / maxi(1, cell_at_scale.x)), maxi(1, px.y / maxi(1, cell_at_scale.y))
+		)
+		if cap.x >= minimum_capacity.x and cap.y >= minimum_capacity.y:
+			_scale = s
+			break
+	_cell_size = _base_cell_size * _scale
+	_view_capacity = Vector2i(maxi(1, px.x / _cell_size.x), maxi(1, px.y / _cell_size.y))
+	_slack = px - _cell_size * _view_capacity
+	_origin = origin + (Vector2(_slack) * 0.5).floor()
+	_adaptive = true
 	_recalculate_view_origin()
 
 
@@ -56,11 +93,24 @@ func get_view_origin_cell() -> Vector2i:
 	return _view_origin_cell
 
 
+func get_base_cell_size() -> Vector2i:
+	return _base_cell_size
+
+
+func get_scale() -> int:
+	return _scale
+
+
+func get_slack() -> Vector2i:
+	return _slack
+
+
+func get_edge_padding() -> Vector2i:
+	return _edge_padding
+
+
 func get_view_rect() -> Rect2i:
-	var visible_size: Vector2i = Vector2i(
-		mini(_view_capacity.x, _map_size.x), mini(_view_capacity.y, _map_size.y)
-	)
-	return Rect2i(_view_origin_cell, visible_size)
+	return Rect2i(_view_origin_cell, _view_capacity)
 
 
 func get_view_offset_pixels() -> Vector2:
@@ -99,10 +149,28 @@ func _recalculate_view_origin() -> void:
 	if _map_size == Vector2i.ZERO:
 		_view_origin_cell = Vector2i.ZERO
 		return
-	var maximum_origin: Vector2i = Vector2i(
-		maxi(0, _map_size.x - _view_capacity.x), maxi(0, _map_size.y - _view_capacity.y)
-	)
 	var desired_origin: Vector2i = _focus_cell - _view_capacity / 2
-	_view_origin_cell = Vector2i(
-		clampi(desired_origin.x, 0, maximum_origin.x), clampi(desired_origin.y, 0, maximum_origin.y)
-	)
+	if _adaptive:
+		var ox: int
+		var oy: int
+		if _map_size.x <= _view_capacity.x:
+			ox = (_view_capacity.x - _map_size.x) / -2
+		else:
+			ox = clampi(
+				desired_origin.x, -_edge_padding.x, _map_size.x - _view_capacity.x + _edge_padding.x
+			)
+		if _map_size.y <= _view_capacity.y:
+			oy = (_view_capacity.y - _map_size.y) / -2
+		else:
+			oy = clampi(
+				desired_origin.y, -_edge_padding.y, _map_size.y - _view_capacity.y + _edge_padding.y
+			)
+		_view_origin_cell = Vector2i(ox, oy)
+	else:
+		var maximum_origin: Vector2i = Vector2i(
+			maxi(0, _map_size.x - _view_capacity.x), maxi(0, _map_size.y - _view_capacity.y)
+		)
+		_view_origin_cell = Vector2i(
+			clampi(desired_origin.x, 0, maximum_origin.x),
+			clampi(desired_origin.y, 0, maximum_origin.y)
+		)

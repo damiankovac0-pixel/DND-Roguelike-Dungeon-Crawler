@@ -11,6 +11,7 @@ const STATE_PATH: String = PRESENTATION_DIR + "map_presentation_state.gd"
 const CONTROLLER_PATH: String = PRESENTATION_DIR + "map_presentation_controller.gd"
 const MAP_VIEW_PATH: String = "res://scripts/ui/map_view.gd"
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
+const PREFERRED_SCALES: Array[int] = [3, 2, 1]
 
 
 class FakeActor:
@@ -61,18 +62,16 @@ func _init() -> void:
 
 func _run() -> void:
 	_load_dependencies()
-	if _failed:
-		return
 	_check_grid_layout()
-	if _failed:
-		return
+	_check_adaptive_grid_layout()
 	_check_presentation_state()
-	if _failed:
-		return
 	_check_controller_replay_and_fallback()
 	if _failed:
 		return
 	await _check_pixel_renderer_scene()
+	if _failed:
+		return
+	await _check_adaptive_pixel_renderer()
 	if _failed:
 		return
 	await _check_map_view_switching()
@@ -131,6 +130,194 @@ func _check_grid_layout() -> void:
 		"Last map cell should remain inside the clamped view"
 	)
 	print("  grid layout isolates 16x16 rendering from gameplay world positions")
+
+
+func _check_adaptive_grid_layout() -> void:
+	# === Standard playfield selects 2x ===
+	var layout: RefCounted = _grid_script.new()
+	layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2(20, 44),
+		Vector2(670, 556),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
+	_expect_equal(
+		layout.call(&"get_base_cell_size"),
+		Vector2i(16, 16),
+		"Adaptive layout must preserve base cell size"
+	)
+	_expect_equal(layout.call(&"get_scale"), 2, "Standard 670x556 playfield must select 2x")
+	_expect_equal(
+		layout.call(&"get_cell_size"),
+		Vector2i(32, 32),
+		"2x scale must produce 32x32 cells from 16px base"
+	)
+	_expect_equal(
+		layout.call(&"get_view_capacity"),
+		Vector2i(20, 17),
+		"Capacity must be floor(available / cell_size)"
+	)
+	_expect_equal(
+		layout.call(&"get_slack"),
+		Vector2i(30, 12),
+		"Slack must be available_pixels - capacity * cell_size"
+	)
+	_expect_equal(
+		layout.call(&"get_edge_padding"), Vector2i(4, 3), "Edge padding must be (4,3) as configured"
+	)
+	# Origin offset by half slack
+	_expect_equal(
+		layout.call(&"get_origin"),
+		Vector2(35, 50),
+		"Origin must be base origin plus half-slack offset"
+	)
+
+	# === Large playfield selects 3x ===
+	var large_layout: RefCounted = _grid_script.new()
+	large_layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2.ZERO,
+		Vector2(1000, 800),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
+	_expect_equal(large_layout.call(&"get_scale"), 3, "Large 1000x800 playfield must select 3x")
+	_expect_equal(
+		large_layout.call(&"get_cell_size"), Vector2i(48, 48), "3x must produce 48x48 cells"
+	)
+
+	# === Tiny playfield falls back to 1x ===
+	var tiny_layout: RefCounted = _grid_script.new()
+	tiny_layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2.ZERO,
+		Vector2(320, 256),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
+	_expect_equal(
+		tiny_layout.call(&"get_scale"),
+		1,
+		"320x256 playfield below minimum 2x capacity must fall back to 1x"
+	)
+	_expect_equal(
+		tiny_layout.call(&"get_cell_size"), Vector2i(16, 16), "1x must keep native 16x16 cells"
+	)
+
+	# === Conversions round-trip at adaptive resolution ===
+	var conv_layout: RefCounted = _grid_script.new()
+	conv_layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2(20, 44),
+		Vector2(670, 556),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
+	conv_layout.call(&"set_map_size", Vector2i(48, 32))
+	conv_layout.call(&"set_focus_cell", Vector2i(24, 16))
+	var test_cell: Vector2i = Vector2i(10, 8)
+	var local_pos: Vector2 = conv_layout.call(&"cell_to_local", test_cell)
+	_expect_equal(
+		conv_layout.call(&"local_to_cell", local_pos),
+		test_cell,
+		"cell_to_local -> local_to_cell must round-trip at 2x"
+	)
+	_expect_equal(
+		conv_layout.call(&"local_to_cell", local_pos + Vector2(15, 15)),
+		test_cell,
+		"local_to_cell must floor consistently within a 32x32 cell"
+	)
+	var edge_cell: Vector2i = Vector2i(0, 0)
+	_expect_equal(
+		conv_layout.call(&"local_to_cell", conv_layout.call(&"cell_to_local", edge_cell)),
+		edge_cell,
+		"Edge cell (0,0) must round-trip through conversion"
+	)
+	_expect_equal(
+		conv_layout.call(
+			&"local_to_cell", conv_layout.call(&"cell_to_local", test_cell) + Vector2(31, 31)
+		),
+		test_cell,
+		"Cell interior offsets must still map to the same cell at 2x"
+	)
+
+	# === Small map centering with negative view origin ===
+	var center_layout: RefCounted = _grid_script.new()
+	center_layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2.ZERO,
+		Vector2(670, 556),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
+	center_layout.call(&"set_map_size", Vector2i(5, 4))
+	center_layout.call(&"set_focus_cell", Vector2i(2, 1))
+	var center_origin: Vector2i = center_layout.call(&"get_view_origin_cell")
+	_expect(
+		center_origin.x < 0 and center_origin.y < 0,
+		"Small map focus must produce negative view origin for centering: got %s" % [center_origin]
+	)
+	_expect(
+		bool(center_layout.call(&"is_cell_in_view", Vector2i(0, 0))),
+		"First map cell must remain in view with negative origin"
+	)
+	_expect(
+		bool(center_layout.call(&"is_cell_in_view", Vector2i(4, 3))),
+		"Last map cell must remain in view with negative origin"
+	)
+
+	# === Full-capacity view rect covers capacity regardless of map ===
+	var view_rect: Rect2i = center_layout.call(&"get_view_rect")
+	_expect_equal(
+		view_rect.size,
+		center_layout.call(&"get_view_capacity"),
+		"View rect must always cover full capacity regardless of map size"
+	)
+	_expect(
+		view_rect.position.x <= 0 and view_rect.position.y <= 0,
+		"View rect position must be negative for centered small maps: got %s" % [view_rect.position]
+	)
+
+	# === Edge focus honors safe padding ===
+	center_layout.call(&"set_map_size", Vector2i(40, 30))
+	center_layout.call(&"set_focus_cell", Vector2i(0, 0))
+	var edge_origin: Vector2i = center_layout.call(&"get_view_origin_cell")
+	_expect(
+		edge_origin.x >= -4 and edge_origin.y >= -3,
+		"Edge focus at (0,0) must not exceed -edge_padding: got %s" % [edge_origin]
+	)
+	_expect(
+		bool(center_layout.call(&"is_cell_in_view", Vector2i(0, 0))),
+		"Map cell (0,0) must be in view at edge focus"
+	)
+	# Focus at opposite corner of a large map
+	center_layout.call(&"set_focus_cell", Vector2i(39, 29))
+	_expect(
+		bool(center_layout.call(&"is_cell_in_view", Vector2i(39, 29))),
+		"Last map cell must be in view at far corner focus"
+	)
+	var far_origin: Vector2i = center_layout.call(&"get_view_origin_cell")
+	var far_end: Vector2i = far_origin + center_layout.call(&"get_view_capacity")
+	_expect(
+		far_end.x >= 40,
+		(
+			"View rect must reach map edge at far corner: origin=%s capacity=%s"
+			% [far_origin, center_layout.call(&"get_view_capacity")]
+		)
+	)
+
+	print("  adaptive grid layout selects zoom, centers small maps, and converts deterministically")
 
 
 func _check_presentation_state() -> void:
@@ -329,6 +516,123 @@ func _check_missing_catalog_fallback(renderer_scene: PackedScene, layout: RefCou
 	missing_renderer.queue_free()
 
 
+func _check_adaptive_pixel_renderer() -> void:
+	var renderer_scene: PackedScene = load(PIXEL_RENDERER_SCENE_PATH)
+	var renderer: Node2D = renderer_scene.instantiate()
+	root.add_child(renderer)
+	await process_frame
+	var layout: RefCounted = _new_adaptive_layout()
+	var initialization_error: int = int(renderer.call(&"initialize_renderer", layout))
+	_expect_equal(initialization_error, OK, "Pixel renderer should initialize with adaptive layout")
+	if _failed:
+		renderer.queue_free()
+		return
+	var state: RefCounted = _build_pixel_fixture_state()
+	renderer.call(&"present", state)
+	await process_frame
+	var debug: Dictionary = renderer.call(&"get_debug_snapshot")
+	_expect(bool(debug.get("available", false)), "Adaptive pixel renderer should report available")
+
+	# New debug fields mirror layout properties
+	_expect_equal(
+		debug.get("base_cell_size"),
+		Vector2i(16, 16),
+		"Debug must expose base cell size from adaptive layout"
+	)
+	_expect_equal(debug.get("scale"), 2, "Debug must expose integer zoom from adaptive layout")
+	_expect_equal(
+		debug.get("slack"), Vector2i(30, 12), "Debug must expose slack from adaptive layout"
+	)
+	_expect_equal(
+		debug.get("edge_padding"),
+		Vector2i(4, 3),
+		"Debug must expose edge padding from adaptive layout"
+	)
+	_expect_equal(
+		debug.get("cell_size"), Vector2i(32, 32), "Debug must expose cell size from adaptive layout"
+	)
+	_expect_equal(
+		debug.get("origin"), Vector2(35, 50), "Debug must expose origin from adaptive layout"
+	)
+	_expect_equal(
+		debug.get("capacity"), Vector2i(20, 17), "Debug must expose capacity from adaptive layout"
+	)
+
+	# Tile layers scale by the integer zoom
+	_expect_equal(
+		renderer.get_node("GroundLayer").scale,
+		Vector2(2, 2),
+		"Ground TileMapLayer must scale by integer zoom"
+	)
+	_expect_equal(
+		renderer.get_node("StructureLayer").scale,
+		Vector2(2, 2),
+		"Structure TileMapLayer must scale by integer zoom"
+	)
+
+	# Vector layers remain unscaled
+	for layer_name: StringName in [
+		&"ObjectLayer",
+		&"ActorLayer",
+		&"FogLayer",
+		&"TacticalLayer",
+		&"LightingLayer",
+		&"EffectPool"
+	]:
+		var layer: Node = renderer.get_node(NodePath(String(layer_name)))
+		_expect_equal(
+			layer.scale, Vector2.ONE, "%s must remain unscaled under adaptive layout" % [layer_name]
+		)
+
+	# Actor positions remain cell-centered via layout
+	_expect_equal(
+		debug.get("player_cell"),
+		Vector2i(24, 16),
+		"Player cell must be preserved under adaptive layout"
+	)
+	_expect_equal(
+		debug.get("player_position"),
+		layout.call(&"cell_center_to_local", Vector2i(24, 16)),
+		"Player position under adaptive layout must match cell_center_to_local"
+	)
+
+	# Transform ownership: tile layers carry layout origin + view offset,
+	# vector layers remain at ZERO before shake is applied.
+	var layer_dict: Dictionary = debug.get("layers", {})
+	var expected_tile_pos: Vector2 = (
+		(layout.call(&"get_origin") + layout.call(&"get_view_offset_pixels")).round()
+	)
+	_expect_equal(
+		layer_dict.get("GroundLayer", {}).get("position"),
+		expected_tile_pos,
+		"GroundLayer position must include layout origin and view offset"
+	)
+	_expect_equal(
+		layer_dict.get("StructureLayer", {}).get("position"),
+		expected_tile_pos,
+		"StructureLayer position must include layout origin and view offset"
+	)
+	for layer_name: StringName in [
+		&"ObjectLayer",
+		&"ActorLayer",
+		&"FogLayer",
+		&"TacticalLayer",
+		&"LightingLayer",
+		&"EffectPool"
+	]:
+		_expect_equal(
+			layer_dict.get(String(layer_name), {}).get("position"),
+			Vector2.ZERO,
+			"%s position must be ZERO before shake" % [layer_name]
+		)
+
+	renderer.queue_free()
+	await process_frame
+	print(
+		"  adaptive pixel renderer scales tiles, leaves vectors unscaled, exposes layout in debug"
+	)
+
+
 func _check_map_view_switching() -> void:
 	var map_view: Node2D = _map_view_script.new()
 	root.add_child(map_view)
@@ -387,6 +691,20 @@ func _check_map_view_switching() -> void:
 func _new_layout() -> RefCounted:
 	var layout: RefCounted = _grid_script.new()
 	layout.call(&"configure", Vector2i(16, 16), Vector2(20, 44), Vector2i(41, 34))
+	return layout
+
+
+func _new_adaptive_layout() -> RefCounted:
+	var layout: RefCounted = _grid_script.new()
+	layout.call(
+		&"configure_adaptive",
+		Vector2i(16, 16),
+		Vector2(20, 44),
+		Vector2(670, 556),
+		PREFERRED_SCALES,
+		Vector2i(19, 15),
+		Vector2i(4, 3)
+	)
 	return layout
 
 

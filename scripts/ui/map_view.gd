@@ -16,6 +16,10 @@ const MapPresentationStateScript: GDScript = preload(
 )
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
 const PIXEL_CELL_SIZE: Vector2i = Vector2i(16, 16)
+const PLAYFIELD_RECT_POSITION: Vector2 = Vector2(10, 10)
+const PREFERRED_SCALES: Array[int] = [3, 2, 1]
+const MINIMUM_ADAPTIVE_CAPACITY: Vector2i = Vector2i(19, 15)
+const EDGE_PADDING_CELLS: Vector2i = Vector2i(4, 3)
 const SECRET_WALL_GLYPH: String = "?"
 const FLOOR_GLYPHS: Array[String] = [".", ",", "'", "`"]
 const WALL_GLYPHS: Array[String] = ["#", "H", "I"]
@@ -541,13 +545,20 @@ func _initialize_pixel_renderer() -> void:
 	_pixel_renderer = renderer_node as Node2D
 	_pixel_renderer.name = &"PixelMapRenderer"
 	add_child(_pixel_renderer)
-	var playfield_rect: Rect2 = Rect2(Vector2(10, 10), playfield_size)
+	var playfield_rect: Rect2 = Rect2(PLAYFIELD_RECT_POSITION, playfield_size)
 	var available_pixels: Vector2 = playfield_rect.end - margin
-	var view_capacity: Vector2i = Vector2i(
-		maxi(1, int(floor(available_pixels.x / float(PIXEL_CELL_SIZE.x)))),
-		maxi(1, int(floor(available_pixels.y / float(PIXEL_CELL_SIZE.y))))
+	(
+		_pixel_layout
+		. call(
+			&"configure_adaptive",
+			PIXEL_CELL_SIZE,
+			margin,
+			available_pixels,
+			PREFERRED_SCALES,
+			MINIMUM_ADAPTIVE_CAPACITY,
+			EDGE_PADDING_CELLS,
+		)
 	)
-	_pixel_layout.call(&"configure", PIXEL_CELL_SIZE, margin, view_capacity)
 	_update_pixel_renderer_style()
 	var initialization_error: Error = _pixel_renderer.call(&"initialize_renderer", _pixel_layout)
 	if initialization_error != OK:
@@ -579,7 +590,7 @@ func _update_pixel_renderer_style() -> void:
 		return
 	_pixel_renderer.call(
 		&"configure_style",
-		Rect2(Vector2(10, 10), playfield_size),
+		Rect2(PLAYFIELD_RECT_POSITION, playfield_size),
 		_theme_color("outer_bg_tint", outer_bg_tint),
 		_theme_color("border_color", border_color),
 		_theme_color("border_frame_color", border_frame_color),
@@ -697,7 +708,7 @@ func _draw() -> void:
 
 	var ascent: float = draw_font.get_ascent(font_size)
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var playfield_rect: Rect2 = Rect2(Vector2(10, 10), playfield_size)
+	var playfield_rect: Rect2 = Rect2(PLAYFIELD_RECT_POSITION, playfield_size)
 
 	var pixel_base_active: bool = _is_pixel_base_active()
 	var full_pixel_active: bool = _is_full_pixel_active()

@@ -53,6 +53,7 @@ var _feedback_active: bool = false
 var _death_animation_finished: bool = false
 var _feedback_event_count: int = 0
 var _boss_intro_count: int = 0
+var _layout_scale: int = 1
 
 # === Onready ===
 @onready var visual_root: Node2D = $VisualRoot
@@ -97,6 +98,7 @@ func initialize_view(
 	visual_id = snapshot.get("visual_id", &"actor/enemy")
 	_layout = layout
 	_tint = tint
+	_layout_scale = maxi(1, _layout.call(&"get_scale")) if _layout != null else 1
 	_reduced_vfx_enabled = reduced_vfx_enabled
 	sprite.sprite_frames = frames
 	sprite.modulate = tint
@@ -113,6 +115,7 @@ func apply_snapshot(
 	var previous_cell: Vector2i = _cell
 	var was_initialized: bool = _initialized
 	_snapshot = snapshot
+	_layout_scale = maxi(1, _layout.call(&"get_scale")) if _layout != null else 1
 	_cell = snapshot.get("cell", Vector2i.ZERO)
 	_is_boss = bool(snapshot.get("is_boss", false))
 	_footprint_cells = footprint_cells.duplicate()
@@ -186,14 +189,16 @@ func play_spawn_intro() -> void:
 		duration = 0.08
 		flash_amount = 0.24
 	else:
-		visual_root.scale = Vector2(0.72, 0.72)
+		visual_root.scale = Vector2(0.72 * _layout_scale, 0.72 * _layout_scale)
 	_set_flash_color(Color(1.0, 0.74, 0.30, 1.0))
 	_set_flash_amount(flash_amount)
 	_feedback_tween = create_tween()
 	_feedback_tween.set_parallel(true)
 	_feedback_tween.set_trans(Tween.TRANS_BACK)
 	_feedback_tween.set_ease(Tween.EASE_OUT)
-	_feedback_tween.tween_property(visual_root, "scale", Vector2.ONE, duration)
+	_feedback_tween.tween_property(
+		visual_root, "scale", Vector2(_layout_scale, _layout_scale), duration
+	)
 	_feedback_tween.tween_method(_set_flash_amount, flash_amount, 0.0, duration)
 	_feedback_active = true
 	_feedback_tween.finished.connect(_on_feedback_finished)
@@ -257,6 +262,7 @@ func get_debug_snapshot() -> Dictionary:
 		"flash_amount": _shader_float(&"flash_amount"),
 		"desaturate_amount": _shader_float(&"desaturate_amount"),
 		"alpha_multiplier": _shader_float(&"alpha_multiplier"),
+		"layout_scale": _layout_scale,
 		"visual_position": visual_root.position,
 		"visual_scale": visual_root.scale,
 	}
@@ -271,8 +277,8 @@ func _start_actor_feedback(animation: StringName) -> void:
 	var flash_color: Color = Color(1.0, 0.82, 0.36, 1.0)
 	var flash_amount: float = 0.38
 	var start_position: Vector2 = _attack_feedback_offset()
-	var start_scale: Vector2 = Vector2(1.08, 0.94)
-	var end_scale: Vector2 = Vector2.ONE
+	var start_scale: Vector2 = Vector2(1.08 * _layout_scale, 0.94 * _layout_scale)
+	var end_scale: Vector2 = Vector2(_layout_scale, _layout_scale)
 	var end_desaturation: float = 0.0
 	var end_alpha: float = 1.0
 	match animation:
@@ -281,21 +287,21 @@ func _start_actor_feedback(animation: StringName) -> void:
 			flash_color = Color(0.68, 0.48, 1.0, 1.0)
 			flash_amount = 0.62
 			start_position = Vector2.ZERO
-			start_scale = Vector2(0.92, 0.92)
+			start_scale = Vector2(0.92 * _layout_scale, 0.92 * _layout_scale)
 		&"hurt":
 			duration = HURT_FEEDBACK_SECONDS
 			flash_color = Color.WHITE
 			flash_amount = 1.0
 			var recoil_direction: float = -1.0 if actor_id % 2 == 0 else 1.0
-			start_position = Vector2(2.0 * recoil_direction, 0.0)
-			start_scale = Vector2(1.10, 0.90)
+			start_position = Vector2(2.0 * recoil_direction * _layout_scale, 0.0)
+			start_scale = Vector2(1.10 * _layout_scale, 0.90 * _layout_scale)
 		&"death":
 			duration = BOSS_DEATH_FEEDBACK_SECONDS if _is_boss else DEATH_FEEDBACK_SECONDS
 			flash_color = Color(0.92, 0.24, 0.34, 1.0)
 			flash_amount = 0.86
 			start_position = Vector2.ZERO
-			start_scale = Vector2.ONE
-			end_scale = Vector2(0.82, 0.82)
+			start_scale = Vector2(_layout_scale, _layout_scale)
+			end_scale = Vector2(0.82 * _layout_scale, 0.82 * _layout_scale)
 			end_desaturation = 0.86
 			end_alpha = 0.10
 		_:
@@ -304,9 +310,9 @@ func _start_actor_feedback(animation: StringName) -> void:
 		duration = minf(duration * 0.52, 0.10)
 		flash_amount *= 0.34
 		start_position = Vector2.ZERO
-		start_scale = Vector2.ONE
+		start_scale = Vector2(_layout_scale, _layout_scale)
 		if animation == &"death":
-			end_scale = Vector2.ONE
+			end_scale = Vector2(_layout_scale, _layout_scale)
 			end_desaturation = 0.34
 			end_alpha = 0.42
 	visual_root.position = start_position.round()
@@ -329,12 +335,12 @@ func _start_actor_feedback(animation: StringName) -> void:
 func _attack_feedback_offset() -> Vector2:
 	match StringName(_snapshot.get("facing", &"down")):
 		&"left":
-			return Vector2(-2.0, 0.0)
+			return Vector2(-2.0 * _layout_scale, 0.0)
 		&"right":
-			return Vector2(2.0, 0.0)
+			return Vector2(2.0 * _layout_scale, 0.0)
 		&"up":
-			return Vector2(0.0, -2.0)
-	return Vector2(0.0, 2.0)
+			return Vector2(0.0, -2.0 * _layout_scale)
+	return Vector2(0.0, 2.0 * _layout_scale)
 
 
 func _stop_feedback_tween() -> void:
@@ -348,7 +354,7 @@ func _reset_feedback_visuals() -> void:
 	if not is_instance_valid(visual_root):
 		return
 	visual_root.position = Vector2.ZERO
-	visual_root.scale = Vector2.ONE
+	visual_root.scale = Vector2(_layout_scale, _layout_scale)
 	_set_flash_amount(0.0)
 	_set_desaturate_amount(0.0)
 	_set_alpha_multiplier(1.0)

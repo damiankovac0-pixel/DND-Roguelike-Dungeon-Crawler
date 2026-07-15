@@ -279,6 +279,26 @@ func get_debug_snapshot() -> Dictionary:
 		"player_cell": player_debug.get("cell", Vector2i.ZERO),
 		"player_position": player_debug.get("position", Vector2.ZERO),
 		"view_origin": view_origin,
+		"layout_base_cell_size":
+		_layout.call(&"get_base_cell_size") if _layout != null else Vector2i.ZERO,
+		"layout_scale": _layout.call(&"get_scale") if _layout != null else 1,
+		"layout_cell_size": _layout.call(&"get_cell_size") if _layout != null else Vector2i.ONE,
+		"layout_capacity": _layout.call(&"get_view_capacity") if _layout != null else Vector2i.ONE,
+		"layout_view_rect": _layout.call(&"get_view_rect") if _layout != null else Rect2i(),
+		"layout_origin": _layout.call(&"get_origin") if _layout != null else Vector2.ZERO,
+		"layout_slack": _layout.call(&"get_slack") if _layout != null else Vector2.ZERO,
+		"layout_edge_padding":
+		_layout.call(&"get_edge_padding") if _layout != null else Vector2i.ZERO,
+		"base_cell_size": _layout.call(&"get_base_cell_size") if _layout != null else Vector2i.ZERO,
+		"cell_size": _layout.call(&"get_cell_size") if _layout != null else Vector2i.ONE,
+		"scale": _layout.call(&"get_scale") if _layout != null else 1,
+		"origin": _layout.call(&"get_origin") if _layout != null else Vector2.ZERO,
+		"capacity": _layout.call(&"get_view_capacity") if _layout != null else Vector2i.ONE,
+		"slack": _layout.call(&"get_slack") if _layout != null else Vector2.ZERO,
+		"edge_padding": _layout.call(&"get_edge_padding") if _layout != null else Vector2i.ZERO,
+		"layout_playfield": _playfield_rect,
+		"layout_ground_scale": ground_layer.scale,
+		"layout_structure_scale": structure_layer.scale,
 		"map_revision": _last_map_revision,
 		"visibility_revision": _last_visibility_revision,
 		"actor_revision": _last_actor_revision,
@@ -286,6 +306,18 @@ func get_debug_snapshot() -> Dictionary:
 		"environment_revision": _last_environment_revision,
 		"actor_count": _actor_views.size(),
 		"visible_actor_count": _visible_actor_count(actor_debug),
+		"layers":
+		{
+			"GroundLayer": {"position": ground_layer.position, "scale": ground_layer.scale},
+			"StructureLayer":
+			{"position": structure_layer.position, "scale": structure_layer.scale},
+			"ObjectLayer": {"position": object_layer.position, "scale": object_layer.scale},
+			"ActorLayer": {"position": actor_layer.position, "scale": actor_layer.scale},
+			"FogLayer": {"position": fog_layer.position, "scale": fog_layer.scale},
+			"TacticalLayer": {"position": tactical_layer.position, "scale": tactical_layer.scale},
+			"LightingLayer": {"position": lighting_layer.position, "scale": lighting_layer.scale},
+			"EffectPool": {"position": effect_pool.position, "scale": effect_pool.scale},
+		},
 		"boss_actor_count": _boss_actor_count(actor_debug),
 		"retired_actor_count": _retired_actor_ids.size(),
 		"actor_event_count": _actor_event_count,
@@ -325,14 +357,23 @@ func _update_layer_positions() -> void:
 		return
 	var tile_layer_position: Vector2 = _layout.call(&"get_origin")
 	tile_layer_position += _layout.call(&"get_view_offset_pixels")
+	var layout_scale: int = _layout.call(&"get_scale")
+	ground_layer.scale = Vector2(layout_scale, layout_scale)
+	structure_layer.scale = Vector2(layout_scale, layout_scale)
 	ground_layer.position = (tile_layer_position + _world_offset).round()
 	structure_layer.position = (tile_layer_position + _world_offset).round()
-	object_layer.position = _world_offset
-	lighting_layer.position = _world_offset
-	actor_layer.position = _world_offset
-	fog_layer.position = _world_offset
-	tactical_layer.position = _world_offset
-	effect_pool.position = _world_offset
+	object_layer.position = _world_offset.round()
+	object_layer.scale = Vector2.ONE
+	lighting_layer.position = _world_offset.round()
+	lighting_layer.scale = Vector2.ONE
+	actor_layer.position = _world_offset.round()
+	actor_layer.scale = Vector2.ONE
+	fog_layer.position = _world_offset.round()
+	fog_layer.scale = Vector2.ONE
+	tactical_layer.position = _world_offset.round()
+	tactical_layer.scale = Vector2.ONE
+	effect_pool.position = _world_offset.round()
+	effect_pool.scale = Vector2.ONE
 
 
 func _rebuild_tiles() -> void:
