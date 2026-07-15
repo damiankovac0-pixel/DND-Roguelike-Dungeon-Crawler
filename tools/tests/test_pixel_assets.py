@@ -4,6 +4,7 @@ import copy
 import importlib.util
 from pathlib import Path
 import unittest
+import xml.etree.ElementTree as ET
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -73,9 +74,9 @@ class PixelAssetPipelineTests(unittest.TestCase):
         self.assertLess(command.index("--list-tags"), source_index)
         self.assertEqual(command[command.index("--sheet-type") + 1], "rows")
         self.assertEqual(command[command.index("--sheet-columns") + 1], "12")
-        self.assertEqual(command[command.index("--sheet-rows") + 1], "14")
+        self.assertEqual(command[command.index("--sheet-rows") + 1], "51")
         self.assertEqual(command[command.index("--sheet-width") + 1], "192")
-        self.assertEqual(command[command.index("--sheet-height") + 1], "224")
+        self.assertEqual(command[command.index("--sheet-height") + 1], "816")
         self.assertEqual(command[command.index("--format") + 1], "json-array")
         self.assertNotIn("--trim", command)
         self.assertNotIn("--sheet-pack", command)
@@ -107,10 +108,10 @@ class PixelAssetPipelineTests(unittest.TestCase):
             pixel_assets.validate_aseprite_metadata(self.actor_asset, wrong_size)
 
     def test_terrain_manifest_schema(self) -> None:
-        """Terrain is a static 12x6 atlas with 72 fully-qualified semantic IDs, no row_ids, no animations.
+        """Terrain is a static 13x6 atlas with 78 fully-qualified semantic IDs.
 
         Assertions encode the static-atlas contract and catch reintroduction of
-        row_ids, fake animations, or fewer than 72 semantic IDs.
+        row_ids, fake animations, or missing cracked-wall cells.
         """
         terrain = self.manifest["assets"][0]
         self.assertEqual(terrain["id"], "terrain/core")
@@ -129,22 +130,108 @@ class PixelAssetPipelineTests(unittest.TestCase):
             pixel_assets._validate_manifest_structure(mutated, REPOSITORY_ROOT)
         self.assertIn("semantic_ids must fill the atlas grid", str(ctx.exception))
 
+    def test_production_svg_art_is_distinct_and_complete(self) -> None:
+        assets = {asset["id"]: asset for asset in self.manifest["assets"]}
+
+        actor = assets["actor/core"]
+        actor_groups = self._svg_group_signatures(actor["source_path"])
+        animation_names = tuple(actor["animations"])
+        enemy_rows = tuple(actor["row_ids"][14:])
+        self.assertEqual(len(enemy_rows), 37)
+        enemy_idle_signatures: set[str] = set()
+        enemy_row_signatures: set[tuple[str, ...]] = set()
+        for row_id in enemy_rows:
+            row_signatures: list[str] = []
+            for animation in animation_names:
+                first_id = f"{row_id}-{animation}-a"
+                second_id = f"{row_id}-{animation}-b"
+                self.assertIn(first_id, actor_groups)
+                self.assertIn(second_id, actor_groups)
+                self.assertNotEqual(actor_groups[first_id], actor_groups[second_id])
+                row_signatures.extend((actor_groups[first_id], actor_groups[second_id]))
+            enemy_idle_signatures.add(actor_groups[f"{row_id}-idle-a"])
+            enemy_row_signatures.add(tuple(row_signatures))
+        self.assertEqual(len(enemy_idle_signatures), 37)
+        self.assertEqual(len(enemy_row_signatures), 37)
+
+        objects = assets["object/core"]
+        object_groups = self._svg_group_signatures(objects["source_path"])
+        item_group_ids = [
+            f"item_{semantic_id.rsplit('/', 1)[-1]}"
+            for semantic_id in objects["semantic_ids"][28:]
+        ]
+        self.assertEqual(len(item_group_ids), 76)
+        item_signatures = []
+        for group_id in item_group_ids:
+            self.assertIn(group_id, object_groups)
+            item_signatures.append(object_groups[group_id])
+        self.assertEqual(len(set(item_signatures)), 76)
+
+        player_actions = assets["actor/player_actions"]
+        action_groups = self._svg_group_signatures(player_actions["source_path"])
+        for row_id in player_actions["row_ids"]:
+            for animation in player_actions["animations"]:
+                first_id = f"{row_id}-{animation}-a"
+                second_id = f"{row_id}-{animation}-b"
+                self.assertIn(first_id, action_groups)
+                self.assertIn(second_id, action_groups)
+                self.assertNotEqual(action_groups[first_id], action_groups[second_id])
+
+        terrain_groups = self._svg_group_signatures(assets["terrain/core"]["source_path"])
+        cracked_ids = [
+            f"{biome}-wall-cracked"
+            for biome in ("tower", "garden", "cinder", "sunken", "glass", "deeps")
+        ]
+        cracked_signatures = []
+        for group_id in cracked_ids:
+            self.assertIn(group_id, terrain_groups)
+            cracked_signatures.append(terrain_groups[group_id])
+        self.assertEqual(len(set(cracked_signatures)), 6)
+
     @staticmethod
-    def _actor_metadata() -> dict[str, object]:
+    def _svg_group_signatures(relative_path: str) -> dict[str, str]:
+        root = ET.parse(REPOSITORY_ROOT / relative_path).getroot()
+        signatures: dict[str, str] = {}
+        for element in root.iter():
+            if element.tag.rsplit("}", 1)[-1] != "g":
+                continue
+            group_id = element.attrib.get("id")
+            if not group_id:
+                continue
+            clone = copy.deepcopy(element)
+            clone.attrib.pop("id", None)
+            clone.attrib.pop("transform", None)
+            signatures[group_id] = ET.tostring(clone, encoding="unicode")
+        return signatures
+
+    def _actor_metadata(self) -> dict[str, object]:
+        actor = next(asset for asset in self.manifest["assets"] if asset["id"] == "actor/core")
+        columns, rows = actor["grid"]
+        width, height = actor["expected_size"]
+        frame_width, frame_height = actor["frame_size"]
         frames = []
-        for index in range(168):
+        for index in range(columns * rows):
             frames.append(
                 {
                     "filename": f"frame-{index}",
-                    "frame": {"x": (index % 12) * 16, "y": (index // 12) * 16, "w": 16, "h": 16},
+                    "frame": {
+                        "x": (index % columns) * frame_width,
+                        "y": (index // columns) * frame_height,
+                        "w": frame_width,
+                        "h": frame_height,
+                    },
                     "rotated": False,
                     "trimmed": False,
-                    "spriteSourceSize": {"x": 0, "y": 0, "w": 16, "h": 16},
-                    "sourceSize": {"w": 16, "h": 16},
+                    "spriteSourceSize": {
+                        "x": 0,
+                        "y": 0,
+                        "w": frame_width,
+                        "h": frame_height,
+                    },
+                    "sourceSize": {"w": frame_width, "h": frame_height},
                     "duration": 100,
                 }
             )
-        animation_names = ("idle", "move", "attack", "cast", "hurt", "death")
         return {
             "frames": frames,
             "meta": {
@@ -152,31 +239,13 @@ class PixelAssetPipelineTests(unittest.TestCase):
                 "version": "1.3.0",
                 "image": "actors.png",
                 "format": "RGBA8888",
-                "size": {"w": 192, "h": 224},
+                "size": {"w": width, "h": height},
                 "scale": "1",
                 "frameTags": [
                     {"name": name, "from": index * 2, "to": index * 2 + 1, "direction": "forward"}
-                    for index, name in enumerate(animation_names)
+                    for index, name in enumerate(actor["animations"])
                 ],
-                "layers": [
-                    {"name": name}
-                    for name in (
-                        "player_fighter",
-                        "player_ranger",
-                        "player_wizard",
-                        "enemy_humanoid",
-                        "enemy_brute",
-                        "enemy_undead",
-                        "enemy_beast",
-                        "enemy_flyer",
-                        "enemy_construct",
-                        "enemy_caster",
-                        "enemy_aquatic",
-                        "enemy_aberration",
-                        "shopkeeper",
-                        "summon",
-                    )
-                ],
+                "layers": [{"name": name} for name in actor["row_ids"]],
             },
         }
 

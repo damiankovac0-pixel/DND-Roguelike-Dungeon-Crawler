@@ -16,4 +16,4 @@ min_floor = 22
 healing_amount = 140
 max_floor = 0
 use_effect = 1
-visual_id = &"item/elixir"
+visual_id = &"item/resource/ascendant_elixir"

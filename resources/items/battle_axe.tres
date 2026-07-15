@@ -16,4 +16,4 @@ min_floor = 1
 damage_sides = 8
 attack_bonus = 0
 damage_bonus = 1
-visual_id = &"item/axe"
+visual_id = &"item/resource/battle_axe"

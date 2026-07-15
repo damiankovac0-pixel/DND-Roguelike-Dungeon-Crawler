@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/aquatic"
+visual_id = &"actor/enemy/abyssal_eel"
 display_name = "Abyssal Eel"
 glyph = "q"
 color = Color(0.30, 0.90, 0.88, 1)

@@ -21,4 +21,4 @@ damage_dice = 1
 damage_sides = 8
 attack_bonus = 1
 damage_bonus = 0
-visual_id = &"item/bow"
+visual_id = &"item/resource/longbow"

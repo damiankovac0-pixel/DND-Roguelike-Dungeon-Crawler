@@ -16,4 +16,4 @@ min_floor = 17
 healing_amount = 110
 max_floor = 0
 use_effect = 1
-visual_id = &"item/elixir"
+visual_id = &"item/resource/phoenix_elixir"

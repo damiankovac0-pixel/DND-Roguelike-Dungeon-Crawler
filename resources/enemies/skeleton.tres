@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/undead"
+visual_id = &"actor/enemy/skeleton"
 display_name = "Skeleton"
 glyph = "s"
 color = Color(0.9, 0.9, 0.7, 1)

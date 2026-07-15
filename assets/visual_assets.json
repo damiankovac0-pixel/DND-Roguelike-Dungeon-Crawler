@@ -25,9 +25,18 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/terrain/core.svg",
-      "expected_size": [192, 96],
-      "frame_size": [16, 16],
-      "grid": [12, 6],
+      "expected_size": [
+        208,
+        96
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "grid": [
+        13,
+        6
+      ],
       "semantic_ids": [
         "terrain/tower/floor_a",
         "terrain/tower/floor_b",
@@ -41,6 +50,7 @@
         "terrain/tower/stairs_down",
         "terrain/tower/boss_door",
         "terrain/tower/boss_door_sealed",
+        "terrain/tower/wall_cracked",
         "terrain/garden/floor_a",
         "terrain/garden/floor_b",
         "terrain/garden/floor_c",
@@ -53,6 +63,7 @@
         "terrain/garden/stairs_down",
         "terrain/garden/boss_door",
         "terrain/garden/boss_door_sealed",
+        "terrain/garden/wall_cracked",
         "terrain/cinder/floor_a",
         "terrain/cinder/floor_b",
         "terrain/cinder/floor_c",
@@ -65,6 +76,7 @@
         "terrain/cinder/stairs_down",
         "terrain/cinder/boss_door",
         "terrain/cinder/boss_door_sealed",
+        "terrain/cinder/wall_cracked",
         "terrain/sunken/floor_a",
         "terrain/sunken/floor_b",
         "terrain/sunken/floor_c",
@@ -77,6 +89,7 @@
         "terrain/sunken/stairs_down",
         "terrain/sunken/boss_door",
         "terrain/sunken/boss_door_sealed",
+        "terrain/sunken/wall_cracked",
         "terrain/glass/floor_a",
         "terrain/glass/floor_b",
         "terrain/glass/floor_c",
@@ -89,6 +102,7 @@
         "terrain/glass/stairs_down",
         "terrain/glass/boss_door",
         "terrain/glass/boss_door_sealed",
+        "terrain/glass/wall_cracked",
         "terrain/deeps/floor_a",
         "terrain/deeps/floor_b",
         "terrain/deeps/floor_c",
@@ -100,7 +114,8 @@
         "terrain/deeps/door_open",
         "terrain/deeps/stairs_down",
         "terrain/deeps/boss_door",
-        "terrain/deeps/boss_door_sealed"
+        "terrain/deeps/boss_door_sealed",
+        "terrain/deeps/wall_cracked"
       ],
       "animations": {},
       "prototype": false,
@@ -114,9 +129,18 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/actors/core.svg",
-      "expected_size": [192, 224],
-      "frame_size": [16, 16],
-      "grid": [12, 14],
+      "expected_size": [
+        192,
+        816
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "grid": [
+        12,
+        51
+      ],
       "semantic_ids": [
         "actor/player/fighter",
         "actor/player/ranger",
@@ -131,7 +155,44 @@
         "actor/enemy/aquatic",
         "actor/enemy/aberration",
         "actor/shopkeeper",
-        "actor/summon"
+        "actor/summon",
+        "actor/enemy/bat",
+        "actor/enemy/abyss_knight",
+        "actor/enemy/ancient_dragon",
+        "actor/enemy/cultist",
+        "actor/enemy/goblin",
+        "actor/enemy/kobold",
+        "actor/enemy/lich",
+        "actor/enemy/ogre_brute",
+        "actor/enemy/orc",
+        "actor/enemy/rat",
+        "actor/enemy/skeleton",
+        "actor/enemy/troll",
+        "actor/enemy/wraith",
+        "actor/enemy/zombie",
+        "actor/enemy/stone_sentry",
+        "actor/enemy/eye_acolyte",
+        "actor/enemy/clockwork_spider",
+        "actor/enemy/thorn_lasher",
+        "actor/enemy/spore_servant",
+        "actor/enemy/briar_witch",
+        "actor/enemy/ash_revenant",
+        "actor/enemy/ember_archer",
+        "actor/enemy/flame_acolyte",
+        "actor/enemy/drowned_knight",
+        "actor/enemy/harpooner",
+        "actor/enemy/abyssal_eel",
+        "actor/enemy/tidecaller",
+        "actor/enemy/mirror_duelist",
+        "actor/enemy/prism_seer",
+        "actor/enemy/shard_golem",
+        "actor/enemy/glass_dragonling",
+        "actor/enemy/void_herald",
+        "actor/enemy/deep_maw",
+        "actor/enemy/starved_godling",
+        "actor/enemy/frost_guardian",
+        "actor/enemy/warleader",
+        "actor/enemy/shadow_weaver"
       ],
       "row_ids": [
         "player_fighter",
@@ -147,7 +208,44 @@
         "enemy_aquatic",
         "enemy_aberration",
         "shopkeeper",
-        "summon"
+        "summon",
+        "enemy_bat",
+        "enemy_abyss_knight",
+        "enemy_ancient_dragon",
+        "enemy_cultist",
+        "enemy_goblin",
+        "enemy_kobold",
+        "enemy_lich",
+        "enemy_ogre_brute",
+        "enemy_orc",
+        "enemy_rat",
+        "enemy_skeleton",
+        "enemy_troll",
+        "enemy_wraith",
+        "enemy_zombie",
+        "enemy_stone_sentry",
+        "enemy_eye_acolyte",
+        "enemy_clockwork_spider",
+        "enemy_thorn_lasher",
+        "enemy_spore_servant",
+        "enemy_briar_witch",
+        "enemy_ash_revenant",
+        "enemy_ember_archer",
+        "enemy_flame_acolyte",
+        "enemy_drowned_knight",
+        "enemy_harpooner",
+        "enemy_abyssal_eel",
+        "enemy_tidecaller",
+        "enemy_mirror_duelist",
+        "enemy_prism_seer",
+        "enemy_shard_golem",
+        "enemy_glass_dragonling",
+        "enemy_void_herald",
+        "enemy_deep_maw",
+        "enemy_starved_godling",
+        "enemy_frost_guardian",
+        "enemy_warleader",
+        "enemy_shadow_weaver"
       ],
       "animations": {
         "idle": 2,
@@ -168,9 +266,18 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/bosses/core.svg",
-      "expected_size": [960, 320],
-      "frame_size": [80, 64],
-      "grid": [12, 5],
+      "expected_size": [
+        960,
+        320
+      ],
+      "frame_size": [
+        80,
+        64
+      ],
+      "grid": [
+        12,
+        5
+      ],
       "semantic_ids": [
         "boss/observer",
         "boss/seraphine",
@@ -204,9 +311,18 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/objects/core.svg",
-      "expected_size": [448, 16],
-      "frame_size": [16, 16],
-      "grid": [28, 1],
+      "expected_size": [
+        1664,
+        16
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "grid": [
+        104,
+        1
+      ],
       "semantic_ids": [
         "item/potion",
         "item/elixir",
@@ -235,7 +351,83 @@
         "trap/teleport",
         "trap/alarm",
         "trap/stun",
-        "trap/ambush"
+        "trap/ambush",
+        "item/resource/ascendant_elixir",
+        "item/resource/ascended_aegis",
+        "item/resource/ascended_sword",
+        "item/resource/amulet_of_guarding",
+        "item/resource/battle_axe",
+        "item/resource/bracers_of_power",
+        "item/resource/chainmail",
+        "item/resource/dagger",
+        "item/resource/celestial_greatbow",
+        "item/resource/crown_of_the_deep",
+        "item/resource/dragonbone_blade",
+        "item/resource/elixir_of_life",
+        "item/resource/elixir_of_swiftness",
+        "item/resource/elven_chain",
+        "item/resource/flail",
+        "item/resource/greater_health_potion",
+        "item/resource/greatsword",
+        "item/resource/half_plate",
+        "item/resource/hand_crossbow",
+        "item/resource/health_potion",
+        "item/resource/heavy_crossbow",
+        "item/resource/iron_axe",
+        "item/resource/leather_armor",
+        "item/resource/longbow",
+        "item/resource/longsword",
+        "item/resource/mace",
+        "item/resource/mythril_plate",
+        "item/resource/plate_armor",
+        "item/resource/phoenix_elixir",
+        "item/resource/potion_of_giant_strength",
+        "item/resource/potion_of_haste",
+        "item/resource/ring_of_accuracy",
+        "item/resource/ring_of_power",
+        "item/resource/ring_of_protection",
+        "item/resource/scale_mail",
+        "item/resource/scimitar",
+        "item/resource/scroll_fire_bolt",
+        "item/resource/scroll_lightning_bolt",
+        "item/resource/scroll_fireball",
+        "item/resource/scroll_magic_missile",
+        "item/resource/scroll_shield",
+        "item/resource/scroll_sleep",
+        "item/resource/scroll_regeneration",
+        "item/resource/shortbow",
+        "item/resource/spear",
+        "item/resource/splint_armor",
+        "item/resource/stepstone_anklet",
+        "item/resource/starfall_charm",
+        "item/resource/studded_leather",
+        "item/resource/superior_health_potion",
+        "item/resource/tonic_of_regeneration",
+        "item/resource/warhammer",
+        "item/resource/voidglass_rapier",
+        "item/resource/apprentice_staff",
+        "item/resource/hunting_bow",
+        "item/resource/training_sword",
+        "item/resource/staff_ember",
+        "item/resource/staff_stormglass",
+        "item/resource/staff_void",
+        "item/resource/staff_astral",
+        "item/resource/staff_starfall",
+        "item/resource/staff_ascendant",
+        "item/resource/vanguard_blade",
+        "item/resource/warlord_greatsword",
+        "item/resource/eaglewood_bow",
+        "item/resource/moonstring_longbow",
+        "item/resource/warriors_ring",
+        "item/resource/soldiers_plate",
+        "item/resource/deft_gloves",
+        "item/resource/scouts_cloak",
+        "item/resource/mana_circlet",
+        "item/resource/arcane_robes",
+        "item/resource/guardian_mail",
+        "item/resource/guardian_charm",
+        "item/resource/siphon_rapier",
+        "item/resource/siphon_ring"
       ],
       "animations": {},
       "prototype": false,
@@ -249,9 +441,18 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/effects/particle.svg",
-      "expected_size": [3, 3],
-      "frame_size": [3, 3],
-      "grid": [1, 1],
+      "expected_size": [
+        3,
+        3
+      ],
+      "frame_size": [
+        3,
+        3
+      ],
+      "grid": [
+        1,
+        1
+      ],
       "semantic_ids": [
         "effect/particle"
       ],
@@ -267,10 +468,21 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/effects/ember.svg",
-      "expected_size": [3, 3],
-      "frame_size": [3, 3],
-      "grid": [1, 1],
-      "semantic_ids": ["effect/ember"],
+      "expected_size": [
+        3,
+        3
+      ],
+      "frame_size": [
+        3,
+        3
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "semantic_ids": [
+        "effect/ember"
+      ],
       "animations": {},
       "prototype": false,
       "license_id": "project_authored",
@@ -283,10 +495,21 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/effects/arcane.svg",
-      "expected_size": [3, 3],
-      "frame_size": [3, 3],
-      "grid": [1, 1],
-      "semantic_ids": ["effect/arcane"],
+      "expected_size": [
+        3,
+        3
+      ],
+      "frame_size": [
+        3,
+        3
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "semantic_ids": [
+        "effect/arcane"
+      ],
       "animations": {},
       "prototype": false,
       "license_id": "project_authored",
@@ -299,10 +522,21 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/effects/poison.svg",
-      "expected_size": [3, 3],
-      "frame_size": [3, 3],
-      "grid": [1, 1],
-      "semantic_ids": ["effect/poison"],
+      "expected_size": [
+        3,
+        3
+      ],
+      "frame_size": [
+        3,
+        3
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "semantic_ids": [
+        "effect/poison"
+      ],
       "animations": {},
       "prototype": false,
       "license_id": "project_authored",
@@ -315,14 +549,101 @@
       "source_format": "svg",
       "exporter": "committed",
       "runtime_path": "assets/pixel_art/source/effects/frost.svg",
-      "expected_size": [3, 3],
-      "frame_size": [3, 3],
-      "grid": [1, 1],
-      "semantic_ids": ["effect/frost"],
+      "expected_size": [
+        3,
+        3
+      ],
+      "frame_size": [
+        3,
+        3
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "semantic_ids": [
+        "effect/frost"
+      ],
       "animations": {},
       "prototype": false,
       "license_id": "project_authored",
       "attribution": "Project-authored production frost texture."
+    },
+    {
+      "id": "actor/player_actions",
+      "category": "actor",
+      "source_path": "assets/pixel_art/source/actors/player_actions.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/pixel_art/source/actors/player_actions.svg",
+      "expected_size": [
+        448,
+        48
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "grid": [
+        28,
+        3
+      ],
+      "semantic_ids": [
+        "actor/player/action/fighter",
+        "actor/player/action/ranger",
+        "actor/player/action/wizard"
+      ],
+      "row_ids": [
+        "player_fighter",
+        "player_ranger",
+        "player_wizard"
+      ],
+      "animations": {
+        "attack_sword": 2,
+        "attack_bow": 2,
+        "attack_staff": 2,
+        "use_scroll": 2,
+        "drink_potion": 2,
+        "fighter_cleave": 2,
+        "fighter_second_wind": 2,
+        "fighter_whirlwind": 2,
+        "ranger_focus": 2,
+        "ranger_volley": 2,
+        "ranger_quickstep": 2,
+        "arcane_spark": 2,
+        "wizard_frost_nova": 2,
+        "wizard_chain_lightning": 2
+      },
+      "prototype": false,
+      "license_id": "project_authored",
+      "attribution": "Project-authored player action sprite sheet."
+    },
+    {
+      "id": "effect/enchantment",
+      "category": "effect",
+      "source_path": "assets/pixel_art/source/effects/enchantment.svg",
+      "source_format": "svg",
+      "exporter": "committed",
+      "runtime_path": "assets/pixel_art/source/effects/enchantment.svg",
+      "expected_size": [
+        16,
+        16
+      ],
+      "frame_size": [
+        16,
+        16
+      ],
+      "grid": [
+        1,
+        1
+      ],
+      "semantic_ids": [
+        "effect/enchantment"
+      ],
+      "animations": {},
+      "prototype": false,
+      "license_id": "project_authored",
+      "attribution": "Project-authored enchantment overlay texture."
     }
   ],
   "catalogs": [
@@ -356,6 +677,11 @@
           "property": "boss_sheet",
           "asset_id": "boss/core",
           "resource_id": "3_bosses"
+        },
+        {
+          "property": "player_action_sheet",
+          "asset_id": "actor/player_actions",
+          "resource_id": "3_actions"
         }
       ],
       "prototype": false,
@@ -371,6 +697,11 @@
           "property": "object_atlas",
           "asset_id": "object/core",
           "resource_id": "2_objects"
+        },
+        {
+          "property": "enchantment_overlay",
+          "asset_id": "effect/enchantment",
+          "resource_id": "4_enchant"
         }
       ],
       "prototype": false,

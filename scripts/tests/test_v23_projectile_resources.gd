@@ -442,16 +442,16 @@ func _check_version_metadata() -> void:
 		_fail("GameManager autoload missing")
 		return
 
-	if gm.GAME_VERSION != "23.3.0":
-		_fail("GameManager.GAME_VERSION expected '23.3.0', got '%s'" % gm.GAME_VERSION)
+	if gm.GAME_VERSION != "30.0.0":
+		_fail("GameManager.GAME_VERSION expected '30.0.0', got '%s'" % gm.GAME_VERSION)
 
 	var version_label: String = gm.get_version_label()
-	if not "23.3.0" in version_label:
-		_fail("get_version_label() missing '23.3.0': " + version_label)
+	if not "30.0.0" in version_label:
+		_fail("get_version_label() missing '30.0.0': " + version_label)
 		return
 
-	if not "2026-07-12" in version_label:
-		_fail("get_version_label() missing '2026-07-12': " + version_label)
+	if not "2026-07-15" in version_label:
+		_fail("get_version_label() missing '2026-07-15': " + version_label)
 	# Standalone script tests cannot preload LibraryMenu because its UI script resolves the
 	# GameManager autoload at scene compile time. Verify the static history wiring instead.
 	var library_source: String = FileAccess.get_file_as_string("res://scripts/ui/library_menu.gd")
@@ -463,19 +463,19 @@ func _check_version_metadata() -> void:
 		_fail("LibraryMenu should expose version_history.gd through VERSION_HISTORY")
 		return
 
-	# Version_history.gd keeps the current V23.3.0 and historical V23.2.2 entries.
+	# Version_history.gd keeps the current V30.0.0 and historical V23.3.0 entries.
 	var history: Array = VersionHistoryScript.VERSION_HISTORY
+	var found_v30_0_0: bool = false
 	var found_v23_3_0: bool = false
-	var found_v23_2_2: bool = false
 	for entry: String in history:
+		if "V30.0.0" in entry:
+			found_v30_0_0 = true
 		if "V23.3.0" in entry:
 			found_v23_3_0 = true
-		if "V23.2.2" in entry:
-			found_v23_2_2 = true
+	if not found_v30_0_0:
+		_fail("version_history.gd should contain V30.0.0 entry")
+		return
 	if not found_v23_3_0:
-		_fail("version_history.gd should contain V23.3.0 entry")
+		_fail("version_history.gd should retain V23.3.0 entry")
 		return
-	if not found_v23_2_2:
-		_fail("version_history.gd should retain V23.2.2 entry")
-		return
-	print("  version metadata: 23.3.0, 2026-07-12, V23.2.2+V23.3.0 in VERSION_HISTORY")
+	print("  version metadata: 30.0.0, 2026-07-15, V23.3.0+V30.0.0 in VERSION_HISTORY")

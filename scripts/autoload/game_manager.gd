@@ -12,8 +12,8 @@ signal log_message_added(message: String, message_type: StringName)
 
 # === Constants ===
 const HISTORY_PATH: String = "user://character_history.json"
-const GAME_VERSION: String = "23.3.0"
-const LAST_UPDATED: String = "2026-07-12"
+const GAME_VERSION: String = "30.0.0"
+const LAST_UPDATED: String = "2026-07-15"
 const CLASS_FIGHTER: StringName = &"fighter"
 const CLASS_RANGER: StringName = &"ranger"
 const CLASS_WIZARD: StringName = &"wizard"

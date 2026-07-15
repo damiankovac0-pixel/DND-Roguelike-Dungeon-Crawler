@@ -8,12 +8,13 @@ extends Resource
 # === Constants ===
 const DungeonDataScript: GDScript = preload("res://scripts/dungeon/dungeon_data.gd")
 const TILE_SIZE: Vector2i = Vector2i(16, 16)
-const ATLAS_SIZE: Vector2i = Vector2i(192, 96)
-## Atlas grid: 12 columns × 6 rows, 16px cells.
+const ATLAS_SIZE: Vector2i = Vector2i(208, 96)
+## Atlas grid: 13 columns × 6 rows, 16px cells.
 ##   Rows: 0=Tower, 1=Garden, 2=Cinder, 3=Sunken, 4=Glass, 5=Deeps
 ##   Columns: 0-3=floor_a..floor_d, 4-6=wall_a..wall_c,
 ##            7=door_closed, 8=door_open, 9=stairs_down,
-##            10=boss_door, 11=boss_door_sealed
+##            10=boss_door, 11=boss_door_sealed,
+##            12=wall_cracked
 ## Base coordinate for each tile type in row 0 (Tower). Variant
 ## selection adjusts the column for floors (0-3) and walls (4-6)
 ## using a deterministic cell hash.
@@ -30,8 +31,9 @@ const FLOOR_VARIANT_SALT: int = 12347
 const WALL_VARIANT_SALT: int = 67891
 const CATALOG_VERSION: int = 2
 const TILE_SOURCE_ID: int = 0
-const ATLAS_COLUMNS: int = 12
+const ATLAS_COLUMNS: int = 13
 const ATLAS_ROWS: int = 6
+const WALL_CRACKED_COLUMN: int = 12
 
 # === Exports ===
 @export var catalog_version: int = CATALOG_VERSION
@@ -47,7 +49,7 @@ func validate() -> String:
 	if tile_atlas == null:
 		return "Pixel tile atlas is missing"
 	if Vector2i(tile_atlas.get_size()) != ATLAS_SIZE:
-		return "Pixel tile atlas must be exactly 192x96"
+		return "Pixel tile atlas must be exactly 208x96"
 	if attribution.strip_edges().is_empty():
 		return "Pixel tile atlas attribution is missing"
 	return ""
@@ -89,6 +91,11 @@ func atlas_coords_for_tile(
 		var variant: int = _cell_variant_hash(cell, WALL_VARIANT_SALT) % 3
 		return Vector2i(4 + variant, row)
 	return Vector2i(base.x, row)
+
+
+## Column is always 12 (WALL_CRACKED_COLUMN); row is clamped to valid range.
+func atlas_coords_for_cracked_wall(biome_row: int) -> Vector2i:
+	return Vector2i(WALL_CRACKED_COLUMN, clampi(biome_row, 0, ATLAS_ROWS - 1))
 
 
 static func _cell_variant_hash(cell: Vector2i, salt: int) -> int:

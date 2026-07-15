@@ -21,4 +21,4 @@ damage_dice = 1
 damage_sides = 6
 attack_bonus = 2
 damage_bonus = 1
-visual_id = &"item/crossbow"
+visual_id = &"item/resource/hand_crossbow"

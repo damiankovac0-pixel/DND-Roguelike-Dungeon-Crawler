@@ -14,4 +14,4 @@ base_price = 760
 spawn_weight = 1
 min_floor = 21
 armor_bonus = 10
-visual_id = &"item/armor/heavy"
+visual_id = &"item/resource/ascended_aegis"

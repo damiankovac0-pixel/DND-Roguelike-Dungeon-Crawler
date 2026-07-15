@@ -16,4 +16,4 @@ min_floor = 5
 damage_sides = 10
 attack_bonus = 0
 damage_bonus = 3
-visual_id = &"item/sword"
+visual_id = &"item/resource/greatsword"

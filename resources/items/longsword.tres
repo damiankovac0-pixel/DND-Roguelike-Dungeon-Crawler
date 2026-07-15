@@ -16,4 +16,4 @@ min_floor = 3
 damage_sides = 8
 attack_bonus = 1
 damage_bonus = 1
-visual_id = &"item/sword"
+visual_id = &"item/resource/longsword"

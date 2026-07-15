@@ -521,12 +521,12 @@ func _check_visual_catalog_contract(renderer: Node2D) -> void:
 	var catalog: Resource = renderer.get("catalog")
 	_expect(catalog != null, "Catalog must be set on pixel renderer")
 
-	# Terrain atlas must be exactly 192x96
+	# Terrain atlas includes twelve base columns plus dedicated cracked walls.
 	var tile_atlas: Texture2D = catalog.get("tile_atlas")
 	var atlas_size: Vector2i = (
 		Vector2i(tile_atlas.get_size()) if tile_atlas != null else Vector2i.ZERO
 	)
-	_expect_equal(atlas_size, Vector2i(192, 96), "Terrain atlas must be exactly 192x96")
+	_expect_equal(atlas_size, Vector2i(208, 96), "Terrain atlas must be exactly 208x96")
 
 	# Catalog version and validate return no errors
 	_expect_equal(int(catalog.get("catalog_version")), 2, "Catalog version must be 2")
@@ -610,6 +610,22 @@ func _check_visual_catalog_contract(renderer: Node2D) -> void:
 		Vector2i(11, 0),
 		"SEALED_BOSS_DOOR must map to fixed column 11"
 	)
+	for biome_row: int in range(6):
+		_expect_equal(
+			catalog.call(&"atlas_coords_for_cracked_wall", biome_row),
+			Vector2i(12, biome_row),
+			"Cracked wall must use the dedicated biome-specific atlas cell",
+		)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_cracked_wall", -1),
+		Vector2i(12, 0),
+		"Cracked wall rows must clamp below the atlas",
+	)
+	_expect_equal(
+		catalog.call(&"atlas_coords_for_cracked_wall", 99),
+		Vector2i(12, 5),
+		"Cracked wall rows must clamp above the atlas",
+	)
 
 	# One-argument Tower fallback (no cell -> row 0 Tower, no variant)
 	var tower_floor: Vector2i = catalog.call(&"atlas_coords_for_tile", 0)
@@ -621,7 +637,7 @@ func _check_visual_catalog_contract(renderer: Node2D) -> void:
 	var tower_door: Vector2i = catalog.call(&"atlas_coords_for_tile", 2)
 	_expect_equal(tower_door, Vector2i(7, 0), "One-arg DOOR fallback must be Tower row 0 column 7")
 
-	# All returned coords bounded within 12x6 atlas
+	# Base tile coordinates stay in columns 0-11 of the 13x6 atlas.
 	for tile_type in [0, 1, 2, 3, 4, 5, 6]:
 		for biome in [0, 2, 4]:
 			for cell in [cell_a, cell_b]:
@@ -631,8 +647,8 @@ func _check_visual_catalog_contract(renderer: Node2D) -> void:
 				_expect(
 					coords.x >= 0 and coords.x <= 11 and coords.y >= 0 and coords.y <= 5,
 					(
-						"Atlas coords must be within 12x6: type=%d biome=%d cell=%s got %s"
-						% [tile_type, biome, cell, coords]
+						"Base atlas coords must remain within columns 0-11: "
+						+ "type=%d biome=%d cell=%s got %s" % [tile_type, biome, cell, coords]
 					)
 				)
 

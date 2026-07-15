@@ -14,4 +14,4 @@ base_price = 95
 spawn_weight = 4
 min_floor = 5
 armor_bonus = 2
-visual_id = &"item/charm"
+visual_id = &"item/resource/amulet_of_guarding"

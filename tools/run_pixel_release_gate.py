@@ -25,6 +25,7 @@ GODOT_TESTS = (
     "scripts/tests/test_pixel_renderer_foundation.gd",
     "scripts/tests/test_pixel_actor_rendering.gd",
     "scripts/tests/test_pixel_tactical_rendering.gd",
+    "scripts/tests/test_v30_library_visuals.gd",
     "scripts/tests/test_pixel_vfx_polish.gd",
     "scripts/tests/test_map_render_mode.gd",
     "scripts/tests/test_pixel_renderer_release_gate.gd",
@@ -32,10 +33,14 @@ GODOT_TESTS = (
     "scripts/tests/test_v14_sensory_feedback.gd",
     "scripts/tests/test_v23_2_state_accessibility.gd",
     "scripts/tests/test_v23_projectile_system.gd",
+    "scripts/tests/test_v23_projectile_resources.gd",
+    "scripts/tests/test_v12_fighter_abilities.gd",
+    "scripts/tests/test_v12_ranger_wizard_abilities.gd",
     "scripts/tests/test_v23_projectile_runtime.gd",
     "scripts/tests/test_v23_projectile_rendering.gd",
     "scripts/tests/test_v23_boss_projectiles.gd",
     "scripts/tests/test_v23_3_boss_strategies.gd",
+    "scripts/tests/test_v20_boss_flow.gd",
     "scripts/tests/test_v23_2_gameplay_hardening.gd",
 )
 

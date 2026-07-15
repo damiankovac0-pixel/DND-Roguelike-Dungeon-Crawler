@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/brute"
+visual_id = &"actor/enemy/ogre_brute"
 display_name = "Ogre Brute"
 glyph = "O"
 color = Color(0.72, 0.62, 0.42, 1)

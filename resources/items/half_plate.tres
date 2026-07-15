@@ -14,4 +14,4 @@ base_price = 140
 spawn_weight = 4
 min_floor = 6
 armor_bonus = 6
-visual_id = &"item/armor/heavy"
+visual_id = &"item/resource/half_plate"

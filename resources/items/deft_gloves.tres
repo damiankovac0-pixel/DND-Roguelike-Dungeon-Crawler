@@ -18,4 +18,4 @@ damage_bonus = 0
 required_class = &"ranger"
 class_damage_type = &"ranged"
 class_damage_percent_bonus = 10
-visual_id = &"item/robe"
+visual_id = &"item/resource/deft_gloves"

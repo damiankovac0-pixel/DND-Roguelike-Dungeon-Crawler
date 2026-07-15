@@ -27,6 +27,9 @@ func _run() -> void:
 	_game = _instantiate_game()
 	root.add_child(_game)
 	await process_frame
+	_check_consumable_action_ids()
+	if _failed:
+		return
 	while _game_manager.current_floor < BOSS_FLOOR:
 		_game._debug_descend_deeper()
 		await process_frame
@@ -40,6 +43,30 @@ func _run() -> void:
 	if not _failed:
 		print("V20 boss flow checks passed")
 		quit(0)
+
+
+func _check_consumable_action_ids() -> void:
+	var scroll_paths: Array[String] = [
+		"res://resources/items/scroll_shield.tres",
+		"res://resources/items/scroll_regeneration.tres",
+	]
+	for path: String in scroll_paths:
+		var item: Resource = load(path)
+		_assert(item != null, "failed to load direct scroll resource %s" % path)
+		if _failed:
+			return
+		_assert(
+			_game._consumable_action_id(item) == &"use_scroll",
+			"%s should dispatch the use_scroll player animation" % path,
+		)
+	var potion: Resource = load("res://resources/items/potion_of_haste.tres")
+	_assert(potion != null, "failed to load Potion of Haste")
+	if _failed:
+		return
+	_assert(
+		_game._consumable_action_id(potion) == &"drink_potion",
+		"Potion of Haste should dispatch the drink_potion player animation",
+	)
 
 
 func _check_boss_not_spawned_before_gate() -> void:
@@ -258,39 +285,70 @@ func _check_boss_telegraph_damage(boss: Node) -> void:
 
 func _check_boss_defeat_rewards(boss: Node) -> void:
 	var gold_before: int = _game._player.stats_component.gold
+	var reward_gold: int = boss.enemy_data.boss_reward_gold
+	var container_count_before: int = _game._container_positions.size()
+	var death_footprint: Array[Vector2i] = _game._calculate_enemy_occupied_cells(boss)
+	var expected_chest_cell: Vector2i = _game._compute_boss_footprint_center(death_footprint)
+	var even_footprint: Array[Vector2i] = [
+		Vector2i(4, 8),
+		Vector2i(5, 8),
+		Vector2i(4, 9),
+		Vector2i(5, 9),
+	]
+	_assert(
+		_game._compute_boss_footprint_center(even_footprint) == Vector2i(4, 8),
+		"even boss footprints should choose the stable upper-left center cell",
+	)
 	boss.stats_component.apply_damage(99999)
 	await process_frame
 	_assert(
 		bool(_game._active_boss_encounter.get("defeated", false)),
-		"boss defeat did not mark encounter defeated"
+		"boss defeat did not mark encounter defeated",
 	)
 	var stairs: Vector2i = _game._active_boss_encounter.get("stairs_cell")
 	_assert(
 		_game_manager.map_data[stairs.y][stairs.x] == _game.DungeonDataScript.TileType.STAIRS_DOWN,
-		"boss defeat did not reveal stairs"
+		"boss defeat did not reveal stairs",
 	)
-	var room_cells: Dictionary = _game._active_boss_encounter.get("room_cells", {})
-	var chest_in_boss_room: bool = false
-	var boss_chest_cell: Vector2i
-	for placed_cell: Vector2i in _game._container_positions:
-		if room_cells.has(placed_cell):
-			chest_in_boss_room = true
-			boss_chest_cell = placed_cell
-			break
-	_assert(chest_in_boss_room, "boss defeat did not create a chest inside the boss room")
+	_assert(
+		_game._container_positions.size() == container_count_before,
+		"boss reward chest should wait for the death animation",
+	)
+	_game._reach_stairs()
+	_assert(
+		_game_manager.current_floor == BOSS_FLOOR,
+		"stairs must not descend before the delayed boss reward chest resolves",
+	)
+	var reward_delay: float = float(_game.BOSS_REWARD_CHEST_DEFER_SECONDS)
+	await create_timer(reward_delay * 0.5).timeout
+	_assert(
+		_game._container_positions.size() == container_count_before,
+		"boss reward chest appeared before the death animation duration elapsed",
+	)
+	await create_timer(reward_delay).timeout
+	await process_frame
+	_assert(
+		_game._container_positions.size() == container_count_before + 1,
+		"boss defeat did not create exactly one delayed reward chest",
+	)
+	_assert(
+		_game._container_positions.has(expected_chest_cell),
+		"boss reward chest was not centered on the captured death footprint",
+	)
 	if not _failed:
-		var chest_data: Dictionary = _game._container_positions.get(boss_chest_cell, {})
+		var chest_data: Dictionary = _game._container_positions.get(expected_chest_cell, {})
 		var chest_rarity: int = chest_data.get("rarity", -1)
 		_assert(
 			chest_rarity == 2,
-			"boss chest rarity = %d, expected 2 (RARE) on floor %d" % [chest_rarity, BOSS_FLOOR]
+			"boss chest rarity = %d, expected 2 (RARE) on floor %d" % [chest_rarity, BOSS_FLOOR],
 		)
 	_assert(
-		not _game.sensory_feedback.is_boss_music_playing(), "boss music did not stop after defeat"
+		not _game.sensory_feedback.is_boss_music_playing(),
+		"boss music did not stop after defeat",
 	)
 	_assert(
-		_game._player.stats_component.gold == gold_before + boss.enemy_data.boss_reward_gold,
-		"boss gold reward should not include normal enemy gold"
+		_game._player.stats_component.gold == gold_before + reward_gold,
+		"boss gold reward should not include normal enemy gold",
 	)
 
 

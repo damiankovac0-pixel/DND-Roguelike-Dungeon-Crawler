@@ -41,6 +41,7 @@ const BOSS_ARENA_STATE_REVEAL: StringName = &"arena_reveal"
 const BOSS_ARENA_STATE_ACTIVE: StringName = &"active"
 const BOSS_ARENA_STATE_DEFEATED: StringName = &"defeated"
 const BOSS_ARENA_REVEAL_SECONDS: float = 2.10
+const BOSS_REWARD_CHEST_DEFER_SECONDS: float = 0.50
 const BOSS_RESOURCE_BY_ID: Dictionary = {
 	&"observer": "res://resources/enemies/the_observer.tres",
 	&"seraphine": "res://resources/enemies/seraphine_thorn_saint.tres",
@@ -1780,14 +1781,11 @@ func _release_boss_encounter() -> void:
 	if boss_data != null:
 		chest_rarity = boss_data.boss_reward_chest_rarity
 		gold_reward = boss_data.boss_reward_gold
-	var chest_cell: Vector2i = _active_boss_encounter.get("chest_cell", Vector2i.ZERO)
-	var reward_cell: Vector2i = _find_boss_chest_reward_cell(chest_cell)
-	if reward_cell == Vector2i.ZERO:
-		GameManager.add_log_message("No safe space remains for the boss chest.", &"warning")
-	else:
-		_container_positions[reward_cell] = _make_chest_container(chest_rarity, true)
-		GameManager.add_log_message("A marked boss reward chest materializes nearby.", &"loot")
-		_play_action_burst(reward_cell, &"loot")
+	# Schedule deferred boss reward chest
+	_active_boss_encounter["pending_chest_rarity"] = chest_rarity
+	_active_boss_encounter["pending_chest_floor"] = GameManager.current_floor
+	_active_boss_encounter["pending_chest_boss_id"] = _active_boss_encounter.get("boss_id", &"")
+	_schedule_boss_chest_reward()
 	if gold_reward > 0:
 		_player.stats_component.gold += gold_reward
 		GameManager.add_log_message(
@@ -1838,6 +1836,67 @@ func _find_boss_chest_reward_cell(preferred_cell: Vector2i) -> Vector2i:
 	return Vector2i.ZERO
 
 
+func _compute_boss_footprint_center(footprint: Array[Vector2i]) -> Vector2i:
+	if footprint.is_empty():
+		return Vector2i.ZERO
+	var min_x: int = footprint[0].x
+	var max_x: int = footprint[0].x
+	var min_y: int = footprint[0].y
+	var max_y: int = footprint[0].y
+	for cell: Vector2i in footprint:
+		min_x = min(min_x, cell.x)
+		max_x = max(max_x, cell.x)
+		min_y = min(min_y, cell.y)
+		max_y = max(max_y, cell.y)
+	# Floor midpoint, choosing upper/left for even spans
+	var center_x: int = floori((min_x + max_x) / 2.0)
+	var center_y: int = floori((min_y + max_y) / 2.0)
+	return Vector2i(center_x, center_y)
+
+
+func _schedule_boss_chest_reward() -> void:
+	if _active_boss_encounter.is_empty():
+		return
+	if not _active_boss_encounter.has("pending_chest_rarity"):
+		return
+	var timer: SceneTreeTimer = get_tree().create_timer(BOSS_REWARD_CHEST_DEFER_SECONDS)
+	timer.timeout.connect(_on_boss_chest_reward_timer)
+
+
+func _on_boss_chest_reward_timer() -> void:
+	# Guard against stale encounter/floor/boss identity
+	if _active_boss_encounter.is_empty():
+		return
+	var guard_floor: int = _active_boss_encounter.get("pending_chest_floor", -1)
+	if guard_floor != GameManager.current_floor:
+		return
+	var guard_boss_id: StringName = _active_boss_encounter.get("pending_chest_boss_id", &"")
+	if guard_boss_id == &"":
+		return
+	if not _active_boss_encounter.has("pending_chest_rarity"):
+		return
+	var chest_rarity: int = _active_boss_encounter.get(
+		"pending_chest_rarity", ItemDataScript.ItemRarity.MYTHIC
+	)
+	var preferred_center: Vector2i = _active_boss_encounter.get(
+		"pending_chest_preferred_cell", Vector2i.ZERO
+	)
+	# Feed through existing fallback for blocked-center
+	var reward_cell: Vector2i = _find_boss_chest_reward_cell(preferred_center)
+	if reward_cell == Vector2i.ZERO:
+		GameManager.add_log_message("No safe space remains for the boss chest.", &"warning")
+	else:
+		_container_positions[reward_cell] = _make_chest_container(chest_rarity, true)
+		GameManager.add_log_message("A marked boss reward chest materializes nearby.", &"loot")
+		_play_action_burst(reward_cell, &"loot")
+	# Clean up pending fields
+	_active_boss_encounter.erase("pending_chest_rarity")
+	_active_boss_encounter.erase("pending_chest_preferred_cell")
+	_active_boss_encounter.erase("pending_chest_boss_id")
+	_active_boss_encounter.erase("pending_chest_floor")
+	_refresh_map()
+
+
 func _handle_boss_defeated(enemy: Node) -> bool:
 	if not _is_boss_enemy(enemy):
 		return false
@@ -1846,6 +1905,11 @@ func _handle_boss_defeated(enemy: Node) -> bool:
 		return true
 	state["reward_claimed"] = true
 	_boss_states[enemy] = state
+	# Capture authoritative death footprint before boss state removal
+	var footprint_cells: Array[Vector2i] = _calculate_enemy_occupied_cells(enemy)
+	_active_boss_encounter["pending_chest_preferred_cell"] = _compute_boss_footprint_center(
+		footprint_cells
+	)
 	_release_boss_encounter()
 	return true
 
@@ -2219,7 +2283,9 @@ func _advance_dash_charge() -> void:
 
 # ===== Combat Resolution =====
 func _resolve_attack(attacker: Node, defender: Node) -> void:
-	_play_actor_presentation_event(attacker, &"attack")
+	_play_actor_presentation_event(
+		attacker, &"attack", &"attack_sword" if attacker == _player else &""
+	)
 	var damage_percent: int = _get_damage_percent(defender, &"melee")
 	var attacker_damage_percent: int = _get_attacker_damage_percent(attacker, &"melee")
 	var outcome: Dictionary = CombatSystemScript.attack(
@@ -2686,6 +2752,7 @@ func _activate_fighter_cleave() -> void:
 		return
 	_fighter_cleave_charges -= 1
 	_cleave_primed = true
+	_play_actor_presentation_event(_player, &"cast", &"fighter_cleave")
 	GameManager.add_log_message(
 		"Cleave primed: your next melee attack splashes to adjacent enemies.", &"magic"
 	)
@@ -2699,6 +2766,7 @@ func _activate_fighter_second_wind() -> void:
 	var shield_value: int = _get_second_wind_shield_value(player_level)
 	var shield_turns_count: int = _get_second_wind_shield_turns(player_level)
 	_fighter_second_wind_charges -= 1
+	_play_actor_presentation_event(_player, &"cast", &"fighter_second_wind")
 	# Heal
 	var heal_amount: int = max(1, int(round(_player.stats_component.max_hp * heal_percent / 100.0)))
 	var before_hp: int = _player.stats_component.current_hp
@@ -2725,7 +2793,7 @@ func _activate_fighter_whirlwind() -> void:
 		GameManager.add_log_message("Whirlwind has no adjacent enemies.", &"warning")
 		return
 	_fighter_whirlwind_charges -= 1
-	_play_actor_presentation_event(_player, &"attack")
+	_play_actor_presentation_event(_player, &"attack", &"fighter_whirlwind")
 	for target: Node2D in adjacent_enemies:
 		var damage_percent: int = _get_damage_percent(target, &"melee")
 		var attacker_damage_percent: int = _get_player_class_damage_percent(
@@ -2756,6 +2824,7 @@ func _activate_ranger_focus() -> void:
 	_ranger_focus_charges -= 1
 	_hunter_focus_primed = true
 	var player_level: int = _get_player_level()
+	_play_actor_presentation_event(_player, &"cast", &"ranger_focus")
 	var accuracy: int = _get_hunter_focus_accuracy(player_level)
 	var multiplier: int = _get_hunter_focus_multiplier(player_level)
 	(
@@ -2785,6 +2854,7 @@ func _activate_ranger_volley() -> void:
 		)
 		return
 	_ranger_volley_charges -= 1
+	_play_actor_presentation_event(_player, &"attack", &"ranger_volley")
 	var player_level: int = _get_player_level()
 	var target_count: int = _get_volley_target_count(player_level)
 	var damage_percent: int = _get_volley_damage_percent(player_level)
@@ -2819,6 +2889,7 @@ func _activate_ranger_volley() -> void:
 func _activate_ranger_quickstep() -> void:
 	if _ranger_quickstep_charges <= 0:
 		return
+	_play_actor_presentation_event(_player, &"cast", &"ranger_quickstep")
 	_ranger_quickstep_charges -= 1
 	var haste_phases: int = _get_quickstep_haste_phases(_get_player_level())
 	_haste_enemy_phases = max(_haste_enemy_phases, haste_phases)
@@ -2844,6 +2915,7 @@ func _activate_wizard_spark() -> void:
 		)
 		return
 	_wizard_spark_charges -= 1
+	_play_actor_presentation_event(_player, &"cast", &"arcane_spark")
 	_play_projectile_between(
 		_player.grid_position,
 		nearest_enemy.grid_position,
@@ -2881,6 +2953,7 @@ func _activate_wizard_frost_nova() -> void:
 		)
 		return
 	_wizard_frost_nova_charges -= 1
+	_play_actor_presentation_event(_player, &"cast", &"wizard_frost_nova")
 	var wis_mod: int = Dice.modifier(_player.stats_component.wisdom)
 	var base_damage: int = Dice.roll(4) + max(0, wis_mod) + int(player_level / 4)
 	var nova_cells: Array[Vector2i] = []
@@ -2913,6 +2986,7 @@ func _activate_wizard_chain_lightning() -> void:
 			"Chain Lightning has no visible targets within range %d." % chain_range, &"warning"
 		)
 		return
+	_play_actor_presentation_event(_player, &"cast", &"wizard_chain_lightning")
 	_wizard_chain_lightning_charges -= 1
 	# Sort by distance, take up to target_count
 	candidates.sort_custom(
@@ -3268,10 +3342,15 @@ func _open_container_at(cell: Vector2i) -> void:
 	hud.bind_player(_player)
 
 
-func _play_actor_presentation_event(actor: Variant, animation: StringName) -> void:
+func _play_actor_presentation_event(
+	actor: Variant, animation: StringName, action_id: StringName = &""
+) -> void:
 	if map_view == null or not map_view.has_method(&"play_actor_event"):
 		return
-	map_view.call(&"play_actor_event", actor, animation)
+	var payload: Dictionary = {}
+	if action_id != &"":
+		payload["action_id"] = action_id
+	map_view.call(&"play_actor_event", actor, animation, payload)
 
 
 func _play_actor_presentation_event_at_cell(cell: Vector2i, animation: StringName) -> void:
@@ -3496,6 +3575,9 @@ func _reach_stairs() -> void:
 			"The stairs are sealed by %s." % _active_boss_encounter.get("boss_name", "the boss"),
 			&"warning"
 		)
+		return
+	if not _active_boss_encounter.is_empty() and _active_boss_encounter.has("pending_chest_rarity"):
+		GameManager.add_log_message("The boss reward is still materializing.", &"warning")
 		return
 	if GameManager.current_floor == FINAL_VICTORY_FLOOR:
 		_show_victory_choice()
@@ -5378,6 +5460,7 @@ func _use_consumable(item: Resource) -> bool:
 				used = false
 			else:
 				_player.inventory_component.remove_item(item)
+				_play_actor_presentation_event(_player, &"cast", _consumable_action_id(item))
 				var before_hp: int = _player.stats_component.current_hp
 				_player.stats_component.heal(_get_potion_heal_amount(item))
 				var healed: int = _player.stats_component.current_hp - before_hp
@@ -5389,6 +5472,7 @@ func _use_consumable(item: Resource) -> bool:
 				_finish_player_action()
 		ItemDataScript.ItemUse.SHIELD:
 			_player.inventory_component.remove_item(item)
+			_play_actor_presentation_event(_player, &"cast", _consumable_action_id(item))
 			_shield_turns = max(_shield_turns, item.effect_duration)
 			_shield_armor_bonus = max(_shield_armor_bonus, item.armor_bonus)
 			_refresh_temporary_stats()
@@ -5403,6 +5487,7 @@ func _use_consumable(item: Resource) -> bool:
 			_finish_player_action()
 		ItemDataScript.ItemUse.HASTE:
 			_player.inventory_component.remove_item(item)
+			_play_actor_presentation_event(_player, &"cast", _consumable_action_id(item))
 			_haste_enemy_phases = max(_haste_enemy_phases, item.effect_duration)
 			GameManager.add_log_message(
 				"%s makes your next move too fast to answer." % item.display_name, &"magic"
@@ -5411,6 +5496,7 @@ func _use_consumable(item: Resource) -> bool:
 			_finish_player_action()
 		ItemDataScript.ItemUse.REGEN:
 			_player.inventory_component.remove_item(item)
+			_play_actor_presentation_event(_player, &"cast", _consumable_action_id(item))
 			_regen_turns = max(_regen_turns, item.effect_duration)
 			_regen_heal_amount = max(_regen_heal_amount, item.healing_amount)
 			GameManager.add_log_message(
@@ -5430,6 +5516,11 @@ func _use_consumable(item: Resource) -> bool:
 			GameManager.add_log_message("Nothing happens.", &"warning")
 			used = false
 	return used
+
+
+func _consumable_action_id(item: Resource) -> StringName:
+	var visual_id: String = String(item.get("visual_id"))
+	return &"use_scroll" if visual_id.begins_with("item/resource/scroll_") else &"drink_potion"
 
 
 func _use_targeted_consumable_or_spend_stun(item: Resource) -> void:
@@ -5667,6 +5758,8 @@ func _resolve_targeted_item(item: Resource, cell: Vector2i, source: StringName) 
 				ProjectileSystemScript.payload_from_item(item, source, secret_damage_type)
 			)
 		_damage_secret_wall(cell, 1, source)
+		if source == &"consumable":
+			_play_actor_presentation_event(_player, &"cast", &"use_scroll")
 		return true
 	match item.use_effect:
 		ItemDataScript.ItemUse.RANGED_ATTACK:
@@ -5692,6 +5785,7 @@ func _resolve_magic_missile(item: Resource, cell: Vector2i) -> bool:
 	var missile_payload: Dictionary = ProjectileSystemScript.payload_from_item(
 		item, &"consumable", &"magic"
 	)
+	_play_actor_presentation_event(_player, &"cast", &"use_scroll")
 	for target: Node2D in missile_targets:
 		_play_projectile_between(_player.grid_position, target.grid_position, missile_payload)
 		var raw_damage: int = _roll_item_damage(item, _get_scroll_damage_bonus(item))
@@ -5709,6 +5803,13 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 	var is_magic_weapon: bool = (
 		source == &"weapon" and (item.is_staff or item.weapon_damage_type == &"magic")
 	)
+	var action_id: StringName = &""
+	if source == &"weapon":
+		action_id = &"attack_staff" if is_magic_weapon else &"attack_bow"
+	elif source == &"consumable":
+		action_id = &"use_scroll"
+	if action_id != &"":
+		_play_actor_presentation_event(_player, &"attack", action_id)
 	var roll_result: int = Dice.d20()
 	var close_weapon_shot: bool = (
 		source == &"weapon"
@@ -5824,6 +5925,7 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 	var area_payload: Dictionary = ProjectileSystemScript.payload_from_item(
 		item, &"consumable", &"fire" if item.projectile_id == &"fireball" else &"magic"
 	)
+	_play_actor_presentation_event(_player, &"cast", &"use_scroll")
 	var area_vfx_cells: Array[Vector2i] = _projectile_area_cells(cell, item.target_radius)
 	_play_projectile_between(_player.grid_position, cell, area_payload)
 	_play_projectile_cells(area_vfx_cells, area_payload)
@@ -5862,6 +5964,7 @@ func _resolve_sleep(item: Resource, cell: Vector2i) -> bool:
 	var sleep_payload: Dictionary = ProjectileSystemScript.payload_from_item(
 		item, &"consumable", &"magic"
 	)
+	_play_actor_presentation_event(_player, &"cast", &"use_scroll")
 	var sleep_vfx_cells: Array[Vector2i] = _projectile_area_cells(cell, item.target_radius)
 	_play_projectile_between(_player.grid_position, cell, sleep_payload)
 	_play_projectile_cells(sleep_vfx_cells, sleep_payload)

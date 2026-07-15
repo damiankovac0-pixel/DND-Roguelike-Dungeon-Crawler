@@ -11,13 +11,32 @@
       "license_id": "project_authored",
       "prototype": false,
       "runtime_path": "res://assets/pixel_art/source/actors/core.svg",
-      "sha256": "b371f6d8854ffd72d450a992847bc598b9c8be4185eeab22a897c91aff23973f",
+      "sha256": "94209fe47f65570d179417ed11ef46bd96557f2156b2d4dca0e19c0433d42c57",
       "size": [
         192,
-        224
+        816
       ],
       "source_format": "svg",
       "source_path": "assets/pixel_art/source/actors/core.svg"
+    },
+    {
+      "attribution": "Project-authored player action sprite sheet.",
+      "category": "actor",
+      "frame_size": [
+        16,
+        16
+      ],
+      "id": "actor/player_actions",
+      "license_id": "project_authored",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/actors/player_actions.svg",
+      "sha256": "9dbc903a0c74bb35db3aa3ecef1859f112388c7423fbdc38b06bd10bc75c75e6",
+      "size": [
+        448,
+        48
+      ],
+      "source_format": "svg",
+      "source_path": "assets/pixel_art/source/actors/player_actions.svg"
     },
     {
       "attribution": "Project-authored production boss sheet.",
@@ -75,6 +94,25 @@
       ],
       "source_format": "svg",
       "source_path": "assets/pixel_art/source/effects/ember.svg"
+    },
+    {
+      "attribution": "Project-authored enchantment overlay texture.",
+      "category": "effect",
+      "frame_size": [
+        16,
+        16
+      ],
+      "id": "effect/enchantment",
+      "license_id": "project_authored",
+      "prototype": false,
+      "runtime_path": "res://assets/pixel_art/source/effects/enchantment.svg",
+      "sha256": "ef7d4e40ff4ee13766629592c9544ff090ec46da7dff39efbfc00ae2257f9373",
+      "size": [
+        16,
+        16
+      ],
+      "source_format": "svg",
+      "source_path": "assets/pixel_art/source/effects/enchantment.svg"
     },
     {
       "attribution": "Project-authored production frost texture.",
@@ -144,9 +182,9 @@
       "license_id": "project_authored",
       "prototype": false,
       "runtime_path": "res://assets/pixel_art/source/objects/core.svg",
-      "sha256": "0f78cb45909a3f65c4b3c083912e596019e7cca42fc7489fbb19603246fddfe6",
+      "sha256": "49ef024718ddf69b664a812620e3daed1f73943b12d93f364ac439197dd8ea25",
       "size": [
-        448,
+        1664,
         16
       ],
       "source_format": "svg",
@@ -163,9 +201,9 @@
       "license_id": "project_authored",
       "prototype": false,
       "runtime_path": "res://assets/pixel_art/source/terrain/core.svg",
-      "sha256": "b036cc59a2e8bdbeab98dfaf6221fadd4c46bf0f33c1f44a10a8befebdd3904e",
+      "sha256": "44ddb5b46c90d1b4c2b797531e022656cea05911150374a4935e807553f73753",
       "size": [
-        192,
+        208,
         96
       ],
       "source_format": "svg",

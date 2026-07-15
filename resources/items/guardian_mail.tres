@@ -18,4 +18,4 @@ set_id = &"guardian"
 set_display_name = "Guardian Set"
 set_required_count = 2
 set_damage_resist_percent = 15
-visual_id = &"item/armor/heavy"
+visual_id = &"item/resource/guardian_mail"

@@ -21,4 +21,4 @@ damage_dice = 1
 damage_sides = 4
 damage_bonus = 2
 max_floor = 0
-visual_id = &"item/scroll"
+visual_id = &"item/resource/scroll_magic_missile"

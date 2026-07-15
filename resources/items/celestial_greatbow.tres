@@ -26,4 +26,4 @@ special_amount = 8
 required_class = &"ranger"
 class_damage_type = &"ranged"
 class_damage_percent_bonus = 16
-visual_id = &"item/bow"
+visual_id = &"item/resource/celestial_greatbow"

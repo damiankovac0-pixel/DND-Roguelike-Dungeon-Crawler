@@ -16,4 +16,4 @@ min_floor = 1
 use_effect = 4
 effect_duration = 4
 armor_bonus = 3
-visual_id = &"item/scroll"
+visual_id = &"item/resource/scroll_shield"

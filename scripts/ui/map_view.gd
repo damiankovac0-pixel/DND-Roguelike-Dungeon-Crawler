@@ -755,8 +755,7 @@ func _draw() -> void:
 						_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
 					)
 
-	if pixel_base_active and not full_pixel_active:
-		_draw_hybrid_secret_wall_hints(draw_font, ascent, playfield_rect)
+
 	if not full_pixel_active:
 		_draw_boss_room_tint(playfield_rect)
 		_draw_boss_arena_motif(draw_font, ascent, playfield_rect)

@@ -18,4 +18,4 @@ damage_bonus = 0
 required_class = &"fighter"
 class_damage_type = &"melee"
 class_damage_percent_bonus = 10
-visual_id = &"item/ring"
+visual_id = &"item/resource/warriors_ring"

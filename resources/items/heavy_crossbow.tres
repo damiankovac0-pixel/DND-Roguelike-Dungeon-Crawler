@@ -21,4 +21,4 @@ damage_dice = 1
 damage_sides = 10
 damage_bonus = 3
 attack_bonus = 0
-visual_id = &"item/crossbow"
+visual_id = &"item/resource/heavy_crossbow"

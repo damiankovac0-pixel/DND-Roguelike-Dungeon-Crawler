@@ -14,4 +14,4 @@ base_price = 90
 spawn_weight = 4
 min_floor = 4
 armor_bonus = 5
-visual_id = &"item/armor/heavy"
+visual_id = &"item/resource/scale_mail"

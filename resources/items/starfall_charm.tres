@@ -16,4 +16,4 @@ min_floor = 16
 attack_bonus = 2
 damage_bonus = 2
 armor_bonus = 2
-visual_id = &"item/charm"
+visual_id = &"item/resource/starfall_charm"

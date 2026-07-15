@@ -153,28 +153,29 @@ func apply_snapshot(
 	queue_redraw()
 
 
-func play_cosmetic(animation: StringName) -> void:
-	if not ANIMATION_PRIORITY.has(animation) or sprite.sprite_frames == null:
-		return
+func play_cosmetic(animation: StringName) -> bool:
+	if sprite.sprite_frames == null:
+		return false
 	if not sprite.sprite_frames.has_animation(animation):
-		return
+		return false
 	if _current_animation == &"death":
 		_coalesced_event_count += 1
-		return
+		return true
 	if animation == _current_animation and sprite.is_playing():
 		_coalesced_event_count += 1
-		return
-	var current_priority: int = int(ANIMATION_PRIORITY.get(_current_animation, 0))
-	var requested_priority: int = int(ANIMATION_PRIORITY[animation])
+		return true
+	var current_priority: int = _animation_priority_for(_current_animation)
+	var requested_priority: int = _animation_priority_for(animation)
 	if requested_priority < current_priority and sprite.is_playing():
 		_coalesced_event_count += 1
-		return
+		return true
 	_event_counts[animation] = int(_event_counts.get(animation, 0)) + 1
 	_death_pending = animation == &"death"
 	if _death_pending:
 		_death_animation_finished = false
 	_play_animation(animation, true)
 	_start_actor_feedback(animation)
+	return true
 
 
 func play_spawn_intro() -> void:
@@ -431,8 +432,7 @@ func _apply_facing(facing_value: Variant) -> void:
 
 
 func _start_move_tween(target: Vector2) -> void:
-	_stop_move_tween()
-	if int(ANIMATION_PRIORITY.get(_current_animation, 0)) <= 1:
+	if _animation_priority_for(_current_animation) <= 1:
 		_play_animation(&"move", true)
 	_move_tween = create_tween()
 	_move_tween.set_trans(Tween.TRANS_QUAD)
@@ -481,3 +481,9 @@ func _on_animation_finished() -> void:
 			death_finished.emit(actor_id)
 	elif _current_animation != &"idle" and _current_animation != &"move":
 		_play_animation(&"idle", true)
+
+
+func _animation_priority_for(animation: StringName) -> int:
+	if ANIMATION_PRIORITY.has(animation):
+		return int(ANIMATION_PRIORITY[animation])
+	return 2

@@ -15,4 +15,4 @@ spawn_weight = 7
 min_floor = 4
 damage_sides = 6
 attack_bonus = 2
-visual_id = &"item/mace"
+visual_id = &"item/resource/flail"

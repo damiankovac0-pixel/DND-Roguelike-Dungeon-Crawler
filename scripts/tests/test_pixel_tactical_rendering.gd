@@ -11,6 +11,8 @@ const STATE_PATH: String = PRESENTATION_DIR + "map_presentation_state.gd"
 const OBJECT_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "map_object_visual_catalog.tres"
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
 const MAP_VIEW_PATH: String = "res://scripts/ui/map_view.gd"
+const ResourcePathsScript = preload("res://scripts/resource_paths.gd")
+const PixelObjectLayerScript = preload("res://scripts/ui/map_presentation/pixel_object_layer.gd")
 
 var _failed: bool = false
 var _layout_script: GDScript
@@ -102,7 +104,7 @@ func _check_object_catalogue() -> void:
 	_expect(atlas != null, "Object catalogue returned no atlas")
 	if atlas != null:
 		_expect_equal(
-			Vector2i(atlas.get_size()), Vector2i(448, 16), "Object atlas dimensions drifted"
+			Vector2i(atlas.get_size()), Vector2i(1664, 16), "Object atlas dimensions drifted"
 		)
 	var expected_columns: Dictionary = {
 		&"item/potion": 0,
@@ -156,7 +158,81 @@ func _check_object_catalogue() -> void:
 	_expect_equal(
 		fallback.position, Vector2(256, 0), "Unknown object IDs need safe fallback at column 16"
 	)
+	_check_resource_visual_coverage()
 	print("  explicit object catalogue maps deterministic 16x16 atlas regions")
+
+
+func _check_resource_visual_coverage() -> void:
+	var item_ids: Dictionary = {}
+	var item_regions: Dictionary = {}
+	for path: String in ResourcePathsScript.ITEM_PATHS:
+		var item: Resource = load(path)
+		_expect(item != null, "Item resource failed to load: %s" % path)
+		if item == null:
+			continue
+		var visual_id: StringName = item.get("visual_id")
+		_expect(visual_id != &"", "Item visual ID is empty: %s" % path)
+		_expect(not item_ids.has(visual_id), "Duplicate item visual ID: %s" % visual_id)
+		item_ids[visual_id] = path
+		_expect(
+			bool(_object_catalog.call(&"has_visual", visual_id)),
+			"Object catalogue is missing item visual %s" % visual_id,
+		)
+		var region: Rect2 = _object_catalog.call(&"region_for", visual_id)
+		_expect_equal(region.size, Vector2(16, 16), "Item visual region must remain 16x16")
+		_expect(
+			region.position.x >= 28.0 * 16.0,
+			"Item visual %s did not receive a dedicated atlas cell" % visual_id,
+		)
+		_expect(
+			not item_regions.has(region.position),
+			(
+				"Item atlas region collision for %s and %s"
+				% [visual_id, item_regions.get(region.position, &"")]
+			),
+		)
+		item_regions[region.position] = visual_id
+	_expect_equal(item_ids.size(), 76, "Every item resource must have one unique visual ID")
+	_expect_equal(
+		item_regions.size(), item_ids.size(), "Every item resource must have one unique atlas cell"
+	)
+	var trap_ids: Dictionary = {}
+	for path: String in ResourcePathsScript.TRAP_PATHS:
+		var trap: Resource = load(path)
+		_expect(trap != null, "Trap resource failed to load: %s" % path)
+		if trap == null:
+			continue
+		var trap_visual_id: StringName = trap.get("visual_id")
+		_expect(trap_visual_id != &"", "Trap visual ID is empty: %s" % path)
+		_expect(not trap_ids.has(trap_visual_id), "Duplicate trap visual ID: %s" % trap_visual_id)
+		trap_ids[trap_visual_id] = true
+		_expect(
+			bool(_object_catalog.call(&"has_visual", trap_visual_id)),
+			"Object catalogue is missing trap visual %s" % trap_visual_id,
+		)
+	_expect_equal(trap_ids.size(), 6, "Every trap resource must have one unique visual ID")
+	var enchantment_overlay: Texture2D = _object_catalog.call(&"get_enchantment_overlay")
+	_expect(enchantment_overlay != null, "Enchantment overlay texture is missing")
+	if enchantment_overlay != null:
+		_expect_equal(
+			Vector2i(enchantment_overlay.get_size()),
+			Vector2i(16, 16),
+			"Enchantment overlay must remain pixel-aligned",
+		)
+	var rarity_colors: Array[Color] = [
+		Color("#8fb3ff"),
+		Color("#d78fff"),
+		Color("#ffb84d"),
+		Color("#ff5fd7"),
+		Color("#66fff0"),
+	]
+	for color_index: int in range(rarity_colors.size()):
+		_expect_equal(
+			PixelObjectLayerScript.enchantment_color_for(color_index + 2),
+			rarity_colors[color_index],
+			"Enchantment rarity colour drifted at index %d" % color_index,
+		)
+	print("  all 76 items and 6 traps resolve to deterministic catalogue visuals")
 
 
 func _build_state() -> RefCounted:
@@ -308,6 +384,13 @@ func _check_renderer_objects_and_tactics(state: RefCounted) -> void:
 	_expect_equal(int(objects.get("item_count", 0)), 1, "Visible uncovered item count drifted")
 	_expect_equal(int(objects.get("container_count", 0)), 1, "Visible container count drifted")
 	_expect_equal(int(objects.get("trap_count", 0)), 2, "Known trap count drifted")
+	_expect_equal(int(objects.get("bob_item_count", 0)), 1, "Dropped item bob count drifted")
+	_expect_equal(
+		int(objects.get("enchantment_overlay_count", 0)),
+		1,
+		"Rare equipment enchantment overlay count drifted",
+	)
+	_expect(bool(objects.get("animation_active", false)), "Dropped item motion should be active")
 	var tactical: Dictionary = debug.get("tactical", {})
 	_expect(
 		not bool(tactical.get("native_tactical", true)),
@@ -348,6 +431,20 @@ func _check_renderer_objects_and_tactics(state: RefCounted) -> void:
 
 func _check_pixel_transients(renderer: Node2D) -> void:
 	renderer.call(&"set_reduced_vfx", true)
+	var reduced_objects: Dictionary = renderer.call(&"get_debug_snapshot").get("objects", {})
+	_expect(
+		bool(reduced_objects.get("reduced_vfx_enabled", false)),
+		"Reduced VFX did not reach the object layer",
+	)
+	_expect(
+		not bool(reduced_objects.get("animation_active", true)),
+		"Reduced VFX must stop dropped-item animation processing",
+	)
+	_expect_equal(
+		int(reduced_objects.get("enchantment_overlay_count", 0)),
+		1,
+		"Reduced VFX must preserve deterministic enchantment presentation",
+	)
 	(
 		renderer
 		. call(

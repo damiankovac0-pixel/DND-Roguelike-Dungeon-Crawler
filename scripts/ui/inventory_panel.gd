@@ -7,10 +7,20 @@ const ItemDataScript = preload("res://scripts/resources/item_data.gd")
 const RarityShimmerEffect = preload("res://scripts/ui/rarity_shimmer_effect.gd")
 const LIST_START_LINE: int = 3
 const SELECTED_SCROLL_MARGIN: int = 4
+# === Hold-Repeat Constants ===
+const HOLD_INITIAL_DELAY: float = 0.32
+const HOLD_START_INTERVAL: float = 0.12
+const HOLD_MIN_INTERVAL: float = 0.045
+const HOLD_ACCELERATION: float = 0.85
 
 # === Private Variables ===
 var _player: Node
 var _selected_index: int = 0
+
+# === Hold-Repeat State ===
+var _hold_direction: int = 0  # -1 = up, 1 = down, 0 = none
+var _hold_timer: float = 0.0
+var _hold_interval: float = HOLD_START_INTERVAL
 
 # === Onready ===
 @onready var output: RichTextLabel = $Output
@@ -19,6 +29,7 @@ var _selected_index: int = 0
 # === Lifecycle Methods ===
 func _ready() -> void:
 	output.bbcode_enabled = true
+	visibility_changed.connect(_on_visibility_changed)
 	output.install_effect(RarityShimmerEffect.new())
 
 
@@ -26,6 +37,98 @@ func _input(event: InputEvent) -> void:
 	if visible and _is_escape_key(event):
 		visible = false
 		get_viewport().set_input_as_handled()
+		_reset_hold()
+		return
+
+	if not visible:
+		return
+
+	var is_up: bool = event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"move_up")
+	var is_down: bool = event.is_action_pressed(&"ui_down") or event.is_action_pressed(&"move_down")
+
+	if is_up or is_down:
+		var event_key: InputEventKey = event as InputEventKey
+		if event_key != null and event_key.echo:
+			get_viewport().set_input_as_handled()
+			return
+
+		var direction: int = -1 if is_up else 1
+
+		# Opposite direction while held: step immediately, restart delay
+		if _hold_direction != 0 and direction != _hold_direction:
+			_step(direction)
+			_reset_hold()
+			_hold_direction = direction
+			_hold_timer = HOLD_INITIAL_DELAY
+			set_process(true)
+			get_viewport().set_input_as_handled()
+			return
+
+		# First press — step, start hold
+		if _hold_direction == 0:
+			_step(direction)
+			_hold_direction = direction
+			_hold_timer = HOLD_INITIAL_DELAY
+			_hold_interval = HOLD_START_INTERVAL
+			set_process(true)
+			get_viewport().set_input_as_handled()
+			return
+
+	# Release of currently held direction resets hold
+	if _hold_direction != 0:
+		var held_up: bool = _hold_direction < 0
+		var releasing_held: bool = false
+		if held_up:
+			releasing_held = (
+				event.is_action_released(&"ui_up") or event.is_action_released(&"move_up")
+			)
+		else:
+			releasing_held = (
+				event.is_action_released(&"ui_down") or event.is_action_released(&"move_down")
+			)
+		if releasing_held:
+			_reset_hold()
+
+
+func _process(delta: float) -> void:
+	if _hold_direction == 0 or not visible:
+		return
+
+	# Check if the held direction's action is still pressed
+	var action_up: bool = (
+		(Input.is_action_pressed(&"ui_up") or Input.is_action_pressed(&"move_up"))
+		if _hold_direction < 0
+		else false
+	)
+	var action_down: bool = (
+		(Input.is_action_pressed(&"ui_down") or Input.is_action_pressed(&"move_down"))
+		if _hold_direction > 0
+		else false
+	)
+
+	if not action_up and not action_down:
+		_reset_hold()
+		return
+
+	_hold_timer -= delta
+	if _hold_timer <= 0.0:
+		if _hold_direction < 0:
+			select_previous()
+		else:
+			select_next()
+
+		# Reset if inventory became empty mid-hold
+		if _player == null or _player.inventory_component.items.is_empty():
+			_reset_hold()
+			return
+
+		_hold_timer = max(_hold_interval, HOLD_MIN_INTERVAL)
+		_hold_interval = max(_hold_interval * HOLD_ACCELERATION, HOLD_MIN_INTERVAL)
+
+
+func _on_visibility_changed() -> void:
+	if not visible:
+		_reset_hold()
 
 
 # === Public Methods ===
@@ -78,6 +181,14 @@ func select_next() -> void:
 		return
 	_selected_index = wrapi(_selected_index + 1, 0, _player.inventory_component.items.size())
 	refresh(_player)
+
+
+func get_hold_debug_snapshot() -> Dictionary:
+	return {
+		"direction": _hold_direction,
+		"timer": _hold_timer,
+		"interval": _hold_interval,
+	}
 
 
 func toggle_selected_equipment() -> String:
@@ -470,3 +581,20 @@ func _is_escape_key(event: InputEvent) -> bool:
 		and not key_event.echo
 		and (key_event.keycode == KEY_ESCAPE or key_event.physical_keycode == KEY_ESCAPE)
 	)
+
+
+func _step(direction: int) -> void:
+	if _player == null or _player.inventory_component.items.is_empty():
+		_reset_hold()
+		return
+	if direction < 0:
+		select_previous()
+	else:
+		select_next()
+
+
+func _reset_hold() -> void:
+	_hold_direction = 0
+	_hold_timer = 0.0
+	_hold_interval = HOLD_START_INTERVAL
+	set_process(false)

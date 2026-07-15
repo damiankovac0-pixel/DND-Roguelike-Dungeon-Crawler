@@ -8,7 +8,7 @@
           ╚════════════════════════════════════════╝
 ```
 
-**Dungeon Adventurer** is a Godot 4.4 ASCII roguelike dungeon crawler with D&D 5e-inspired mechanics, turn-based dungeon tactics, floor-scaling loot, dangerous biomes, readable combat logs, and the constant bad idea of going one floor deeper.
+**Dungeon Adventurer** is a Godot 4.4 ASCII-first roguelike dungeon crawler with optional Hybrid and Full Pixel Map presentation, D&D 5e-inspired mechanics, turn-based dungeon tactics, floor-scaling loot, dangerous biomes, readable combat logs, and the constant bad idea of going one floor deeper.
 
 Play the current web build here:
 
@@ -24,7 +24,7 @@ The game is built around a simple promise:
 
 > Every floor should ask a small tactical question, then offer a shiny reason to make a worse decision.
 
-The style is ASCII-first: walls, doors, floors, traps, enemies, chests, and effects are all communicated through readable symbols, colors, and terminal-inspired UI. The systems underneath are more RPG than arcade: ability scores matter, AC matters, damage types matter, class abilities matter, and good positioning can keep a doomed run alive for one more room.
+The dungeon keeps its ASCII identity across all three map modes. ASCII renders the complete map as symbols; Hybrid combines pixel terrain, actors, items, and effects with ASCII tactical markers; Full Pixel renders the complete tactical map in pixel art. Menus, HUD, combat log, and accessibility cues remain terminal-inspired in every mode.
 
 The dungeon has five themed arcs:
 
@@ -77,6 +77,7 @@ Reach floor 25 and you can leave victorious. Or keep delving forever, because th
 - Terminal-style ASCII UI.
 - Animated title/library/character creation backdrops.
 - Sensory feedback layer with procedural audio cues, ambience, screen flashes, reduced-VFX mode, and pause-menu controls.
+- Optional Hybrid and Full Pixel Map rendering with 16×16 biome terrain, individually authored animated actors, unique item ground art, pixel effects, and deterministic nearest-neighbour scaling.
 - Boss battle audio assets for the current boss encounter direction.
 
 ### Library / codex
@@ -89,6 +90,15 @@ The in-game Library is the lore-and-rules desk:
 - Class ability reference.
 - Version history.
 - Run archive for completed non-debug runs.
+
+### V30 visual release
+
+- Distinct animated pixel sprites for all 37 non-boss enemies, while the five oversized boss sheets retain their multi-cell presentation.
+- Unique 16×16 ground sprites for all 76 item resources, plus rarity-coloured idle enchantment treatment for rare and higher equipment.
+- Class-specific melee, bow, staff, scroll, potion, and class-ability animations.
+- Dedicated cracked-wall terrain in pixel modes; ASCII mode retains its established symbol language.
+- Focus-, hover-, keyboard-, and controller-driven pixel previews in the Library Bestiary, Scribes, and Dungeon Notes browsers.
+- Accelerating held-key inventory navigation and boss reward chests that appear after the death animation at the defeated boss footprint.
 
 ## Controls
 
@@ -153,7 +163,7 @@ Useful focused tests include:
 
 ## Pixel visual assets
 
-Pixel renderer resources are declared explicitly in `assets/visual_assets.json`; the five project-authored production atlases live under `assets/pixel_art/source/`. Validate, release-check, or regenerate the deterministic Godot catalogues with:
+Pixel renderer resources are declared explicitly in `assets/visual_assets.json`; all eleven project-authored production visual sources live under `assets/pixel_art/source/`. Validate, release-check, or regenerate the deterministic Godot catalogues with:
 
 ```sh
 python3 tools/pixel_assets.py check

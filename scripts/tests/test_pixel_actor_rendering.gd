@@ -12,8 +12,25 @@ const STATE_PATH: String = PRESENTATION_DIR + "map_presentation_state.gd"
 const ACTOR_CATALOG_PATH: String = VISUAL_CATALOG_DIR + "actor_visual_catalog.tres"
 const PIXEL_RENDERER_SCENE_PATH: String = "res://scenes/rendering/pixel_map_renderer.tscn"
 const MAP_VIEW_PATH: String = "res://scripts/ui/map_view.gd"
+const ResourcePathsScript = preload("res://scripts/resource_paths.gd")
 const EXPECTED_ANIMATIONS: Array[StringName] = [
 	&"idle", &"move", &"attack", &"cast", &"hurt", &"death"
+]
+const EXPECTED_PLAYER_ACTIONS: Array[StringName] = [
+	&"attack_sword",
+	&"attack_bow",
+	&"attack_staff",
+	&"use_scroll",
+	&"drink_potion",
+	&"fighter_cleave",
+	&"fighter_second_wind",
+	&"fighter_whirlwind",
+	&"ranger_focus",
+	&"ranger_volley",
+	&"ranger_quickstep",
+	&"arcane_spark",
+	&"wizard_frost_nova",
+	&"wizard_chain_lightning",
 ]
 
 
@@ -227,6 +244,7 @@ func _check_catalogue_animations() -> void:
 		var alias_frame: AtlasTexture = alias_frames.get_frame_texture(&"idle", 0) as AtlasTexture
 		_expect(alias_frame != null, "Alias %s frame must use atlas region" % alias_id)
 	_check_actor_catalog_rows()
+	_check_player_action_animations()
 	_check_actor_tint_colors()
 
 
@@ -268,22 +286,132 @@ func _check_actor_catalog_rows() -> void:
 		{"id": &"actor/shopkeeper", "row": 12},
 		{"id": &"actor/summon", "row": 13},
 	]
+	var used_rows: Dictionary = {}
 	for entry: Dictionary in actor_ids:
 		var snapshot: Dictionary = {"visual_id": entry["id"], "kind": &"enemy", "is_boss": false}
 		var frames: SpriteFrames = _catalog.call(&"sprite_frames_for", snapshot)
 		var frame: AtlasTexture = frames.get_frame_texture(&"idle", 0) as AtlasTexture
-		var expected_y: float = float(int(entry["row"]) * 16)
+		var expected_row: int = int(entry["row"])
 		_expect(frame != null, "%s catalogue frame must be AtlasTexture" % entry["id"])
 		if frame != null:
 			_expect_equal(
 				frame.region.position.y,
-				expected_y,
+				float(expected_row * 16),
+				"Actor catalogue row mapping drifted for %s" % entry["id"],
+			)
+		used_rows[expected_row] = entry["id"]
+	var enemy_visual_ids: Dictionary = {}
+	var boss_ids: Dictionary = {}
+	for path: String in ResourcePathsScript.ENEMY_PATHS:
+		var enemy_data: Resource = load(path)
+		_expect(enemy_data != null, "Enemy resource failed to load: %s" % path)
+		if enemy_data == null:
+			continue
+		if bool(enemy_data.get("is_boss")):
+			var boss_id: StringName = enemy_data.get("boss_id")
+			_expect(boss_id != &"", "Boss ID is empty: %s" % path)
+			_expect(not boss_ids.has(boss_id), "Duplicate boss ID: %s" % boss_id)
+			boss_ids[boss_id] = true
+			continue
+		var visual_id: StringName = enemy_data.get("visual_id")
+		_expect(visual_id != &"", "Enemy visual ID is empty: %s" % path)
+		_expect(not enemy_visual_ids.has(visual_id), "Duplicate enemy visual ID: %s" % visual_id)
+		enemy_visual_ids[visual_id] = path
+		var enemy_frames: SpriteFrames = (
+			_catalog
+			. call(
+				&"sprite_frames_for",
+				{"visual_id": visual_id, "kind": &"enemy", "is_boss": false},
+			)
+		)
+		for animation: StringName in EXPECTED_ANIMATIONS:
+			_expect(
+				enemy_frames.has_animation(animation),
+				"Enemy %s is missing animation %s" % [visual_id, animation],
+			)
+			_expect_equal(
+				enemy_frames.get_frame_count(animation),
+				2,
+				"Enemy %s animation %s must have two authored frames" % [visual_id, animation],
+			)
+		var idle_frame: AtlasTexture = enemy_frames.get_frame_texture(&"idle", 0) as AtlasTexture
+		_expect(idle_frame != null, "Enemy %s idle frame is not atlas-backed" % visual_id)
+		if idle_frame != null:
+			var row: int = int(idle_frame.region.position.y / 16.0)
+			_expect(row >= 14 and row <= 50, "Enemy %s uses invalid row %d" % [visual_id, row])
+			_expect(
+				not used_rows.has(row),
 				(
-					"Actor catalogue row mapping drifted for %s (expected y=%d)"
-					% [entry["id"], int(expected_y)]
+					"Enemy %s shares actor atlas row %d with %s"
+					% [visual_id, row, used_rows.get(row, &"")]
 				),
 			)
-	print("  actor catalogue rows map 14 authored visual IDs to deterministic sheet rows")
+			used_rows[row] = visual_id
+		_expect_equal(
+			(
+				_catalog
+				. call(
+					&"tint_for",
+					{"visual_id": visual_id, "kind": &"enemy", "is_boss": false},
+				)
+			),
+			Color.WHITE,
+			"Authored enemy %s must render without fallback tint" % visual_id,
+		)
+	_expect_equal(enemy_visual_ids.size(), 37, "All non-boss enemies need unique visuals")
+	_expect_equal(boss_ids.size(), 5, "All boss resources need stable boss IDs")
+	_expect_equal(used_rows.size(), 51, "Every actor visual must own one atlas row")
+	print("  actor catalogue maps 37 unique enemies and 14 shared actors to distinct rows")
+
+
+func _check_player_action_animations() -> void:
+	var action_sheet: Texture2D = _catalog.get("player_action_sheet")
+	_expect(action_sheet != null, "Player action sheet is missing")
+	var class_rows: Dictionary = {
+		&"actor/player/fighter": 0,
+		&"actor/player/ranger": 1,
+		&"actor/player/wizard": 2,
+	}
+	for visual_id: StringName in class_rows:
+		var row: int = int(class_rows[visual_id])
+		var frames: SpriteFrames = (
+			_catalog
+			. call(
+				&"sprite_frames_for",
+				{"visual_id": visual_id, "kind": &"player", "is_boss": false},
+			)
+		)
+		for action_index: int in range(EXPECTED_PLAYER_ACTIONS.size()):
+			var action_id: StringName = EXPECTED_PLAYER_ACTIONS[action_index]
+			_expect(
+				frames.has_animation(action_id),
+				"Player %s is missing action animation %s" % [visual_id, action_id],
+			)
+			_expect_equal(
+				frames.get_frame_count(action_id),
+				2,
+				"Player action %s must have two authored frames" % action_id,
+			)
+			_expect(
+				not frames.get_animation_loop(action_id),
+				"Player action %s must complete before returning to idle" % action_id,
+			)
+			for frame_index: int in range(2):
+				var frame: AtlasTexture = (
+					frames.get_frame_texture(action_id, frame_index) as AtlasTexture
+				)
+				_expect(frame != null, "Player action %s frame is not atlas-backed" % action_id)
+				if frame != null:
+					_expect(frame.atlas == action_sheet, "Player action frame uses the wrong sheet")
+					_expect_equal(
+						frame.region.position,
+						Vector2((action_index * 2 + frame_index) * 16, row * 16),
+						(
+							"Player %s action %s mapped to the wrong class frame"
+							% [visual_id, action_id]
+						),
+					)
+	print("  three player classes expose distinct weapon, consumable, and skill frames")
 
 
 func _check_actor_tint_colors() -> void:
@@ -598,6 +726,32 @@ func _check_events_and_reset(renderer: Node2D, state: RefCounted) -> void:
 	renderer.call(&"reset_transients")
 	enemy_debug = _actor_debug(renderer, _enemy)
 	_expect_equal(enemy_debug.get("animation"), &"idle", "Transient reset should restore idle")
+	for action_id: StringName in EXPECTED_PLAYER_ACTIONS:
+		(
+			renderer
+			. call(
+				&"play_event",
+				{
+					"type": &"actor_animation",
+					"actor_id": _player.get_instance_id(),
+					"cell": _player.grid_position,
+					"animation": action_id,
+				},
+			)
+		)
+		var player_debug: Dictionary = _actor_debug(renderer, _player)
+		_expect_equal(
+			player_debug.get("animation"),
+			action_id,
+			"Renderer did not dispatch authored player action %s" % action_id,
+		)
+	renderer.call(&"reset_transients")
+	var player_debug: Dictionary = _actor_debug(renderer, _player)
+	_expect_equal(
+		player_debug.get("animation"),
+		&"idle",
+		"Player action reset should restore idle",
+	)
 
 
 func _check_death_and_revival(renderer: Node2D, state: RefCounted) -> void:

@@ -20,7 +20,9 @@ const EXPECTED_ASSET_IDS: Array[String] = [
 	"effect/ember",
 	"effect/arcane",
 	"effect/poison",
-	"effect/frost"
+	"effect/frost",
+	"actor/player_actions",
+	"effect/enchantment",
 ]
 
 var _failed: bool = false
@@ -118,7 +120,7 @@ func _check_explicit_asset_ids() -> void:
 				found = true
 				break
 		_expect(found, "Expected visual asset ID is missing: %s" % expected_id)
-	print("  manifest contains all nine production visual asset IDs")
+	print("  manifest contains all eleven production visual asset IDs")
 
 
 func _check_asset_texture(asset: Dictionary) -> void:

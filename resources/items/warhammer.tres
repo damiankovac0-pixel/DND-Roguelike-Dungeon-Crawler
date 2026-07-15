@@ -16,4 +16,4 @@ min_floor = 5
 damage_sides = 8
 attack_bonus = 2
 damage_bonus = 2
-visual_id = &"item/mace"
+visual_id = &"item/resource/warhammer"

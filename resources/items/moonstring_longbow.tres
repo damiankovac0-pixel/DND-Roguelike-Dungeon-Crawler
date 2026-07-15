@@ -26,4 +26,4 @@ weapon_damage_type = &"ranged"
 projectile_id = &"arrow"
 class_damage_type = &"ranged"
 class_damage_percent_bonus = 10
-visual_id = &"item/bow"
+visual_id = &"item/resource/moonstring_longbow"

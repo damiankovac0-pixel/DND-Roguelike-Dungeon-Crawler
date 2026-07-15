@@ -8,6 +8,7 @@ const ItemDataScript = preload("res://scripts/resources/item_data.gd")
 const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
 const DamageTypeTextScript = preload("res://scripts/ui/damage_type_text.gd")
+const LibraryVisualPreviewScript = preload("res://scripts/ui/library_visual_preview.gd")
 const ENEMY_NOTES: Dictionary = {
 	"Rat": "Low HP early swarmer. Small poison chance can chip you for 3 turns.",
 	"Bat": "Very low HP but high AC for floor 1. Annoying to hit, quick to kill once struck.",
@@ -72,33 +73,80 @@ const ITEM_TYPE_LORE: Dictionary = {
 	"Two accessory slots. Some add stats; others add cooldown utility like dashes.",
 }
 const VERSION_HISTORY: Array[String] = preload("res://scripts/version_history.gd").VERSION_HISTORY
+const ENTRY_KIND_ENEMY: StringName = &"enemy"
+const ENTRY_KIND_ITEM: StringName = &"item"
+const ENTRY_KIND_TRAP: StringName = &"trap"
+const COMPACT_LAYOUT_WIDTH: float = 760.0
+const WIDE_SPLIT_OFFSET: int = 280
+const COMPACT_SPLIT_OFFSET: int = 128
+const WIDE_LIST_MINIMUM: Vector2 = Vector2(240, 0)
+const WIDE_DETAIL_MINIMUM: Vector2 = Vector2(336, 0)
+const COMPACT_LIST_MINIMUM: Vector2 = Vector2(0, 128)
+const WIDE_PREVIEW_HEIGHT: float = 192.0
+const COMPACT_PREVIEW_HEIGHT: float = 136.0
+const WIDE_HORIZONTAL_MARGIN: int = 32
+const WIDE_VERTICAL_MARGIN: int = 24
+const COMPACT_MARGIN: int = 16
+const WIDE_TITLE_SIZE: int = 28
+const COMPACT_TITLE_SIZE: int = 20
+const WIDE_BACK_WIDTH: float = 112.0
+const COMPACT_BACK_WIDTH: float = 96.0
+
+# === Private Variables ===
+var _bestiary_buttons: Array[Button] = []
+var _scribes_buttons: Array[Button] = []
+var _dungeon_buttons: Array[Button] = []
+var _selected_buttons: Dictionary = {}
+var _reduced_vfx_enabled: bool = true
+var _compact_layout: bool = false
+var _layout_initialized: bool = false
 
 # === Onready ===
+@onready var margin: MarginContainer = $Margin
+@onready var header: HBoxContainer = $Margin/VBox/Header
+@onready var title_label: Label = $Margin/VBox/Header/Title
 @onready var back_button: Button = $Margin/VBox/Header/BackButton
-@onready var tabs: TabContainer = $Margin/VBox/Tabs
-@onready var bestiary_text: RichTextLabel = $Margin/VBox/Tabs/Bestiary/BestiaryText
-@onready var scribes_text: RichTextLabel = $Margin/VBox/Tabs/Scribes/ScribesText
-@onready var info_text: RichTextLabel = $Margin/VBox/Tabs/Info/InfoText
-@onready var dungeon_notes_text: RichTextLabel = $"Margin/VBox/Tabs/Dungeon Notes/DungeonNotesText"
-@onready var archive_text: RichTextLabel = $Margin/VBox/Tabs/Archive/ArchiveText
-@onready var classes_text: RichTextLabel = $Margin/VBox/Tabs/Classes/ClassesText
+@onready var tabs: TabContainer = %Tabs
+@onready var bestiary_split: SplitContainer = %Bestiary
+@onready var scribes_split: SplitContainer = %Scribes
+@onready var dungeon_split: SplitContainer = $"Margin/VBox/Tabs/Dungeon Notes"
+@onready var bestiary_entries: VBoxContainer = %BestiaryEntries
+@onready var scribes_entries: VBoxContainer = %ScribesEntries
+@onready var dungeon_entries: VBoxContainer = %DungeonEntries
+@onready var bestiary_details: RichTextLabel = %BestiaryDetails
+@onready var scribes_details: RichTextLabel = %ScribesDetails
+@onready var dungeon_details: RichTextLabel = %DungeonDetails
+@onready var bestiary_preview: LibraryVisualPreviewScript = %BestiaryPreview
+@onready var scribes_preview: LibraryVisualPreviewScript = %ScribesPreview
+@onready var dungeon_preview: LibraryVisualPreviewScript = %DungeonPreview
+@onready var info_text: RichTextLabel = %InfoText
+@onready var archive_text: RichTextLabel = %ArchiveText
+@onready var classes_text: RichTextLabel = %ClassesText
 
 
 # === Lifecycle Methods ===
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
+	tabs.tab_changed.connect(_on_tab_changed)
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_reduced_vfx_enabled = SensoryFeedback.is_reduced_vfx_preferred()
 	for rich_text: RichTextLabel in [
-		bestiary_text, scribes_text, dungeon_notes_text, classes_text, info_text, archive_text
+		bestiary_details,
+		scribes_details,
+		dungeon_details,
+		classes_text,
+		info_text,
+		archive_text,
 	]:
 		rich_text.add_theme_constant_override("line_separation", 4)
 		rich_text.bbcode_enabled = true
 		rich_text.install_effect(RarityShimmerEffect.new())
-	bestiary_text.text = _build_bestiary_text()
-	scribes_text.text = _build_scribes_text()
+	_build_resource_browsers()
 	classes_text.text = _build_classes_text()
-	dungeon_notes_text.text = _build_dungeon_scrolls_text()
 	info_text.text = _build_info_text()
 	archive_text.text = _build_archive_text()
+	_apply_responsive_layout()
+	_update_back_focus_neighbor()
 	back_button.grab_focus()
 
 
@@ -119,10 +167,284 @@ func _input(event: InputEvent) -> void:
 
 
 # === Private Methods ===
+func _build_resource_browsers() -> void:
+	var enemies: Array[Resource] = _load_resources_with_paths(ResourcePaths.ENEMY_PATHS)
+	enemies.sort_custom(_sort_enemy)
+	_populate_entry_list(
+		enemies,
+		ResourcePaths.ENEMY_PATHS.size() - enemies.size(),
+		ENTRY_KIND_ENEMY,
+		bestiary_entries,
+		_bestiary_buttons
+	)
+
+	var items: Array[Resource] = _load_resources_with_paths(ResourcePaths.ITEM_PATHS)
+	items.sort_custom(_sort_item)
+	_populate_entry_list(
+		items,
+		ResourcePaths.ITEM_PATHS.size() - items.size(),
+		ENTRY_KIND_ITEM,
+		scribes_entries,
+		_scribes_buttons
+	)
+
+	var traps: Array[Resource] = _load_resources_with_paths(ResourcePaths.TRAP_PATHS)
+	traps.sort_custom(_sort_trap)
+	_populate_entry_list(
+		traps,
+		ResourcePaths.TRAP_PATHS.size() - traps.size(),
+		ENTRY_KIND_TRAP,
+		dungeon_entries,
+		_dungeon_buttons
+	)
+
+
+func _populate_entry_list(
+	resources: Array[Resource],
+	failed_count: int,
+	entry_kind: StringName,
+	entry_container: VBoxContainer,
+	buttons: Array[Button]
+) -> void:
+	for child: Node in entry_container.get_children():
+		entry_container.remove_child(child)
+		child.queue_free()
+	buttons.clear()
+	if resources.is_empty():
+		_show_empty_browser(entry_kind, entry_container)
+		return
+
+	var button_group: ButtonGroup = ButtonGroup.new()
+	for resource: Resource in resources:
+		var button: Button = Button.new()
+		button.custom_minimum_size = Vector2(0, 36)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.clip_text = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.focus_mode = Control.FOCUS_ALL
+		button.toggle_mode = true
+		button.button_group = button_group
+		button.text = _entry_row_text(resource, entry_kind)
+		button.tooltip_text = "%s — ASCII glyph '%s'" % [resource.display_name, resource.glyph]
+		var select_callable: Callable = _select_entry.bind(resource, entry_kind, button)
+		button.mouse_entered.connect(select_callable)
+		button.pressed.connect(select_callable)
+		button.focus_entered.connect(select_callable)
+		entry_container.add_child(button)
+		buttons.append(button)
+	if failed_count > 0:
+		var warning_label: Label = Label.new()
+		warning_label.text = "%d record(s) could not be loaded." % failed_count
+		warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		entry_container.add_child(warning_label)
+	_wire_entry_focus(buttons)
+	_select_entry(resources[0], entry_kind, buttons[0])
+
+
+func _entry_row_text(resource: Resource, entry_kind: StringName) -> String:
+	match entry_kind:
+		ENTRY_KIND_ITEM:
+			return (
+				"%s  %s  · %s" % [resource.glyph, resource.display_name, resource.get_rarity_name()]
+			)
+		ENTRY_KIND_TRAP:
+			return "%s  %s  · DC %d" % [resource.glyph, resource.display_name, resource.detect_dc]
+	return "%s  %s" % [resource.glyph, resource.display_name]
+
+
+func _select_entry(resource: Resource, entry_kind: StringName, source_button: Button) -> void:
+	if resource == null or not is_instance_valid(source_button):
+		return
+	source_button.button_pressed = true
+	_selected_buttons[entry_kind] = source_button
+	match entry_kind:
+		ENTRY_KIND_ENEMY:
+			bestiary_details.text = _build_bestiary_selection_text(resource)
+			bestiary_preview.show_enemy(resource)
+			_reset_detail_scroll(bestiary_details)
+		ENTRY_KIND_ITEM:
+			scribes_details.text = _build_scribes_selection_text(resource)
+			scribes_preview.show_item(resource)
+			_reset_detail_scroll(scribes_details)
+		ENTRY_KIND_TRAP:
+			dungeon_details.text = _build_dungeon_selection_text(resource)
+			dungeon_preview.show_trap(resource)
+			_reset_detail_scroll(dungeon_details)
+
+
+func _show_empty_browser(entry_kind: StringName, entry_container: VBoxContainer) -> void:
+	var category: String = "library"
+	match entry_kind:
+		ENTRY_KIND_ENEMY:
+			category = "bestiary"
+		ENTRY_KIND_ITEM:
+			category = "item"
+		ENTRY_KIND_TRAP:
+			category = "trap"
+	var message: String = (
+		"No %s records could be loaded. Use Back to return to the main menu." % category
+	)
+	var empty_label: Label = Label.new()
+	empty_label.text = message
+	empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	entry_container.add_child(empty_label)
+	match entry_kind:
+		ENTRY_KIND_ENEMY:
+			bestiary_details.text = message
+			bestiary_preview.show_empty(message)
+		ENTRY_KIND_ITEM:
+			scribes_details.text = message
+			scribes_preview.show_empty(message)
+		ENTRY_KIND_TRAP:
+			dungeon_details.text = message
+			dungeon_preview.show_empty(message)
+
+
+func _wire_entry_focus(buttons: Array[Button]) -> void:
+	for index: int in range(buttons.size()):
+		var button: Button = buttons[index]
+		var previous: Control = back_button if index == 0 else buttons[index - 1]
+		var next: Control = back_button if index == buttons.size() - 1 else buttons[index + 1]
+		button.focus_neighbor_top = button.get_path_to(previous)
+		button.focus_neighbor_bottom = button.get_path_to(next)
+		button.focus_previous = button.get_path_to(previous)
+		button.focus_next = button.get_path_to(next)
+
+
+func _reset_detail_scroll(details: RichTextLabel) -> void:
+	var scroll: ScrollContainer = details.get_parent() as ScrollContainer
+	if scroll != null:
+		scroll.set_deferred(&"scroll_vertical", 0)
+
+
+func _on_tab_changed(_tab_index: int) -> void:
+	call_deferred(&"_focus_active_tab_entry")
+
+
+func _focus_active_tab_entry() -> void:
+	var entry_kind: StringName = _active_entry_kind()
+	var buttons: Array[Button] = _buttons_for_kind(entry_kind)
+	if buttons.is_empty():
+		back_button.focus_neighbor_bottom = NodePath()
+		back_button.grab_focus()
+		return
+	var target: Button = _selected_buttons.get(entry_kind) as Button
+	if not is_instance_valid(target):
+		target = buttons[0]
+	back_button.focus_neighbor_bottom = back_button.get_path_to(target)
+	target.grab_focus()
+
+
+func _update_back_focus_neighbor() -> void:
+	var entry_kind: StringName = _active_entry_kind()
+	var buttons: Array[Button] = _buttons_for_kind(entry_kind)
+	if buttons.is_empty():
+		back_button.focus_neighbor_bottom = NodePath()
+		return
+	var target: Button = _selected_buttons.get(entry_kind) as Button
+	if not is_instance_valid(target):
+		target = buttons[0]
+	back_button.focus_neighbor_bottom = back_button.get_path_to(target)
+
+
+func _active_entry_kind() -> StringName:
+	match tabs.get_tab_title(tabs.current_tab):
+		"Bestiary":
+			return ENTRY_KIND_ENEMY
+		"Scribes":
+			return ENTRY_KIND_ITEM
+		"Dungeon Notes":
+			return ENTRY_KIND_TRAP
+	return &""
+
+
+func _buttons_for_kind(entry_kind: StringName) -> Array[Button]:
+	match entry_kind:
+		ENTRY_KIND_ENEMY:
+			return _bestiary_buttons
+		ENTRY_KIND_ITEM:
+			return _scribes_buttons
+		ENTRY_KIND_TRAP:
+			return _dungeon_buttons
+	var empty: Array[Button] = []
+	return empty
+
+
+func _apply_responsive_layout() -> void:
+	var compact: bool = get_window().size.x < COMPACT_LAYOUT_WIDTH
+	if _layout_initialized and compact == _compact_layout:
+		return
+	_layout_initialized = true
+	_compact_layout = compact
+	var horizontal_margin: int = COMPACT_MARGIN if compact else WIDE_HORIZONTAL_MARGIN
+	var vertical_margin: int = COMPACT_MARGIN if compact else WIDE_VERTICAL_MARGIN
+	margin.add_theme_constant_override("margin_left", horizontal_margin)
+	margin.add_theme_constant_override("margin_right", horizontal_margin)
+	margin.add_theme_constant_override("margin_top", vertical_margin)
+	margin.add_theme_constant_override("margin_bottom", vertical_margin)
+	header.add_theme_constant_override("separation", 8 if compact else 16)
+	title_label.add_theme_font_size_override(
+		"font_size", COMPACT_TITLE_SIZE if compact else WIDE_TITLE_SIZE
+	)
+	back_button.custom_minimum_size.x = COMPACT_BACK_WIDTH if compact else WIDE_BACK_WIDTH
+	_apply_split_layout(bestiary_split, bestiary_preview, compact)
+	_apply_split_layout(scribes_split, scribes_preview, compact)
+	_apply_split_layout(dungeon_split, dungeon_preview, compact)
+
+
+func _apply_split_layout(
+	split: SplitContainer, preview: LibraryVisualPreviewScript, compact: bool
+) -> void:
+	split.vertical = compact
+	split.split_offset = COMPACT_SPLIT_OFFSET if compact else WIDE_SPLIT_OFFSET
+	var list_panel: Control = split.get_child(0) as Control
+	var detail_column: Control = split.get_child(1) as Control
+	if list_panel != null:
+		list_panel.custom_minimum_size = COMPACT_LIST_MINIMUM if compact else WIDE_LIST_MINIMUM
+	if detail_column != null:
+		detail_column.custom_minimum_size = Vector2.ZERO if compact else WIDE_DETAIL_MINIMUM
+	preview.custom_minimum_size.y = (COMPACT_PREVIEW_HEIGHT if compact else WIDE_PREVIEW_HEIGHT)
+	preview.set_compact_layout(compact)
+	split.call_deferred(&"clamp_split_offset")
+
+
+func _build_bestiary_selection_text(enemy: Resource) -> String:
+	var lines: Array[String] = _bestiary_intro_lines()
+	lines.append_array(_enemy_entry(enemy))
+	return "\n".join(lines)
+
+
+func _build_scribes_selection_text(item: Resource) -> String:
+	var lines: Array[String] = _scribes_reference_lines()
+	lines.append("[color=#f1c75b]KNOWN ITEMS — SELECTED[/color]")
+	lines.append_array(_item_entry(item, not _reduced_vfx_enabled))
+	return "\n".join(lines)
+
+
+func _build_dungeon_selection_text(trap: Resource) -> String:
+	var lines: Array[String] = _dungeon_heading_lines()
+	lines.append_array(_dungeon_trap_intro_lines())
+	lines.append(_trap_entry(trap))
+	lines.append("")
+	lines.append_array(_dungeon_map_and_biome_lines())
+	lines.append_array(_dungeon_secret_room_lines())
+	return "\n".join(lines)
+
+
 func _build_bestiary_text() -> String:
 	var enemies: Array[Resource] = _load_resources_with_paths(ResourcePaths.ENEMY_PATHS)
 	enemies.sort_custom(_sort_enemy)
-	var lines: Array[String] = [
+	var lines: Array[String] = _bestiary_intro_lines()
+	for enemy: Resource in enemies:
+		lines.append_array(_enemy_entry(enemy))
+		lines.append("")
+	return "\n".join(lines)
+
+
+func _bestiary_intro_lines() -> Array[String]:
+	return [
 		"[font_size=24][color=#f1c75b]BESTIARY[/color][/font_size]",
 		"",
 		"Base monster data from enemy resources; Biomes shows where each roster can appear.",
@@ -131,15 +453,29 @@ func _build_bestiary_text() -> String:
 		DamageTypeTextScript.DAMAGE_TYPE_SUMMARY,
 		"",
 	]
-	for enemy: Resource in enemies:
-		lines.append_array(_enemy_entry(enemy))
-		lines.append("")
-	return "\n".join(lines)
 
 
 func _build_scribes_text() -> String:
 	var items: Array[Resource] = _load_resources_with_paths(ResourcePaths.ITEM_PATHS)
 	items.sort_custom(_sort_item)
+	var lines: Array[String] = _scribes_reference_lines()
+	lines.append("[color=#f1c75b]KNOWN ITEMS[/color]")
+	var current_kind: int = -1
+	for item: Resource in items:
+		if item.kind != current_kind:
+			current_kind = item.kind
+			lines.append("")
+			lines.append(
+				(
+					"[font_size=20][color=#8fb3ff]%s[/color][/font_size]"
+					% item.get_kind_name().to_upper()
+				)
+			)
+		lines.append_array(_item_entry(item))
+	return "\n".join(lines)
+
+
+func _scribes_reference_lines() -> Array[String]:
 	var lines: Array[String] = [
 		"[font_size=24][color=#f1c75b]SCRIBES[/color][/font_size]",
 		"",
@@ -168,30 +504,33 @@ func _build_scribes_text() -> String:
 	for rarity_index: int in range(ItemDataScript.RARITY_NAMES.size()):
 		lines.append(_rarity_entry(rarity_index))
 	lines.append("")
-	lines.append("[color=#f1c75b]KNOWN ITEMS[/color]")
-	var current_kind: int = -1
-	for item: Resource in items:
-		if item.kind != current_kind:
-			current_kind = item.kind
-			lines.append("")
-			lines.append(
-				(
-					"[font_size=20][color=#8fb3ff]%s[/color][/font_size]"
-					% item.get_kind_name().to_upper()
-				)
-			)
-		lines.append_array(_item_entry(item))
-	return "\n".join(lines)
+	return lines
 
 
 func _build_dungeon_scrolls_text() -> String:
 	var traps: Array[Resource] = _load_resources_with_paths(ResourcePaths.TRAP_PATHS)
 	traps.sort_custom(_sort_trap)
-	var lines: Array[String] = [
+	var lines: Array[String] = _dungeon_heading_lines()
+	lines.append_array(_dungeon_map_and_biome_lines())
+	lines.append_array(_dungeon_trap_intro_lines())
+	for trap: Resource in traps:
+		lines.append(_trap_entry(trap))
+	lines.append("")
+	lines.append_array(_dungeon_secret_room_lines())
+	return "\n".join(lines)
+
+
+func _dungeon_heading_lines() -> Array[String]:
+	return [
 		"[font_size=24][color=#f1c75b]DUNGEON NOTES[/color][/font_size]",
 		"",
 		"Field guide to symbols, traps, secret rooms, and dungeon markings.",
 		"",
+	]
+
+
+func _dungeon_map_and_biome_lines() -> Array[String]:
+	return [
 		"[color=#8fb3ff]MAP SYMBOLS[/color]",
 		"- [color=#f2f2f2]@[/color] You.",
 		"- [color=#777777]. ' ` , ~ * : ;[/color] Floor variants and biome decorations. Walkable.",
@@ -247,19 +586,25 @@ func _build_dungeon_scrolls_text() -> String:
 		),
 		"- Each biome ends in a sealed boss room on floors 5/10/15/20/25.",
 		"",
+	]
+
+
+func _dungeon_trap_intro_lines() -> Array[String]:
+	return [
 		"[color=#8fb3ff]TRAPS[/color]",
 		"Traps are hidden until detected. Moving near one rolls passive detection;",
 		"Space searches visible traps within 3 tiles. WIS adds to detection.",
 	]
-	for trap: Resource in traps:
-		lines.append(_trap_entry(trap))
-	lines.append("")
-	lines.append("[color=#8fb3ff]SECRET ROOMS[/color]")
-	lines.append("- Secret rooms start sealed behind normal-looking wall tiles.")
-	lines.append("- Search/listen can reveal nearby weak walls as '?'.")
-	lines.append("- Breaking the weak wall turns it into floor and reveals the hidden passage.")
-	lines.append("- Secret rooms have a high chance to contain a chest and clutter.")
-	return "\n".join(lines)
+
+
+func _dungeon_secret_room_lines() -> Array[String]:
+	return [
+		"[color=#8fb3ff]SECRET ROOMS[/color]",
+		"- Secret rooms start sealed behind normal-looking wall tiles.",
+		"- Search/listen can reveal nearby weak walls as '?'.",
+		"- Breaking the weak wall turns it into floor and reveals the hidden passage.",
+		"- Secret rooms have a high chance to contain a chest and clutter.",
+	]
 
 
 func _build_classes_text() -> String:
@@ -575,12 +920,12 @@ func _lich_summon_entry(lich: Resource) -> Array[String]:
 	]
 
 
-func _item_entry(item: Resource) -> Array[String]:
+func _item_entry(item: Resource, animated_name: bool = true) -> Array[String]:
 	var lines: Array[String] = [
 		(
 			"[font_size=18]%s[/font_size]  [color=#777788]%s %s[/color]"
 			% [
-				item.get_display_name_bbcode(),
+				item.get_display_name_bbcode(animated_name),
 				item.get_rarity_name(),
 				item.get_kind_name(),
 			]

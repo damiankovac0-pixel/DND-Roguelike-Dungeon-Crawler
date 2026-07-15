@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/flyer"
+visual_id = &"actor/enemy/ancient_dragon"
 display_name = "Ancient Dragon"
 glyph = "D"
 color = Color(1, 0.35, 0.16, 1)

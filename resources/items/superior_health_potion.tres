@@ -16,4 +16,4 @@ min_floor = 7
 healing_amount = 48
 max_floor = 20
 use_effect = 1
-visual_id = &"item/potion"
+visual_id = &"item/resource/superior_health_potion"

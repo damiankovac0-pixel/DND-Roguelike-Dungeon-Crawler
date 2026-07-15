@@ -15,4 +15,4 @@ spawn_weight = 3
 min_floor = 5
 armor_bonus = 5
 attack_bonus = 1
-visual_id = &"item/armor/light"
+visual_id = &"item/resource/elven_chain"

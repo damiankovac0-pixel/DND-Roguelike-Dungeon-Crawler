@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/humanoid"
+visual_id = &"actor/enemy/kobold"
 display_name = "Kobold"
 glyph = "k"
 color = Color(0.95, 0.62, 0.28, 1)

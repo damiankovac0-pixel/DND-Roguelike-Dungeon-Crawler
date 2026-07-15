@@ -15,4 +15,4 @@ spawn_weight = 3
 min_floor = 4
 special_effect = 3
 special_cooldown = 3
-visual_id = &"item/charm"
+visual_id = &"item/resource/stepstone_anklet"

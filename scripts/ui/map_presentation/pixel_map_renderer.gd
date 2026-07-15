@@ -201,6 +201,7 @@ func set_reduced_vfx(enabled: bool) -> void:
 		if view_value is PixelActorView:
 			(view_value as PixelActorView).set_reduced_vfx(enabled)
 	tactical_layer.set_reduced_vfx(enabled)
+	object_layer.set_reduced_vfx(enabled)
 	effect_pool.set_reduced_vfx(enabled)
 	if enabled:
 		_clear_map_shake()
@@ -401,9 +402,15 @@ func _rebuild_tiles() -> void:
 			)
 			ground_layer.set_cell(cell, TILE_SOURCE_ID, ground_coords)
 			if bool(catalog.call(&"is_structure_tile", tile_type)):
-				var structure_coords: Vector2i = catalog.call(
-					&"atlas_coords_for_tile", tile_type, biome_row, cell
-				)
+				var structure_coords: Vector2i
+				var secret_walls: Dictionary = _state.get("secret_walls")
+				var revealed_secret_walls: Dictionary = _state.get("revealed_secret_walls")
+				if secret_walls.has(cell) and revealed_secret_walls.has(cell):
+					structure_coords = catalog.call(&"atlas_coords_for_cracked_wall", biome_row)
+				else:
+					structure_coords = catalog.call(
+						&"atlas_coords_for_tile", tile_type, biome_row, cell
+					)
 				structure_layer.set_cell(cell, TILE_SOURCE_ID, structure_coords)
 
 
@@ -532,7 +539,12 @@ func _play_actor_event(event: Dictionary) -> void:
 	if view == null:
 		return
 	var animation: StringName = event.get("animation", &"idle")
-	view.play_cosmetic(animation)
+	var action_id: StringName = event.get("action_id", &"")
+	if action_id != &"":
+		if not view.play_cosmetic(action_id):
+			view.play_cosmetic(animation)
+	else:
+		view.play_cosmetic(animation)
 	var actor_debug: Dictionary = view.get_debug_snapshot()
 	var effect_event: Dictionary = event.duplicate(true)
 	effect_event["color"] = actor_debug.get("tint", Color.WHITE)

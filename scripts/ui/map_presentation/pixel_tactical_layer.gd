@@ -234,24 +234,7 @@ func _draw_boss_room() -> void:
 
 
 func _draw_secret_walls() -> void:
-	var walls: Dictionary = _state.get("secret_walls")
-	var revealed: Dictionary = _state.get("revealed_secret_walls")
-	var explored_cells: Dictionary = _state.get("explored_cells")
-	var visible_cells: Dictionary = _state.get("visible_cells")
-	var base_color: Color = _color_or(_state.get("secret_wall_hint_color"), Color.WHITE)
-	for cell_value: Variant in revealed:
-		if not (cell_value is Vector2i):
-			continue
-		var cell: Vector2i = cell_value
-		if not walls.has(cell) or not explored_cells.has(cell) or not _cell_in_view(cell):
-			continue
-		var color: Color = base_color if visible_cells.has(cell) else base_color.darkened(0.58)
-		var rect: Rect2 = _cell_rect(cell, 2.0)
-		var start: Vector2 = rect.position + Vector2(3, 0)
-		var points: PackedVector2Array = PackedVector2Array(
-			[start, start + Vector2(-2, 3), start + Vector2(1, 6), start + Vector2(-1, 9)]
-		)
-		draw_polyline(points, color, 1.0, false)
+	pass
 
 
 func _draw_targeting() -> void:

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-visual_id = &"actor/enemy/construct"
+visual_id = &"actor/enemy/shard_golem"
 display_name = "Shard Golem"
 glyph = "Q"
 color = Color(0.62, 0.86, 1, 1)

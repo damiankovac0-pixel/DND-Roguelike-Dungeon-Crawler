@@ -2,7 +2,7 @@
 
 The pixel renderer loads only explicit Godot resources. `assets/visual_assets.json` is the build-time source of truth for visual source files, runtime textures, atlas dimensions, semantic IDs, licences, attribution, and generated `.tres` catalogues. Runtime code never scans asset directories and never invokes Aseprite.
 
-The five declared visual sources are project-authored production SVG atlases under `assets/pixel_art/source/`. They use `"exporter": "committed"`, so each source is also its runtime texture. The same pipeline supports future committed `.aseprite` sources with generated PNG/JSON pairs; the renderer always remains playable from committed outputs without Aseprite installed.
+The eleven declared visual sources are project-authored production SVG atlases under `assets/pixel_art/source/`. They use `"exporter": "committed"`, so each source is also its runtime texture. The same pipeline supports future committed `.aseprite` sources with generated PNG/JSON pairs; the renderer always remains playable from committed outputs without Aseprite installed.
 
 ## Commands
 
@@ -57,11 +57,11 @@ tools/tests/test_pixel_assets.py        Build-tool regression coverage
 The production source folders are:
 
 ```text
-assets/pixel_art/source/terrain/        Terrain atlas; currently core.svg
-assets/pixel_art/source/actors/         Actor animation sheet; currently core.svg
-assets/pixel_art/source/bosses/         Boss animation sheet; currently core.svg
-assets/pixel_art/source/objects/        Item, prop, and trap atlas; currently core.svg
-assets/pixel_art/source/effects/        Effect textures; currently particle.svg
+assets/pixel_art/source/terrain/        13×6 biome terrain atlas; core.svg
+assets/pixel_art/source/actors/         51-row core actor sheet and 3-row player action sheet
+assets/pixel_art/source/bosses/         Five-row oversized boss animation sheet; core.svg
+assets/pixel_art/source/objects/        104-cell item, prop, container, and trap atlas; core.svg
+assets/pixel_art/source/effects/        Five 3×3 particles plus one 16×16 enchantment overlay
 assets/pixel_art/generated/             Optional PNG sheets and JSON for Aseprite-backed entries
 ```
 
@@ -83,17 +83,19 @@ The current renderer contracts are:
 
 | Content | Frame size | Current sheet grid | Current sheet size |
 | --- | ---: | ---: | ---: |
-| Terrain | 16×16 | 7×1 | 112×16 |
-| Actors | 16×16 | 12×4 | 192×64 |
+| Terrain | 16×16 | 13×6 | 208×96 |
+| Core actors | 16×16 | 12×51 | 192×816 |
+| Player actions | 16×16 | 28×3 | 448×48 |
 | Bosses | 80×64 | 12×5 | 960×320 |
-| Objects | 16×16 | 16×1 | 256×16 |
-| Effect particle | 3×3 | 1×1 | 3×3 |
+| Objects | 16×16 | 104×1 | 1664×16 |
+| Effect particles | 3×3 | 1×1 each | 3×3 each |
+| Enchantment overlay | 16×16 | 1×1 | 16×16 |
 
 The manifest requires `expected_size == frame_size * grid`. The exporter fixes sheet rows, columns, width, and height. It deliberately does not trim, rotate, pack, merge duplicate frames, extrude, or add padding. Those operations would invalidate fixed atlas coordinates and pixel-perfect alignment.
 
 For terrain, objects, and effects, put one untrimmed frame at each manifest grid position in `semantic_ids` order.
 
-For actors and bosses:
+For core actors and bosses:
 
 - One visible Aseprite layer represents each `row_ids` entry, in manifest order.
 - Every layer uses the same 12-frame timeline.
@@ -101,6 +103,8 @@ For actors and bosses:
 - The current contract assigns two frames to every tag, in that order.
 - Tag bounds, layer order, total frame count, frame dimensions, rotation, and trimming are validated from exported JSON.
 - Facing remains renderer state; the current generic views mirror sprites where appropriate. Do not add directional sheets until the renderer contract explicitly gains directional animation IDs.
+
+The player-action sheet has one row per class and 28 columns: two frames each for sword, bow, and staff attacks; scroll and potion use; Fighter Cleave/Second Wind/Whirlwind; Ranger Focus/Volley/Quickstep; and Wizard Arcane Spark/Frost Nova/Chain Lightning. These action IDs are presentation events only; gameplay resolution remains renderer-independent.
 
 The current runtime builds `SpriteFrames` from fixed atlas regions. Exported Aseprite JSON is build-time validation data, not runtime gameplay data.
 

@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/library_menu.gd" id="1"]
 [ext_resource type="Theme" path="res://resources/terminal_theme.tres" id="2"]
 [ext_resource type="Script" path="res://scripts/ui/ascii_backdrop.gd" id="3"]
 [ext_resource type="FontFile" path="res://resources/terminal_font.tres" id="4"]
+[ext_resource type="Script" path="res://scripts/ui/library_visual_preview.gd" id="5"]
 
 [node name="LibraryMenu" type="Control"]
 layout_mode = 3
@@ -37,10 +38,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 36
-theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 36
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
@@ -54,89 +55,375 @@ theme_override_constants/separation = 16
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
+clip_text = true
 text = "THE DELVER'S LIBRARY"
 
 [node name="BackButton" type="Button" parent="Margin/VBox/Header"]
-custom_minimum_size = Vector2(140, 36)
+custom_minimum_size = Vector2(112, 36)
 layout_mode = 2
 text = "Back"
 
 [node name="Tabs" type="TabContainer" parent="Margin/VBox"]
-custom_minimum_size = Vector2(1000, 610)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 current_tab = 0
 tab_alignment = 1
+unique_name_in_owner = true
 
-[node name="Bestiary" type="ScrollContainer" parent="Margin/VBox/Tabs"]
+[node name="Bestiary" type="SplitContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 280
+theme_override_constants/separation = 16
+unique_name_in_owner = true
+
+[node name="BestiaryListPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Bestiary"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+
+[node name="BestiaryListColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryListPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BestiaryListHeading" type="Label" parent="Margin/VBox/Tabs/Bestiary/BestiaryListPanel/BestiaryListColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "ENEMY RECORDS"
+
+[node name="BestiaryListHint" type="Label" parent="Margin/VBox/Tabs/Bestiary/BestiaryListPanel/BestiaryListColumn"]
+layout_mode = 2
+text = "Hover, click, or focus a row."
+autowrap_mode = 2
+
+[node name="BestiaryEntryScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryListPanel/BestiaryListColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
 horizontal_scroll_mode = 0
 
-[node name="BestiaryText" type="RichTextLabel" parent="Margin/VBox/Tabs/Bestiary"]
-custom_minimum_size = Vector2(980, 0)
+[node name="BestiaryEntries" type="VBoxContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryListPanel/BestiaryListColumn/BestiaryEntryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+unique_name_in_owner = true
+
+[node name="BestiaryDetailColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Bestiary"]
+custom_minimum_size = Vector2(336, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="BestiaryPreview" type="PanelContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn"]
+custom_minimum_size = Vector2(0, 192)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("5")
+unique_name_in_owner = true
+
+[node name="Margin" type="MarginContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PreviewStage" type="Control" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox"]
+custom_minimum_size = Vector2(0, 112)
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ActorSprite" type="AnimatedSprite2D" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="ObjectSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="EnchantmentSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="AltText" type="Label" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox"]
+layout_mode = 2
+text = "Choose an enemy record."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="FallbackNote" type="Label" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryPreview/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BestiaryDetailPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BestiaryDetailScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryDetailPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BestiaryDetails" type="RichTextLabel" parent="Margin/VBox/Tabs/Bestiary/BestiaryDetailColumn/BestiaryDetailPanel/BestiaryDetailScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
+unique_name_in_owner = true
 
-[node name="Scribes" type="ScrollContainer" parent="Margin/VBox/Tabs"]
+[node name="Scribes" type="SplitContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 280
+theme_override_constants/separation = 16
+unique_name_in_owner = true
+
+[node name="ScribesListPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Scribes"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+
+[node name="ScribesListColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Scribes/ScribesListPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ScribesListHeading" type="Label" parent="Margin/VBox/Tabs/Scribes/ScribesListPanel/ScribesListColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "KNOWN ITEMS"
+
+[node name="ScribesListHint" type="Label" parent="Margin/VBox/Tabs/Scribes/ScribesListPanel/ScribesListColumn"]
+layout_mode = 2
+text = "Hover, click, or focus a row."
+autowrap_mode = 2
+
+[node name="ScribesEntryScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Scribes/ScribesListPanel/ScribesListColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
 horizontal_scroll_mode = 0
 
-[node name="ScribesText" type="RichTextLabel" parent="Margin/VBox/Tabs/Scribes"]
-custom_minimum_size = Vector2(980, 0)
+[node name="ScribesEntries" type="VBoxContainer" parent="Margin/VBox/Tabs/Scribes/ScribesListPanel/ScribesListColumn/ScribesEntryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+unique_name_in_owner = true
+
+[node name="ScribesDetailColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Scribes"]
+custom_minimum_size = Vector2(336, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ScribesPreview" type="PanelContainer" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn"]
+custom_minimum_size = Vector2(0, 192)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("5")
+unique_name_in_owner = true
+
+[node name="Margin" type="MarginContainer" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PreviewStage" type="Control" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox"]
+custom_minimum_size = Vector2(0, 112)
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ActorSprite" type="AnimatedSprite2D" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="ObjectSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="EnchantmentSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="AltText" type="Label" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox"]
+layout_mode = 2
+text = "Choose an item record."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="FallbackNote" type="Label" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesPreview/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ScribesDetailPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ScribesDetailScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesDetailPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ScribesDetails" type="RichTextLabel" parent="Margin/VBox/Tabs/Scribes/ScribesDetailColumn/ScribesDetailPanel/ScribesDetailScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-
+unique_name_in_owner = true
 
 [node name="Classes" type="ScrollContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
 [node name="ClassesText" type="RichTextLabel" parent="Margin/VBox/Tabs/Classes"]
-custom_minimum_size = Vector2(980, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-[node name="Dungeon Notes" type="ScrollContainer" parent="Margin/VBox/Tabs"]
+unique_name_in_owner = true
+
+[node name="Dungeon Notes" type="SplitContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 280
+theme_override_constants/separation = 16
+unique_name_in_owner = true
+
+[node name="DungeonListPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Dungeon Notes"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+
+[node name="DungeonListColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonListPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DungeonListHeading" type="Label" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonListPanel/DungeonListColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "KNOWN TRAPS"
+
+[node name="DungeonListHint" type="Label" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonListPanel/DungeonListColumn"]
+layout_mode = 2
+text = "Hover, click, or focus a row."
+autowrap_mode = 2
+
+[node name="DungeonEntryScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonListPanel/DungeonListColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
 horizontal_scroll_mode = 0
 
-[node name="DungeonNotesText" type="RichTextLabel" parent="Margin/VBox/Tabs/Dungeon Notes"]
-custom_minimum_size = Vector2(980, 0)
+[node name="DungeonEntries" type="VBoxContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonListPanel/DungeonListColumn/DungeonEntryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+unique_name_in_owner = true
+
+[node name="DungeonDetailColumn" type="VBoxContainer" parent="Margin/VBox/Tabs/Dungeon Notes"]
+custom_minimum_size = Vector2(336, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="DungeonPreview" type="PanelContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn"]
+custom_minimum_size = Vector2(0, 192)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("5")
+unique_name_in_owner = true
+
+[node name="Margin" type="MarginContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PreviewStage" type="Control" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox"]
+custom_minimum_size = Vector2(0, 112)
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ActorSprite" type="AnimatedSprite2D" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="ObjectSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="EnchantmentSprite" type="Sprite2D" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox/PreviewStage"]
+texture_filter = 1
+
+[node name="AltText" type="Label" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox"]
+layout_mode = 2
+text = "Choose a trap record."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="FallbackNote" type="Label" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonPreview/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="DungeonDetailPanel" type="PanelContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DungeonDetailScroll" type="ScrollContainer" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonDetailPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DungeonDetails" type="RichTextLabel" parent="Margin/VBox/Tabs/Dungeon Notes/DungeonDetailColumn/DungeonDetailPanel/DungeonDetailScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
+unique_name_in_owner = true
 
 [node name="Info" type="ScrollContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
 [node name="InfoText" type="RichTextLabel" parent="Margin/VBox/Tabs/Info"]
-custom_minimum_size = Vector2(980, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
+unique_name_in_owner = true
 
 [node name="Archive" type="ScrollContainer" parent="Margin/VBox/Tabs"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
 [node name="ArchiveText" type="RichTextLabel" parent="Margin/VBox/Tabs/Archive"]
-custom_minimum_size = Vector2(980, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
+unique_name_in_owner = true
