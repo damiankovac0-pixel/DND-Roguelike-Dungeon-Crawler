@@ -762,26 +762,21 @@ func _check_game_manager_version() -> void:
 		_fail("GameManager instance missing GAME_VERSION property")
 
 	var gm_version: String = gm.GAME_VERSION
-	if gm_version != "30.0.0":
+	if gm_version != "31.0.0":
 		_fail(
 			(
-				"GameManager.GAME_VERSION expected '30.0.0', got '%s' — V30.0.0 release not set"
+				"GameManager.GAME_VERSION expected '31.0.0', got '%s' — V31.0.0 release not set"
 				% gm_version
 			)
 		)
 		return
-	print("  GameManager.GAME_VERSION = 30.0.0")
+	print("  GameManager.GAME_VERSION = 31.0.0")
 
 	var label: String = gm.get_version_label()
-	if not "30.0.0" in label or not "2026-07-15" in label:
-		print(
-			(
-				"  WARNING: GameManager.get_version_label() = '%s' — "
-				+ "may not reference 30.0.0 / 2026-07-15" % label
-			)
-		)
+	if not "31.0.0" in label or not "2026-07-18" in label:
+		_fail("GameManager.get_version_label() = '%s' — " + "expected 31.0.0 / 2026-07-18" % label)
 	else:
-		print("  GameManager.get_version_label() references 30.0.0 / 2026-07-15")
+		print("  GameManager.get_version_label() references 31.0.0 / 2026-07-18")
 
 
 # ======================================================================
@@ -792,6 +787,9 @@ func _check_library_version_history() -> void:
 	if history == null or history.is_empty():
 		_fail("LibraryMenu.VERSION_HISTORY is empty or missing")
 
+	var has_v31_0_0: bool = false
+	var has_v30_0_0: bool = false
+	var has_v23_3_0: bool = false
 	var has_v16_5: bool = false
 	var has_v16: bool = false
 	var has_v15: bool = false
@@ -799,6 +797,12 @@ func _check_library_version_history() -> void:
 	var has_v13: bool = false
 	for entry: Variant in history:
 		var line: String = str(entry)
+		if line.contains("V31.0.0"):
+			has_v31_0_0 = true
+		if line.contains("V30.0.0"):
+			has_v30_0_0 = true
+		if line.contains("V23.3.0"):
+			has_v23_3_0 = true
 		if line.contains("V16.5") or line.contains("16.5.0"):
 			has_v16_5 = true
 		if line.contains("V16.0.0") or line.contains("16.0.0"):
@@ -810,6 +814,12 @@ func _check_library_version_history() -> void:
 		if line.contains("V13") or line.contains("13.0.0"):
 			has_v13 = true
 
+	if not has_v31_0_0:
+		_fail("Library version history must include V31.0.0 entry")
+	if not has_v30_0_0:
+		_fail("Library version history must retain V30.0.0 entry")
+	if not has_v23_3_0:
+		_fail("Library version history must retain V23.3.0 entry")
 	if not has_v16_5:
 		_fail(
 			(
@@ -842,8 +852,14 @@ func _check_library_version_history() -> void:
 		print("  NOTE: V13 entry not found in VERSION_HISTORY (acceptable if trimmed)")
 	print(
 		(
-			"  Library version history: V16.5 %s, V16 %s, V15 %s, V14 %s, V13 %s"
+			(
+				"  Library version history: V31.0.0 %s, V30.0.0 %s, V23.3.0 %s, "
+				+ "V16.5 %s, V16 %s, V15 %s, V14 %s, V13 %s"
+			)
 			% [
+				"✓" if has_v31_0_0 else "✗",
+				"✓" if has_v30_0_0 else "✗",
+				"✓" if has_v23_3_0 else "✗",
 				"✓" if has_v16_5 else "✗",
 				"✓" if has_v16 else "✗",
 				"✓" if has_v15 else "✗",
@@ -865,11 +881,20 @@ func _check_library_history_raw() -> void:
 		_fail("Could not read version_history.gd for version history check")
 		return
 
+	var has_v31_0_0: bool = "V31.0.0" in content
+	var has_v30_0_0: bool = "V30.0.0" in content
+	var has_v23_3_0: bool = "V23.3.0" in content
 	var has_v16_5: bool = "16.5.0" in content or "V16.5" in content
 	var has_v16: bool = "16.0.0" in content or "V16.0" in content
 	var has_v15: bool = "15.0.0" in content or "V15" in content
 	var has_v14: bool = "14.0.0" in content or "V14" in content
 
+	if not has_v31_0_0:
+		_fail("Library version history must include V31.0.0 entry")
+	if not has_v30_0_0:
+		_fail("Library version history must retain V30.0.0 entry")
+	if not has_v23_3_0:
+		_fail("Library version history must retain V23.3.0 entry")
 	if not has_v16_5:
 		_fail(
 			(
@@ -909,8 +934,14 @@ func _check_library_history_raw() -> void:
 
 	print(
 		(
-			"  Library version history (raw scan): V16.5 %s, V16 %s, V15 %s, V14 %s — %d entries"
+			(
+				"  Library version history (raw scan): V31.0.0 %s, V30.0.0 %s, "
+				+ "V23.3.0 %s, V16.5 %s, V16 %s, V15 %s, V14 %s — %d entries"
+			)
 			% [
+				"✓" if has_v31_0_0 else "✗",
+				"✓" if has_v30_0_0 else "✗",
+				"✓" if has_v23_3_0 else "✗",
 				"✓" if has_v16_5 else "✗",
 				"✓" if has_v16 else "✗",
 				"✓" if has_v15 else "✗",

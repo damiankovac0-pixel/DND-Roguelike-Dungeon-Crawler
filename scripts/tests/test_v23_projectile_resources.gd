@@ -442,16 +442,16 @@ func _check_version_metadata() -> void:
 		_fail("GameManager autoload missing")
 		return
 
-	if gm.GAME_VERSION != "30.0.0":
-		_fail("GameManager.GAME_VERSION expected '30.0.0', got '%s'" % gm.GAME_VERSION)
+	if gm.GAME_VERSION != "31.0.0":
+		_fail("GameManager.GAME_VERSION expected '31.0.0', got '%s'" % gm.GAME_VERSION)
 
 	var version_label: String = gm.get_version_label()
-	if not "30.0.0" in version_label:
-		_fail("get_version_label() missing '30.0.0': " + version_label)
+	if not "31.0.0" in version_label:
+		_fail("get_version_label() missing '31.0.0': " + version_label)
 		return
 
-	if not "2026-07-15" in version_label:
-		_fail("get_version_label() missing '2026-07-15': " + version_label)
+	if not "2026-07-18" in version_label:
+		_fail("get_version_label() missing '2026-07-18': " + version_label)
 	# Standalone script tests cannot preload LibraryMenu because its UI script resolves the
 	# GameManager autoload at scene compile time. Verify the static history wiring instead.
 	var library_source: String = FileAccess.get_file_as_string("res://scripts/ui/library_menu.gd")
@@ -463,19 +463,25 @@ func _check_version_metadata() -> void:
 		_fail("LibraryMenu should expose version_history.gd through VERSION_HISTORY")
 		return
 
-	# Version_history.gd keeps the current V30.0.0 and historical V23.3.0 entries.
+	# Version_history.gd keeps current V31.0.0 and historical V30.0.0/V23.3.0 entries.
 	var history: Array = VersionHistoryScript.VERSION_HISTORY
+	var found_v31_0_0: bool = false
 	var found_v30_0_0: bool = false
 	var found_v23_3_0: bool = false
 	for entry: String in history:
+		if "V31.0.0" in entry:
+			found_v31_0_0 = true
 		if "V30.0.0" in entry:
 			found_v30_0_0 = true
 		if "V23.3.0" in entry:
 			found_v23_3_0 = true
+	if not found_v31_0_0:
+		_fail("version_history.gd should contain V31.0.0 entry")
+		return
 	if not found_v30_0_0:
 		_fail("version_history.gd should contain V30.0.0 entry")
 		return
 	if not found_v23_3_0:
 		_fail("version_history.gd should retain V23.3.0 entry")
 		return
-	print("  version metadata: 30.0.0, 2026-07-15, V23.3.0+V30.0.0 in VERSION_HISTORY")
+	print("  version metadata: 31.0.0, 2026-07-18, V23.3.0+V30.0.0+V31.0.0 in VERSION_HISTORY")

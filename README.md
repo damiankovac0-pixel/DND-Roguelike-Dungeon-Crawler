@@ -91,6 +91,13 @@ The in-game Library is the lore-and-rules desk:
 - Version history.
 - Run archive for completed non-debug runs.
 
+### V31 boss and Hard-mode release
+
+- Normal bosses now pair tighter phase-, range-, and cooldown-aware scheduling with distinct close-range counters, readable one-turn tells, contextual attack audio, and boss-specific spawn effects.
+- Normal and Hard can be selected during character creation. Hard unlocks only after an **archived, non-debug Normal victory**.
+- Hard adds visually distinct elites from floor 3 onward, tougher regular enemies and bosses, scarcer enemy gold, higher buy and reroll costs, reduced sell returns, and adjusted elite and boss rewards.
+- Each Hard boss gains channel-immunity counterplay: the Observer blocks ranged damage while its eye is closed; Seraphine, Vorrak, and Nyxara adapt to repeated damage channels and force signature retaliations; and Kaelros blocks magic while a retainer lives.
+
 ### V30 visual release
 
 - Distinct animated pixel sprites for all 37 non-boss enemies, while the five oversized boss sheets retain their multi-cell presentation.

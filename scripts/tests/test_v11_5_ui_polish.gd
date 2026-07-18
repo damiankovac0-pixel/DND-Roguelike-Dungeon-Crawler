@@ -177,12 +177,12 @@ func _check_game_manager_version() -> void:
 	if game_manager == null:
 		_fail("GameManager autoload missing")
 		return
-	if game_manager.GAME_VERSION != "30.0.0":
-		_fail("GameManager.GAME_VERSION expected '30.0.0', got '%s'" % game_manager.GAME_VERSION)
+	if game_manager.GAME_VERSION != "31.0.0":
+		_fail("GameManager.GAME_VERSION expected '31.0.0', got '%s'" % game_manager.GAME_VERSION)
 	var version_label: String = game_manager.get_version_label()
-	if not "30.0.0" in version_label:
+	if not "31.0.0" in version_label:
 		_fail("get_version_label() missing version: " + version_label)
-	if not "2026-07-15" in version_label:
+	if not "2026-07-18" in version_label:
 		_fail("get_version_label() missing date: " + version_label)
 
 
@@ -207,6 +207,9 @@ func _check_library_version_history() -> void:
 	var found_v15_0: bool = false
 	var found_v16_0: bool = false
 	var found_v16_5: bool = false
+	var found_v31_0_0: bool = false
+	var found_v30_0_0: bool = false
+	var found_v23_3_0: bool = false
 	var last_entry: String = ""
 	for entry: String in version_history:
 		if "V11.5.0" in entry:
@@ -229,6 +232,12 @@ func _check_library_version_history() -> void:
 			found_v16_0 = true
 		if "V16.5.0" in entry:
 			found_v16_5 = true
+		if "V31.0.0" in entry:
+			found_v31_0_0 = true
+		if "V30.0.0" in entry:
+			found_v30_0_0 = true
+		if "V23.3.0" in entry:
+			found_v23_3_0 = true
 		last_entry = entry
 	if not found_v11_5:
 		_fail("Library VERSION_HISTORY missing V11.5.0 entry; last: " + last_entry)
@@ -250,6 +259,12 @@ func _check_library_version_history() -> void:
 		_fail("Library VERSION_HISTORY missing V16.0.0 entry; last: " + last_entry)
 	if not found_v16_5:
 		_fail("Library VERSION_HISTORY missing V16.5.0 entry; last: " + last_entry)
+	if not found_v31_0_0:
+		_fail("Library VERSION_HISTORY missing V31.0.0 entry; last: " + last_entry)
+	if not found_v30_0_0:
+		_fail("Library VERSION_HISTORY missing retained V30.0.0 entry; last: " + last_entry)
+	if not found_v23_3_0:
+		_fail("Library VERSION_HISTORY missing retained V23.3.0 entry; last: " + last_entry)
 	# Verify library scene exposes a Classes tab text node
 	var lib_scene: PackedScene = load("res://scenes/library.tscn")
 	if lib_scene == null:
