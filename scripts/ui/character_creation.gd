@@ -16,6 +16,8 @@ const STAT_DESCRIPTIONS: Array[String] = [
 	"CHA: shops sell cheaper, buy for more, and feature one golden deal at 15+.",
 ]
 const CLASS_IDS: Array[StringName] = [&"fighter", &"ranger", &"wizard"]
+const NORMAL_DIFFICULTY_COLOR: Color = Color(0.6, 0.843137, 0.898039, 1.0)
+const HARD_DIFFICULTY_COLOR: Color = Color(1.0, 0.33, 0.47, 1.0)
 # === Private Variables ===
 var _rolls: Array[int] = []
 var _selectors: Array[OptionButton] = []
@@ -27,6 +29,7 @@ var _selected_class_index: int = 0
 @onready var name_input: LineEdit = $Center/Panel/Margin/VBox/NameInput
 @onready var class_selector: OptionButton = $Center/Panel/Margin/VBox/ClassRow/ClassSelector
 @onready var class_description: Label = $Center/Panel/Margin/VBox/ClassRow/ClassDescription
+@onready var difficulty_label: Label = $Center/Panel/Margin/VBox/DifficultyLabel
 @onready var assignments: VBoxContainer = $Center/Panel/Margin/VBox/Assignments
 @onready var status_label: Label = $Center/Panel/Margin/VBox/StatusLabel
 @onready var reroll_button: Button = $Center/Panel/Margin/VBox/Buttons/RerollButton
@@ -38,6 +41,7 @@ var _selected_class_index: int = 0
 # === Lifecycle Methods ===
 func _ready() -> void:
 	_apply_motion_preferences()
+	_update_difficulty_confirmation()
 	reroll_button.pressed.connect(_roll_abilities)
 	begin_button.pressed.connect(_begin_run)
 	back_button.pressed.connect(_go_back)
@@ -89,6 +93,19 @@ func _is_backspace_key(key_event: InputEventKey) -> bool:
 # === Private Methods ===
 func _apply_motion_preferences() -> void:
 	background.motion_enabled = not SensoryFeedback.is_reduced_vfx_preferred()
+
+
+func _update_difficulty_confirmation() -> void:
+	var selected_difficulty: StringName = GameManager.pending_difficulty
+	difficulty_label.text = (
+		"Difficulty: %s" % GameManager.get_difficulty_label(selected_difficulty).to_upper()
+	)
+	var label_color: Color = (
+		HARD_DIFFICULTY_COLOR
+		if selected_difficulty == GameManager.DIFFICULTY_HARD
+		else NORMAL_DIFFICULTY_COLOR
+	)
+	difficulty_label.add_theme_color_override(&"font_color", label_color)
 
 
 func _build_assignment_rows() -> void:

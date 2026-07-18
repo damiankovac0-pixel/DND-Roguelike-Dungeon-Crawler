@@ -57,7 +57,7 @@ func _run() -> void:
 		return
 	_capture_game_manager_state(_game_manager)
 
-	_check_history_filter_preserves_modern_legacy_names(_game_manager)
+	_check_history_migration_preserves_legitimate_entries(_game_manager)
 	if _failed:
 		return
 	_check_last_run_summary_cleanup(_game_manager)
@@ -80,7 +80,7 @@ func _run() -> void:
 	quit(0)
 
 
-func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> void:
+func _check_history_migration_preserves_legitimate_entries(game_manager: Node) -> void:
 	var raw_history: Array = [
 		{
 			"name": "Fresh Delver",
@@ -89,6 +89,7 @@ func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> 
 			"victory": false,
 			"version": "23.1.0",
 			"class": "fighter",
+			"difficulty": "hard",
 		},
 		{
 			"name": "Long Debug Name",
@@ -97,9 +98,17 @@ func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> 
 			"victory": true,
 			"version": "23.1.0",
 			"class": "ranger",
+			"difficulty": "nightmare",
 		},
 		{"name": "Old Delver", "floor": 4, "level": 2, "victory": false},
-		{"name": "Patch Hero", "floor": 9, "level": 3, "victory": true, "version": "23.1.0"},
+		{
+			"name": "Patch Hero",
+			"floor": 9,
+			"level": 3,
+			"victory": true,
+			"version": "23.1.0",
+			"difficulty": "veteran",
+		},
 		{
 			"name": "debug",
 			"floor": 25,
@@ -107,6 +116,17 @@ func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> 
 			"victory": true,
 			"version": "23.1.0",
 			"class": "fighter",
+			"difficulty": "normal",
+		},
+		{
+			"name": "Archived Debug Hero",
+			"floor": 25,
+			"level": 20,
+			"victory": true,
+			"version": "23.1.0",
+			"class": "fighter",
+			"difficulty": "normal",
+			"archived_debug": true,
 		},
 		{
 			"name": "Mage Survivor",
@@ -115,6 +135,7 @@ func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> 
 			"victory": false,
 			"version": "20.0.0",
 			"class": "mage",
+			"difficulty": null,
 		},
 		{"name": "Nameless Actual", "floor": 2, "level": 1, "victory": false},
 		"not a dictionary",
@@ -126,57 +147,158 @@ func _check_history_filter_preserves_modern_legacy_names(game_manager: Node) -> 
 	game_manager._load_character_history()
 
 	var names: Array[String] = _history_names(game_manager.character_history)
-	_assert_true(
-		names.has("Fresh Delver"),
-		"complete modern Fresh Delver history entry should not be discarded as a legacy fixture"
-	)
+	for legitimate_name: String in [
+		"Fresh Delver",
+		"Long Debug Name",
+		"Old Delver",
+		"Patch Hero",
+		"Mage Survivor",
+		"Nameless Actual",
+	]:
+		_assert_true(
+			names.has(legitimate_name),
+			"legitimate history entry should survive migration: %s" % legitimate_name
+		)
+		if _failed:
+			return
+	_assert_true(not names.has("debug"), "explicit debug-name history entry should be filtered")
 	if _failed:
 		return
 	_assert_true(
-		names.has("Long Debug Name"),
-		"complete modern Long Debug Name history entry should not be discarded as a legacy fixture"
-	)
-	if _failed:
-		return
-	_assert_true(
-		names.has("Mage Survivor"), "mage-class history entry should be preserved and migrated"
-	)
-	if _failed:
-		return
-	_assert_true(
-		names.has("Nameless Actual"), "non-fixture incomplete history entry should be preserved"
-	)
-	if _failed:
-		return
-	_assert_true(not names.has("Old Delver"), "incomplete Old Delver fixture should be filtered")
-	if _failed:
-		return
-	_assert_true(not names.has("Patch Hero"), "incomplete Patch Hero fixture should be filtered")
-	if _failed:
-		return
-	_assert_true(
-		not names.has("debug"), "debug history entry should be filtered even with metadata"
+		not names.has("Archived Debug Hero"), "history entry with archived_debug should be filtered"
 	)
 	if _failed:
 		return
 
-	for entry: Variant in game_manager.character_history:
-		if entry is Dictionary and str(entry.get("name", "")) == "Mage Survivor":
-			_assert_equal(
-				str(entry.get("class", "")), "wizard", "legacy mage class should migrate to wizard"
-			)
-			if _failed:
-				return
-	var saved: Variant = JSON.parse_string(_read_required_user_file(HISTORY_PATH))
+	var entries_by_name: Dictionary = _history_entries_by_name(game_manager.character_history)
+	_assert_equal(
+		str((entries_by_name["Fresh Delver"] as Dictionary).get("difficulty", "")),
+		"hard",
+		"valid Hard difficulty should survive migration"
+	)
 	if _failed:
 		return
-	if not (saved is Array):
+	for normal_name: String in [
+		"Long Debug Name",
+		"Old Delver",
+		"Patch Hero",
+		"Mage Survivor",
+		"Nameless Actual",
+	]:
+		_assert_equal(
+			str((entries_by_name[normal_name] as Dictionary).get("difficulty", "")),
+			"normal",
+			"missing or invalid difficulty should migrate to Normal: %s" % normal_name
+		)
+		if _failed:
+			return
+	_assert_equal(
+		str((entries_by_name["Mage Survivor"] as Dictionary).get("class", "")),
+		"wizard",
+		"legacy mage class should migrate to wizard"
+	)
+	if _failed:
+		return
+
+	var saved_filtered: Variant = JSON.parse_string(_read_required_user_file(HISTORY_PATH))
+	if _failed:
+		return
+	if not (saved_filtered is Array):
 		_fail("filtered history file should save as a JSON array")
 		return
-	var saved_names: Array[String] = _history_names(saved)
+	var saved_filtered_names: Array[String] = _history_names(saved_filtered)
 	_assert_equal(
-		saved_names.size(), names.size(), "saved filtered history should match in-memory history"
+		saved_filtered_names.size(),
+		names.size(),
+		"saved filtered history should match in-memory history"
 	)
+	if _failed:
+		return
+
+	var additive_history: Array = [
+		{
+			"name": "Persisted Missing Difficulty",
+			"floor": 3,
+			"level": 2,
+			"victory": false,
+			"class": "fighter",
+		},
+		{
+			"name": "Persisted Invalid Difficulty",
+			"floor": 5,
+			"level": 4,
+			"victory": true,
+			"class": "ranger",
+			"difficulty": "nightmare",
+		},
+		{
+			"name": "Persisted Mage",
+			"floor": 7,
+			"level": 5,
+			"victory": false,
+			"class": "mage",
+			"difficulty": null,
+		},
+	]
+	_write_required_user_file(HISTORY_PATH, JSON.stringify(additive_history))
+	if _failed:
+		return
+	game_manager.character_history = []
+	game_manager._load_character_history()
+	_assert_equal(
+		game_manager.character_history.size(),
+		additive_history.size(),
+		"content-only migration should not add or remove history entries"
+	)
+	if _failed:
+		return
+
+	var saved_additive: Variant = JSON.parse_string(_read_required_user_file(HISTORY_PATH))
+	if _failed:
+		return
+	if not (saved_additive is Array):
+		_fail("content-migrated history file should save as a JSON array")
+		return
+	_assert_equal(
+		saved_additive.size(),
+		additive_history.size(),
+		"content-changing migration should persist without changing array size"
+	)
+	if _failed:
+		return
+	var saved_additive_entries: Dictionary = _history_entries_by_name(saved_additive)
+	for migrated_name: String in [
+		"Persisted Missing Difficulty",
+		"Persisted Invalid Difficulty",
+		"Persisted Mage",
+	]:
+		var migrated_entry: Dictionary = saved_additive_entries[migrated_name] as Dictionary
+		_assert_true(
+			migrated_entry.has("difficulty"),
+			"persisted migration should add a difficulty field: %s" % migrated_name
+		)
+		if _failed:
+			return
+		_assert_equal(
+			str(migrated_entry.get("difficulty", "")),
+			"normal",
+			"persisted missing or invalid difficulty should be Normal: %s" % migrated_name
+		)
+		if _failed:
+			return
+	_assert_equal(
+		str((saved_additive_entries["Persisted Mage"] as Dictionary).get("class", "")),
+		"wizard",
+		"persisted content-only migration should retain mage-to-wizard conversion"
+	)
+
+
+func _history_entries_by_name(history: Array) -> Dictionary:
+	var entries_by_name: Dictionary = {}
+	for entry: Variant in history:
+		if entry is Dictionary:
+			entries_by_name[str(entry.get("name", ""))] = entry
+	return entries_by_name
 
 
 func _check_last_run_summary_cleanup(game_manager: Node) -> void:

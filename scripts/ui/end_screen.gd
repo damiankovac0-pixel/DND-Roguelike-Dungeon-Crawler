@@ -2,6 +2,10 @@
 class_name EndScreen
 extends Control
 
+# === Constants ===
+const DIFFICULTY_NORMAL_COLOR: Color = Color("#8fb3ff")
+const DIFFICULTY_HARD_COLOR: Color = Color("#ff5777")
+
 # === Exports ===
 @export var title_text: String = "Game Over"
 @export_multiline var body_text: String = ""
@@ -12,12 +16,14 @@ extends Control
 @onready var body_label: Label = $Center/VBox/BodyLabel
 @onready var retry_button: Button = $Center/VBox/RetryButton
 @onready var quit_button: Button = $Center/VBox/QuitButton
+var _difficulty_label: Label
 
 
 # === Lifecycle Methods ===
 func _ready() -> void:
 	title_label.text = title_text
 	body_label.text = _build_body_text()
+	_add_difficulty_label()
 	retry_button.pressed.connect(_on_retry_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
 
@@ -31,6 +37,25 @@ func _on_retry_pressed() -> void:
 func _on_quit_pressed() -> void:
 	GameManager.clear_finished_run_context()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+func _add_difficulty_label() -> void:
+	var summary: Dictionary = GameManager.last_run_summary
+	if summary.is_empty():
+		summary = _build_fallback_summary()
+	var difficulty: StringName = StringName(
+		str(summary.get("difficulty", GameManager.DEFAULT_DIFFICULTY))
+	)
+	var difficulty_text: String = GameManager.get_difficulty_label(difficulty)
+	_difficulty_label = Label.new()
+	_difficulty_label.name = "DifficultyLabel"
+	_difficulty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_difficulty_label.text = ("Difficulty: %s" % difficulty_text.to_upper())
+	_difficulty_label.add_theme_color_override(
+		"font_color",
+		DIFFICULTY_HARD_COLOR if difficulty_text == "Hard" else DIFFICULTY_NORMAL_COLOR
+	)
+	body_label.add_sibling(_difficulty_label)
 
 
 func _build_body_text() -> String:
@@ -77,4 +102,5 @@ func _build_fallback_summary() -> Dictionary:
 		"class": String(GameManager.pending_character_class),
 		"version": GameManager.GAME_VERSION,
 		"archived_debug": GameManager.pending_debug_loadout,
+		"difficulty": String(GameManager.pending_difficulty),
 	}

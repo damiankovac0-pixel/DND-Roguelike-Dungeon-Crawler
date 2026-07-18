@@ -18,15 +18,13 @@ const CLASS_FIGHTER: StringName = &"fighter"
 const CLASS_RANGER: StringName = &"ranger"
 const CLASS_WIZARD: StringName = &"wizard"
 const DEFAULT_CHARACTER_CLASS: StringName = CLASS_FIGHTER
+const DIFFICULTY_NORMAL: StringName = &"normal"
+const DIFFICULTY_HARD: StringName = &"hard"
+const DEFAULT_DIFFICULTY: StringName = DIFFICULTY_NORMAL
 const SHOP_FEATURED_DEAL_MIN_CHARISMA: int = 15
 const SHOP_FEATURED_DEAL_DISCOUNT_PERCENT: int = 15
-const LEGACY_TEST_HISTORY_NAMES: Array[String] = [
-	"debug",
-	"Fresh Delver",
-	"Old Delver",
-	"Patch Hero",
-	"Long Debug Name",
-]
+const HARD_BUY_MARKUP_DIVISOR: int = 10
+const HARD_SELL_PRICE_MULTIPLIER: float = 0.90
 
 # === Public Variables ===
 var player: Node2D
@@ -41,6 +39,7 @@ var has_active_run: bool = false
 var pending_character_name: String = ""
 var pending_ability_scores: Dictionary = {}
 var pending_character_class: StringName = DEFAULT_CHARACTER_CLASS
+var pending_difficulty: StringName = DEFAULT_DIFFICULTY
 var pending_debug_loadout: bool = false
 var character_history: Array = []
 var last_run_summary: Dictionary = {}
@@ -72,6 +71,42 @@ func prepare_character(
 		}
 	else:
 		pending_ability_scores = ability_scores.duplicate(true)
+
+
+func set_pending_difficulty(value: StringName) -> void:
+	var normalized_difficulty: StringName = _normalize_difficulty(value)
+	if normalized_difficulty == DIFFICULTY_HARD and not is_hard_mode_unlocked():
+		normalized_difficulty = DEFAULT_DIFFICULTY
+	pending_difficulty = normalized_difficulty
+
+
+func get_difficulty_label(value: StringName = &"") -> String:
+	var resolved_difficulty: StringName = (
+		pending_difficulty if value == &"" else _normalize_difficulty(value)
+	)
+	return "Hard" if resolved_difficulty == DIFFICULTY_HARD else "Normal"
+
+
+func is_hard_mode() -> bool:
+	return pending_difficulty == DIFFICULTY_HARD
+
+
+func is_hard_mode_unlocked() -> bool:
+	for entry: Variant in character_history:
+		if not entry is Dictionary:
+			continue
+		var history_entry: Dictionary = entry
+		if _is_debug_history_entry(history_entry):
+			continue
+		var victory_value: Variant = history_entry.get("victory", false)
+		if typeof(victory_value) != TYPE_BOOL or not victory_value:
+			continue
+		if (
+			_normalize_difficulty(history_entry.get("difficulty", DEFAULT_DIFFICULTY))
+			== DIFFICULTY_NORMAL
+		):
+			return true
+	return false
 
 
 func get_character_class_label(character_class: StringName = &"") -> String:
@@ -165,13 +200,23 @@ func _get_shop_buy_price(item: Resource, charisma: int, stock_index: int = -1) -
 	var multiplier: float = clampf(1.0 - 0.05 * cha_mod, 0.5, 1.5)
 	if _is_shop_featured_deal(charisma, stock_index):
 		multiplier *= (100.0 - SHOP_FEATURED_DEAL_DISCOUNT_PERCENT) / 100.0
-	return max(1, ceili(base_price * multiplier))
+	var normal_price: int = max(1, ceili(base_price * multiplier))
+	if is_hard_mode():
+		@warning_ignore("integer_division")
+		var hard_markup: int = normal_price / HARD_BUY_MARKUP_DIVISOR
+		if normal_price % HARD_BUY_MARKUP_DIVISOR != 0:
+			hard_markup += 1
+		return max(1, normal_price + hard_markup)
+	return normal_price
 
 
 func _get_shop_sell_price(item: Resource, charisma: int) -> int:
 	var cha_mod: int = Dice.modifier(charisma)
 	var multiplier: float = clampf(0.35 + 0.02 * cha_mod, 0.25, 0.50)
-	return max(1, floori(item.get_price() * multiplier))
+	var normal_price: int = max(1, floori(item.get_price() * multiplier))
+	if is_hard_mode():
+		return max(1, floori(normal_price * HARD_SELL_PRICE_MULTIPLIER))
+	return normal_price
 
 
 func reset_run() -> void:
@@ -267,6 +312,13 @@ func clear_finished_run_context() -> void:
 # === Private Methods ===
 
 
+func _normalize_difficulty(value: Variant) -> StringName:
+	var normalized_value: StringName = StringName(str(value).strip_edges().to_lower())
+	if normalized_value == DIFFICULTY_HARD:
+		return DIFFICULTY_HARD
+	return DEFAULT_DIFFICULTY
+
+
 func _normalize_character_class(character_class: StringName) -> StringName:
 	match character_class:
 		CLASS_FIGHTER, CLASS_RANGER, CLASS_WIZARD:
@@ -301,6 +353,7 @@ func _build_last_run_summary(victory: bool) -> Dictionary:
 		"class": String(pending_character_class),
 		"version": GAME_VERSION,
 		"archived_debug": pending_debug_loadout,
+		"difficulty": String(pending_difficulty),
 	}
 	summary.make_read_only()
 	return summary
@@ -317,6 +370,7 @@ func _record_character(summary: Dictionary) -> void:
 				"victory": bool(summary.get("victory", false)),
 				"version": str(summary.get("version", GAME_VERSION)),
 				"class": str(summary.get("class", String(DEFAULT_CHARACTER_CLASS))),
+				"difficulty": str(summary.get("difficulty", String(DEFAULT_DIFFICULTY))),
 			}
 		)
 	)
@@ -333,7 +387,7 @@ func _load_character_history() -> void:
 	if parsed is Array:
 		var raw_history: Array = parsed
 		character_history = _filter_character_history(raw_history)
-		if character_history.size() != raw_history.size():
+		if character_history != raw_history:
 			_save_character_history()
 
 
@@ -346,7 +400,7 @@ func _save_character_history() -> void:
 func _filter_character_history(raw_history: Array) -> Array:
 	var filtered: Array = []
 	for entry: Variant in raw_history:
-		if entry is Dictionary and not _is_legacy_test_history_entry(entry):
+		if entry is Dictionary and not _is_debug_history_entry(entry):
 			filtered.append(_migrate_character_history_entry(entry))
 	return filtered
 
@@ -355,6 +409,9 @@ func _migrate_character_history_entry(entry: Dictionary) -> Dictionary:
 	var migrated_entry: Dictionary = entry.duplicate(true)
 	if str(migrated_entry.get("class", "")) == "mage":
 		migrated_entry["class"] = String(CLASS_WIZARD)
+	migrated_entry["difficulty"] = String(
+		_normalize_difficulty(migrated_entry.get("difficulty", DEFAULT_DIFFICULTY))
+	)
 	return migrated_entry
 
 
@@ -369,10 +426,7 @@ func _clear_run_context() -> void:
 	pending_debug_loadout = false
 
 
-func _is_legacy_test_history_entry(entry: Dictionary) -> bool:
-	var character_name: String = str(entry.get("name", "")).strip_edges()
-	if character_name.to_lower() == "debug":
+func _is_debug_history_entry(entry: Dictionary) -> bool:
+	if bool(entry.get("archived_debug", false)):
 		return true
-	if entry.has("version") and entry.has("class"):
-		return false
-	return LEGACY_TEST_HISTORY_NAMES.has(character_name)
+	return str(entry.get("name", "")).strip_edges().to_lower() == "debug"

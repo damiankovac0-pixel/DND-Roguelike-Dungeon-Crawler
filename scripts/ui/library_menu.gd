@@ -9,6 +9,8 @@ const TrapDataScript = preload("res://scripts/resources/trap_data.gd")
 const BiomeCatalogScript = preload("res://scripts/biome_catalog.gd")
 const DamageTypeTextScript = preload("res://scripts/ui/damage_type_text.gd")
 const LibraryVisualPreviewScript = preload("res://scripts/ui/library_visual_preview.gd")
+const DIFFICULTY_NORMAL_COLOR: String = "#8fb3ff"
+const DIFFICULTY_HARD_COLOR: String = "#ff5777"
 const ENEMY_NOTES: Dictionary = {
 	"Rat": "Low HP early swarmer. Small poison chance can chip you for 3 turns.",
 	"Bat": "Very low HP but high AC for floor 1. Annoying to hit, quick to kill once struck.",
@@ -785,6 +787,7 @@ func _build_archive_text() -> String:
 		"[font_size=24][color=#f1c75b]ARCHIVE[/color][/font_size]",
 		"",
 		"Real completed runs only. Debug/test loadouts are ignored.",
+		"Hard unlocks after an archived non-debug Normal victory.",
 		"New runs store the game version at the moment they end.",
 	]
 	if entries.is_empty():
@@ -806,11 +809,18 @@ func _archive_entry(entry: Dictionary, archive_index: int) -> String:
 		str(entry.get("class", GameManager.DEFAULT_CHARACTER_CLASS))
 	)
 	var class_label: String = GameManager.get_character_class_label(class_id)
+	var difficulty: StringName = StringName(
+		str(entry.get("difficulty", GameManager.DEFAULT_DIFFICULTY))
+	)
+	var difficulty_label: String = GameManager.get_difficulty_label(difficulty)
+	var difficulty_color: String = (
+		DIFFICULTY_HARD_COLOR if difficulty_label == "Hard" else DIFFICULTY_NORMAL_COLOR
+	)
 	var entry_text: String = (
 		"[color=#47426b]%02d[/color]  [color=#fffbf0]%s[/color]  "
-		+ "[color=#8fb3ff]%s[/color]  [color=#7db8ff]F%d[/color]  "
-		+ "[color=#d8d8d8]L%s[/color]  [color=%s]%s[/color]  "
-		+ "[color=#f1c75b]%s[/color]"
+		+ "[color=#8fb3ff]%s[/color]  [color=%s]%s[/color]  "
+		+ "[color=#7db8ff]F%d[/color]  [color=#d8d8d8]L%s[/color]  "
+		+ "[color=%s]%s[/color]  [color=#f1c75b]%s[/color]"
 	)
 	return (
 		entry_text
@@ -818,6 +828,8 @@ func _archive_entry(entry: Dictionary, archive_index: int) -> String:
 			archive_index,
 			delver_name,
 			class_label,
+			difficulty_color,
+			difficulty_label,
 			floor_number,
 			_format_level_bbcode(level_value),
 			result_color,
