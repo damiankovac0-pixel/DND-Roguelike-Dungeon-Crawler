@@ -96,30 +96,52 @@ func _check_reduced_vfx_tones_down_flash() -> void:
 
 
 func _check_audio_profiles_are_quieter() -> void:
+	var path: String = _sf_script.SETTINGS_PATH
+	var absolute_path: String = ProjectSettings.globalize_path(path)
+	var existed: bool = FileAccess.file_exists(path)
+	var backup: PackedByteArray = PackedByteArray()
+	if existed:
+		backup = FileAccess.get_file_as_bytes(path)
+		if DirAccess.remove_absolute(absolute_path) != OK:
+			_restore_settings(path, absolute_path, existed, backup)
+			_fail("failed to isolate default sensory settings")
+			return
+
 	var sf: Control = _new_sensory_feedback()
 	if sf == null:
+		_restore_settings(path, absolute_path, existed, backup)
 		return
 	var hit_profile: Dictionary = sf.get_cue_profile(sf.CUE_COMBAT_HIT)
 	var damage_profile: Dictionary = sf.get_cue_profile(sf.CUE_DAMAGE)
 	var warning_profile: Dictionary = sf.get_cue_profile(sf.CUE_WARNING)
 	if float(hit_profile.get("gain_db", 0.0)) > -8.0:
-		_fail("combat hit gain should stay polished/quiet: %s" % hit_profile)
 		sf.queue_free()
+		await process_frame
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("combat hit gain should stay polished/quiet: %s" % hit_profile)
 		return
 	if float(damage_profile.get("min_interval", 0.0)) < 0.45:
-		_fail("damage cue should be rate-limited more gently: %s" % damage_profile)
 		sf.queue_free()
+		await process_frame
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("damage cue should be rate-limited more gently: %s" % damage_profile)
 		return
 	if float(warning_profile.get("gain_db", 0.0)) > -12.0:
-		_fail("warning cue should stay quiet: %s" % warning_profile)
 		sf.queue_free()
+		await process_frame
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("warning cue should stay quiet: %s" % warning_profile)
 		return
 	if sf.get_master_volume() > 0.43:
-		_fail("default master volume should be calmer, got %s" % sf.get_master_volume())
+		var default_volume: float = sf.get_master_volume()
 		sf.queue_free()
+		await process_frame
+		_restore_settings(path, absolute_path, existed, backup)
+		_fail("default master volume should be calmer, got %s" % default_volume)
 		return
 	sf.queue_free()
 	await process_frame
+	_restore_settings(path, absolute_path, existed, backup)
 	print("  audio profiles: lower gains, longer rate limits, calmer default volume")
 
 
