@@ -26,6 +26,7 @@ const WALL_GLYPHS: Array[String] = ["#", "H", "I"]
 const GLYPH_SHADOW_OFFSET: Vector2 = Vector2(1, 1)
 const CELL_BURST_DURATION: float = 0.55
 const BOSS_SPAWN_INTRO_SECONDS: float = 0.90
+const BOSS_SPAWN_REDUCED_MAX_ALPHA: float = 0.20
 const CELL_BURST_LIFT: float = 9.0
 const TILE_FOREGROUND_COLORS: Dictionary = {
 	DungeonDataScript.TileType.FLOOR: Color(0.72, 0.70, 0.62),
@@ -301,14 +302,28 @@ func set_boss_visuals(boss_visuals: Dictionary) -> void:
 func play_boss_spawn_intro(anchor_cell: Vector2i, visual: Dictionary) -> void:
 	var effect: Dictionary = visual.duplicate(true)
 	effect["age"] = 0.0
-	effect["duration"] = BOSS_SPAWN_INTRO_SECONDS
+	effect["duration"] = maxf(
+		0.05,
+		float(
+			(
+				effect
+				. get(
+					"duration",
+					effect.get("duration_seconds", BOSS_SPAWN_INTRO_SECONDS),
+				)
+			)
+		),
+	)
 	effect["cell"] = anchor_cell
+	var renderer_effect: Dictionary = effect.duplicate(true)
+	if _reduced_vfx_enabled:
+		_apply_reduced_vfx_to_spawn_effect(effect)
 	_boss_spawn_effects[anchor_cell] = effect
 	(
 		_presentation_controller
 		. call(
 			&"play_event",
-			{"type": &"boss_spawn_intro", "payload": effect.duplicate(true)},
+			{"type": &"boss_spawn_intro", "payload": renderer_effect},
 		)
 	)
 	_update_processing_state()
@@ -755,7 +770,6 @@ func _draw() -> void:
 						_tile_foreground(cell, tile_type, is_visible, is_revealed_secret_wall)
 					)
 
-
 	if not full_pixel_active:
 		_draw_boss_room_tint(playfield_rect)
 		_draw_boss_arena_motif(draw_font, ascent, playfield_rect)
@@ -1057,35 +1071,132 @@ func _draw_boss_visuals(draw_font: Font, ascent: float, playfield_rect: Rect2) -
 func _draw_boss_spawn_effects(draw_font: Font, ascent: float, playfield_rect: Rect2) -> void:
 	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
 		var effect: Dictionary = _dictionary_or(_boss_spawn_effects[anchor_cell])
-		var age: float = float(effect.get("age", 0.0))
-		var duration: float = max(0.05, float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)))
-		var progress: float = clampf(age / duration, 0.0, 1.0)
+		var duration: float = maxf(0.05, float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)))
+		var progress: float = clampf(float(effect.get("age", 0.0)) / duration, 0.0, 1.0)
 		var color: Color = _color_or(
-			effect.get("color", Color(1.0, 0.72, 0.22, 1.0)), Color(1.0, 0.72, 0.22, 1.0)
+			effect.get("color", Color(1.0, 0.72, 0.22, 1.0)),
+			Color(1.0, 0.72, 0.22, 1.0),
 		)
-		var cells: Array = _array_or(effect.get("occupied_cells", []))
-		if cells.is_empty():
-			cells = [anchor_cell]
-		var pulse_alpha: float = sin(progress * PI) * 0.45
-		var glyphs: Array = _array_or(effect.get("spawn_glyphs", [".", "*", "!", "X"]))
-		if glyphs.is_empty():
-			glyphs = [".", "*", "!", "X"]
-		var glyph: String = str(glyphs[int(floor(progress * float(glyphs.size()))) % glyphs.size()])
-		for raw_cell in cells:
-			if not (raw_cell is Vector2i):
-				continue
-			var cell: Vector2i = raw_cell
+		var cells: Array[Vector2i] = _boss_spawn_cells(effect, anchor_cell)
+		var style: StringName = _boss_spawn_style(effect)
+		for index: int in range(cells.size()):
+			var cell: Vector2i = cells[index]
 			if not _visible_cells.has(cell):
 				continue
 			var point: Vector2 = _cell_draw_position(cell, ascent)
 			if not _is_inside_playfield(point, playfield_rect):
 				continue
-			_draw_cell_highlight(
+			_draw_boss_spawn_cell(
+				draw_font,
 				cell,
-				Color(color.r, color.g, color.b, 0.12 + pulse_alpha),
-				Color(color.r, color.g, color.b, 0.30 + pulse_alpha)
+				point,
+				style,
+				effect,
+				index,
+				cells.size(),
+				progress,
+				color,
 			)
-			_draw_glyph(draw_font, point, glyph, Color(color.r, color.g, color.b, 0.90), false)
+
+
+func _draw_boss_spawn_cell(
+	draw_font: Font,
+	cell: Vector2i,
+	point: Vector2,
+	style: StringName,
+	effect: Dictionary,
+	cell_index: int,
+	cell_count: int,
+	progress: float,
+	color: Color,
+) -> void:
+	var pulse: float = sin(progress * PI)
+	_draw_cell_highlight(
+		cell,
+		_cap_color_alpha(color, 0.08 + pulse * 0.34, color),
+		_cap_color_alpha(color, 0.18 + pulse * 0.54, color),
+	)
+	var phase: int = mini(int(floor(progress * 4.0)), 3)
+	var glyph_color: Color = _cap_color_alpha(color, 0.90, color)
+	match style:
+		&"observer":
+			var scan_y: float = lerpf(-5.0, 5.0, progress)
+			var scan_active: bool = cell_index == mini(int(progress * cell_count), cell_count - 1)
+			if scan_active:
+				_draw_glyph(draw_font, point + Vector2(0, scan_y), "─", glyph_color, false)
+			_draw_glyph(draw_font, point, ["·", "⊙", "◎", "◉"][phase], glyph_color, false)
+		&"seraphine":
+			var growth_lift: float = progress * (4.0 + float(cell_index % 2) * 2.0)
+			_draw_glyph(draw_font, point, ".", _cap_color_alpha(color, 0.46, color), false)
+			_draw_glyph(
+				draw_font,
+				point - Vector2(0, growth_lift),
+				["v", "^", "✹", "╋"][phase],
+				glyph_color,
+				false,
+			)
+		&"vorrak":
+			var flame_lift: float = progress * (5.0 + float((cell_index + 1) % 3))
+			var spark_side: float = -3.0 if cell_index % 2 == 0 else 3.0
+			_draw_glyph(
+				draw_font,
+				point + Vector2(spark_side, -flame_lift * 0.5),
+				".",
+				_cap_color_alpha(color, 0.58, color),
+				false,
+			)
+			_draw_glyph(
+				draw_font,
+				point - Vector2(0, flame_lift),
+				[".", "*", "※", "▴"][phase],
+				glyph_color,
+				false,
+			)
+		&"kaelros":
+			var tide_shift: float = sin(progress * TAU + float(cell_index) * 0.9) * 3.0
+			_draw_glyph(
+				draw_font,
+				point + Vector2(tide_shift, 3.0),
+				["~", "≈", "≋", "♒"][phase],
+				glyph_color,
+				false,
+			)
+			if progress >= 0.55:
+				_draw_glyph(draw_font, point - Vector2(0, 4), "W", glyph_color, false)
+		&"nyxara":
+			var diagonal: float = lerpf(-4.0, 4.0, progress)
+			var slash: String = "/" if (cell.x + cell.y) % 2 == 0 else "\\"
+			_draw_glyph(draw_font, point + Vector2(diagonal, -diagonal), slash, glyph_color, false)
+			_draw_glyph(
+				draw_font,
+				point - Vector2(diagonal, -diagonal),
+				"X" if phase >= 2 else slash,
+				_cap_color_alpha(color, 0.62, color),
+				false,
+			)
+		_:
+			var glyphs: Array = _array_or(effect.get("spawn_glyphs", [".", "*", "!", "X"]))
+			if glyphs.is_empty():
+				glyphs = [".", "*", "!", "X"]
+			var glyph_index: int = mini(int(floor(progress * glyphs.size())), glyphs.size() - 1)
+			_draw_glyph(draw_font, point, str(glyphs[glyph_index]), glyph_color, false)
+
+
+func _boss_spawn_style(effect: Dictionary) -> StringName:
+	var boss_value: Variant = effect.get("boss_id", &"")
+	if str(boss_value).is_empty():
+		boss_value = effect.get("spawn_style", &"")
+	return StringName(str(boss_value))
+
+
+func _boss_spawn_cells(effect: Dictionary, anchor_cell: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell_value: Variant in _array_or(effect.get("occupied_cells", [])):
+		if cell_value is Vector2i:
+			cells.append(cell_value)
+	if cells.is_empty():
+		cells.append(anchor_cell)
+	return cells
 
 
 func _boss_frame_width(frame: PackedStringArray) -> int:
@@ -1338,6 +1449,14 @@ func _apply_reduced_vfx_to_active_effects() -> void:
 		var burst: Dictionary = _cell_bursts[index]
 		_apply_reduced_vfx_to_burst(burst)
 		_cell_bursts[index] = burst
+	for anchor_cell: Vector2i in _boss_spawn_effects.keys():
+		var effect: Dictionary = _dictionary_or(_boss_spawn_effects[anchor_cell])
+		var age: float = float(effect.get("age", 0.0))
+		_apply_reduced_vfx_to_spawn_effect(effect)
+		if age >= float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS)):
+			_boss_spawn_effects.erase(anchor_cell)
+		else:
+			_boss_spawn_effects[anchor_cell] = effect
 	_update_processing_state()
 
 
@@ -1370,6 +1489,15 @@ func _apply_reduced_vfx_to_burst(burst: Dictionary) -> void:
 	burst["duration"] = duration
 	burst["age"] = min(float(burst.get("age", 0.0)), duration)
 	burst["color"] = _cap_color_alpha(burst.get("color", Color.WHITE), 0.08)
+
+
+func _apply_reduced_vfx_to_spawn_effect(effect: Dictionary) -> void:
+	effect["duration"] = _reduced_effect_duration(
+		float(effect.get("duration", BOSS_SPAWN_INTRO_SECONDS))
+	)
+	effect["color"] = _cap_color_alpha(
+		effect.get("color", Color.WHITE), BOSS_SPAWN_REDUCED_MAX_ALPHA
+	)
 
 
 func _shimmered_color(base: Color, accent: Color, trail: Dictionary) -> Color:

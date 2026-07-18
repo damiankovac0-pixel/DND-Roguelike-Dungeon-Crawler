@@ -4,6 +4,7 @@
 ##   - get_cue_names() completeness for all required cues
 ##   - AudioStreamWAV properties (format, mix_rate, non-empty data)
 ##   - Visual feedback lifecycle (activate on trigger, expire after duration)
+##   - V31 lazy boss attack audio allocation, rate limiting, and contextual visuals
 ##   - Game scene integration (UI/SensoryFeedback node presence)
 ##
 ## Run:
@@ -44,7 +45,10 @@ func _run() -> void:
 	# === 4. Visual feedback ===
 	await _check_visual_feedback()
 
-	# === 5. Game scene integration ===
+	# === 5. Lazy boss attack audio ===
+	_check_lazy_boss_attack_audio()
+
+	# === 6. Game scene integration ===
 	await _check_game_scene_integration()
 
 	await process_frame
@@ -184,7 +188,92 @@ func _check_visual_feedback() -> void:
 
 
 # ======================================================================
-# 5. Game scene integration
+# 5. V31 lazy boss attack audio
+# ======================================================================
+func _check_lazy_boss_attack_audio() -> void:
+	var sf = _sensory_feedback_script.new()
+	root.add_child(sf)
+
+	var telegraph_cue: StringName = sf.CUE_BOSS_TELEGRAPH
+	var initial_cache_size: int = sf._boss_attack_streams.size()
+	var disabled_attack_id: StringName = &"v31_lazy_disabled_windup"
+	var disabled_key: StringName = StringName("observer|%s|windup" % disabled_attack_id)
+
+	sf.set_audio_enabled(false)
+	sf.play_boss_attack_cue(&"observer", disabled_attack_id, &"windup")
+	_assert_eq(
+		sf._boss_attack_streams.size(),
+		initial_cache_size,
+		"audio-disabled boss attack cue should not allocate a stream"
+	)
+	_assert_eq(
+		sf._boss_attack_streams.has(disabled_key),
+		false,
+		"audio-disabled boss attack cue should not populate its cache key"
+	)
+	if not sf.has_active_visual_feedback():
+		_fail("audio-disabled boss attack cue should still activate visual feedback")
+	var observer_visual: Color = Color(0.62, 0.84, 1.0, sf._visual_color.a)
+	if not sf._visual_color.is_equal_approx(observer_visual):
+		_fail(
+			(
+				"contextual observer visual expected %s, got %s"
+				% [str(observer_visual), str(sf._visual_color)]
+			)
+		)
+
+	sf.set_audio_enabled(true)
+	var profile: Dictionary = sf.CUE_PROFILES.get(telegraph_cue, {})
+	var min_interval: float = float(profile.get("min_interval", 0.0))
+	if min_interval <= 0.0:
+		_fail("boss telegraph cue should expose a positive minimum interval")
+
+	var eligible_attack_id: StringName = &"v31_lazy_eligible_windup"
+	var eligible_key: StringName = StringName("observer|%s|windup" % eligible_attack_id)
+	var eligible_now: float = Time.get_ticks_msec() / 1000.0
+	sf._cue_last_play_time[telegraph_cue] = eligible_now - min_interval - 1.0
+	sf.play_boss_attack_cue(&"observer", eligible_attack_id, &"windup")
+	_assert_eq(
+		sf._boss_attack_streams.size(),
+		initial_cache_size + 1,
+		"eligible boss attack cue should allocate exactly one cached stream"
+	)
+	if not sf._boss_attack_streams.get(eligible_key) is AudioStreamWAV:
+		_fail("eligible boss attack cue should cache an AudioStreamWAV at its runtime key")
+
+	var rate_limited_attack_id: StringName = &"v31_lazy_rate_limited_resolve"
+	var rate_limited_key: StringName = StringName("observer|%s|resolve" % rate_limited_attack_id)
+	sf.play_boss_attack_cue(&"observer", rate_limited_attack_id, &"resolve")
+	_assert_eq(
+		sf._boss_attack_streams.size(),
+		initial_cache_size + 1,
+		"immediate rate-limited boss attack cue should not allocate a fresh stream"
+	)
+	_assert_eq(
+		sf._boss_attack_streams.has(rate_limited_key),
+		false,
+		"rate-limited boss attack cue should leave its fresh cache key absent"
+	)
+
+	var after_interval: float = Time.get_ticks_msec() / 1000.0
+	sf._cue_last_play_time[telegraph_cue] = after_interval - min_interval - 0.001
+	sf.play_boss_attack_cue(&"observer", rate_limited_attack_id, &"resolve")
+	_assert_eq(
+		sf._boss_attack_streams.size(),
+		initial_cache_size + 2,
+		"boss attack cue should allocate after its minimum interval"
+	)
+	if not sf._boss_attack_streams.get(rate_limited_key) is AudioStreamWAV:
+		_fail("post-interval boss attack cue should cache its AudioStreamWAV")
+
+	sf.queue_free()
+
+
+# ======================================================================
+# 6. Game scene integration
+# ======================================================================
+# ======================================================================
+# 6. Game scene integration
 # ======================================================================
 func _check_game_scene_integration() -> void:
 	var gm: Node = root.get_node_or_null("/root/GameManager")

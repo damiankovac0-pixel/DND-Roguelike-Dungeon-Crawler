@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
@@ -10,6 +10,9 @@ script = ExtResource("2")
 id = &"observer_gaze"
 intent = &"boss_attack"
 phase_min = 1
+selection_weight = 5
+min_player_distance = 2.0
+max_player_distance = 0.0
 cooldown = 2
 telegraph_turns = 2
 shape = &"line_to_player"
@@ -36,6 +39,9 @@ script = ExtResource("2")
 id = &"blink_pulse"
 intent = &"boss_attack"
 phase_min = 2
+selection_weight = 4
+min_player_distance = 0.0
+max_player_distance = 0.0
 cooldown = 3
 telegraph_turns = 2
 shape = &"ring"
@@ -64,6 +70,9 @@ script = ExtResource("2")
 id = &"many_eyes"
 intent = &"boss_attack"
 phase_min = 3
+selection_weight = 7
+min_player_distance = 0.0
+max_player_distance = 0.0
 cooldown = 4
 telegraph_turns = 2
 shape = &"cross"
@@ -82,13 +91,40 @@ telegraph_color = Color(0.74, 0.92, 1, 1)
 telegraph_fill_color = Color(0.12, 0.36, 0.78, 0.24)
 telegraph_border_color = Color(0.54, 0.84, 1, 0.88)
 
+[sub_resource type="Resource" id="Resource_observer_recoil"]
+script = ExtResource("2")
+id = &"optic_recoil"
+intent = &"boss_attack"
+phase_min = 1
+selection_weight = 12
+min_player_distance = 0.0
+max_player_distance = 2.0
+cooldown = 3
+telegraph_turns = 1
+shape = &"ring"
+radius = 1
+damage_dice = 2
+damage_sides = 4
+damage_bonus = 1
+damage_type = &"magic"
+projectile_id = &"observer_gaze"
+warning_text = "The Observer's eye snaps wide -- optic force gathers at close range. Break away."
+resolve_text = "The Observer's optic recoil blasts you for %d magic damage."
+effect = &"push"
+effect_trigger = &"hit"
+effect_amount = 2
+telegraph_glyph = "O"
+telegraph_color = Color(0.74, 0.92, 1, 1)
+telegraph_fill_color = Color(0.12, 0.36, 0.78, 0.24)
+telegraph_border_color = Color(0.54, 0.84, 1, 0.88)
+
 [resource]
 script = ExtResource("1")
 visual_id = &"boss/observer"
 display_name = "The Observer"
 glyph = "O"
 color = Color(0.84, 0.88, 1, 1)
-max_hp = 110
+max_hp = 128
 armor_class = 15
 attack_bonus = 7
 damage_sides = 8
@@ -100,12 +136,14 @@ spawn_weight = 0
 melee_damage_percent = 100
 ranged_damage_percent = 100
 magic_damage_percent = 100
-boss_strategy_hint = "Evade the Observer's attacks to expose its eye for bonus damage."
+boss_strategy_hint = "Close attacks trigger optic recoil; evade the Observer's telegraphs to open its eye for bonus damage."
 boss_guarded_damage_percent = 70
 boss_exposed_damage_percent = 165
 boss_exposed_turns = 2
 is_boss = true
 boss_id = &"observer"
+boss_retaliation_attack_id = &"optic_recoil"
+boss_retaliation_hit_threshold = 2
 boss_floor = 5
 boss_room_title = "The Unblinking Gate"
 boss_reward_gold = 150
@@ -114,6 +152,6 @@ boss_phase_hp_percents = Array[int]([65, 35])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-2, 0), Vector2i(0, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
 boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" .O. ", "( o )", " '~' "), PackedStringArray(" ~O~ ", "[ * ]", " 'v' "), PackedStringArray(" .O. ", "{ @ }", " '^' ")])
 boss_visual_frame_seconds = 0.26
-boss_attacks = Array[Resource]([SubResource("Resource_observer_gaze"), SubResource("Resource_observer_blink"), SubResource("Resource_observer_many_eyes")])
+boss_attacks = Array[Resource]([SubResource("Resource_observer_gaze"), SubResource("Resource_observer_blink"), SubResource("Resource_observer_many_eyes"), SubResource("Resource_observer_recoil")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

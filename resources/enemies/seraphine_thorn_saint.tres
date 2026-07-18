@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
@@ -10,6 +10,9 @@ script = ExtResource("2")
 id = &"thorn_lance"
 intent = &"boss_attack"
 phase_min = 1
+selection_weight = 5
+min_player_distance = 2.0
+max_player_distance = 0.0
 cooldown = 2
 telegraph_turns = 2
 shape = &"line_to_player"
@@ -31,7 +34,10 @@ telegraph_border_color = Color(0.76, 1, 0.36, 0.84)
 script = ExtResource("2")
 id = &"spore_bloom"
 intent = &"boss_attack"
-phase_min = 3
+phase_min = 2
+selection_weight = 6
+min_player_distance = 0.0
+max_player_distance = 0.0
 cooldown = 4
 telegraph_turns = 1
 shape = &"summon"
@@ -49,6 +55,9 @@ script = ExtResource("2")
 id = &"spore_burst"
 intent = &"boss_attack"
 phase_min = 2
+selection_weight = 7
+min_player_distance = 0.0
+max_player_distance = 0.0
 cooldown = 3
 telegraph_turns = 2
 shape = &"thorn_patch"
@@ -78,13 +87,40 @@ hazard_glyph = ","
 hazard_vfx_id = &"spore_hazard"
 hazard_message = "Lingering spores erupt for %d magic damage."
 
+[sub_resource type="Resource" id="Resource_seraphine_rebuke"]
+script = ExtResource("2")
+id = &"briar_rebuke"
+intent = &"boss_attack"
+phase_min = 1
+selection_weight = 12
+min_player_distance = 0.0
+max_player_distance = 2.0
+cooldown = 3
+telegraph_turns = 1
+shape = &"ring"
+radius = 1
+damage_dice = 2
+damage_sides = 4
+damage_bonus = 2
+damage_type = &"melee"
+projectile_id = &"thorn_lance"
+warning_text = "Seraphine's roots knot beneath nearby feet -- the briars are about to reject close attackers."
+resolve_text = "Seraphine's briar rebuke tears through you for %d melee damage."
+effect = &"push"
+effect_trigger = &"hit"
+effect_amount = 1
+telegraph_glyph = "+"
+telegraph_color = Color(0.90, 1, 0.48, 1)
+telegraph_fill_color = Color(0.18, 0.54, 0.16, 0.24)
+telegraph_border_color = Color(0.90, 0.58, 0.82, 0.86)
+
 [resource]
 script = ExtResource("1")
 visual_id = &"boss/seraphine"
 display_name = "Seraphine, the Thorn Saint"
 glyph = "S"
 color = Color(0.88, 0.42, 0.58, 1)
-max_hp = 140
+max_hp = 165
 armor_class = 16
 attack_bonus = 8
 damage_sides = 8
@@ -96,12 +132,14 @@ spawn_weight = 0
 melee_damage_percent = 100
 ranged_damage_percent = 100
 magic_damage_percent = 100
-boss_strategy_hint = "Land 3 hits to prune the briars; slain servants prune 2. Strike while the sanctuary is open."
+boss_strategy_hint = "Land 3 hits to prune the briars; slain servants prune 2. Keep moving when her roots reject close campers."
 boss_guarded_damage_percent = 70
 boss_exposed_damage_percent = 150
 boss_exposed_turns = 2
 is_boss = true
 boss_id = &"seraphine"
+boss_retaliation_attack_id = &"briar_rebuke"
+boss_retaliation_hit_threshold = 3
 boss_floor = 10
 boss_room_title = "The Blooming Reliquary"
 boss_reward_gold = 240
@@ -110,6 +148,6 @@ boss_phase_hp_percents = Array[int]([70, 40])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(1, 1)])
 boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" .S. ", "-{+}-", " .|. ", " V V "), PackedStringArray(" .S. ", "<|*|>", " /|\\ ", " v v ")])
 boss_visual_frame_seconds = 0.30
-boss_attacks = Array[Resource]([SubResource("Resource_seraphine_lance"), SubResource("Resource_seraphine_bloom"), SubResource("Resource_seraphine_spores")])
+boss_attacks = Array[Resource]([SubResource("Resource_seraphine_lance"), SubResource("Resource_seraphine_bloom"), SubResource("Resource_seraphine_spores"), SubResource("Resource_seraphine_rebuke")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

@@ -61,3 +61,5 @@ extends Resource
 @export var boss_guarded_damage_percent: int = 100
 @export var boss_exposed_damage_percent: int = 100
 @export var boss_exposed_turns: int = 0
+@export var boss_retaliation_attack_id: StringName = &""
+@export var boss_retaliation_hit_threshold: int = 0

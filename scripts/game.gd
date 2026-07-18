@@ -42,6 +42,7 @@ const BOSS_ARENA_STATE_ACTIVE: StringName = &"active"
 const BOSS_ARENA_STATE_DEFEATED: StringName = &"defeated"
 const BOSS_ARENA_REVEAL_SECONDS: float = 2.10
 const BOSS_REWARD_CHEST_DEFER_SECONDS: float = 0.50
+const BOSS_CURRENT_PHASE_ATTACK_SCORE_BONUS: int = 1000
 const BOSS_RESOURCE_BY_ID: Dictionary = {
 	&"observer": "res://resources/enemies/the_observer.tres",
 	&"seraphine": "res://resources/enemies/seraphine_thorn_saint.tres",
@@ -1307,6 +1308,8 @@ func complete_boss_arena_reveal() -> bool:
 					"display_name": boss.display_name,
 					"color": boss.color,
 					"occupied_cells": _boss_states[boss].get("occupied_cells", []),
+					"boss_id": boss_id,
+					"spawn_style": boss_id,
 					"spawn_glyphs": _boss_spawn_glyphs(boss_id),
 				}
 			)
@@ -1387,6 +1390,8 @@ func _make_boss_state(enemy: Node) -> Dictionary:
 		"telegraph_turns": 0,
 		"telegraph_cells": {},
 		"last_attack_id": &"",
+		"melee_hits_received": 0,
+		"forced_attack_id": &"",
 		"occupied_cells": _calculate_enemy_occupied_cells(enemy),
 		"reward_claimed": false,
 		"nyxara_summon_toggle": false,
@@ -1532,15 +1537,16 @@ func _on_boss_strategy_attack_resolved(enemy: Node, hit: bool) -> void:
 	_boss_states[enemy] = state
 
 
-func _on_boss_damaged(enemy: Node) -> void:
+func _on_boss_damaged(enemy: Node, damage_channel: StringName = &"") -> void:
 	if not _is_boss_enemy(enemy):
 		return
 	var enemy_actor: Enemy = enemy as Enemy
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return
+	var enemy_data: Resource = enemy_actor.enemy_data
 	var state: Dictionary = _boss_state_for(enemy)
-	var boss_id: StringName = enemy_actor.enemy_data.boss_id
-	var exposed_turns: int = enemy_actor.enemy_data.boss_exposed_turns
+	var boss_id: StringName = enemy_data.boss_id
+	var exposed_turns: int = enemy_data.boss_exposed_turns
 	match boss_id:
 		&"seraphine":
 			var briars: int = int(state.get("strategy_resource", 3))
@@ -1553,7 +1559,6 @@ func _on_boss_damaged(enemy: Node) -> void:
 					GameManager.add_log_message(
 						"%s's sanctuary is pruned!" % enemy.display_name, &"warning"
 					)
-				_boss_states[enemy] = state
 		&"nyxara":
 			# Attacking Nyxara from the true angle opens the guard window
 			if _player_at_nyxara_true_side(enemy) and exposed_turns > 0:
@@ -1564,7 +1569,25 @@ func _on_boss_damaged(enemy: Node) -> void:
 					GameManager.add_log_message(
 						"%s's mirror guard cracks." % enemy.display_name, &"warning"
 					)
-					_boss_states[enemy] = state
+	if (
+		damage_channel == &"melee"
+		and enemy_data.boss_retaliation_hit_threshold > 0
+		and enemy_data.boss_retaliation_attack_id != &""
+	):
+		var melee_hits: int = int(state.get("melee_hits_received", 0)) + 1
+		if melee_hits >= enemy_data.boss_retaliation_hit_threshold:
+			state["melee_hits_received"] = 0
+			state["forced_attack_id"] = enemy_data.boss_retaliation_attack_id
+			GameManager.add_log_message(
+				(
+					"%s's retaliation is primed: %s will be next!"
+					% [enemy.display_name, enemy_data.boss_retaliation_attack_id]
+				),
+				&"warning"
+			)
+		else:
+			state["melee_hits_received"] = melee_hits
+	_boss_states[enemy] = state
 
 
 func _on_boss_summon_died(summoner_id: int) -> void:
@@ -2313,7 +2336,7 @@ func _resolve_attack(attacker: Node, defender: Node) -> void:
 		_play_action_burst(defender.grid_position, &"miss")
 
 	_try_apply_attack_poison(attacker, defender, outcome)
-	_handle_defender_after_damage(defender, outcome["damage"] > 0)
+	_handle_defender_after_damage(defender, int(outcome["damage"]) > 0, &"melee")
 
 	if attacker == _player and _cleave_primed and outcome["hit"]:
 		_apply_cleave_splash(defender, outcome)
@@ -2414,7 +2437,9 @@ func _try_apply_attack_poison(attacker: Node, defender: Node, outcome: Dictionar
 	)
 
 
-func _handle_defender_after_damage(defender: Node, took_damage: bool = true) -> void:
+func _handle_defender_after_damage(
+	defender: Node, took_damage: bool = true, damage_channel: StringName = &""
+) -> void:
 	if took_damage and defender != null:
 		var animation: StringName = &"hurt" if defender.is_alive() else &"death"
 		_play_actor_presentation_event(defender, animation)
@@ -2425,7 +2450,7 @@ func _handle_defender_after_damage(defender: Node, took_damage: bool = true) -> 
 		if not _player.is_alive():
 			_game_over(false)
 	elif _is_boss_enemy(defender) and took_damage and defender.is_alive():
-		_on_boss_damaged(defender)
+		_on_boss_damaged(defender, damage_channel)
 	elif not defender.is_alive():
 		var xp_reward: int = defender.stats_component.xp_reward
 		_grant_player_xp(xp_reward)
@@ -2814,7 +2839,9 @@ func _activate_fighter_whirlwind() -> void:
 			GameManager.add_log_message(
 				"Whirlwind misses %s." % target.display_name, &"combat_miss"
 			)
-		_handle_defender_after_damage(target, outcome["hit"] and int(outcome["damage"]) > 0)
+		_handle_defender_after_damage(
+			target, outcome["hit"] and int(outcome["damage"]) > 0, &"melee"
+		)
 	_finish_player_action()
 
 
@@ -2882,7 +2909,7 @@ func _activate_ranger_volley() -> void:
 		GameManager.add_log_message(
 			"Volley hits %s for %d damage." % [target.display_name, damage], &"combat_hit"
 		)
-		_handle_defender_after_damage(target)
+		_handle_defender_after_damage(target, damage > 0, &"ranged")
 	_finish_player_action()
 
 
@@ -2928,7 +2955,7 @@ func _activate_wizard_spark() -> void:
 		"Arcane Spark hits %s for %d force magic damage." % [nearest_enemy.display_name, damage],
 		&"magic"
 	)
-	_handle_defender_after_damage(nearest_enemy)
+	_handle_defender_after_damage(nearest_enemy, damage > 0, &"magic")
 	_finish_player_action()
 
 
@@ -2970,7 +2997,7 @@ func _activate_wizard_frost_nova() -> void:
 			&"combat_hit"
 		)
 		_sleeping_enemies[target] = sleep_turns
-		_handle_defender_after_damage(target)
+		_handle_defender_after_damage(target, damage > 0, &"magic")
 	_finish_player_action()
 
 
@@ -3017,7 +3044,7 @@ func _activate_wizard_chain_lightning() -> void:
 			),
 			&"combat_hit"
 		)
-		_handle_defender_after_damage(target)
+		_handle_defender_after_damage(target, damage > 0, &"magic")
 	_finish_player_action()
 
 
@@ -3274,7 +3301,7 @@ func _apply_cleave_splash(primary_target: Node, outcome: Dictionary) -> void:
 				),
 				&"combat_hit"
 			)
-		_handle_defender_after_damage(splash_target)
+		_handle_defender_after_damage(splash_target, splash_damage > 0, &"melee")
 
 
 func _apply_fighter_extra_strike(defender: Node) -> void:
@@ -3310,7 +3337,7 @@ func _apply_fighter_extra_strike(defender: Node) -> void:
 			"Extra strike misses %s." % [defender.display_name], &"combat_miss"
 		)
 	_handle_defender_after_damage(
-		defender, extra_outcome["hit"] and int(extra_outcome["damage"]) > 0
+		defender, extra_outcome["hit"] and int(extra_outcome["damage"]) > 0, &"melee"
 	)
 
 
@@ -4013,7 +4040,7 @@ func _is_free_enemy_spawn_cell(cell: Vector2i, blocked_cells: Dictionary) -> boo
 
 func _enemy_distance_to_player(enemy: Node) -> float:
 	var best_distance: float = INF
-	for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
+	for occupied_cell: Vector2i in _calculate_enemy_occupied_cells(enemy):
 		best_distance = min(best_distance, occupied_cell.distance_to(_player.grid_position))
 	return (
 		best_distance
@@ -4053,9 +4080,15 @@ func _process_boss_turn(
 	_tick_boss_attack_cooldowns(enemy)
 	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
 	if attack == null:
+		_try_move_boss_toward_player(enemy, blocked_cells)
+		_refresh_boss_presentation()
+		_refresh_map()
 		return true
 	var cells: Dictionary = _boss_attack_cells(enemy, attack)
 	if cells.is_empty() and attack.shape != &"summon":
+		_try_move_boss_toward_player(enemy, blocked_cells)
+		_refresh_boss_presentation()
+		_refresh_map()
 		return true
 	_queue_boss_attack(enemy, attack, cells)
 	var effective_windup: int = _boss_attack_effective_windup(attack)
@@ -4074,11 +4107,12 @@ func _process_boss_turn(
 	return true
 
 
-func _update_boss_phase(enemy: Node) -> void:
+func _boss_phase_for(enemy: Node) -> int:
 	if not _is_boss_enemy(enemy):
-		return
+		return 1
 	var enemy_actor: Enemy = enemy as Enemy
-	var state: Dictionary = _boss_state_for(enemy)
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return 1
 	var hp_percent: float = (
 		float(enemy.stats_component.current_hp)
 		/ max(1.0, float(enemy.stats_component.max_hp))
@@ -4088,6 +4122,15 @@ func _update_boss_phase(enemy: Node) -> void:
 	for threshold: int in enemy_actor.enemy_data.boss_phase_hp_percents:
 		if hp_percent <= float(threshold):
 			phase += 1
+	return phase
+
+
+func _update_boss_phase(enemy: Node) -> void:
+	if not _is_boss_enemy(enemy):
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	var state: Dictionary = _boss_state_for(enemy)
+	var phase: int = _boss_phase_for(enemy)
 	var previous_phase: int = int(state.get("phase", 1))
 	state["phase"] = phase
 	_boss_states[enemy] = state
@@ -4123,52 +4166,69 @@ func _tick_boss_attack_cooldowns(enemy: Node) -> void:
 	_boss_states[enemy] = state
 
 
-func _choose_boss_attack(enemy: Node, _action_count: int, _distance_to_player: float) -> Resource:
+func _choose_boss_attack(enemy: Node, _action_count: int, distance_to_player: float) -> Resource:
 	var enemy_actor: Enemy = enemy as Enemy
 	if enemy_actor == null or enemy_actor.enemy_data == null:
 		return null
-	var state: Dictionary = _boss_state_for(enemy)
-	var phase: int = int(state.get("phase", 1))
+	var state: Dictionary = _boss_states.get(enemy, {})
+	var phase: int = _boss_phase_for(enemy)
 	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
-	var candidates: Array[Resource] = []
-	for attack: Resource in enemy_actor.enemy_data.boss_attacks:
-		if attack == null:
-			continue
-		if attack.phase_min > phase:
-			continue
-		if int(cooldowns.get(attack.id, 0)) > 0:
-			continue
-		if attack.shape == &"summon" and _boss_summon_slots_available(enemy, attack) <= 0:
-			continue
-		candidates.append(attack)
-	if candidates.is_empty():
-		return null
-	var exact_phase_candidates: Array[Resource] = []
-	for attack: Resource in candidates:
-		if attack.phase_min == phase:
-			exact_phase_candidates.append(attack)
-	if not exact_phase_candidates.is_empty():
-		candidates = exact_phase_candidates
+	var forced_attack_id: StringName = state.get("forced_attack_id", &"")
+	if forced_attack_id != &"":
+		for attack: Resource in enemy_actor.enemy_data.boss_attacks:
+			if attack == null or attack.id != forced_attack_id:
+				continue
+			if _is_boss_attack_eligible(enemy, attack, phase, distance_to_player, cooldowns, true):
+				return attack
+			return null
 	var last_attack_id: StringName = state.get("last_attack_id", &"")
-	var preferred: Resource = null
-	for attack: Resource in candidates:
+	var best_attack: Resource = null
+	var best_score: int = -1
+	for attack: Resource in enemy_actor.enemy_data.boss_attacks:
+		if not _is_boss_attack_eligible(enemy, attack, phase, distance_to_player, cooldowns):
+			continue
+		var score: int = max(0, int(attack.selection_weight)) * 100
+		if attack.phase_min == phase:
+			score += BOSS_CURRENT_PHASE_ATTACK_SCORE_BONUS
 		if attack.id != last_attack_id:
-			preferred = attack
-			break
-	if preferred != null:
-		return preferred
-	return candidates[0]
+			score += 1
+		if best_attack == null or score > best_score:
+			best_attack = attack
+			best_score = score
+	return best_attack
+
+
+func _is_boss_attack_eligible(
+	enemy: Node,
+	attack: Resource,
+	phase: int,
+	distance_to_player: float,
+	cooldowns: Dictionary,
+	ignore_cooldown: bool = false
+) -> bool:
+	if attack == null or attack.phase_min > phase:
+		return false
+	if not ignore_cooldown and int(cooldowns.get(attack.id, 0)) > 0:
+		return false
+	if distance_to_player < attack.min_player_distance:
+		return false
+	if attack.max_player_distance > 0.0 and distance_to_player > attack.max_player_distance:
+		return false
+	if attack.shape == &"summon" and _boss_summon_slots_available(enemy, attack) <= 0:
+		return false
+	return true
 
 
 func _boss_has_windup_intent(enemy: Node, action_count: int, distance_to_player: float) -> bool:
-	_update_boss_phase(enemy)
 	var attack: Resource = _choose_boss_attack(enemy, action_count, distance_to_player)
 	if attack == null:
 		return false
-	return attack.shape == &"summon" or not _boss_attack_cells(enemy, attack).is_empty()
+	return attack.shape == &"summon" or not _boss_attack_cells(enemy, attack, false).is_empty()
 
 
-func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
+func _boss_attack_cells(
+	enemy: Node, attack: Resource, report_unknown_shape: bool = true
+) -> Dictionary:
 	var cells: Dictionary = {}
 	if attack == null or _player == null:
 		return cells
@@ -4197,7 +4257,7 @@ func _boss_attack_cells(enemy: Node, attack: Resource) -> Dictionary:
 		&"summon":
 			_add_boss_summon_preview_cells(cells, enemy, attack)
 		_:
-			if not _unknown_boss_attack_shapes.has(shape):
+			if report_unknown_shape and not _unknown_boss_attack_shapes.has(shape):
 				_unknown_boss_attack_shapes[shape] = true
 				GameManager.add_log_message(
 					"Unknown boss attack shape %s; targeting you instead." % shape, &"warning"
@@ -4265,7 +4325,7 @@ func _add_boss_cross_cells(cells: Dictionary, enemy: Node, attack: Resource) -> 
 
 func _add_boss_ring_cells(cells: Dictionary, enemy: Node, attack: Resource) -> void:
 	var radius: int = max(1, attack.radius)
-	var occupied_cells: Array[Vector2i] = _enemy_occupied_cells(enemy)
+	var occupied_cells: Array[Vector2i] = _calculate_enemy_occupied_cells(enemy)
 	if occupied_cells.is_empty():
 		return
 	var min_x: int = occupied_cells[0].x
@@ -4394,9 +4454,23 @@ func _play_boss_projectile_resolution(enemy: Node, attack: Resource, cells: Dict
 		_play_projectile_cells(queued_cells, payload)
 
 
+func _play_boss_attack_cue(enemy: Node, attack: Resource, stage: StringName) -> void:
+	if (
+		attack == null
+		or not is_instance_valid(sensory_feedback)
+		or not sensory_feedback.has_method(&"play_boss_attack_cue")
+	):
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	sensory_feedback.call(&"play_boss_attack_cue", enemy_actor.enemy_data.boss_id, attack.id, stage)
+
+
 func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> void:
 	if attack == null:
 		return
+	_play_boss_attack_cue(enemy, attack, &"resolve")
 	_play_actor_presentation_event(enemy, &"cast")
 	if attack.shape == &"summon":
 		_resolve_boss_summon(enemy, attack, cells)
@@ -4679,12 +4753,6 @@ func _find_boss_room_summon_cell(origin: Vector2i, blocked_cells: Dictionary) ->
 
 
 func _boss_attack_effective_windup(attack: Resource) -> int:
-	var is_summon: bool = attack.shape == &"summon"
-	var is_damaging: bool = attack.damage_dice > 0 or attack.damage_bonus > 0
-	if is_summon:
-		return max(1, attack.telegraph_turns)
-	if is_damaging:
-		return max(2, attack.telegraph_turns)
 	return max(1, attack.telegraph_turns)
 
 
@@ -4728,13 +4796,7 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	var state: Dictionary = _boss_state_for(enemy)
 	var is_summon: bool = attack.shape == &"summon"
 	var is_damaging: bool = attack.damage_dice > 0 or attack.damage_bonus > 0
-	var effective_windup: int
-	if is_summon:
-		effective_windup = max(1, attack.telegraph_turns)
-	elif is_damaging:
-		effective_windup = max(2, attack.telegraph_turns)
-	else:
-		effective_windup = max(1, attack.telegraph_turns)
+	var effective_windup: int = _boss_attack_effective_windup(attack)
 	if is_damaging and not is_summon:
 		_ensure_boss_telegraph_escape(cells, _player.grid_position)
 	state["pending_attack"] = attack
@@ -4742,6 +4804,8 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	state["effective_windup"] = effective_windup
 	state["telegraph_cells"] = cells.duplicate(true)
 	state["last_attack_id"] = attack.id
+	if state.get("forced_attack_id", &"") == attack.id:
+		state["forced_attack_id"] = &""
 	var cooldowns: Dictionary = state.get("attack_cooldowns", {})
 	cooldowns[attack.id] = max(1, attack.cooldown)
 	state["attack_cooldowns"] = cooldowns
@@ -4752,6 +4816,7 @@ func _queue_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> voi
 	var boss_id: StringName = &""
 	if enemy_actor != null and enemy_actor.enemy_data != null:
 		boss_id = enemy_actor.enemy_data.boss_id
+	_play_boss_attack_cue(enemy, attack, &"windup")
 	for cell: Vector2i in cells.keys():
 		_boss_telegraphs[cell] = payload.duplicate(true)
 		_boss_telegraphs[cell]["attack_id"] = attack.id
@@ -5085,7 +5150,7 @@ func _build_enemy_intents() -> Dictionary:
 		var distance_to_player: float = _enemy_distance_to_player(enemy)
 		var next_action_count: int = int(_enemy_action_counts.get(enemy, 0)) + 1
 		if enemy_data.is_boss:
-			var state: Dictionary = _boss_state_for(enemy)
+			var state: Dictionary = _boss_states.get(enemy, {})
 			if state.get("pending_attack", null) != null:
 				intents[enemy.grid_position] = &"boss_attack"
 			elif _boss_has_windup_intent(enemy, next_action_count, distance_to_player):
@@ -5795,7 +5860,7 @@ func _resolve_magic_missile(item: Resource, cell: Vector2i) -> bool:
 			&"magic"
 		)
 		_play_action_burst(target.grid_position, &"magic_hit")
-		_handle_defender_after_damage(target)
+		_handle_defender_after_damage(target, damage > 0, &"magic")
 	return true
 
 
@@ -5898,7 +5963,7 @@ func _resolve_ranged_attack(item: Resource, defender: Node2D, source: StringName
 				else (&"magic_hit" if attack_damage_type == &"magic" else &"ranged_hit")
 			)
 		)
-		_handle_defender_after_damage(defender)
+		_handle_defender_after_damage(defender, damage > 0, attack_damage_type)
 	else:
 		GameManager.add_log_message(
 			"%s misses %s." % [_player.display_name, defender.display_name], &"combat_miss"
@@ -5940,7 +6005,7 @@ func _resolve_area_damage(item: Resource, cell: Vector2i) -> bool:
 			&"magic"
 		)
 		_play_action_burst(enemy.grid_position, &"magic_hit")
-		_handle_defender_after_damage(enemy)
+		_handle_defender_after_damage(enemy, damage > 0, &"magic")
 	return true
 
 

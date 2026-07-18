@@ -274,13 +274,90 @@ func _check_boss_cues() -> void:
 	_assert(all_cues.has(&"boss_telegraph"), "boss_telegraph not in ALL_CUES")
 	_assert(all_cues.has(&"boss_phase"), "boss_phase not in ALL_CUES")
 	_assert(all_cues.has(&"boss_defeat"), "boss_defeat not in ALL_CUES")
-	## Message-type→cue mapping includes boss entries
+	## Boss lifecycle cues are routed contextually so their matching log messages
+	## cannot play the same cue a second time. The gate remains log-driven.
 	var msg_map: Dictionary = SensoryScript.MESSAGE_TYPE_CUE_MAP
 	_assert(msg_map.has(&"boss_gate"), "boss_gate message type not in cue map")
-	_assert(msg_map.has(&"boss_story"), "boss_story message type not in cue map")
-	_assert(msg_map.has(&"boss_telegraph"), "boss_telegraph message type not in cue map")
-	_assert(msg_map.has(&"boss_phase"), "boss_phase message type not in cue map")
-	_assert(msg_map.has(&"boss_defeat"), "boss_defeat message type not in cue map")
+	var sf: Node = SensoryScript.new()
+	root.add_child(sf)
+	var contextual_message_types: Array[StringName] = [
+		&"boss_story", &"boss_telegraph", &"boss_phase", &"boss_defeat"
+	]
+	for message_type: StringName in contextual_message_types:
+		_assert(
+			sf.cue_for_message_type(message_type) == &"",
+			"%s should be routed directly, not through the log cue map" % message_type
+		)
+
+	for cue_name: StringName in SensoryScript.CUE_PROFILES:
+		var profile: Dictionary = sf.get_cue_profile(cue_name)
+		if profile.get("category", "") != "boss":
+			continue
+		var category_stream: AudioStreamWAV = sf.get_cue_stream(cue_name)
+		_assert(category_stream != null, "boss cue %s should have an audio stream" % cue_name)
+		if category_stream != null:
+			_assert(
+				not category_stream.data.is_empty(),
+				"boss cue %s should contain audible PCM data" % cue_name
+			)
+
+	sf.play_boss_intro_cue(&"observer")
+	sf.play_boss_phase_cue(&"observer", 2)
+	sf.play_boss_defeat_cue(&"observer")
+	_assert(
+		sf.get_play_count(SensoryScript.CUE_BOSS_SPAWN) == 1, "boss intro should route directly"
+	)
+	_assert(
+		sf.get_play_count(SensoryScript.CUE_BOSS_PHASE) == 1, "boss phase should route directly"
+	)
+	_assert(
+		sf.get_play_count(SensoryScript.CUE_BOSS_DEFEAT) == 1, "boss defeat should route directly"
+	)
+
+	var boss_attacks: Dictionary = {
+		&"observer": &"optic_recoil",
+		&"seraphine": &"briar_rebuke",
+		&"vorrak": &"maw_snap",
+		&"kaelros": &"royal_backwash",
+		&"nyxara": &"shardstep",
+	}
+	for boss_id: StringName in boss_attacks:
+		var attack_id: StringName = StringName(boss_attacks[boss_id])
+		var windup_key: StringName = StringName("%s|%s|windup" % [boss_id, attack_id])
+		var resolve_key: StringName = StringName("%s|%s|resolve" % [boss_id, attack_id])
+		## Keep each public API call eligible without waiting in this deterministic test.
+		sf._cue_last_play_time.erase(SensoryScript.CUE_BOSS_TELEGRAPH)
+		sf.play_boss_attack_cue(boss_id, attack_id, &"windup")
+		sf._cue_last_play_time.erase(SensoryScript.CUE_BOSS_TELEGRAPH)
+		sf.play_boss_attack_cue(boss_id, attack_id, &"resolve")
+		var windup_stream: AudioStreamWAV = (
+			sf._boss_attack_streams.get(windup_key) as AudioStreamWAV
+		)
+		var resolve_stream: AudioStreamWAV = (
+			sf._boss_attack_streams.get(resolve_key) as AudioStreamWAV
+		)
+		_assert(
+			windup_stream != null, "%s windup should be cached through the public API" % boss_id
+		)
+		_assert(
+			resolve_stream != null, "%s resolve should be cached through the public API" % boss_id
+		)
+		if windup_stream != null and resolve_stream != null:
+			_assert(not windup_stream.data.is_empty(), "%s windup PCM should be audible" % boss_id)
+			_assert(
+				not resolve_stream.data.is_empty(), "%s resolve PCM should be audible" % boss_id
+			)
+			_assert(
+				windup_stream.data != resolve_stream.data,
+				"%s windup and resolve should have distinct PCM" % boss_id
+			)
+			sf._cue_last_play_time.erase(SensoryScript.CUE_BOSS_TELEGRAPH)
+			sf.play_boss_attack_cue(boss_id, attack_id, &"windup")
+			_assert(
+				sf._boss_attack_streams.get(windup_key) == windup_stream,
+				"%s windup should reuse its cached stream" % boss_id
+			)
+	sf.queue_free()
 
 
 func _check_sensory_boss_cues() -> void:

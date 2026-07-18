@@ -355,7 +355,11 @@ func _visual_id_for(
 	elif kind == &"shopkeeper":
 		visual_id = &"actor/shopkeeper"
 	elif kind == &"summon":
-		visual_id = &"actor/summon"
+		var summon_visual: Variant = enemy_data.get("visual_id") if enemy_data != null else null
+		if summon_visual != null and str(summon_visual) != "":
+			visual_id = StringName(summon_visual)
+		else:
+			visual_id = &"actor/summon"
 	else:
 		# Normal enemy — prefer resource visual_id, fall back to humanoid
 		var enemy_visual: Variant = enemy_data.get("visual_id") if enemy_data != null else null

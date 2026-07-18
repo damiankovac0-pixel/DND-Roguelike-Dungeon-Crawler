@@ -90,10 +90,6 @@ const MESSAGE_TYPE_CUE_MAP: Dictionary = {
 	&"equipment": CUE_EQUIPMENT,
 	&"magic": CUE_MAGIC,
 	&"boss_gate": CUE_BOSS_GATE,
-	&"boss_story": CUE_BOSS_SPAWN,
-	&"boss_telegraph": CUE_BOSS_TELEGRAPH,
-	&"boss_phase": CUE_BOSS_PHASE,
-	&"boss_defeat": CUE_BOSS_DEFEAT,
 }
 
 # Visual colour / duration profile per cue.
@@ -148,6 +144,7 @@ const CUE_PROFILES: Dictionary = {
 
 # === Private Variables ===
 var _cue_streams: Dictionary = {}  # StringName → AudioStreamWAV
+var _boss_attack_streams: Dictionary = {}  # Boss/attack/stage key → AudioStreamWAV
 var _audio_players: Array[AudioStreamPlayer] = []
 var _audio_enabled: bool = true
 var _next_player_index: int = 0
@@ -396,12 +393,18 @@ func _boss_cue_color(boss_id: StringName, fallback: Color) -> Color:
 			return fallback
 
 
-func _trigger_boss_cue(cue_name: StringName, boss_id: StringName, phase: int = 1) -> void:
+func _trigger_boss_cue(
+	cue_name: StringName,
+	boss_id: StringName,
+	phase: int = 1,
+	stream_override: AudioStreamWAV = null,
+	stream_factory: Callable = Callable()
+) -> void:
 	if cue_name == &"":
 		return
 
 	if _audio_enabled:
-		_play_cue(cue_name)
+		_play_cue(cue_name, stream_override, stream_factory)
 
 	var visual_config: Variant = CUE_VISUAL.get(cue_name)
 	if visual_config is Dictionary:
@@ -450,6 +453,14 @@ func play_boss_phase_cue(boss_id: StringName, phase: int) -> void:
 
 func play_boss_defeat_cue(boss_id: StringName) -> void:
 	_trigger_boss_cue(CUE_BOSS_DEFEAT, boss_id)
+
+
+## Plays a cached identity-specific attack cue for a boss windup or resolve.
+func play_boss_attack_cue(boss_id: StringName, attack_id: StringName, stage: StringName) -> void:
+	if stage != &"windup" and stage != &"resolve":
+		return
+	var stream_factory: Callable = _get_boss_attack_stream.bind(boss_id, attack_id, stage)
+	_trigger_boss_cue(CUE_BOSS_TELEGRAPH, boss_id, 1, null, stream_factory)
 
 
 ## Enables or disables all audio playback, optionally announcing via log.
@@ -736,6 +747,27 @@ func _initialize_cues() -> void:
 	_cue_streams[CUE_EQUIPMENT] = _generate_cue_stream(_build_equipment)
 	_cue_streams[CUE_MAGIC] = _generate_cue_stream(_build_magic)
 	_cue_streams[CUE_VICTORY] = _generate_cue_stream(_build_victory)
+	_cue_streams[CUE_BOSS_GATE] = _generate_cue_stream(_build_boss_gate)
+	_cue_streams[CUE_BOSS_SPAWN] = _generate_cue_stream(_build_boss_spawn)
+	_cue_streams[CUE_BOSS_TELEGRAPH] = _generate_cue_stream(_build_boss_telegraph)
+	_cue_streams[CUE_BOSS_PHASE] = _generate_cue_stream(_build_boss_phase)
+	_cue_streams[CUE_BOSS_DEFEAT] = _generate_cue_stream(_build_boss_defeat)
+
+
+func _get_boss_attack_stream(
+	boss_id: StringName, attack_id: StringName, stage: StringName
+) -> AudioStreamWAV:
+	var cache_key: StringName = StringName(
+		"%s|%s|%s" % [String(boss_id), String(attack_id), String(stage)]
+	)
+	var cached: Variant = _boss_attack_streams.get(cache_key)
+	if cached is AudioStreamWAV:
+		return cached
+	var stream: AudioStreamWAV = _generate_cue_stream(
+		_build_boss_attack.bind(boss_id, attack_id, stage)
+	)
+	_boss_attack_streams[cache_key] = stream
+	return stream
 
 
 func _initialize_audio_pool() -> void:
@@ -749,7 +781,11 @@ func _initialize_audio_pool() -> void:
 
 
 ## Plays a cue stream if rate limiting permits, applying per-cue gain.
-func _play_cue(cue_name: StringName) -> void:
+func _play_cue(
+	cue_name: StringName,
+	stream_override: AudioStreamWAV = null,
+	stream_factory: Callable = Callable()
+) -> void:
 	var profile: Variant = CUE_PROFILES.get(cue_name)
 	if profile is not Dictionary:
 		return
@@ -760,17 +796,26 @@ func _play_cue(cue_name: StringName) -> void:
 	_cue_last_play_time[cue_name] = now
 	_cue_play_count[cue_name] = _cue_play_count.get(cue_name, 0) + 1
 
-	var stream: Variant = _cue_streams.get(cue_name)
-	if stream is AudioStreamWAV:
-		var pool_size: int = _audio_players.size()
-		if pool_size == 0:
-			return
-		var player: AudioStreamPlayer = _audio_players[_next_player_index]
-		_next_player_index = (_next_player_index + 1) % pool_size
-		player.stream = stream
-		var gain_db: float = float(profile.get("gain_db", 0.0))
-		player.volume_db = get_effective_volume_db() + gain_db
-		player.play()
+	var stream: AudioStreamWAV = stream_override
+	if stream == null and stream_factory.is_valid():
+		var generated_stream: Variant = stream_factory.call()
+		if generated_stream is AudioStreamWAV:
+			stream = generated_stream
+	if stream == null:
+		var registered_stream: Variant = _cue_streams.get(cue_name)
+		if registered_stream is AudioStreamWAV:
+			stream = registered_stream
+	if stream == null:
+		return
+	var pool_size: int = _audio_players.size()
+	if pool_size == 0:
+		return
+	var player: AudioStreamPlayer = _audio_players[_next_player_index]
+	_next_player_index = (_next_player_index + 1) % pool_size
+	player.stream = stream
+	var gain_db: float = float(profile.get("gain_db", 0.0))
+	player.volume_db = get_effective_volume_db() + gain_db
+	player.play()
 
 
 ## Updates all active audio player volumes from the current master volume.
@@ -893,6 +938,18 @@ static func _noise_samples(duration: float) -> Array[float]:
 	result.resize(count)
 	for i: int in range(count):
 		result[i] = randf() * 2.0 - 1.0
+	return result
+
+
+## Deterministic noise for cached identity cues; never touches global random state.
+static func _seeded_noise_samples(duration: float, seed_value: int) -> Array[float]:
+	var count: int = maxi(1, ceili(duration * SAMPLE_RATE))
+	var result: Array[float] = []
+	result.resize(count)
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.set_seed(seed_value)
+	for i: int in range(count):
+		result[i] = rng.randf() * 2.0 - 1.0
 	return result
 
 
@@ -1055,6 +1112,132 @@ static func _build_victory() -> Array[float]:
 	_apply_sweep(s3, 750.0, 1800.0)
 	var mixed: Array[float] = _mix([s1, s2, s3], [0.4, 0.3, 0.12])
 	return _envelope(mixed, 0.015, 0.80)
+
+
+static func _build_boss_gate() -> Array[float]:
+	var low: Array[float] = _sine_samples(72.0, 0.35)
+	var upper: Array[float] = _sine_samples(108.0, 0.35)
+	var mixed: Array[float] = _mix([low, upper], [0.75, 0.28])
+	return _envelope(mixed, 0.012, 0.72)
+
+
+static func _build_boss_spawn() -> Array[float]:
+	var low: Array[float] = _sine_samples(74.0, 0.65)
+	_apply_sweep(low, 74.0, 146.0)
+	var upper: Array[float] = _sine_samples(111.0, 0.65)
+	_apply_sweep(upper, 111.0, 292.0)
+	var mixed: Array[float] = _mix([low, upper], [0.62, 0.30])
+	return _envelope(mixed, 0.025, 0.78)
+
+
+static func _build_boss_telegraph() -> Array[float]:
+	var sweep: Array[float] = _sine_samples(420.0, 0.16)
+	_apply_sweep(sweep, 420.0, 760.0)
+	var edge: Array[float] = _sine_samples(840.0, 0.16)
+	var mixed: Array[float] = _mix([sweep, edge], [0.60, 0.22])
+	return _envelope(mixed, 0.003, 0.48)
+
+
+static func _build_boss_phase() -> Array[float]:
+	var low: Array[float] = _sine_samples(170.0, 0.42)
+	_apply_sweep(low, 170.0, 340.0)
+	var upper: Array[float] = _sine_samples(255.0, 0.42)
+	_apply_sweep(upper, 255.0, 680.0)
+	var mixed: Array[float] = _mix([low, upper], [0.58, 0.31])
+	return _envelope(mixed, 0.008, 0.72)
+
+
+static func _build_boss_defeat() -> Array[float]:
+	var low: Array[float] = _sine_samples(190.0, 1.0)
+	_apply_sweep(low, 190.0, 48.0)
+	var upper: Array[float] = _sine_samples(285.0, 1.0)
+	_apply_sweep(upper, 285.0, 72.0)
+	var mixed: Array[float] = _mix([low, upper], [0.66, 0.27])
+	return _envelope(mixed, 0.010, 0.68)
+
+
+static func _build_boss_attack(
+	boss_id: StringName, attack_id: StringName, stage: StringName
+) -> Array[float]:
+	var is_resolve: bool = stage == &"resolve"
+	var duration: float = 0.22 if is_resolve else 0.30
+	var variation: float = float(abs(hash(attack_id) % 19))
+	var seed_value: int = hash(boss_id) ^ hash(attack_id) ^ hash(stage)
+	match boss_id:
+		&"observer":
+			var scan: Array[float] = _sine_samples(620.0 + variation, duration)
+			_apply_sweep(
+				scan,
+				1480.0 + variation if is_resolve else 620.0 + variation,
+				460.0 + variation if is_resolve else 1280.0 + variation
+			)
+			var optic: Array[float] = _sine_samples(930.0 + variation, duration)
+			var mixed: Array[float] = _mix([scan, optic], [0.68, 0.22])
+			for i: int in range(mixed.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				mixed[i] *= 1.0 if int(t * 24.0) % 2 == 0 else 0.30
+			return _envelope(mixed, 0.003, 0.72 if is_resolve else 0.86)
+		&"seraphine":
+			var rustle: Array[float] = _seeded_noise_samples(duration, seed_value)
+			var stem: Array[float] = _sine_samples(155.0 + variation, duration)
+			_apply_sweep(
+				stem,
+				430.0 + variation if is_resolve else 155.0 + variation,
+				130.0 + variation if is_resolve else 470.0 + variation
+			)
+			for i: int in range(rustle.size()):
+				var fraction: float = float(i) / float(maxi(1, rustle.size() - 1))
+				var growth: float = 1.0 - fraction if is_resolve else 0.18 + fraction * 0.82
+				rustle[i] *= growth * (0.55 + 0.45 * sin(float(i) / SAMPLE_RATE * 17.0 * TAU))
+			var mixed: Array[float] = _mix([stem, rustle], [0.52, 0.20])
+			return _envelope(mixed, 0.018, 0.76)
+		&"vorrak":
+			var ignition: Array[float] = _sine_samples(58.0 + variation * 0.25, duration)
+			_apply_sweep(
+				ignition,
+				138.0 + variation if is_resolve else 58.0 + variation * 0.25,
+				42.0 + variation * 0.2 if is_resolve else 148.0 + variation
+			)
+			var grit: Array[float] = _seeded_noise_samples(duration, seed_value)
+			for i: int in range(grit.size()):
+				var fraction: float = float(i) / float(maxi(1, grit.size() - 1))
+				grit[i] *= (1.0 - fraction if is_resolve else fraction) * 0.34
+			var mixed: Array[float] = _mix([ignition, grit], [0.78, 0.34])
+			return _envelope(mixed, 0.006, 0.74)
+		&"kaelros":
+			var metal: Array[float] = _sine_samples(232.0 + variation, duration)
+			var interval: Array[float] = _sine_samples(348.0 + variation * 1.5, duration)
+			if is_resolve:
+				_apply_sweep(metal, 348.0 + variation, 174.0 + variation)
+				_apply_sweep(interval, 522.0 + variation, 261.0 + variation)
+			for i: int in range(metal.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				var tide: float = 0.56 + 0.44 * sin(t * (7.0 if is_resolve else 4.0) * TAU)
+				metal[i] *= tide
+				interval[i] *= 1.0 - tide * 0.34
+			var mixed: Array[float] = _mix([metal, interval], [0.56, 0.42])
+			return _envelope(mixed, 0.004, 0.82 if is_resolve else 0.90)
+		&"nyxara":
+			var shard_a: Array[float] = _sine_samples(365.0 + variation, duration)
+			var shard_b: Array[float] = _sine_samples(374.0 + variation, duration)
+			_apply_sweep(
+				shard_a,
+				820.0 + variation if is_resolve else 365.0 + variation,
+				250.0 + variation if is_resolve else 760.0 + variation
+			)
+			_apply_sweep(
+				shard_b,
+				790.0 - variation if is_resolve else 374.0 + variation,
+				274.0 + variation if is_resolve else 805.0 - variation
+			)
+			var mixed: Array[float] = _mix([shard_a, shard_b], [0.56, 0.53])
+			var fracture_rate: float = 31.0 if is_resolve else 19.0
+			for i: int in range(mixed.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				mixed[i] *= 1.0 if int(t * fracture_rate) % 3 != 1 else 0.08
+			return _envelope(mixed, 0.002, 0.70)
+		_:
+			return _build_boss_telegraph()
 
 
 # --- Ambience synthesiser ---

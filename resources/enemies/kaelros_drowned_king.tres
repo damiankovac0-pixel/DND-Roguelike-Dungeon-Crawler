@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/enemy_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/resources/boss_attack_data.gd" id="2"]
@@ -10,6 +10,9 @@ script = ExtResource("2")
 id = &"undertow"
 intent = &"boss_attack"
 phase_min = 1
+selection_weight = 6
+min_player_distance = 2.0
+max_player_distance = 0.0
 cooldown = 2
 telegraph_turns = 2
 shape = &"tidal_lane"
@@ -44,6 +47,9 @@ script = ExtResource("2")
 id = &"drowned_retinue"
 intent = &"boss_attack"
 phase_min = 2
+selection_weight = 8
+min_player_distance = 0.0
+max_player_distance = 0.0
 cooldown = 4
 telegraph_turns = 1
 shape = &"summon"
@@ -60,6 +66,9 @@ script = ExtResource("2")
 id = &"crown_deluge"
 intent = &"boss_attack"
 phase_min = 3
+selection_weight = 8
+min_player_distance = 0.0
+max_player_distance = 6.0
 cooldown = 3
 telegraph_turns = 2
 shape = &"ring"
@@ -84,6 +93,33 @@ hazard_glyph = "~"
 hazard_vfx_id = &"undertow_hazard"
 hazard_message = "The deluge's remnants wash over you for %d magic damage."
 
+[sub_resource type="Resource" id="Resource_kaelros_royal_backwash"]
+script = ExtResource("2")
+id = &"royal_backwash"
+intent = &"boss_attack"
+phase_min = 1
+selection_weight = 12
+min_player_distance = 0.0
+max_player_distance = 2.0
+cooldown = 3
+telegraph_turns = 1
+shape = &"ring"
+radius = 1
+damage_dice = 2
+damage_sides = 6
+damage_bonus = 6
+damage_type = &"magic"
+projectile_id = &"undertow"
+warning_text = "Kaelros drives his trident down — a royal backwash gathers around the throne!"
+resolve_text = "The royal backwash hurls you through the surf for %d magic damage."
+effect = &"push"
+effect_trigger = &"hit"
+effect_amount = 3
+telegraph_glyph = "~"
+telegraph_color = Color(0.40, 0.94, 1, 1)
+telegraph_fill_color = Color(0.04, 0.42, 0.58, 0.30)
+telegraph_border_color = Color(0.32, 0.90, 1, 0.90)
+
 
 [resource]
 script = ExtResource("1")
@@ -91,7 +127,7 @@ visual_id = &"boss/kaelros"
 display_name = "Kaelros, the Drowned King"
 glyph = "K"
 color = Color(0.32, 0.68, 0.86, 1)
-max_hp = 210
+max_hp = 250
 armor_class = 18
 attack_bonus = 10
 damage_sides = 10
@@ -105,6 +141,8 @@ ranged_damage_percent = 100
 magic_damage_percent = 100
 is_boss = true
 boss_id = &"kaelros"
+boss_retaliation_attack_id = &"royal_backwash"
+boss_retaliation_hit_threshold = 2
 boss_floor = 20
 boss_room_title = "The Drowned Throne"
 boss_reward_gold = 520
@@ -113,10 +151,10 @@ boss_phase_hp_percents = Array[int]([70, 35])
 boss_footprint_offsets = Array[Vector2i]([Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
 boss_visual_frames = Array[PackedStringArray]([PackedStringArray(" ,*, ", "/~+~\\", "|~~~|", "\\_~_/"), PackedStringArray(" ,+, ", "/~~~\\", "|~+~|", "\\_~_/")])
 boss_visual_frame_seconds = 0.34
-boss_strategy_hint = "Drowned retainers guard the crown. Slay the last retainer to break it and open a counterattack."
+boss_strategy_hint = "Close pressure triggers a royal backwash. Evade the currents, then slay the drowned retinue to break the crown and expose Kaelros."
 boss_guarded_damage_percent = 60
 boss_exposed_damage_percent = 160
 boss_exposed_turns = 2
-boss_attacks = Array[Resource]([SubResource("Resource_kaelros_undertow"), SubResource("Resource_kaelros_retinue"), SubResource("Resource_kaelros_crown_deluge")])
+boss_attacks = Array[Resource]([SubResource("Resource_kaelros_undertow"), SubResource("Resource_kaelros_retinue"), SubResource("Resource_kaelros_crown_deluge"), SubResource("Resource_kaelros_royal_backwash")])
 boss_music_stream = ExtResource("3")
 boss_climax_music_stream = ExtResource("4")

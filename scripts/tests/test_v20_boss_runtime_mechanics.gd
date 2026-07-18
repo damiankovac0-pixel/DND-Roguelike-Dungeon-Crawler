@@ -1,12 +1,12 @@
-## V20.1 boss runtime mechanics contracts.
+## V31 boss runtime mechanics contracts.
 ##
-## Covers: attack scheduler exact-phase/cooldown behavior, cooldown
-## mutation discipline, Seraphine phase selection, Observer stun
-## hit/evade, hazard no-immediate-tick/poison/expiry/unknown-effect,
-## Vorrak push clamp, Kaelros pull/hazard single-tick discipline,
-## Nyxara stationary true-angle rotation, summon caps, capped-summon
-## avoidance by scheduler, telegraph countdown payload keys and
-## decrement/clear, and stale cleanup after normal boss death.
+## Covers: attack scheduler phase/cooldown/distance behavior, chooser
+## purity, movement when no attack is eligible, close-range melee
+## retaliation and one-turn countdowns for all five bosses, Seraphine
+## phase selection, Observer stun hit/evade, hazard timing/poison/expiry/
+## unknown effects, Vorrak push clamp, Kaelros pull/hazard single-tick
+## discipline, Nyxara stationary true-angle rotation, summon caps and
+## scheduler avoidance, telegraph payload countdown, and stale cleanup.
 ##
 ## Run with:
 ##   /usr/local/bin/godot --headless --path . --script \
@@ -124,7 +124,15 @@ func _run() -> void:
 	if _failed:
 		return
 
-	print("V20.1 boss runtime mechanics checks passed")
+	# ── V31: deterministic distance scheduling and melee retaliation ──
+	await _test_distance_eligibility_and_no_idle_movement()
+	if _failed:
+		return
+	await _test_melee_retaliation_contracts()
+	if _failed:
+		return
+
+	print("V31 boss runtime mechanics checks passed")
 	quit(0)
 
 
@@ -214,6 +222,29 @@ func _live_boss_count(game: Node) -> int:
 	return count
 
 
+func _find_boss_movement_target(game: Node, boss: Node, min_distance: float) -> Vector2i:
+	## Finds a room cell whose primary approach step can accept the full
+	## boss footprint, making the scheduler movement assertion deterministic.
+	var room_cells: Dictionary = game._active_boss_encounter.get("room_cells", {})
+	var boss_cell: Vector2i = boss.grid_position
+	for cell: Vector2i in room_cells.keys():
+		if (
+			not game._is_walkable(cell)
+			or game._enemy_occupies_cell(boss, cell)
+			or cell.distance_to(boss_cell) < min_distance
+		):
+			continue
+		var delta: Vector2i = cell - boss_cell
+		var primary_direction: Vector2i
+		if abs(delta.x) >= abs(delta.y):
+			primary_direction = Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
+		else:
+			primary_direction = Vector2i.DOWN if delta.y > 0 else Vector2i.UP
+		if game._can_place_boss_at(boss, boss_cell + primary_direction, {}):
+			return cell
+	return Vector2i(-1, -1)
+
+
 func _attack_by_id(boss_data: Resource, attack_id: StringName) -> Resource:
 	## Returns the BossAttackData sub-resource matching `attack_id`,
 	## or null if not found.
@@ -266,8 +297,9 @@ func _test_attack_scheduler_exact_phase() -> void:
 	if observer == null:
 		_fail("Observer not spawned")
 		return
+	observer.stats_component.current_hp = int(float(observer.stats_component.max_hp) * 0.60)
+	game._update_boss_phase(observer)
 	var state: Dictionary = game._boss_state_for(observer)
-	state["phase"] = 2
 	state["attack_cooldowns"] = {}
 	state["pending_attack"] = null
 	state["telegraph_cells"] = {}
@@ -286,7 +318,10 @@ func _test_attack_scheduler_exact_phase() -> void:
 	var chosen: Resource = game._choose_boss_attack(
 		observer, 999, game._enemy_distance_to_player(observer)
 	)
-	_assert(chosen == blink_pulse, "Phase 2 should prefer blink_pulse, got %s" % chosen.id)
+	_assert(
+		chosen == blink_pulse,
+		"Phase 2 should prefer blink_pulse, got %s" % ("" if chosen == null else chosen.id)
+	)
 	if _failed:
 		return
 
@@ -321,6 +356,240 @@ func _test_attack_scheduler_exact_phase() -> void:
 	)
 
 	game.queue_free()
+
+
+func _test_distance_eligibility_and_no_idle_movement() -> void:
+	## Close and ranged bands meet at distance 2.0. Selection is stable
+	## on either side of that inclusive boundary and does not mutate state.
+	## If every attack is unavailable, the normal boss-turn path advances
+	## the full footprint toward the player instead of consuming an idle turn.
+	var game: Node = await _start_game()
+	var observer: Node = await _enter_boss_on_floor(game, 5)
+	if observer == null:
+		_fail("Observer not spawned for distance scheduler checks")
+		return
+
+	var observer_data: Resource = observer.enemy_data
+	var optic_recoil: Resource = _attack_by_id(observer_data, &"optic_recoil")
+	var observer_gaze: Resource = _attack_by_id(observer_data, &"observer_gaze")
+	_assert(optic_recoil != null, "optic_recoil attack not found")
+	_assert(observer_gaze != null, "observer_gaze attack not found")
+	if _failed:
+		return
+
+	var state_before: Dictionary = game._boss_state_for(observer).duplicate(true)
+	for _repeat: int in range(3):
+		var close_choice: Resource = game._choose_boss_attack(observer, 1, 1.99)
+		_assert(close_choice == optic_recoil, "distance 1.99 should choose optic_recoil")
+		var boundary_choice: Resource = game._choose_boss_attack(observer, 1, 2.0)
+		_assert(boundary_choice == optic_recoil, "distance 2.0 should include optic_recoil")
+		var ranged_choice: Resource = game._choose_boss_attack(observer, 1, 2.01)
+		_assert(ranged_choice == observer_gaze, "distance 2.01 should choose observer_gaze")
+		if _failed:
+			return
+	_assert(
+		game._boss_state_for(observer) == state_before,
+		"distance-aware chooser should be deterministic and state-pure"
+	)
+	if _failed:
+		return
+
+	var movement_target: Vector2i = _find_boss_movement_target(game, observer, 4.0)
+	_assert(movement_target != Vector2i(-1, -1), "no deterministic boss movement seam found")
+	if _failed:
+		return
+	game._player.set_grid_position(movement_target)
+	await process_frame
+
+	var state: Dictionary = game._boss_state_for(observer)
+	var cooldowns: Dictionary = {}
+	for attack: Resource in observer_data.boss_attacks:
+		cooldowns[attack.id] = 50
+	state["attack_cooldowns"] = cooldowns
+	state["forced_attack_id"] = &""
+	state["pending_attack"] = null
+	game._boss_states[observer] = state
+	var position_before: Vector2i = observer.grid_position
+	var distance_before: float = game._enemy_distance_to_player(observer)
+	var consumed_turn: bool = game._process_boss_turn(observer, distance_before, 1, {})
+	var distance_after: float = game._enemy_distance_to_player(observer)
+	_assert(consumed_turn, "boss turn should be consumed when no attack is eligible")
+	_assert(observer.grid_position != position_before, "boss idled when no attack was eligible")
+	_assert(distance_after < distance_before, "fallback movement should reduce player distance")
+
+	game.queue_free()
+
+
+func _test_melee_retaliation_contracts() -> void:
+	## `_handle_defender_after_damage(..., true, channel)` is the post-resolution
+	## seam for positive damage. False covers both miss and zero-damage results.
+	## Every Normal boss counts only positive melee hits, forces its configured
+	## close counter at threshold (even through cooldown), clears that force only
+	## when queued, and resolves the one-turn telegraph on the next boss turn.
+	var cases: Array[Dictionary] = [
+		{
+			"floor": 5,
+			"boss_id": &"observer",
+			"attack_id": &"optic_recoil",
+			"threshold": 2,
+		},
+		{
+			"floor": 10,
+			"boss_id": &"seraphine",
+			"attack_id": &"briar_rebuke",
+			"threshold": 3,
+		},
+		{
+			"floor": 15,
+			"boss_id": &"vorrak",
+			"attack_id": &"maw_snap",
+			"threshold": 2,
+		},
+		{
+			"floor": 20,
+			"boss_id": &"kaelros",
+			"attack_id": &"royal_backwash",
+			"threshold": 2,
+		},
+		{
+			"floor": 25,
+			"boss_id": &"nyxara",
+			"attack_id": &"shardstep",
+			"threshold": 2,
+		},
+	]
+
+	for test_case: Dictionary in cases:
+		var floor_number: int = int(test_case["floor"])
+		var expected_boss_id: StringName = test_case["boss_id"]
+		var expected_attack_id: StringName = test_case["attack_id"]
+		var expected_threshold: int = int(test_case["threshold"])
+		var game: Node = await _start_game()
+		var boss: Node = await _enter_boss_on_floor(game, floor_number)
+		if boss == null:
+			_fail("%s not spawned for melee retaliation checks" % expected_boss_id)
+			return
+		_remove_all_enemies_except(game, boss)
+
+		var enemy_data: Resource = boss.enemy_data
+		var counter_attack: Resource = _attack_by_id(enemy_data, expected_attack_id)
+		_assert(
+			enemy_data.boss_id == expected_boss_id, "unexpected boss on floor %d" % floor_number
+		)
+		_assert(
+			enemy_data.boss_retaliation_hit_threshold == expected_threshold,
+			"%s retaliation threshold should be %d" % [expected_boss_id, expected_threshold]
+		)
+		_assert(
+			enemy_data.boss_retaliation_attack_id == expected_attack_id,
+			"%s retaliation should configure %s" % [expected_boss_id, expected_attack_id]
+		)
+		_assert(counter_attack != null, "%s counter attack not found" % expected_attack_id)
+		if _failed:
+			return
+		_assert(
+			counter_attack.telegraph_turns == 1,
+			"%s should have a one-turn tell" % expected_attack_id
+		)
+		_assert(
+			counter_attack.max_player_distance == 2.0,
+			"%s should be close-only" % expected_attack_id
+		)
+		if _failed:
+			return
+
+		var state: Dictionary = game._boss_state_for(boss)
+		state["melee_hits_received"] = 0
+		state["forced_attack_id"] = &""
+		var reaction_cooldowns: Dictionary = {}
+		reaction_cooldowns[expected_attack_id] = 50
+		state["attack_cooldowns"] = reaction_cooldowns
+		game._boss_states[boss] = state
+
+		game._handle_defender_after_damage(boss, false, &"melee")  # Miss.
+		game._handle_defender_after_damage(boss, false, &"melee")  # Zero damage.
+		game._handle_defender_after_damage(boss, true, &"ranged")
+		game._handle_defender_after_damage(boss, true, &"magic")
+		state = game._boss_state_for(boss)
+		_assert(
+			int(state.get("melee_hits_received", -1)) == 0,
+			"%s counted miss, zero, ranged, or magic damage as melee" % expected_boss_id
+		)
+		_assert(
+			state.get("forced_attack_id", &"") == &"",
+			"%s primed retaliation without positive melee hits" % expected_boss_id
+		)
+		if _failed:
+			return
+
+		for hit_count: int in range(1, expected_threshold):
+			game._handle_defender_after_damage(boss, true, &"melee")
+			state = game._boss_state_for(boss)
+			_assert(
+				int(state.get("melee_hits_received", -1)) == hit_count,
+				"%s positive melee count should be %d" % [expected_boss_id, hit_count]
+			)
+			_assert(
+				state.get("forced_attack_id", &"") == &"",
+				"%s forced retaliation before threshold" % expected_boss_id
+			)
+			if _failed:
+				return
+
+		game._handle_defender_after_damage(boss, true, &"melee")
+		state = game._boss_state_for(boss)
+		_assert(
+			int(state.get("melee_hits_received", -1)) == 0,
+			"%s melee count should reset at threshold" % expected_boss_id
+		)
+		_assert(
+			state.get("forced_attack_id", &"") == expected_attack_id,
+			"%s threshold should force %s" % [expected_boss_id, expected_attack_id]
+		)
+		if _failed:
+			return
+
+		var chosen: Resource = game._choose_boss_attack(boss, 1, 1.0)
+		_assert(
+			chosen == counter_attack,
+			"%s forced counter should win while on cooldown" % expected_boss_id
+		)
+		if _failed:
+			return
+		var cells: Dictionary = game._boss_attack_cells(boss, counter_attack)
+		_assert(not cells.is_empty(), "%s counter produced no telegraph cells" % expected_attack_id)
+		if _failed:
+			return
+		game._queue_boss_attack(boss, counter_attack, cells)
+		state = game._boss_state_for(boss)
+		_assert(
+			state.get("forced_attack_id", &"") == &"",
+			"%s force should clear when its attack is queued" % expected_boss_id
+		)
+		_assert(
+			state.get("pending_attack", null) == counter_attack,
+			"%s should be pending" % expected_attack_id
+		)
+		_assert(
+			int(state.get("telegraph_turns", 0)) == 1,
+			"%s countdown should start at one turn" % expected_attack_id
+		)
+		if _failed:
+			return
+
+		game._process_boss_turn(boss, game._enemy_distance_to_player(boss), 1, {})
+		state = game._boss_state_for(boss)
+		_assert(
+			state.get("pending_attack", null) == null,
+			"%s should resolve on the next boss turn" % expected_attack_id
+		)
+		_assert(
+			int(state.get("telegraph_turns", -1)) == 0,
+			"%s countdown should clear after resolution" % expected_attack_id
+		)
+		if _failed:
+			return
+		game.queue_free()
 
 
 func _test_choose_attack_no_cooldown_mutation() -> void:
@@ -443,8 +712,9 @@ func _check_nyxara_one_guard() -> void:
 
 
 func _test_seraphine_phase_selects() -> void:
-	## Phase 2 (HP ~60%) → _choose_boss_attack returns spore_burst.
-	## Phase 3 (HP ~35%) → returns spore_bloom.
+	## Phase 2 (HP ~60%) prefers the higher-weight spore_burst.
+	## While only spore_burst is cooling down, the phase-2 summon
+	## spore_bloom remains selectable (and stays available in phase 3).
 	var game: Node = await _start_game()
 	var seraphine: Node = await _enter_boss_on_floor(game, 10)
 	if seraphine == null:
@@ -455,6 +725,12 @@ func _test_seraphine_phase_selects() -> void:
 	var spore_bloom: Resource = _attack_by_id(data, &"spore_bloom")
 	_assert(spore_burst != null, "spore_burst not found")
 	_assert(spore_bloom != null, "spore_bloom not found")
+	if _failed:
+		return
+	_assert(
+		spore_bloom.phase_min == 2,
+		"spore_bloom should unlock in phase 2 and remain available in phase 3"
+	)
 	if _failed:
 		return
 
@@ -470,31 +746,37 @@ func _test_seraphine_phase_selects() -> void:
 	if _failed:
 		return
 
+	var state_before: Dictionary = state.duplicate(true)
 	var chosen: Resource = game._choose_boss_attack(
 		seraphine, 1, game._enemy_distance_to_player(seraphine)
 	)
 	_assert(
 		chosen == spore_burst,
-		"Phase 2 should select spore_burst, got %s" % ("" if chosen == null else chosen.id)
+		"Phase 2 should prefer spore_burst, got %s" % ("" if chosen == null else chosen.id)
+	)
+	_assert(
+		game._boss_state_for(seraphine) == state_before,
+		"Seraphine phase-2 chooser should be state-pure"
 	)
 	if _failed:
 		return
 
-	# Phase 3: set HP to ~35% of 92 ≈ 32
-	seraphine.stats_component.current_hp = int(float(max_hp) * 0.35)
-	game._update_boss_phase(seraphine)
+	# Cool only the higher-weight pressure attack; the phase-2 summon alternates in.
 	state = game._boss_state_for(seraphine)
-	state["attack_cooldowns"] = {}
-	state["last_attack_id"] = &""
+	state["attack_cooldowns"] = {spore_burst.id: max(1, spore_burst.cooldown)}
 	game._boss_states[seraphine] = state
-	_assert(int(state.get("phase", 1)) == 3, "Seraphine should be phase 3 at 35%% HP")
-	if _failed:
-		return
-
+	state_before = state.duplicate(true)
 	chosen = game._choose_boss_attack(seraphine, 1, game._enemy_distance_to_player(seraphine))
 	_assert(
 		chosen == spore_bloom,
-		"Phase 3 should select spore_bloom, got %s" % ("" if chosen == null else chosen.id)
+		(
+			"Phase 2 should select spore_bloom while only spore_burst cools down, got %s"
+			% ("" if chosen == null else chosen.id)
+		)
+	)
+	_assert(
+		game._boss_state_for(seraphine) == state_before,
+		"Seraphine cooldown chooser should be state-pure"
 	)
 
 	game.queue_free()

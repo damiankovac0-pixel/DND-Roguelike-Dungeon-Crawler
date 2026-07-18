@@ -442,15 +442,170 @@ func _draw_boss_spawn_effects() -> void:
 		var progress: float = clampf(float(effect.get("age", 0.0)) / duration, 0.0, 1.0)
 		var pulse: float = sin(progress * PI)
 		var color: Color = _color_or(effect.get("color"), Color(1.0, 0.72, 0.22, 1.0))
-		for cell_value: Variant in _array_or(effect.get("occupied_cells", [])):
-			if not (cell_value is Vector2i):
-				continue
-			var cell: Vector2i = cell_value
+		var cells: Array[Vector2i] = _boss_spawn_cells(effect)
+		var style: StringName = _boss_spawn_style(effect)
+		for index: int in range(cells.size()):
+			var cell: Vector2i = cells[index]
 			if not visible_cells.has(cell) or not _cell_in_view(cell):
 				continue
 			var rect: Rect2 = _cell_rect(cell, 1.0)
-			draw_rect(rect, Color(color.r, color.g, color.b, 0.08 + pulse * 0.22))
-			_draw_rect_corners(rect, Color(color.r, color.g, color.b, 0.35 + pulse * 0.55), 4.0)
+			draw_rect(rect, _spawn_tone(color, 0.06 + pulse * 0.18))
+			match style:
+				&"observer":
+					_draw_observer_spawn(rect, progress, pulse, color)
+				&"seraphine":
+					_draw_seraphine_spawn(rect, progress, index, color)
+				&"vorrak":
+					_draw_vorrak_spawn(rect, progress, index, color)
+				&"kaelros":
+					_draw_kaelros_spawn(rect, progress, index, color)
+				&"nyxara":
+					_draw_nyxara_spawn(rect, progress, cell, color)
+				_:
+					_draw_rect_corners(rect, _spawn_tone(color, 0.35 + pulse * 0.55), 4.0)
+
+
+func _draw_observer_spawn(rect: Rect2, progress: float, pulse: float, color: Color) -> void:
+	var center: Vector2 = rect.get_center().round()
+	var extent: float = minf(rect.size.x, rect.size.y)
+	var iris_radius: float = maxf(2.0, extent * (0.13 + pulse * 0.10))
+	draw_arc(center, iris_radius, 0.0, TAU, 16, _spawn_tone(color, 0.72), 1.0, false)
+	_draw_diamond(center, maxf(1.0, extent * 0.045), _spawn_tone(color, 0.92))
+	var scan_y: float = lerpf(rect.position.y + 2.0, rect.end.y - 2.0, progress)
+	draw_line(
+		Vector2(rect.position.x + 2.0, scan_y),
+		Vector2(rect.end.x - 2.0, scan_y),
+		_spawn_tone(color, 0.82),
+		1.0,
+		false,
+	)
+
+
+func _draw_seraphine_spawn(rect: Rect2, progress: float, cell_index: int, color: Color) -> void:
+	var center: Vector2 = rect.get_center().round()
+	var extent: float = minf(rect.size.x, rect.size.y)
+	var base: Vector2 = center + Vector2(0, extent * 0.28)
+	var growth: float = extent * (0.10 + progress * (0.24 + float(cell_index % 2) * 0.05))
+	var tip: Vector2 = base - Vector2(0, growth)
+	var stem_color: Color = _spawn_tone(color, 0.84)
+	draw_line(base, tip, stem_color, 1.0, false)
+	var branch: float = maxf(2.0, extent * 0.10)
+	draw_line(tip, tip + Vector2(-branch, -branch * 0.65), stem_color, 1.0, false)
+	draw_line(tip, tip + Vector2(branch, -branch * 0.65), stem_color, 1.0, false)
+	_draw_diamond(base, maxf(1.0, extent * 0.04), _spawn_tone(color, 0.68))
+
+
+func _draw_vorrak_spawn(rect: Rect2, progress: float, cell_index: int, color: Color) -> void:
+	var center: Vector2 = rect.get_center().round()
+	var extent: float = minf(rect.size.x, rect.size.y)
+	var base_y: float = center.y + extent * 0.27
+	var flame_height: float = extent * (0.16 + progress * 0.27)
+	var flame_half_width: float = maxf(2.0, extent * 0.13)
+	draw_colored_polygon(
+		PackedVector2Array(
+			[
+				Vector2(center.x - flame_half_width, base_y),
+				Vector2(center.x, base_y - flame_height),
+				Vector2(center.x + flame_half_width, base_y),
+				Vector2(center.x, base_y - flame_height * 0.35),
+			]
+		),
+		_spawn_tone(color, 0.82),
+	)
+	var spark_side: float = -1.0 if cell_index % 2 == 0 else 1.0
+	var spark: Vector2 = (
+		center + Vector2(spark_side * extent * 0.24, -extent * (0.10 + progress * 0.22))
+	)
+	draw_rect(Rect2(spark.round() - Vector2.ONE, Vector2(2, 2)), _spawn_tone(color, 0.92))
+
+
+func _draw_kaelros_spawn(rect: Rect2, progress: float, cell_index: int, color: Color) -> void:
+	var center: Vector2 = rect.get_center().round()
+	var extent: float = minf(rect.size.x, rect.size.y)
+	var wave_color: Color = _spawn_tone(color, 0.76)
+	for row: int in range(3):
+		var wave_points: PackedVector2Array = PackedVector2Array()
+		for step: int in range(5):
+			var x: float = lerpf(rect.position.x + 2.0, rect.end.x - 2.0, float(step) / 4.0)
+			var wave_phase: float = progress * TAU + float(step + row + cell_index) * PI * 0.5
+			var y: float = center.y + float(row - 1) * extent * 0.11 + sin(wave_phase) * 1.5
+			wave_points.append(Vector2(x, y))
+		draw_polyline(wave_points, wave_color, 1.0, false)
+	if progress >= 0.45:
+		var crown_y: float = center.y - extent * 0.23
+		draw_polyline(
+			PackedVector2Array(
+				[
+					Vector2(center.x - extent * 0.18, crown_y + extent * 0.10),
+					Vector2(center.x - extent * 0.10, crown_y),
+					Vector2(center.x, crown_y + extent * 0.08),
+					Vector2(center.x + extent * 0.10, crown_y - extent * 0.03),
+					Vector2(center.x + extent * 0.18, crown_y + extent * 0.10),
+				]
+			),
+			_spawn_tone(color, 0.92),
+			1.0,
+			false,
+		)
+
+
+func _draw_nyxara_spawn(rect: Rect2, progress: float, cell: Vector2i, color: Color) -> void:
+	var inset: float = maxf(2.0, minf(rect.size.x, rect.size.y) * 0.10)
+	var displacement: float = lerpf(-2.0, 2.0, progress)
+	var fracture_color: Color = _spawn_tone(color, 0.88)
+	if (cell.x + cell.y) % 2 == 0:
+		draw_line(
+			rect.position + Vector2(inset + displacement, inset - displacement),
+			rect.end - Vector2(inset - displacement, inset + displacement),
+			fracture_color,
+			2.0,
+			false,
+		)
+		draw_line(
+			rect.position + Vector2(inset, rect.size.y * 0.62),
+			rect.position + Vector2(rect.size.x * 0.42, inset),
+			_spawn_tone(color, 0.58),
+			1.0,
+			false,
+		)
+	else:
+		draw_line(
+			Vector2(rect.position.x + inset - displacement, rect.end.y - inset - displacement),
+			Vector2(rect.end.x - inset - displacement, rect.position.y + inset - displacement),
+			fracture_color,
+			2.0,
+			false,
+		)
+		draw_line(
+			Vector2(rect.position.x + rect.size.x * 0.58, rect.position.y + inset),
+			Vector2(rect.end.x - inset, rect.position.y + rect.size.y * 0.62),
+			_spawn_tone(color, 0.58),
+			1.0,
+			false,
+		)
+
+
+func _boss_spawn_style(effect: Dictionary) -> StringName:
+	var boss_value: Variant = effect.get("boss_id", &"")
+	if str(boss_value).is_empty():
+		boss_value = effect.get("spawn_style", &"")
+	return StringName(str(boss_value))
+
+
+func _boss_spawn_cells(effect: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell_value: Variant in _array_or(effect.get("occupied_cells", [])):
+		if cell_value is Vector2i:
+			cells.append(cell_value)
+	if cells.is_empty():
+		var anchor_value: Variant = effect.get("cell", Vector2i.ZERO)
+		if anchor_value is Vector2i:
+			cells.append(anchor_value)
+	return cells
+
+
+func _spawn_tone(color: Color, maximum_alpha: float) -> Color:
+	return _cap_alpha(color, maximum_alpha)
 
 
 func _add_projectile_trail(payload: Dictionary) -> void:
@@ -476,13 +631,18 @@ func _add_cell_burst(payload: Dictionary) -> void:
 func _add_boss_spawn_effect(payload: Dictionary) -> void:
 	var effect: Dictionary = payload.duplicate(true)
 	effect["age"] = 0.0
-	effect["duration"] = maxf(0.05, float(effect.get("duration", BOSS_SPAWN_DURATION)))
+	effect["duration"] = maxf(
+		0.05,
+		float(effect.get("duration", effect.get("duration_seconds", BOSS_SPAWN_DURATION))),
+	)
 	if effect.get("occupied_cells", []).is_empty():
 		effect["occupied_cells"] = [effect.get("cell", Vector2i.ZERO)]
+	var anchor_value: Variant = effect.get("cell", Vector2i.ZERO)
+	for index: int in range(_boss_spawn_effects.size() - 1, -1, -1):
+		if _boss_spawn_effects[index].get("cell", Vector2i.ZERO) == anchor_value:
+			_boss_spawn_effects.remove_at(index)
 	if _reduced_vfx_enabled:
-		effect["duration"] = maxf(0.08, float(effect["duration"]) * REDUCED_DURATION_SCALE)
-		var color: Color = _color_or(effect.get("color"), Color.WHITE)
-		effect["color"] = _cap_alpha(color, REDUCED_MAX_ALPHA)
+		_apply_reduced_vfx_to_spawn_effect(effect)
 	_boss_spawn_effects.append(effect)
 	queue_redraw()
 
@@ -505,11 +665,22 @@ func _apply_reduced_vfx_to_active_effects() -> void:
 		_apply_reduced_vfx_to_trail(trail)
 	for burst: Dictionary in _cell_bursts:
 		_apply_reduced_vfx_to_burst(burst)
-	for effect: Dictionary in _boss_spawn_effects:
-		effect["duration"] = maxf(
-			0.08, float(effect.get("duration", 0.90)) * REDUCED_DURATION_SCALE
-		)
-		effect["color"] = _cap_alpha(_color_or(effect.get("color"), Color.WHITE), REDUCED_MAX_ALPHA)
+	for index: int in range(_boss_spawn_effects.size() - 1, -1, -1):
+		var effect: Dictionary = _boss_spawn_effects[index]
+		var age: float = float(effect.get("age", 0.0))
+		_apply_reduced_vfx_to_spawn_effect(effect)
+		if age >= float(effect.get("duration", BOSS_SPAWN_DURATION)):
+			_boss_spawn_effects.remove_at(index)
+		else:
+			_boss_spawn_effects[index] = effect
+
+
+func _apply_reduced_vfx_to_spawn_effect(effect: Dictionary) -> void:
+	effect["duration"] = maxf(
+		0.08,
+		float(effect.get("duration", BOSS_SPAWN_DURATION)) * REDUCED_DURATION_SCALE,
+	)
+	effect["color"] = _cap_alpha(_color_or(effect.get("color"), Color.WHITE), REDUCED_MAX_ALPHA)
 
 
 func _apply_reduced_vfx_to_trail(trail: Dictionary) -> void:
