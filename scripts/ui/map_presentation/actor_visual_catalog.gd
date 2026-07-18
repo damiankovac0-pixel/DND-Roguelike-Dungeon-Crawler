@@ -10,6 +10,7 @@ const ACTOR_FRAME_SIZE: Vector2i = Vector2i(16, 16)
 const BOSS_FRAME_SIZE: Vector2i = Vector2i(80, 64)
 const ACTOR_SHEET_SIZE: Vector2i = Vector2i(192, 816)
 const BOSS_SHEET_SIZE: Vector2i = Vector2i(960, 320)
+const ELITE_TINT: Color = Color(1.0, 0.84, 0.48)
 const ACTOR_ROWS: Dictionary = {
 	# New canonical visual IDs (actor/ namespace)
 	&"actor/player/fighter": 0,
@@ -199,7 +200,14 @@ func sprite_frames_for(snapshot: Dictionary) -> SpriteFrames:
 func tint_for(snapshot: Dictionary) -> Color:
 	var visual_id: StringName = snapshot.get("visual_id", &"actor/enemy")
 	if visual_id != &"" and ACTOR_ROWS.has(visual_id):
-		return Color.WHITE
+		var is_regular_elite: bool = (
+			bool(snapshot.get("is_elite", false))
+			and snapshot.get("kind", &"") == &"enemy"
+			and not bool(snapshot.get("is_player", false))
+			and not bool(snapshot.get("is_boss", false))
+			and not bool(snapshot.get("is_summon", false))
+		)
+		return ELITE_TINT if is_regular_elite else Color.WHITE
 	var boss_id: StringName = snapshot.get("boss_id", &"")
 	if boss_id != &"" and BOSS_ROWS.has(boss_id):
 		return Color.WHITE

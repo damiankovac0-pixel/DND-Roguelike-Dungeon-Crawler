@@ -43,6 +43,21 @@ const BOSS_ARENA_STATE_DEFEATED: StringName = &"defeated"
 const BOSS_ARENA_REVEAL_SECONDS: float = 2.10
 const BOSS_REWARD_CHEST_DEFER_SECONDS: float = 0.50
 const BOSS_CURRENT_PHASE_ATTACK_SCORE_BONUS: int = 1000
+const ELITE_GOLD_COLOR: Color = Color(1.0, 0.74, 0.16, 1.0)
+const HARD_REGULAR_HP_MULTIPLIER: float = 1.12
+const HARD_BOSS_HP_MULTIPLIER: float = 1.25
+const ELITE_HP_MULTIPLIER: float = 1.25
+const HARD_BOSS_XP_MULTIPLIER: float = 1.25
+const ELITE_XP_MULTIPLIER: float = 1.50
+const HARD_ENEMY_GOLD_MULTIPLIER: float = 0.90
+const ELITE_GOLD_MULTIPLIER: float = 1.60
+const HARD_BOSS_GOLD_MULTIPLIER: float = 1.15
+const HARD_REROLL_COST_MULTIPLIER: float = 1.15
+const HARD_BOSS_DIRECT_DAMAGE_PERCENT: int = 112
+const HARD_BOSS_HAZARD_DAMAGE_PERCENT: int = 110
+const ADAPTIVE_SHIELD_TURNS: int = 2
+const NORMAL_ENEMY_CHASE_RADIUS: float = 8.0
+const ELITE_HUNTER_CHASE_RADIUS: float = 10.0
 const BOSS_RESOURCE_BY_ID: Dictionary = {
 	&"observer": "res://resources/enemies/the_observer.tres",
 	&"seraphine": "res://resources/enemies/seraphine_thorn_saint.tres",
@@ -1003,6 +1018,14 @@ func _generate_floor(floor_number: int) -> void:
 	consumable_panel.visible = false
 	if floor_number <= 1:
 		GameManager.add_log_message("You enter the dungeon on floor 1.", &"floor")
+		if GameManager.is_hard_mode():
+			GameManager.add_log_message(
+				(
+					"HARD MODE: foes are tougher, elites emerge from floor 3, "
+					+ "bosses hit harder, and rewards and prices are less forgiving."
+				),
+				&"warning"
+			)
 	else:
 		GameManager.add_log_message("You descend to floor %d." % floor_number, &"floor")
 	_show_biome_title_if_needed(floor_number, biome_theme)
@@ -1015,24 +1038,90 @@ func _generate_floor(floor_number: int) -> void:
 func _spawn_enemies(spawn_positions: Array, floor_number: int) -> void:
 	for spawn_position: Vector2i in spawn_positions:
 		var enemy_data: Resource = _choose_enemy_data_for_floor(floor_number)
-		_spawn_enemy_instance(enemy_data, spawn_position, floor_number, true)
+		_spawn_enemy_instance(enemy_data, spawn_position, floor_number, true, true)
 
 
 func _spawn_enemy_instance(
-	enemy_data: Resource, spawn_position: Vector2i, floor_number: int, apply_floor_scaling: bool
+	enemy_data: Resource,
+	spawn_position: Vector2i,
+	floor_number: int,
+	apply_floor_scaling: bool,
+	allow_elite: bool = false
 ) -> Node2D:
+	var owned_enemy_data: Resource = _duplicate_enemy_data_for_spawn(enemy_data)
 	var enemy: Node2D = EnemyScript.new()
+	if _is_elite_spawn_eligible(owned_enemy_data, floor_number, allow_elite):
+		if _should_make_elite(owned_enemy_data, floor_number, allow_elite, randi_range(1, 100)):
+			_apply_elite_identity(enemy, owned_enemy_data)
 	var stats_component: Node = StatsComponentScript.new()
 	stats_component.name = "StatsComponent"
 	enemy.add_child(stats_component)
 	add_child(enemy)
-	enemy.initialize_from_data(enemy_data, spawn_position)
+	enemy.initialize_from_data(owned_enemy_data, spawn_position)
 	if apply_floor_scaling:
 		_scale_enemy_for_floor(enemy, floor_number)
+	else:
+		enemy.stats_component.current_hp = enemy.stats_component.max_hp
 	enemy.died.connect(_on_enemy_died)
 	_enemies.append(enemy)
 	GameManager.register_enemy(enemy)
 	return enemy
+
+
+func _duplicate_enemy_data_for_spawn(enemy_data: Resource) -> Resource:
+	var owned_enemy_data: Resource = enemy_data.duplicate(true)
+	var owned_boss_attacks: Array[Resource] = []
+	for attack: Resource in enemy_data.boss_attacks:
+		owned_boss_attacks.append(attack.duplicate(true) if attack != null else null)
+	owned_enemy_data.boss_attacks = owned_boss_attacks
+	return owned_enemy_data
+
+
+func _elite_chance_for_floor(floor_number: int) -> int:
+	if floor_number < 3:
+		return 0
+	var five_floor_steps: int = floori(float(floor_number - 3) / 5.0)
+	return clampi(8 + 2 * five_floor_steps, 8, 18)
+
+
+func _is_elite_spawn_eligible(enemy_data: Resource, floor_number: int, allow_elite: bool) -> bool:
+	return (
+		allow_elite
+		and GameManager.is_hard_mode()
+		and floor_number >= 3
+		and enemy_data != null
+		and not enemy_data.is_boss
+	)
+
+
+func _should_make_elite(
+	enemy_data: Resource, floor_number: int, allow_elite: bool, roll_percent: int
+) -> bool:
+	return (
+		_is_elite_spawn_eligible(enemy_data, floor_number, allow_elite)
+		and roll_percent >= 1
+		and roll_percent <= _elite_chance_for_floor(floor_number)
+	)
+
+
+func _apply_elite_identity(enemy: Node, enemy_data: Resource) -> void:
+	enemy.is_elite = true
+	enemy_data.display_name = "Elite %s" % enemy_data.display_name
+	enemy_data.color = enemy_data.color.lerp(ELITE_GOLD_COLOR, 0.62)
+	if enemy_data.summon_interval > 0:
+		enemy.elite_behavior = &"caller"
+		enemy_data.summon_interval = max(3, enemy_data.summon_interval - 1)
+	elif enemy_data.fireball_range > 0 and enemy_data.fireball_damage_dice > 0:
+		enemy.elite_behavior = &"volatile"
+		enemy_data.fireball_interval = max(2, enemy_data.fireball_interval - 1)
+	elif enemy_data.ranged_attack_range > 0:
+		enemy.elite_behavior = &"skirmisher"
+		enemy_data.ai_preferred_range = min(
+			enemy_data.ranged_attack_range, enemy_data.ai_preferred_range + 1
+		)
+		enemy_data.ranged_attack_interval = max(2, enemy_data.ranged_attack_interval - 1)
+	else:
+		enemy.elite_behavior = &"hunter"
 
 
 func _spawn_items(spawn_positions: Array, floor_number: int) -> void:
@@ -1210,6 +1299,14 @@ func _spawn_active_boss() -> Node2D:
 	_boss_states[boss] = _make_boss_state(boss)
 	_active_boss_encounter["boss"] = boss
 	_refresh_boss_occupied_cells(boss)
+	if GameManager.is_hard_mode() and boss_data.boss_id == &"observer":
+		GameManager.add_log_message(
+			(
+				"%s's closed eye grants ranged immunity; evade its tell to expose it."
+				% boss.display_name
+			),
+			&"warning"
+		)
 	return boss
 
 
@@ -1401,6 +1498,11 @@ func _make_boss_state(enemy: Node) -> Dictionary:
 		"strategy_resource": 0,
 		"strategy_resource_max": 0,
 		"nyxara_true_side_index": 0,
+		"active_shield_channel": &"",
+		"active_shield_turns": 0,
+		"shield_skip_tick": false,
+		"consecutive_damage_channel": &"",
+		"consecutive_damage_count": 0,
 	}
 	var enemy_actor: Enemy = enemy as Enemy
 	if enemy_actor != null and enemy_actor.enemy_data != null:
@@ -1492,6 +1594,123 @@ func _tick_boss_exposure(enemy: Node) -> void:
 			if enemy_actor.enemy_data.boss_id == &"seraphine":
 				state["strategy_resource"] = int(state.get("strategy_resource_max", 3))
 	_boss_states[enemy] = state
+
+
+func _tick_hard_boss_shield(enemy: Node) -> void:
+	if not GameManager.is_hard_mode() or not _is_boss_enemy(enemy):
+		return
+	var state: Dictionary = _boss_state_for(enemy)
+	if bool(state.get("shield_skip_tick", false)):
+		state["shield_skip_tick"] = false
+		_boss_states[enemy] = state
+		return
+	var turns_left: int = int(state.get("active_shield_turns", 0))
+	if turns_left <= 0:
+		return
+	turns_left -= 1
+	state["active_shield_turns"] = turns_left
+	if turns_left <= 0:
+		var expired_channel: StringName = state.get("active_shield_channel", &"")
+		state["active_shield_channel"] = &""
+		GameManager.add_log_message(
+			"%s's %s immunity expires." % [enemy.display_name, expired_channel], &"warning"
+		)
+	_boss_states[enemy] = state
+
+
+func _tick_hard_boss_shields_after_player_action() -> void:
+	if not GameManager.is_hard_mode():
+		return
+	for enemy in _enemies:
+		if enemy != null and enemy.is_alive() and _is_boss_enemy(enemy):
+			_tick_hard_boss_shield(enemy)
+
+
+func _hard_boss_immunity_channel(enemy: Node, state: Dictionary) -> StringName:
+	if not GameManager.is_hard_mode() or not _is_boss_enemy(enemy):
+		return &""
+	var enemy_actor: Enemy = enemy as Enemy
+	var boss_id: StringName = enemy_actor.enemy_data.boss_id
+	if boss_id == &"observer" and int(state.get("exposed_turns", 0)) <= 0:
+		return &"ranged"
+	if boss_id == &"kaelros" and _count_summoned_minions(enemy) > 0:
+		return &"magic"
+	if int(state.get("active_shield_turns", 0)) > 0:
+		return state.get("active_shield_channel", &"")
+	return &""
+
+
+func _boss_attack_by_id(enemy: Node, attack_id: StringName) -> Resource:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null or attack_id == &"":
+		return null
+	for attack: Resource in enemy_actor.enemy_data.boss_attacks:
+		if attack != null and attack.id == attack_id:
+			return attack
+	return null
+
+
+func _activate_hard_boss_shield(
+	enemy: Node, state: Dictionary, damage_channel: StringName, forced_attack_id: StringName
+) -> Dictionary:
+	state["active_shield_channel"] = damage_channel
+	state["active_shield_turns"] = ADAPTIVE_SHIELD_TURNS
+	state["shield_skip_tick"] = true
+	state["consecutive_damage_channel"] = &""
+	state["consecutive_damage_count"] = 0
+	var shield_attack: Resource = _boss_attack_by_id(enemy, forced_attack_id)
+	if shield_attack != null:
+		state["forced_attack_id"] = forced_attack_id
+		_play_boss_attack_cue(enemy, shield_attack, &"shield")
+	GameManager.add_log_message(
+		(
+			"%s channels %s immunity for %d player actions."
+			% [enemy.display_name, damage_channel, ADAPTIVE_SHIELD_TURNS]
+		),
+		&"warning"
+	)
+	_boss_states[enemy] = state
+	_refresh_boss_presentation()
+	return state
+
+
+func _record_hard_boss_damage(
+	enemy: Node, state: Dictionary, damage_channel: StringName
+) -> Dictionary:
+	if not GameManager.is_hard_mode():
+		return state
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return state
+	var required_channel: StringName = &""
+	var forced_attack_id: StringName = &""
+	match enemy_actor.enemy_data.boss_id:
+		&"seraphine":
+			required_channel = &"ranged"
+			forced_attack_id = &"briar_rebuke"
+		&"vorrak":
+			required_channel = &"melee"
+			forced_attack_id = &"maw_snap"
+		&"nyxara":
+			required_channel = damage_channel
+			forced_attack_id = &"shardstep"
+		_:
+			state["consecutive_damage_channel"] = &""
+			state["consecutive_damage_count"] = 0
+			return state
+	if required_channel == &"" or damage_channel != required_channel:
+		state["consecutive_damage_channel"] = &""
+		state["consecutive_damage_count"] = 0
+		return state
+	var previous_channel: StringName = state.get("consecutive_damage_channel", &"")
+	var consecutive_hits: int = 1
+	if previous_channel == damage_channel:
+		consecutive_hits = int(state.get("consecutive_damage_count", 0)) + 1
+	state["consecutive_damage_channel"] = damage_channel
+	state["consecutive_damage_count"] = consecutive_hits
+	if consecutive_hits >= 2:
+		state = _activate_hard_boss_shield(enemy, state, damage_channel, forced_attack_id)
+	return state
 
 
 func _on_boss_strategy_attack_resolved(enemy: Node, hit: bool) -> void:
@@ -1587,6 +1806,7 @@ func _on_boss_damaged(enemy: Node, damage_channel: StringName = &"") -> void:
 			)
 		else:
 			state["melee_hits_received"] = melee_hits
+	state = _record_hard_boss_damage(enemy, state, damage_channel)
 	_boss_states[enemy] = state
 
 
@@ -1619,9 +1839,10 @@ func _on_boss_summon_died(summoner_id: int) -> void:
 			if _count_summoned_minions(summoner) <= 0 and exposed_turns > 0:
 				state["exposed_turns"] = exposed_turns
 				state["exposure_skip_tick"] = true
-				GameManager.add_log_message(
-					"%s's crown breaks!" % summoner.display_name, &"warning"
-				)
+				var crown_message: String = "%s's crown breaks!" % summoner.display_name
+				if GameManager.is_hard_mode():
+					crown_message += " Its magic immunity ends."
+				GameManager.add_log_message(crown_message, &"warning")
 				_boss_states[summoner] = state
 		&"nyxara":
 			if _count_summoned_minions(summoner) <= 0 and exposed_turns > 0:
@@ -1674,6 +1895,14 @@ func _boss_strategy_label(enemy: Node, state: Dictionary, enemy_data: Resource) 
 				var cardinal_letters: Array[String] = ["N", "E", "S", "W"]
 				var angle_index: int = int(state.get("nyxara_true_side_index", 0))
 				label = "TRUE ANGLE %s" % cardinal_letters[angle_index % 4]
+	if GameManager.is_hard_mode():
+		var immunity_channel: StringName = _hard_boss_immunity_channel(enemy, state)
+		if immunity_channel != &"":
+			var immunity_label: String = "%s IMMUNE" % str(immunity_channel).to_upper()
+			var shield_turns: int = int(state.get("active_shield_turns", 0))
+			if shield_turns > 0:
+				immunity_label += " %d" % shield_turns
+			label = immunity_label if label.is_empty() else "%s // %s" % [label, immunity_label]
 	return label
 
 
@@ -1804,6 +2033,8 @@ func _release_boss_encounter() -> void:
 	if boss_data != null:
 		chest_rarity = boss_data.boss_reward_chest_rarity
 		gold_reward = boss_data.boss_reward_gold
+		if GameManager.is_hard_mode():
+			gold_reward = roundi(gold_reward * HARD_BOSS_GOLD_MULTIPLIER)
 	# Schedule deferred boss reward chest
 	_active_boss_encounter["pending_chest_rarity"] = chest_rarity
 	_active_boss_encounter["pending_chest_floor"] = GameManager.current_floor
@@ -2362,6 +2593,9 @@ func _get_damage_percent(defender: Node, damage_type: StringName) -> int:
 	if not _is_boss_enemy(defender):
 		return base_percent
 	var state: Dictionary = _boss_state_for(defender)
+	var immunity_channel: StringName = _hard_boss_immunity_channel(defender, state)
+	if immunity_channel == damage_type:
+		return 0
 	var strategy_percent: int = _boss_strategy_percent(defender, state, enemy_actor.enemy_data)
 	return max(1, int(round(float(base_percent * strategy_percent) / 100.0)))
 
@@ -3671,7 +3905,8 @@ func _apply_boss_hazard_tick() -> bool:
 			var raw_damage: int = damage_bonus
 			for _i: int in range(damage_dice):
 				raw_damage += Dice.roll(damage_sides)
-			var damage: int = _player.stats_component.apply_damage(max(1, raw_damage))
+			raw_damage = _scale_boss_special_damage(raw_damage, true)
+			var damage: int = _player.stats_component.apply_damage(raw_damage)
 			GameManager.emit_player_damaged()
 			var message: String = str(hazard.get("message", ""))
 			if message.contains("%d"):
@@ -3729,6 +3964,7 @@ func _tick_stun_action() -> void:
 func _end_player_turn() -> void:
 	if _player == null or not _player.is_alive() or not GameManager.has_active_run:
 		return
+	_tick_hard_boss_shields_after_player_action()
 	if _shield_turns > 0:
 		_shield_turns -= 1
 	_tick_stun_action()
@@ -3781,7 +4017,7 @@ func _process_enemy_turns() -> void:
 			_resolve_attack(enemy, _player)
 			if not _player.is_alive():
 				return
-		elif distance_to_player <= 8.0:
+		elif distance_to_player <= _enemy_chase_radius(enemy):
 			var next_step: Vector2i = PathfindingScript.find_next_step(
 				enemy.grid_position, _player.grid_position, GameManager.map_data, blocked_cells
 			)
@@ -3789,6 +4025,13 @@ func _process_enemy_turns() -> void:
 				enemy.set_grid_position(next_step)
 		for occupied_cell: Vector2i in _enemy_occupied_cells(enemy):
 			blocked_cells[occupied_cell] = true
+
+
+func _enemy_chase_radius(enemy: Node) -> float:
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor != null and enemy_actor.is_elite and enemy_actor.elite_behavior == &"hunter":
+		return ELITE_HUNTER_CHASE_RADIUS
+	return NORMAL_ENEMY_CHASE_RADIUS
 
 
 func _should_skip_enemy_for_boss_arena(enemy: Node) -> bool:
@@ -4481,7 +4724,8 @@ func _resolve_boss_attack(enemy: Node, attack: Resource, cells: Dictionary) -> v
 		var raw_damage: int = attack.damage_bonus
 		for _die_index: int in range(max(1, attack.damage_dice)):
 			raw_damage += Dice.roll(max(2, attack.damage_sides))
-		var damage: int = _player.stats_component.apply_damage(max(1, raw_damage))
+		raw_damage = _scale_boss_special_damage(raw_damage)
+		var damage: int = _player.stats_component.apply_damage(raw_damage)
 		var message: String = attack.resolve_text
 		if message.is_empty():
 			message = (
@@ -4574,6 +4818,16 @@ func _resolve_boss_summon(enemy: Node, attack: Resource, preferred_cells: Dictio
 			),
 			&"magic"
 		)
+		var enemy_actor: Enemy = enemy as Enemy
+		if (
+			GameManager.is_hard_mode()
+			and enemy_actor != null
+			and enemy_actor.enemy_data != null
+			and enemy_actor.enemy_data.boss_id == &"kaelros"
+		):
+			GameManager.add_log_message(
+				"%s's living retinue grants magic immunity." % enemy.display_name, &"warning"
+			)
 
 
 func _take_preferred_summon_cell(
@@ -4753,7 +5007,20 @@ func _find_boss_room_summon_cell(origin: Vector2i, blocked_cells: Dictionary) ->
 
 
 func _boss_attack_effective_windup(attack: Resource) -> int:
-	return max(1, attack.telegraph_turns)
+	var windup: int = attack.telegraph_turns
+	if GameManager.is_hard_mode():
+		windup -= 1
+	return max(1, windup)
+
+
+func _scale_boss_special_damage(raw_damage: int, is_hazard: bool = false) -> int:
+	var bounded_damage: int = max(1, raw_damage)
+	if not GameManager.is_hard_mode():
+		return bounded_damage
+	var damage_percent: int = (
+		HARD_BOSS_HAZARD_DAMAGE_PERCENT if is_hazard else HARD_BOSS_DIRECT_DAMAGE_PERCENT
+	)
+	return _scale_damage(bounded_damage, damage_percent)
 
 
 func _ensure_boss_telegraph_escape(cells: Dictionary, player_cell: Vector2i) -> void:
@@ -6162,9 +6429,15 @@ func _on_enemy_died(enemy: Node) -> void:
 	else:
 		var gold_reward: int = _roll_enemy_gold_reward(enemy)
 		_player.stats_component.gold += gold_reward
-		GameManager.add_log_message(
-			"%s dies. +%d gold." % [enemy.display_name, gold_reward], &"death"
-		)
+		var enemy_actor: Enemy = enemy as Enemy
+		if enemy_actor != null and enemy_actor.is_elite:
+			GameManager.add_log_message(
+				"%s dies. Elite bounty: +%d gold." % [enemy.display_name, gold_reward], &"gold"
+			)
+		else:
+			GameManager.add_log_message(
+				"%s dies. +%d gold." % [enemy.display_name, gold_reward], &"death"
+			)
 	_enemy_action_counts.erase(enemy)
 	_ranged_recovery_enemies.erase(enemy)
 	_boss_states.erase(enemy)
@@ -6295,10 +6568,13 @@ func _on_shop_panel_reroll_requested() -> void:
 
 
 func _get_shop_reroll_cost() -> int:
-	return (
+	var normal_cost: int = (
 		(SHOP_REROLL_BASE_COST + GameManager.current_floor * SHOP_REROLL_FLOOR_COST)
 		* (_shop_reroll_count + 1)
 	)
+	if GameManager.is_hard_mode():
+		return max(1, ceili(normal_cost * HARD_REROLL_COST_MULTIPLIER))
+	return normal_cost
 
 
 # ===== Floor Scaling & Selection =====
@@ -6311,7 +6587,6 @@ func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
 	var attack_bonus: int = int(depth / 7)
 	var damage_bonus: int = int(max(0, depth - 3) / 7)
 	enemy.stats_component.max_hp += hp_bonus
-	enemy.stats_component.current_hp = enemy.stats_component.max_hp
 	enemy.stats_component.base_armor_class += armor_bonus
 	enemy.stats_component.base_attack_bonus += attack_bonus
 	enemy.stats_component.base_damage_bonus += damage_bonus
@@ -6320,6 +6595,42 @@ func _scale_enemy_for_floor(enemy: Node, floor_number: int) -> void:
 	if enemy_actor != null and enemy_actor.enemy_data != null and enemy_actor.enemy_data.is_boss:
 		enemy.stats_component.xp_reward += depth * 4
 	_scale_enemy_special_attacks(enemy, min(3, int(depth / 8)))
+	if GameManager.is_hard_mode():
+		_apply_hard_enemy_tuning(enemy, floor_number)
+	if enemy_actor != null and enemy_actor.is_elite:
+		_apply_elite_tuning(enemy)
+	enemy.stats_component.current_hp = enemy.stats_component.max_hp
+
+
+func _apply_hard_enemy_tuning(enemy: Node, floor_number: int) -> void:
+	if not GameManager.is_hard_mode():
+		return
+	var enemy_actor: Enemy = enemy as Enemy
+	if enemy_actor == null or enemy_actor.enemy_data == null:
+		return
+	if enemy_actor.enemy_data.is_boss:
+		enemy.stats_component.max_hp = ceili(enemy.stats_component.max_hp * HARD_BOSS_HP_MULTIPLIER)
+		enemy.stats_component.base_armor_class += 1
+		enemy.stats_component.base_attack_bonus += 1
+		enemy.stats_component.base_damage_bonus += 1
+		enemy.stats_component.xp_reward = roundi(
+			enemy.stats_component.xp_reward * HARD_BOSS_XP_MULTIPLIER
+		)
+		return
+	enemy.stats_component.max_hp = ceili(enemy.stats_component.max_hp * HARD_REGULAR_HP_MULTIPLIER)
+	if floor_number >= 6:
+		enemy.stats_component.base_attack_bonus += 1
+	if floor_number >= 11:
+		enemy.stats_component.base_damage_bonus += 1
+
+
+func _apply_elite_tuning(enemy: Node) -> void:
+	enemy.stats_component.max_hp = ceili(enemy.stats_component.max_hp * ELITE_HP_MULTIPLIER)
+	enemy.stats_component.base_armor_class += 1
+	enemy.stats_component.base_attack_bonus += 1
+	enemy.stats_component.base_damage_bonus += 1
+	_scale_enemy_special_attacks(enemy, 1)
+	enemy.stats_component.xp_reward = roundi(enemy.stats_component.xp_reward * ELITE_XP_MULTIPLIER)
 
 
 func _scale_enemy_special_attacks(enemy: Node, special_damage_bonus: int) -> void:
@@ -6333,7 +6644,7 @@ func _scale_enemy_special_attacks(enemy: Node, special_damage_bonus: int) -> voi
 		and enemy_actor.enemy_data.fireball_damage_dice <= 0
 	):
 		return
-	enemy_actor.enemy_data = enemy_actor.enemy_data.duplicate(true)
+	# Every spawn already owns a deep clone; mutate that instance directly.
 	if enemy_actor.enemy_data.ranged_damage_sides > 0:
 		enemy_actor.enemy_data.ranged_damage_bonus += special_damage_bonus
 	if enemy_actor.enemy_data.fireball_damage_dice > 0:
@@ -6764,6 +7075,11 @@ func _roll_enemy_gold_reward(enemy: Node = null) -> int:
 		GameManager.add_log_message(
 			"%s carried extra plunder: +%d bonus gold." % [enemy.display_name, bonus], &"gold"
 		)
+	if GameManager.is_hard_mode():
+		var reward_multiplier: float = HARD_ENEMY_GOLD_MULTIPLIER
+		if enemy_actor != null and enemy_actor.is_elite:
+			reward_multiplier *= ELITE_GOLD_MULTIPLIER
+		reward = max(1, roundi(reward * reward_multiplier))
 	return reward
 
 

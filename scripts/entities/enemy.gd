@@ -4,6 +4,8 @@ extends "res://scripts/entities/actor.gd"
 
 # === Public Variables ===
 var enemy_data: Resource
+var is_elite: bool = false
+var elite_behavior: StringName = &""
 
 
 # === Public Methods ===

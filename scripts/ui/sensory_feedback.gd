@@ -455,9 +455,9 @@ func play_boss_defeat_cue(boss_id: StringName) -> void:
 	_trigger_boss_cue(CUE_BOSS_DEFEAT, boss_id)
 
 
-## Plays a cached identity-specific attack cue for a boss windup or resolve.
+## Plays a cached identity-specific attack cue for a boss windup, resolve, or shield.
 func play_boss_attack_cue(boss_id: StringName, attack_id: StringName, stage: StringName) -> void:
-	if stage != &"windup" and stage != &"resolve":
+	if stage != &"windup" and stage != &"resolve" and stage != &"shield":
 		return
 	var stream_factory: Callable = _get_boss_attack_stream.bind(boss_id, attack_id, stage)
 	_trigger_boss_cue(CUE_BOSS_TELEGRAPH, boss_id, 1, null, stream_factory)
@@ -1156,9 +1156,71 @@ static func _build_boss_defeat() -> Array[float]:
 	return _envelope(mixed, 0.010, 0.68)
 
 
+static func _build_boss_shield(boss_id: StringName, attack_id: StringName) -> Array[float]:
+	var duration: float = 0.18
+	var variation: float = float(abs(hash(attack_id) % 19))
+	var seed_value: int = hash(boss_id) ^ hash(attack_id) ^ hash(&"shield")
+	match boss_id:
+		&"observer":
+			var scan: Array[float] = _sine_samples(1320.0 + variation, duration)
+			_apply_sweep(scan, 1320.0 + variation, 540.0 + variation)
+			var optic: Array[float] = _sine_samples(930.0 + variation, duration)
+			var mixed: Array[float] = _mix([scan, optic], [0.60, 0.28])
+			for i: int in range(mixed.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				mixed[i] *= 1.0 if int(t * 32.0) % 2 == 0 else 0.38
+			return _envelope(mixed, 0.002, 0.58)
+		&"seraphine":
+			var rustle: Array[float] = _seeded_noise_samples(duration, seed_value)
+			var stem: Array[float] = _sine_samples(430.0 + variation, duration)
+			_apply_sweep(stem, 430.0 + variation, 145.0 + variation)
+			for i: int in range(rustle.size()):
+				var fraction: float = float(i) / float(maxi(1, rustle.size() - 1))
+				rustle[i] *= (
+					(1.0 - fraction) * (0.55 + 0.45 * sin(float(i) / SAMPLE_RATE * 22.0 * TAU))
+				)
+			var mixed: Array[float] = _mix([stem, rustle], [0.55, 0.18])
+			return _envelope(mixed, 0.010, 0.58)
+		&"vorrak":
+			var ignition: Array[float] = _sine_samples(138.0 + variation, duration)
+			_apply_sweep(ignition, 138.0 + variation, 48.0 + variation * 0.2)
+			var grit: Array[float] = _seeded_noise_samples(duration, seed_value)
+			for i: int in range(grit.size()):
+				var fraction: float = float(i) / float(maxi(1, grit.size() - 1))
+				grit[i] *= (1.0 - fraction) * 0.36
+			var mixed: Array[float] = _mix([ignition, grit], [0.80, 0.32])
+			return _envelope(mixed, 0.003, 0.55)
+		&"kaelros":
+			var metal: Array[float] = _sine_samples(348.0 + variation, duration)
+			var interval: Array[float] = _sine_samples(522.0 + variation * 1.5, duration)
+			_apply_sweep(metal, 348.0 + variation, 232.0 + variation)
+			_apply_sweep(interval, 522.0 + variation * 1.5, 348.0 + variation)
+			for i: int in range(metal.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				var ring: float = 0.62 + 0.38 * sin(t * 11.0 * TAU)
+				metal[i] *= ring
+				interval[i] *= 1.0 - ring * 0.30
+			var mixed: Array[float] = _mix([metal, interval], [0.60, 0.44])
+			return _envelope(mixed, 0.002, 0.62)
+		&"nyxara":
+			var shard_a: Array[float] = _sine_samples(810.0 + variation, duration)
+			var shard_b: Array[float] = _sine_samples(790.0 - variation, duration)
+			_apply_sweep(shard_a, 810.0 + variation, 350.0 + variation)
+			_apply_sweep(shard_b, 790.0 - variation, 374.0 + variation)
+			var mixed: Array[float] = _mix([shard_a, shard_b], [0.56, 0.53])
+			for i: int in range(mixed.size()):
+				var t: float = float(i) / SAMPLE_RATE
+				mixed[i] *= 1.0 if int(t * 37.0) % 3 == 0 else 0.22
+			return _envelope(mixed, 0.001, 0.54)
+		_:
+			return _build_boss_telegraph()
+
+
 static func _build_boss_attack(
 	boss_id: StringName, attack_id: StringName, stage: StringName
 ) -> Array[float]:
+	if stage == &"shield":
+		return _build_boss_shield(boss_id, attack_id)
 	var is_resolve: bool = stage == &"resolve"
 	var duration: float = 0.22 if is_resolve else 0.30
 	var variation: float = float(abs(hash(attack_id) % 19))
