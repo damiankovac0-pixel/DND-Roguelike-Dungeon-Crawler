@@ -18,8 +18,9 @@ const ENTRANCE_STAGGER: float = 0.12
 @onready
 var normal_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/NormalButton
 @onready var hard_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/HardButton
-@onready
-var difficulty_status_label: Label = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/StatusLabel
+@onready var difficulty_status_label: Label = get_node(
+	"DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/StatusLabel"
+)
 @onready
 var difficulty_back_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/BackButton
 

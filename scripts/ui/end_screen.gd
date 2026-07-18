@@ -11,12 +11,14 @@ const DIFFICULTY_HARD_COLOR: Color = Color("#ff5777")
 @export_multiline var body_text: String = ""
 @export var restart_scene: String = "res://scenes/game.tscn"
 
+# === Private Variables ===
+var _difficulty_label: Label
+
 # === Onready ===
 @onready var title_label: Label = $Center/VBox/TitleLabel
 @onready var body_label: Label = $Center/VBox/BodyLabel
 @onready var retry_button: Button = $Center/VBox/RetryButton
 @onready var quit_button: Button = $Center/VBox/QuitButton
-var _difficulty_label: Label
 
 
 # === Lifecycle Methods ===
