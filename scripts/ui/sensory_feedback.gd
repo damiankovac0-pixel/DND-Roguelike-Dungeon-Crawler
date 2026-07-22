@@ -21,7 +21,7 @@ const SETTINGS_PATH: String = "user://dungeon_delver_settings.cfg"
 const MapRenderModeScript: GDScript = preload(
 	"res://scripts/ui/map_presentation/map_render_mode.gd"
 )
-const DEFAULT_MAP_RENDER_MODE: StringName = MapRenderModeScript.HYBRID
+const DEFAULT_MAP_RENDER_MODE: StringName = MapRenderModeScript.PIXEL
 const GRAPHICS_SETTINGS_SECTION: String = "graphics"
 const SETTING_MAP_RENDER_MODE: String = "map_render_mode"
 const SETTINGS_SECTION: String = "sensory"

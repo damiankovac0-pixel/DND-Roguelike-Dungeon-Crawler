@@ -89,7 +89,15 @@ The in-game Library is the lore-and-rules desk:
 - Item and trap references.
 - Class ability reference.
 - Version history.
-- Run archive for completed non-debug runs.
+- Run archive with difficulty, score, combat totals, bound shards, and high-score records for completed non-debug runs.
+
+### V32 Nightmare and Shardfall release
+
+- A non-debug Hard victory unlocks **Nightmare**, a third difficulty with guaranteed floor-one mutated elites, four distinct elite families, tighter boss telegraphs and cooldowns, longer adaptive shields, harsher prices, and larger risk multipliers for scoring.
+- Character creation now leads through a skippable, player-paced Shardbearer prologue. Every capstone boss guards one portal shard; the HUD, boss defeat overlays, final choice, codex, and archive carry that progression.
+- Victory and defeat now open a responsive run report with the killer or final fate, floor, turns, HP, gold, kills, elites, bosses, items, containers, loadout, ranked damage sources, deterministic score breakdown, and per-difficulty high score.
+- Defeated bosses appear as their real pixel sprites and play their authored death animation in sequence on the results screen.
+- Full Pixel is the default renderer for new settings profiles; ASCII and Hybrid remain available.
 
 ### V31 boss and Hard-mode release
 

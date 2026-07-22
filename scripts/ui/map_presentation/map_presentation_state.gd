@@ -288,6 +288,9 @@ func _snapshot_actor(actor: Variant) -> Dictionary:
 	var boss_id: StringName = StringName(enemy_data.get("boss_id")) if is_boss else StringName()
 	var color_value: Variant = actor.get("color")
 	var is_elite: bool = _actor_is_elite(actor)
+	var elite_behavior: StringName
+	if is_elite:
+		elite_behavior = StringName(str(actor.get("elite_behavior")))
 	return {
 		"id": actor_id,
 		"name": actor_name,
@@ -298,6 +301,7 @@ func _snapshot_actor(actor: Variant) -> Dictionary:
 		"is_boss": is_boss,
 		"is_summon": is_summon,
 		"is_elite": is_elite,
+		"elite_behavior": elite_behavior,
 		"boss_id": boss_id,
 		"cell": cell_value,
 		"occupied_cells": [cell_value],

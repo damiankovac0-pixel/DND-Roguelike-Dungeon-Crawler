@@ -762,21 +762,21 @@ func _check_game_manager_version() -> void:
 		_fail("GameManager instance missing GAME_VERSION property")
 
 	var gm_version: String = gm.GAME_VERSION
-	if gm_version != "31.0.0":
+	if gm_version != "32.0.0":
 		_fail(
 			(
-				"GameManager.GAME_VERSION expected '31.0.0', got '%s' — V31.0.0 release not set"
+				"GameManager.GAME_VERSION expected '32.0.0', got '%s' — V32.0.0 release not set"
 				% gm_version
 			)
 		)
 		return
-	print("  GameManager.GAME_VERSION = 31.0.0")
+	print("  GameManager.GAME_VERSION = 32.0.0")
 
 	var label: String = gm.get_version_label()
-	if not "31.0.0" in label or not "2026-07-18" in label:
-		_fail("GameManager.get_version_label() = '%s' — " + "expected 31.0.0 / 2026-07-18" % label)
+	if not "32.0.0" in label or not "2026-07-18" in label:
+		_fail("GameManager.get_version_label() = '%s' — " + "expected 32.0.0 / 2026-07-18" % label)
 	else:
-		print("  GameManager.get_version_label() references 31.0.0 / 2026-07-18")
+		print("  GameManager.get_version_label() references 32.0.0 / 2026-07-18")
 
 
 # ======================================================================

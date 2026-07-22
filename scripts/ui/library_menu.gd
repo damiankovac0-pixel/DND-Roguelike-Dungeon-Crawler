@@ -11,6 +11,14 @@ const DamageTypeTextScript = preload("res://scripts/ui/damage_type_text.gd")
 const LibraryVisualPreviewScript = preload("res://scripts/ui/library_visual_preview.gd")
 const DIFFICULTY_NORMAL_COLOR: String = "#8fb3ff"
 const DIFFICULTY_HARD_COLOR: String = "#ff5777"
+const DIFFICULTY_NIGHTMARE_COLOR: String = "#c77dff"
+const SHARDBEARER_NAMES: Dictionary = {
+	&"observer": "Observer",
+	&"seraphine": "Seraphine",
+	&"vorrak": "Vorrak",
+	&"kaelros": "Kaelros",
+	&"nyxara": "Nyxara",
+}
 const ENEMY_NOTES: Dictionary = {
 	"Rat": "Low HP early swarmer. Small poison chance can chip you for 3 turns.",
 	"Bat": "Very low HP but high AC for floor 1. Annoying to hit, quick to kill once struck.",
@@ -788,7 +796,8 @@ func _build_archive_text() -> String:
 		"",
 		"Real completed runs only. Debug/test loadouts are ignored.",
 		"Hard unlocks after an archived non-debug Normal victory.",
-		"New runs store the game version at the moment they end.",
+		"Nightmare unlocks after an archived non-debug Hard victory.",
+		"Scores, shards, loadouts, and combat totals persist from V32 onward.",
 	]
 	if entries.is_empty():
 		lines.append("[color=#92906f]No archived runs yet.[/color]")
@@ -813,16 +822,21 @@ func _archive_entry(entry: Dictionary, archive_index: int) -> String:
 		str(entry.get("difficulty", GameManager.DEFAULT_DIFFICULTY))
 	)
 	var difficulty_label: String = GameManager.get_difficulty_label(difficulty)
-	var difficulty_color: String = (
-		DIFFICULTY_HARD_COLOR if difficulty_label == "Hard" else DIFFICULTY_NORMAL_COLOR
-	)
+	var difficulty_color: String
+	match difficulty:
+		GameManager.DIFFICULTY_HARD:
+			difficulty_color = DIFFICULTY_HARD_COLOR
+		GameManager.DIFFICULTY_NIGHTMARE:
+			difficulty_color = DIFFICULTY_NIGHTMARE_COLOR
+		_:
+			difficulty_color = DIFFICULTY_NORMAL_COLOR
 	var entry_text: String = (
 		"[color=#47426b]%02d[/color]  [color=#fffbf0]%s[/color]  "
 		+ "[color=#8fb3ff]%s[/color]  [color=%s]%s[/color]  "
 		+ "[color=#7db8ff]F%d[/color]  [color=#d8d8d8]L%s[/color]  "
 		+ "[color=%s]%s[/color]  [color=#f1c75b]%s[/color]"
 	)
-	return (
+	var header: String = (
 		entry_text
 		% [
 			archive_index,
@@ -837,6 +851,52 @@ func _archive_entry(entry: Dictionary, archive_index: int) -> String:
 			version_text,
 		]
 	)
+	if not entry.has("score"):
+		return header
+	var score: int = int(entry.get("score", 0))
+	var high_score: int = GameManager.get_high_score(difficulty)
+	var record_label: String = (
+		"  [color=#ffe077][b]HIGH SCORE[/b][/color]" if score > 0 and score == high_score else ""
+	)
+	var telemetry: String = (
+		(
+			"\n      [color=#ffe077]Score %s[/color]  "
+			+ "[color=#a8a6b8]Turns %d  //  Kills %d  //  Shards %d/%d[/color]%s"
+		)
+		% [
+			_format_archive_number(score),
+			int(entry.get("turns", 0)),
+			int(entry.get("enemy_kills", 0)),
+			int(entry.get("shards_collected", 0)),
+			GameManager.TOTAL_PORTAL_SHARDS,
+			record_label,
+		]
+	)
+	var boss_kills: Array = entry.get("boss_kills", [])
+	if not boss_kills.is_empty():
+		var bound_names: PackedStringArray = []
+		for boss_entry: Variant in boss_kills:
+			var boss_id: StringName
+			var boss_name: String
+			if boss_entry is Dictionary:
+				boss_id = StringName(str(boss_entry.get("id", "")))
+				boss_name = str(boss_entry.get("name", ""))
+			else:
+				boss_id = StringName(str(boss_entry))
+			if boss_name.is_empty():
+				boss_name = str(SHARDBEARER_NAMES.get(boss_id, str(boss_id).capitalize()))
+			bound_names.append(boss_name)
+		telemetry += ("\n      [color=#c77dff]Bound shards:[/color] %s" % ", ".join(bound_names))
+	return header + telemetry
+
+
+func _format_archive_number(value: int) -> String:
+	var digits: String = str(max(0, value))
+	var grouped: String = ""
+	while digits.length() > 3:
+		grouped = ",%s%s" % [digits.right(3), grouped]
+		digits = digits.left(digits.length() - 3)
+	return digits + grouped
 
 
 func _archive_version(version_value: String) -> String:
@@ -902,6 +962,12 @@ func _enemy_entry(enemy: Resource) -> Array[String]:
 		),
 		"Note: %s" % ENEMY_NOTES.get(enemy.display_name, _enemy_stat_note(enemy)),
 	]
+	if enemy.is_boss:
+		lines.append("")
+		lines.append("[color=#c77dff][b]SHARDBEARER // %s[/b][/color]" % enemy.boss_room_title)
+		lines.append("[color=#d8d1df]%s[/color]" % enemy.boss_lore)
+		lines.append("[color=#8dd6e8]Shard memory:[/color] %s" % enemy.boss_shard_lore)
+		lines.append("[color=#ffe077]Tactic:[/color] %s" % enemy.boss_strategy_hint)
 	if enemy.display_name == "Lich":
 		lines.append_array(_lich_summon_entry(enemy))
 	return lines

@@ -9,6 +9,7 @@ const HP_DANGER_COLOR: Color = Color(1.0, 0.34, 0.47)
 const HP_HEAL_FLASH_COLOR: Color = Color(0.48, 0.95, 0.56)
 const GOLD_FLASH_COLOR: Color = Color(1.0, 0.82, 0.18)
 const XP_FLASH_COLOR: Color = Color(0.55, 0.86, 1.0)
+const SHARD_FLASH_COLOR: Color = Color(0.86, 0.62, 1.0)
 const LABEL_PULSE_SCALE: Vector2 = Vector2(1.08, 1.08)
 const LABEL_PULSE_SECONDS: float = 0.24
 const BOSS_HP_BAR_CELLS: int = 12
@@ -23,6 +24,7 @@ var _has_shopkeeper: bool = false
 var _last_hp: int = -1
 var _last_gold: int = -1
 var _last_xp: int = -1
+var _last_shards: int = -1
 var _visible_enemy_intents: Dictionary = {}
 var _boss_display_name: String = ""
 var _boss_floor_active: bool = false
@@ -34,6 +36,7 @@ var _hp_tween: Tween
 var _boss_hp_tween: Tween
 var _gold_tween: Tween
 var _xp_tween: Tween
+var _shard_tween: Tween
 var _last_boss_phase: int = -1
 var _boss_status_tween: Tween
 
@@ -50,6 +53,7 @@ var _boss_status_tween: Tween
 @onready var boss_banner_status_label: Label = $BossBanner/Margin/VBox/StatusLabel
 @onready var stats_label: RichTextLabel = $Margin/VBox/StatsLabel
 @onready var gold_label: Label = $Margin/VBox/GoldLabel
+@onready var shards_label: Label = $Margin/VBox/ShardsLabel
 @onready var help_label: Label = $Margin/VBox/HelpLabel
 @onready var sidebar_panel: PanelContainer = $"../SidebarPanel"
 @onready var sidebar_vbox: VBoxContainer = $Margin/VBox
@@ -60,6 +64,7 @@ func _ready() -> void:
 	GameManager.player_damaged.connect(_update_hp)
 	GameManager.xp_changed.connect(_update_xp)
 	GameManager.floor_changed.connect(_update_floor)
+	GameManager.shards_changed.connect(_update_shards)
 	resized.connect(_queue_sidebar_resize)
 	stats_label.bbcode_enabled = true
 	stats_label.fit_content = true
@@ -75,6 +80,7 @@ func bind_player(player: Node) -> void:
 	_update_hp(player.stats_component.current_hp, player.stats_component.max_hp)
 	_update_xp(player.stats_component.xp, player.stats_component.xp_for_next_level())
 	_update_gold(player.stats_component.gold)
+	_update_shards(GameManager.get_collected_shard_count(), GameManager.TOTAL_PORTAL_SHARDS)
 
 
 func set_biome_theme(theme: Dictionary) -> void:
@@ -235,6 +241,13 @@ func _update_gold(gold: int) -> void:
 	if _last_gold >= 0 and gold != _last_gold:
 		_gold_tween = _pulse_label(gold_label, _gold_tween, GOLD_FLASH_COLOR)
 	_last_gold = gold
+
+
+func _update_shards(collected: int, total: int) -> void:
+	shards_label.text = "Shards %d / %d" % [collected, total]
+	if _last_shards >= 0 and collected > _last_shards:
+		_shard_tween = _pulse_label(shards_label, _shard_tween, SHARD_FLASH_COLOR)
+	_last_shards = collected
 
 
 func _hp_status_color(current_hp: int, max_hp: int) -> Color:

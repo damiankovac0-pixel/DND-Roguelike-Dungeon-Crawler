@@ -203,6 +203,11 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1.0, 0.725, 0.082, 1)
 text = "Gold 0"
 
+[node name="ShardsLabel" type="Label" parent="UI/HUD/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.48, 1, 1)
+text = "Shards 0 / 5"
+
 [node name="SepControls" type="Label" parent="UI/HUD/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/margin_top = 8

@@ -72,7 +72,8 @@ static func trigger_trap(
 	refresh_callback: Callable,
 	game_over_callback: Callable,
 	special_callback: Callable,
-	actor_blockers: Dictionary = {}
+	actor_blockers: Dictionary = {},
+	damage_callback: Callable = Callable(),
 ) -> bool:
 	if not trap_data.has(trap_cell):
 		return true
@@ -83,6 +84,8 @@ static func trigger_trap(
 		TrapDataScript.TrapEffect.DAMAGE, TrapDataScript.TrapEffect.POTSON:
 			var damage: int = randi_range(trap.min_damage, trap.max_damage)
 			damage = stats.apply_damage(damage)
+			if damage_callback.is_valid():
+				damage_callback.call(damage, str(trap.display_name), &"trap")
 			if trap.effect == TrapDataScript.TrapEffect.DAMAGE:
 				log_callback.call(
 					"%s stabs you for %d damage!" % [trap.display_name, damage], &"damage"

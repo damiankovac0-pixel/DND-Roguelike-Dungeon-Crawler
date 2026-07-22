@@ -26,7 +26,7 @@ const BOSS_PATHS: Dictionary = {
 
 # Stat sanity bounds (loose — survive rebalancing)
 const MIN_HP: int = 60
-const MAX_HP: int = 300
+const MAX_HP: int = 400
 const MIN_AC: int = 14
 const MAX_AC: int = 20
 const MIN_GOLD_REWARD: int = 150
@@ -295,11 +295,12 @@ func _check_resource_ascii_and_windups(bosses: Dictionary) -> void:
 				"%s: telegraph_glyph should be printable ASCII" % tag
 			)
 			if is_damaging and not is_summon:
+				var minimum_windup: int = 1 if attack.max_player_distance <= 2.0 else 2
 				_assert(
-					attack.telegraph_turns >= 2,
+					attack.telegraph_turns >= minimum_windup,
 					(
-						"%s: damaging non-summon telegraph_turns = %d, expected >= 2"
-						% [tag, attack.telegraph_turns]
+						"%s: damaging telegraph_turns = %d, expected >= %d"
+						% [tag, attack.telegraph_turns, minimum_windup]
 					)
 				)
 				_assert(attack.projectile_id != &"", "%s: projectile_id should be non-empty" % tag)
@@ -634,12 +635,19 @@ func _check_hazard_contracts(bosses: Dictionary) -> void:
 func _check_cooldown_contracts(bosses: Dictionary) -> void:
 	## Exact cooldown values per the V20.1 attack cadence redesign.
 	var cd_specs: Dictionary = {
-		&"observer": {&"observer_gaze": 2, &"blink_pulse": 3, &"many_eyes": 4},
-		&"seraphine": {&"thorn_lance": 2, &"spore_burst": 3, &"spore_bloom": 4},
-		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3, &"furnace_vent": 4},
-		&"kaelros": {&"undertow": 2, &"drowned_retinue": 4, &"crown_deluge": 3},
+		&"observer": {&"observer_gaze": 2, &"blink_pulse": 3, &"many_eyes": 4, &"optic_recoil": 3},
+		&"seraphine": {&"thorn_lance": 2, &"spore_burst": 3, &"spore_bloom": 4, &"briar_rebuke": 3},
+		&"vorrak": {&"ash_breath": 3, &"maw_quake": 3, &"furnace_vent": 4, &"maw_snap": 2},
+		&"kaelros":
+		{&"undertow": 2, &"drowned_retinue": 4, &"crown_deluge": 3, &"royal_backwash": 3},
 		&"nyxara":
-		{&"mirror_ray": 3, &"prism_fracture": 3, &"mirror_guard": 5, &"hall_of_mirrors": 4},
+		{
+			&"mirror_ray": 3,
+			&"prism_fracture": 3,
+			&"mirror_guard": 5,
+			&"hall_of_mirrors": 4,
+			&"shardstep": 3,
+		},
 	}
 	for boss_id: StringName in bosses:
 		var b: Resource = bosses[boss_id]
@@ -666,18 +674,18 @@ func _check_phase_order(bosses: Dictionary) -> void:
 	## intended cadence per V20.1.
 	var phase_specs: Dictionary = {
 		&"observer": {&"blink_pulse": 2},
-		&"seraphine": {&"spore_burst": 2, &"spore_bloom": 3},
+		&"seraphine": {&"spore_burst": 2, &"spore_bloom": 2},
 		&"vorrak": {&"maw_quake": 2},
 		&"nyxara": {&"prism_fracture": 2, &"mirror_guard": 2},
 	}
 
-	# Seraphine spore_bloom phase-3 summon must have styled telegraph glyph
+	# Seraphine's phase-2 summon must have a styled telegraph glyph.
 	var ser: Resource = bosses[&"seraphine"]
 	var bloom_checked: bool = false
 	for attack: Resource in ser.boss_attacks:
 		if attack.id == &"spore_bloom":
 			bloom_checked = true
-			_assert(attack.phase_min == 3, "spore_bloom phase_min should be 3")
+			_assert(attack.phase_min == 2, "spore_bloom phase_min should be 2")
 			_assert(attack.summon_count == 1, "spore_bloom summon_count should be 1")
 			_assert(attack.summon_max_active == 2, "spore_bloom summon_max_active should be 2")
 			_assert(attack.telegraph_glyph == "*", "spore_bloom telegraph_glyph should be *")

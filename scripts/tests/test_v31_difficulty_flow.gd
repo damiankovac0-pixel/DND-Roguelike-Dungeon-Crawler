@@ -145,14 +145,14 @@ func _check_unlock_and_normalization_contract() -> void:
 		"A legacy victory without difficulty did not migrate to Normal unlock authority",
 	)
 	_expect_unlock(
-		[{"name": "Unknown Victor", "victory": true, "difficulty": "nightmare"}],
-		true,
-		"An unknown archived difficulty did not normalize to Normal",
+		[{"name": "Nightmare Victor", "victory": true, "difficulty": "nightmare"}],
+		false,
+		"A Nightmare victory incorrectly became Normal unlock authority",
 	)
 	_expect_unlock(
 		[{"name": "Hard Victor", "victory": true, "difficulty": "hard"}],
 		false,
-		"A Hard victory incorrectly unlocked Hard",
+		"A Hard victory incorrectly became Normal unlock authority",
 	)
 	_expect_unlock(
 		[{"name": "Truthy Number", "victory": 1, "difficulty": "normal"}],
@@ -271,8 +271,8 @@ func _check_history_migration_and_persistence() -> void:
 	)
 	_expect_equal(
 		patch_hero.get("difficulty"),
-		"normal",
-		"Invalid archive difficulty did not migrate to Normal",
+		"nightmare",
+		"Nightmare archive difficulty did not survive migration",
 	)
 	_expect_equal(
 		hard_victor.get("difficulty"),

@@ -21,6 +21,7 @@ const TYPE_COLORS: Dictionary = {
 	&"boss_story": "#ff9fdf",
 	&"boss_telegraph": "#ff6b35",
 	&"boss_phase": "#7ff5ff",
+	&"shard": "#c77dff",
 }
 const LOG_PULSE_SCALE: Vector2 = Vector2(1.015, 1.015)
 const LOG_PULSE_SECONDS: float = 0.18

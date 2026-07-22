@@ -18,6 +18,8 @@ const ENTRANCE_STAGGER: float = 0.12
 @onready
 var normal_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/NormalButton
 @onready var hard_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/HardButton
+@onready
+var nightmare_button: Button = $DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/NightmareButton
 @onready var difficulty_status_label: Label = get_node(
 	"DifficultyModal/SafeMargin/Center/Panel/Margin/VBox/StatusLabel"
 )
@@ -32,6 +34,7 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	normal_button.pressed.connect(_on_normal_pressed)
 	hard_button.pressed.connect(_on_hard_pressed)
+	nightmare_button.pressed.connect(_on_nightmare_pressed)
 	difficulty_back_button.pressed.connect(_close_difficulty_modal)
 	GameManager.set_pending_difficulty(GameManager.pending_difficulty)
 	_refresh_difficulty_modal()
@@ -66,7 +69,12 @@ func _open_difficulty_modal() -> void:
 	_refresh_difficulty_modal()
 	_set_main_controls_enabled(false)
 	difficulty_modal.show()
-	if not hard_button.disabled and GameManager.pending_difficulty == GameManager.DIFFICULTY_HARD:
+	if (
+		not nightmare_button.disabled
+		and GameManager.pending_difficulty == GameManager.DIFFICULTY_NIGHTMARE
+	):
+		nightmare_button.grab_focus()
+	elif not hard_button.disabled and GameManager.pending_difficulty == GameManager.DIFFICULTY_HARD:
 		hard_button.grab_focus()
 	else:
 		normal_button.grab_focus()
@@ -80,35 +88,41 @@ func _close_difficulty_modal() -> void:
 
 func _refresh_difficulty_modal() -> void:
 	var hard_unlocked: bool = GameManager.is_hard_mode_unlocked()
+	var nightmare_unlocked: bool = GameManager.is_nightmare_mode_unlocked()
 	hard_button.disabled = not hard_unlocked
 	hard_button.focus_mode = Control.FOCUS_ALL if hard_unlocked else Control.FOCUS_NONE
-	if hard_unlocked:
-		difficulty_status_label.text = ("HARD UNLOCKED // A harsher descent awaits. Choose carefully.")
+	nightmare_button.disabled = not nightmare_unlocked
+	nightmare_button.focus_mode = Control.FOCUS_ALL if nightmare_unlocked else Control.FOCUS_NONE
+	if nightmare_unlocked:
+		difficulty_status_label.text = (
+			"NIGHTMARE UNLOCKED // The dungeon no longer " + "follows ordinary rules."
+		)
+	elif hard_unlocked:
+		difficulty_status_label.text = (
+			"HARD UNLOCKED // NIGHTMARE LOCKED — Win a non-debug Hard run " + "to unlock Nightmare."
+		)
 	else:
 		difficulty_status_label.text = ("HARD LOCKED // Win a non-debug Normal run to unlock Hard.")
-	_wire_difficulty_focus(hard_unlocked)
+	_wire_difficulty_focus(hard_unlocked, nightmare_unlocked)
 
 
-func _wire_difficulty_focus(hard_unlocked: bool) -> void:
-	var next_after_normal: Button = hard_button if hard_unlocked else difficulty_back_button
-	var previous_before_back: Button = hard_button if hard_unlocked else normal_button
-
-	normal_button.focus_neighbor_top = normal_button.get_path_to(difficulty_back_button)
-	normal_button.focus_neighbor_bottom = normal_button.get_path_to(next_after_normal)
-	normal_button.focus_previous = normal_button.get_path_to(difficulty_back_button)
-	normal_button.focus_next = normal_button.get_path_to(next_after_normal)
-
-	hard_button.focus_neighbor_top = hard_button.get_path_to(normal_button)
-	hard_button.focus_neighbor_bottom = hard_button.get_path_to(difficulty_back_button)
-	hard_button.focus_previous = hard_button.get_path_to(normal_button)
-	hard_button.focus_next = hard_button.get_path_to(difficulty_back_button)
-
-	difficulty_back_button.focus_neighbor_top = difficulty_back_button.get_path_to(
-		previous_before_back
-	)
-	difficulty_back_button.focus_neighbor_bottom = difficulty_back_button.get_path_to(normal_button)
-	difficulty_back_button.focus_previous = difficulty_back_button.get_path_to(previous_before_back)
-	difficulty_back_button.focus_next = difficulty_back_button.get_path_to(normal_button)
+func _wire_difficulty_focus(hard_unlocked: bool, nightmare_unlocked: bool) -> void:
+	var focusable_buttons: Array[Button] = [normal_button]
+	if hard_unlocked:
+		focusable_buttons.append(hard_button)
+	if nightmare_unlocked:
+		focusable_buttons.append(nightmare_button)
+	focusable_buttons.append(difficulty_back_button)
+	for index: int in range(focusable_buttons.size()):
+		var button: Button = focusable_buttons[index]
+		var previous: Button = focusable_buttons[
+			(index - 1 + focusable_buttons.size()) % focusable_buttons.size()
+		]
+		var next: Button = focusable_buttons[(index + 1) % focusable_buttons.size()]
+		button.focus_neighbor_top = button.get_path_to(previous)
+		button.focus_neighbor_bottom = button.get_path_to(next)
+		button.focus_previous = button.get_path_to(previous)
+		button.focus_next = button.get_path_to(next)
 
 
 func _set_main_controls_enabled(enabled: bool) -> void:
@@ -171,6 +185,15 @@ func _on_hard_pressed() -> void:
 		normal_button.grab_focus()
 		return
 	GameManager.set_pending_difficulty(GameManager.DIFFICULTY_HARD)
+	_navigate_to_character_creation()
+
+
+func _on_nightmare_pressed() -> void:
+	if not GameManager.is_nightmare_mode_unlocked():
+		_refresh_difficulty_modal()
+		normal_button.grab_focus()
+		return
+	GameManager.set_pending_difficulty(GameManager.DIFFICULTY_NIGHTMARE)
 	_navigate_to_character_creation()
 
 

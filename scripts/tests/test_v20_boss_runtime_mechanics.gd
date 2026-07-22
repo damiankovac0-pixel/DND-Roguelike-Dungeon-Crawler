@@ -47,7 +47,7 @@ func _run() -> void:
 	if _failed:
 		return
 
-	# ── V23.1.0: Seraphine spore_burst is escapable (telegraph_turns=2) ──
+	# ── V32.0.0: Seraphine's signature burst has a three-tier windup ──
 	if not _failed:
 		_check_seraphine_escape_contract()
 	if _failed:
@@ -628,14 +628,14 @@ func _test_choose_attack_no_cooldown_mutation() -> void:
 
 
 # ---------------------------------------------------------------------------
-#  V23.1.0 — Seraphine spore_burst telegraph_turns = 2 (player can escape)
+#  V32.0.0 — spore_burst telegraphs 3/2/1 turns in Normal/Hard/Nightmare
 # ---------------------------------------------------------------------------
 
 
 func _check_seraphine_escape_contract() -> void:
-	## Seraphine spore_burst telegraph_turns=2 ensures the player can
-	## react before the burst resolves.  hazard_turns=2 means the hazard
-	## persists for two ticks after landing.
+	## A three-turn base keeps the burst escapable on Normal while difficulty
+	## scaling tightens it to two turns on Hard and one on Nightmare.
+	## hazard_turns=2 means the hazard persists for two ticks after landing.
 	#
 	# This is a resource-level check: we load the Seraphine enemy template
 	# and inspect the attack definition without spawning a boss encounter.
@@ -648,8 +648,8 @@ func _check_seraphine_escape_contract() -> void:
 		_fail("spore_burst attack not found on Seraphine")
 		return
 	_assert(
-		burst.telegraph_turns == 2,
-		"spore_burst telegraph_turns = %d, expected 2" % burst.telegraph_turns
+		burst.telegraph_turns == 3,
+		"spore_burst telegraph_turns = %d, expected 3" % burst.telegraph_turns
 	)
 	_assert(
 		burst.hazard_turns == 2, "spore_burst hazard_turns = %d, expected 2" % burst.hazard_turns

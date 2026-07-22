@@ -18,6 +18,7 @@ const STAT_DESCRIPTIONS: Array[String] = [
 const CLASS_IDS: Array[StringName] = [&"fighter", &"ranger", &"wizard"]
 const NORMAL_DIFFICULTY_COLOR: Color = Color(0.6, 0.843137, 0.898039, 1.0)
 const HARD_DIFFICULTY_COLOR: Color = Color(1.0, 0.33, 0.47, 1.0)
+const NIGHTMARE_DIFFICULTY_COLOR: Color = Color(0.78, 0.48, 1.0, 1.0)
 # === Private Variables ===
 var _rolls: Array[int] = []
 var _selectors: Array[OptionButton] = []
@@ -100,11 +101,14 @@ func _update_difficulty_confirmation() -> void:
 	difficulty_label.text = (
 		"Difficulty: %s" % GameManager.get_difficulty_label(selected_difficulty).to_upper()
 	)
-	var label_color: Color = (
-		HARD_DIFFICULTY_COLOR
-		if selected_difficulty == GameManager.DIFFICULTY_HARD
-		else NORMAL_DIFFICULTY_COLOR
-	)
+	var label_color: Color
+	match selected_difficulty:
+		GameManager.DIFFICULTY_HARD:
+			label_color = HARD_DIFFICULTY_COLOR
+		GameManager.DIFFICULTY_NIGHTMARE:
+			label_color = NIGHTMARE_DIFFICULTY_COLOR
+		_:
+			label_color = NORMAL_DIFFICULTY_COLOR
 	difficulty_label.add_theme_color_override(&"font_color", label_color)
 
 
@@ -173,7 +177,7 @@ func _begin_run() -> void:
 		var roll_index: int = _selectors[index].get_selected_id()
 		ability_scores[STAT_KEYS[index]] = _rolls[roll_index]
 	GameManager.prepare_character(name_input.text, ability_scores, _selected_class_id())
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_tree().change_scene_to_file("res://scenes/prologue.tscn")
 
 
 func _go_back() -> void:

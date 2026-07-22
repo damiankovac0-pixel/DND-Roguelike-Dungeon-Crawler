@@ -11,6 +11,7 @@ const BOSS_FRAME_SIZE: Vector2i = Vector2i(80, 64)
 const ACTOR_SHEET_SIZE: Vector2i = Vector2i(192, 816)
 const BOSS_SHEET_SIZE: Vector2i = Vector2i(960, 320)
 const ELITE_TINT: Color = Color(1.0, 0.84, 0.48)
+const NIGHTMARE_ELITE_TINT: Color = Color(0.86, 0.46, 1.0)
 const ACTOR_ROWS: Dictionary = {
 	# New canonical visual IDs (actor/ namespace)
 	&"actor/player/fighter": 0,
@@ -207,7 +208,11 @@ func tint_for(snapshot: Dictionary) -> Color:
 			and not bool(snapshot.get("is_boss", false))
 			and not bool(snapshot.get("is_summon", false))
 		)
-		return ELITE_TINT if is_regular_elite else Color.WHITE
+		if is_regular_elite:
+			if str(snapshot.get("elite_behavior", "")).begins_with("nightmare_"):
+				return NIGHTMARE_ELITE_TINT
+			return ELITE_TINT
+		return Color.WHITE
 	var boss_id: StringName = snapshot.get("boss_id", &"")
 	if boss_id != &"" and BOSS_ROWS.has(boss_id):
 		return Color.WHITE
